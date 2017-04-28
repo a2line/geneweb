@@ -1551,7 +1551,7 @@ let print_misc_file misc_fname =
   | Other _ -> false
 
 let misc_request fname =
-  let fname = Util.find_misc_file fname in
+  let fname = Util.etc_file fname in
   if fname <> "" then
     let misc_fname =
       if Filename.check_suffix fname ".css" then Css fname

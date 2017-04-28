@@ -11,12 +11,6 @@ val cnt_dir : string ref
 val image_prefix : config -> string
 val base_path : string list -> string -> string
 
-val find_misc_file : string -> string
-
-val search_in_lang_path : string -> string
-
-val etc_file_name : config -> string -> string
-
 val escache_value : base -> string
 val commit_patches : config -> base -> unit
 val update_wf_trace : config -> string -> unit
@@ -114,9 +108,17 @@ val create_env : string -> (string * string) list
 val capitale : string -> string
 val index_of_next_char : string -> int -> int
 
+(** Search file (template, image...) in gw. *)
+val open_gw_etc_file : string -> in_channel option
+val open_base_etc_file : config -> string -> in_channel option
+
+val search_in_lang_path : string -> string
+val etc_file : string -> string
+
 val open_etc_file : string -> in_channel option
-val open_hed_trl : config -> string -> in_channel option
-val open_templ : config -> string -> in_channel option
+val etc_file_name : config -> string -> string
+val open_etc_file_name : config -> string -> in_channel option
+
 val string_with_macros :
   config -> (char * (unit -> string)) list -> string -> string
 val string_of_place : config -> string -> string
