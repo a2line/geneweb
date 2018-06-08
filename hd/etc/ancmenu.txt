@@ -241,6 +241,12 @@ function no_options () {
           <input type="checkbox" id="t_repeat" name="repeat" value="on"%/>
           [*display smallest sosa number relative to ancestor]
         </label>
+        %if;(wizard)
+          <label>
+            <input type="checkbox" name="csv" value="on"%/>
+            CSV import
+          </label>
+        %end;
       </p>
       </div>
 
