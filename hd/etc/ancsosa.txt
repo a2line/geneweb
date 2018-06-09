@@ -1388,16 +1388,23 @@
           <tr>
             %apply;table_row()
           </tr>
+          %if;(ancestor.nb_families > 1)
+            %apply;table_family()
+          %end;
           %if;(wizard and evar.csv="on" and not ancestor.has_parents)
             <tr>
               <td colspan="%nb_col;">
-                <textarea rows="2" style="width:95%%" id="CSV_row_%ancestor.anc_sosa;" title="Import CSV rows of parents from GenewParse to add them!" data-key="&ch1_occ=%ancestor.occ;&ch1_fn=%ancestor.first_name_key;&ch1_sn=%ancestor.surname_key;"></textarea>
-                <input type="button" style="height:36px;vertical-align:top;margin-left:1px;" value="OK" title="[add::parents]" onClick="CSVtoURL(%ancestor.anc_sosa;)" />
+                %let;anc_sex;%if;(ancestor.sex="0")2%elseif;(ancestor.sex="1")1%end;%in;
+                <textarea rows="2" style="width:91%%" id="CSV_row_%ancestor.anc_sosa;" title="Import CSV rows of parents from GenewParse to add them!"
+                data-ch1="&ch1_occ=%ancestor.occ;&ch1_fn=%ancestor.first_name_key;&ch1_sn=%ancestor.surname_key;"
+                data-ancsex="%anc_sex;"
+                data-pa12="%if;(ancestor.sex="1")&pa2_p=link&pa2_occ=%ancestor.occ;&pa2_fn=%ancestor.first_name_key;&pa2_sn=%ancestor.surname_key;&pa2b_dd=&pa2b_mm=&pa2b_yyyy=&pa2b_pl=&pa2d_dd=&pa2d_mm=&pa2d_yyyy=&pa2d_pl=&pa2_occupation=&pa1_p=create&pa1_occ=&pa1b_dd=&pa1b_mm=&pa1b_yyyy=&pa1b_pl=&pa1d_dd=&pa1d_mm=&pa1d_yyyy=%%2B&pa1d_pl=&pa1_occupation=%nn;
+                      %elseif;(ancestor.sex="0")&pa1_p=link&pa1_occ=%ancestor.occ;&pa1_fn=%ancestor.first_name_key;&pa1_sn=%ancestor.surname_key;&pa1b_dd=&pa1b_mm=&pa1b_yyyy=&pa1b_pl=&pa1d_dd=&pa1d_mm=&pa1d_yyyy=&pa1d_pl=&pa1_occupation=&pa2_p=create&pa2_occ=&pa2b_dd=&pa2b_mm=&pa2b_yyyy=&pa2b_pl=&pa12_dd=&pa2d_mm=&pa2d_yyyy=%%2B&pa2d_pl=&pa2_occupation=%nn;
+                      %end;"></textarea>
+                <button style="height:36px;vertical-align:top;margin-left:1px;" title="[add::parents]" onClick="CSVtoURL_PAR(%ancestor.anc_sosa;)">ADD<br />PAR</button>
+                <button style="height:36px;vertical-align:top;margin-left:1px;" title="[add::family]" onClick="CSVtoURL_FAM(%ancestor.anc_sosa;)">ADD<br />FAM</button>
               </td>
             </tr>
-          %end;
-          %if;(ancestor.nb_families > 1)
-            %apply;table_family()
           %end;
         %end;
       %end;
@@ -1405,15 +1412,26 @@
     <p>[*total]: %count; [[person/persons]1@(c)]</p>
   %end;
 %end;
-%if;(evar.t="Z" and evar.csv="on")
+%if;(evar.t="Z" and evar.csv="on" and wizard)
 <script type="text/javascript">
-  function CSVtoURL(ancsosa) {
+  function CSVtoURL_PAR(ancsosa) {
       var id = document.getElementById('CSV_row_'+ancsosa)
-      var ch1_key = id.dataset.key
-      var url1 = '?m=ADD_FAM_OK&digest=&ch1_p=link' + ch1_key + '&ch1b_dd=&ch1b_mm=&ch1b_yyyy=&ch1b_pl=&ch1d_dd=&ch1d_mm=&ch1d_yyyy=&ch1d_pl=&ch1_occupation=&pa1_p=create&pa1_occ=&pa2_p=create&pa2_occ=&marr_cal=&marr_text=&marr_src=&div=not_divorced&div_cal=&div_text=&div_yyyy=&div_prec=&div_oryear=&div_dd=&div_mm=&div_yy=&comment=&src=&psrc=';
-      var url2 = id.value.replace(/^([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);\n([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*)/g,"&pa1_fn=$2&pa1_sn=$3&pa1b_dd=$4&pa1b_mm=$5&pa1b_yyyy=$6&pa1b_pl=$7&pa1d_dd=$8&pa1d_mm=$9&pa1d_yyyy=$10&pa1d_pl=$11&pa1_occupation=$12&pa2_fn=$21&pa2_sn=$22&pa2b_dd=$23&pa2b_mm=$24&pa2b_yyyy=$25&pa2b_pl=$26&pa2d_dd=$27&pa2d_mm=$28&pa2d_yyyy=$29&pa2d_pl=$30&pa2_occupation=$31&mrel=marr&marr_yyyy=$17&marr_prec=sure&marr_oryear=&marr_dd=$15&marr_mm=$16&marr_yy=$17&marr_place=$18");
+      var ch1 = id.dataset.ch1
+      var url1 = '?m=ADD_FAM_OK&digest=&ch1_p=link' + ch1 + '&ch1b_dd=&ch1b_mm=&ch1b_yyyy=&ch1b_pl=&ch1d_dd=&ch1d_mm=&ch1d_yyyy=&ch1d_pl=&ch1_occupation=&pa1_p=create&pa1_occ=&pa2_p=create&pa2_occ=&marr_cal=&marr_text=&marr_src=&div=not_divorced&div_cal=&div_text=&div_yyyy=&div_prec=&div_oryear=&div_dd=&div_mm=&div_yy=&comment=&src=&psrc='
+      var url2 = id.value.replace(/^([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*)\n([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*)/g,"&pa1_fn=$2&pa1_sn=$3&pa1b_dd=$4&pa1b_mm=$5&pa1b_yyyy=$6&pa1b_pl=$7&pa1d_dd=$8&pa1d_mm=$9&pa1d_yyyy=$10&pa1d_pl=$11&pa1_occupation=$12&pa2_fn=$21&pa2_sn=$22&pa2b_dd=$23&pa2b_mm=$24&pa2b_yyyy=$25&pa2b_pl=$26&pa2d_dd=$27&pa2d_mm=$28&pa2d_yyyy=$29&pa2d_pl=$30&pa2_occupation=$31&mrel=marr&marr_yyyy=$17&marr_prec=sure&marr_oryear=&marr_dd=$15&marr_mm=$16&marr_yy=$17&marr_place=$18")
       window.open(url1 + url2);
-    }
+  }
+</script>
+<script type="text/javascript">
+  function CSVtoURL_FAM(ancsosa) {
+      var id = document.getElementById('CSV_row_'+ancsosa)
+      var pa12 = id.dataset.pa12
+      var ancsex = id.dataset.ancsex
+      var url1 = '?m=ADD_FAM_OK&digest=&marr_cal=&marr_text=&marr_src=&div=not_divorced&div_cal=&div_text=&div_yyyy=&div_prec=&div_oryear=&div_dd=&div_mm=&div_yy=&comment=&src=&psrc='
+      var subst = '&pa' + ancsex + '_fn=$13&pa' + ancsex + '_sn=$14&mrel=marr&marr_yyyy=$17&marr_prec=sure&marr_oryear=&marr_dd=$15&marr_mm=$16&marr_yy=$17&marr_place=$18';
+      var url2 = id.value.replace(/^([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*)/g,subst)
+      window.open(url1 + pa12 + url2);
+  }
 </script>
 %end;
 %base_trailer;
