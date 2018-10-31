@@ -1139,8 +1139,9 @@ let base_path bname =
     else
       (bname, bname ^ ".gwb")
   in
-  IFDEF WINDOWS THEN bname_suff
-  ELSE
+  #ifdef WINDOWS
+    bname_suff
+  #else
     let bfile_suff =
       List.fold_left Filename.concat (Secure.base_dir ()) [bname_suff]
     in
@@ -1155,7 +1156,7 @@ let base_path bname =
       let bfile_suff = Filename.concat dir bname_suff in
       bfile_suff
     else bfile_suff
-  END
+  #endif
 
 (** Search file (template, image...) in bases directory:
       - bases/bname/etc/file
@@ -1170,39 +1171,39 @@ let base_etc_file conf fname =
     try
       let s = List.assoc "template" conf.base_env in
       let rec loop list i len =
-        if i = String.length s then List.rev [Buff.get len :: list]
-        else if s.[i] = ',' then loop [Buff.get len :: list] (i + 1) 0
+        if i = String.length s then List.rev (Buff.get len :: list)
+        else if s.[i] = ',' then loop (Buff.get len :: list) (i + 1) 0
         else loop list (i + 1) (Buff.store len s.[i])
       in
       loop [] 0 0
     with
-    [ Not_found -> [conf.bname; "*"] ]
+      Not_found -> [conf.bname; "*"]
   in
   let url_templ =
     match p_getenv conf.env "templ" with
-    [ Some x when List.mem "*" config_templ -> x
+      Some x when List.mem "*" config_templ -> x
     | Some x when List.mem x config_templ -> x
     | Some _ | None ->
         match config_templ with
-        [ [] | ["*"] -> ""
-        | [x :: _] -> x ] ]
+          [] | ["*"] -> ""
+        | x :: _ -> x
   in
-  let tpl = [url_templ :: config_templ] in
+  let tpl = url_templ :: config_templ in
   let rec loop tpl =
     match tpl with
-    [ [] ->
+      [] ->
         let rec loop2 tpl =
           match tpl with
-          [ [] -> ""
-          | [t :: l] ->
+            [] -> ""
+          | t :: l ->
             let etc_file = gw_etc_file fname in
             let etc_tpl_file = gw_etc_file (Filename.concat t fname) in
             if Sys.file_exists etc_file then etc_file
             else if Sys.file_exists etc_tpl_file then etc_tpl_file
-            else loop2 l ]
+            else loop2 l
         in
         loop2 tpl
-    | [t :: l] ->
+    | t :: l ->
         let bname_etc_file =
           List.fold_left Filename.concat
             (base_path conf.bname) ["etc"; fname ^ ".txt"]
@@ -1223,13 +1224,13 @@ let base_etc_file conf fname =
         else if Sys.file_exists bname_etc_tpl_file then bname_etc_tpl_file
         else if Sys.file_exists etc_file then etc_file
         else if Sys.file_exists etc_tpl_file then etc_tpl_file
-        else loop l ]
+        else loop l
   in
   loop tpl
 
 let open_base_etc_file conf fname =
   try Some (Secure.open_in (base_etc_file conf fname)) with
-  [ Sys_error _ -> None ]
+    Sys_error _ -> None
 
 let base_path pref bname =
   let pref = Secure.base_dir () :: pref in
@@ -1243,12 +1244,14 @@ let base_path pref bname =
   else bfile
 
 let search_in_lang_path fname =
-  loop (Secure.lang_path ()) where rec loop =
-    fun
-    [ [] -> fname
-    | [d :: dl] ->
+   let rec loop =
+    function
+      [] -> fname
+    | d :: dl ->
         let f = Filename.concat d fname in
-        if Sys.file_exists f then f else loop dl ]
+        if Sys.file_exists f then f else loop dl
+    in
+    loop (Secure.lang_path ())
 
 let etc_file fname =
   let base_tpl_dir = Filename.concat (base_path ["etc"] "") fname in
@@ -1264,9 +1267,6 @@ let etc_file fname =
   else if Sys.file_exists fname2 then fname2
   else ""
 
-let open_etc_file fname =
-  try Some (Secure.open_in (etc_file fname)) with
-  [ Sys_error _ -> None ]
 
 (* ************************************************************************ *)
 (*  [Fonc] etc_file_name : config -> string -> string                       *)
@@ -1345,6 +1345,12 @@ let etc_file_name conf fname =
     "" -> default_templ config_templ std_fname
   | s -> s
 
+(* TODO laquelle des deux implémentation retenir?? *)
+let open_etc_file fname =
+  try Some (Secure.open_in (etc_file fname)) with
+    Sys_error _ -> None
+
+(*
 let open_etc_file fname =
   let fname1 = base_path ["etc"] (Filename.basename fname ^ ".txt") in
   let fname2 =
@@ -1353,6 +1359,7 @@ let open_etc_file fname =
   in
   try Some (Secure.open_in fname1) with
     Sys_error _ -> try Some (Secure.open_in fname2) with Sys_error _ -> None
+*)
 
 let open_etc_file_name conf fname =
   try Some (Secure.open_in (etc_file_name conf fname)) with
