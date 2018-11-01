@@ -131,12 +131,12 @@ let source_file_name conf fname =
   let lang = conf.lang in
   let fname1 =
     List.fold_right Filename.concat [Util.base_path ["src"] bname; lang]
-      (Filename.basename fname ^ ".txt")
+      (fname ^ ".txt")
   in
   if Sys.file_exists fname1 then fname1
   else
     Filename.concat (Util.base_path ["src"] bname)
-      (Filename.basename fname ^ ".txt")
+      (fname ^ ".txt")
 
 let extract_date s =
   try Scanf.sscanf s "%d/%d/%d" (fun d m y -> Some (d, m, y))
@@ -425,6 +425,8 @@ and copy_from_string conf base str mode =
   copy_from_stream conf base (Stream.of_string str) mode
 
 let gen_print with_logo mode conf base fname =
+  let _ = Printf.eprintf "Print_source %s\n" fname in
+  let _ = flush stderr in
   let channel =
     match mode with
       Lang ->

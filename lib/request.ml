@@ -386,10 +386,19 @@ let treat_request conf base =
   with
     Some s, _, _ -> print_moved conf s
   | _, Some "no_index", _ -> print_no_index conf base
-  | _, _, Some "IM" -> Image.print conf base
+  | _, _, Some "IM" ->
+      begin match p_getenv conf.env "s" with
+        Some f ->
+          let _ = Printf.eprintf "m=IM;s=%s\n" f in
+          let _ = flush stderr in
+          Image.print conf base
+      | None -> Image.print conf base
+      end
   | _, _, Some "DOC" ->
       begin match p_getenv conf.env "s" with
         Some f ->
+          let _ = Printf.eprintf "m=DOC;s=%s\n" f in
+          let _ = flush stderr in
           if Filename.check_suffix f ".txt" then
             let f = Filename.chop_suffix f ".txt" in
             Srcfile.print_source conf base f
