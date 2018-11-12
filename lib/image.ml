@@ -38,8 +38,6 @@ let content ct len fname =
     [Rem] : Ne pas utiliser en dehors de ce module.                           *)
 (* ************************************************************************** *)
 let print_image_type fname ctype =
-  (*let _ = Printf.eprintf "Print_image_type %s\n" fname in
-  let _ = flush stderr in*)
   match try Some (Secure.open_in_bin fname) with Sys_error _ -> None with
     Some ic ->
       let buf = Bytes.create 1024 in
@@ -57,8 +55,6 @@ let print_image_type fname ctype =
   | None -> false
 
 let print_image_type_2 conf fname ctype =
-  (*let _ = Printf.eprintf "Print_image_type_2 %s\n" fname in
-  let _ = flush stderr in*)
   if Sys.file_exists fname then
     match try Some (Secure.open_in_bin fname) with Sys_error _ -> None with
       Some ic ->
@@ -148,8 +144,8 @@ let print_source_image conf f =
   let fname =
     if f.[0] = '/' then String.sub f 1 (String.length f - 1) else f
   in
-  (*if fname = Filename.basename fname then*)
-    let fname = Util.source_image_file_name conf.bname fname in
+  (*if fname = Filename.basename fname then TODO clean if ok*)
+    let fname = Util.source_image_file_name conf fname in
     if print_image_file_2 conf fname then () else Hutil.incorrect_request conf
   (*else Hutil.incorrect_request conf*)
 
