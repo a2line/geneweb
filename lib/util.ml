@@ -2647,6 +2647,19 @@ let auto_image_file conf base p =
   else if Sys.file_exists (f ^ ".png") then Some (f ^ ".png")
   else None
 
+let keydir conf base p =
+  let s = default_image_name base p in
+  let f = Filename.concat (base_path ["images"] conf.bname) s in
+  try if Sys.is_directory f then Some f
+  else None
+  with Sys_error _ -> None
+
+let get_keydir conf base p =
+  match keydir conf base p with
+    Some f ->
+      List.map (fun f -> Gwdb.insert_string base f) (Array.to_list (Sys.readdir f))
+  | None -> []
+
 (* ********************************************************************** *)
 (*  [Fonc] image_and_size : config -> base -> person -> image_size        *)
 (** [Description] : Renvoie la source de l'image ainsi que sa taille.
@@ -2723,6 +2736,12 @@ let has_image conf base p =
      not (string_exists (sou base (get_image p)) "/private/")) ||
     auto_image_file conf base p <> None
   else false
+
+let has_keydir conf base p =
+  if not conf.no_image && authorized_age conf base p then
+    keydir conf base p <> None
+  else false
+
 
 let gen_only_printable or_nl s =
   let s' =

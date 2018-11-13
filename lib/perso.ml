@@ -2139,6 +2139,11 @@ and eval_simple_str_var conf base env (_, p_auth) =
         Vstring s -> s
       | _ -> raise Not_found
       end
+  | "keydir_img" ->
+      begin match get_env "keydir_img" env with
+        Vstring s -> s
+      | _ -> raise Not_found
+      end
   | "child_cnt" -> string_of_int_env "child_cnt" env
   | "comment" | "fnotes" ->
       begin match get_env "fam" env with
@@ -4009,6 +4014,7 @@ and eval_bool_person_field conf base env (p, p_auth) =
       else get_first_names_aliases p <> []
   | "has_history" -> has_history conf base p p_auth
   | "has_image" -> Util.has_image conf base p
+  | "has_keydir" -> Util.has_keydir conf base p
   | "has_nephews_or_nieces" -> has_nephews_or_nieces conf base p
   | "has_nobility_titles" -> p_auth && nobtit conf base p <> []
   | "has_notes" | "has_pnotes" ->
@@ -4364,6 +4370,8 @@ and eval_str_person_field conf base env (p, p_auth as ep) =
           "</ul>\n"
         else ""
       else ""
+  | "nb_keydir_img" ->
+    string_of_int (List.length (get_keydir conf base p))
   | "nb_children_total" ->
       let n =
         List.fold_left
@@ -5060,6 +5068,7 @@ let print_foreach conf base print_ast eval_expr =
         print_foreach_event_witness_relation env al ep
     | "family" -> print_foreach_family env al ini_ep ep
     | "first_name_alias" -> print_foreach_first_name_alias env al ep
+    | "img_in_keydir" -> print_foreach_img_in_keydir env al ep
     | "nobility_title" -> print_foreach_nobility_title env al ep
     | "parent" -> print_foreach_parent env al ep
     | "qualifier" -> print_foreach_qualifier env al ep
@@ -5660,6 +5669,16 @@ let print_foreach conf base print_ast eval_expr =
         List.iter (print_ast env ep) al; loop (succ i)
     in
     loop 1
+  and print_foreach_img_in_keydir env al (p, p_auth as ep) =
+    if not p_auth && is_hide_names conf p then ()
+    else
+      let img_list = get_keydir conf base p in
+      Mutil.list_iter_first
+        (fun first a ->
+          let env = ("keydir_img", Vstring (sou base a)) :: env in
+          let env = ("first", Vbool first) :: env in
+          List.iter (print_ast env ep) al)
+        img_list
   and print_foreach_nobility_title env al (p, p_auth as ep) =
     if p_auth then
       let titles = nobility_titles_list conf base p in
