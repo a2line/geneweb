@@ -1120,28 +1120,6 @@ let string_of_witness_kind conf p witness_kind =
 
 let image_prefix conf = conf.image_prefix
 
-(** Search file (template, image...) in gw default directory. *)
-let gw_etc_file fname =
-  let etc_file = Filename.concat "etc" fname in
-  let share_file = Filename.concat sharelib fname in
-  if Sys.file_exists etc_file then etc_file
-  else if Sys.file_exists share_file then share_file
-  else ""
-
-let open_gw_etc_file fname =
-  try Some (Secure.open_in (gw_etc_file fname)) with
-    Sys_error _ -> None
-
-let search_in_lang_path fname =
-   let rec loop =
-    function
-      [] -> fname
-    | d :: dl ->
-        let f = Filename.concat d fname in
-        if Sys.file_exists f then f else loop dl
-    in
-    loop (Secure.lang_path ())
-
 let base_path bname =
   let (bname, bname_suff) =
     if Filename.check_suffix bname ".gwb" then
@@ -1168,6 +1146,40 @@ let base_path bname =
       bfile_suff
       else bfile_suff
   #endif
+
+let search_in_lang_path fname =
+   let rec loop =
+    function
+      [] -> fname
+    | d :: dl ->
+        let f = Filename.concat d fname in
+        if Sys.file_exists f then f else loop dl
+    in
+    loop (Secure.lang_path ())
+(* *******************************************************************  *)
+(*   Search file (template, image...) in gw default directory.          *)
+(*                                                                      *)
+(*   search_in_lang_path cherche dans une succession de dossiers :
+      -hd
+      .
+      sharelib (GWPREFIX/share/geneweb ou /usr/share/geneweb)
+      (je crois dans cet ordre)
+      Renvoie le chemin completé du fichier recherché                  *)
+(* ******************************************************************* *)
+let gw_etc_file fname =
+  let etc_file = Filename.concat (search_in_lang_path "etc") fname in
+  (* cette ligne est probablement inutile search_in_lg_path fait le travail *)
+  let share_file = Filename.concat sharelib fname in
+  let _ = Printf.eprintf "Gw_etc_file: %s\n" etc_file in
+  let _ = Printf.eprintf "Gw_share_file: %s\n" share_file in
+  let _ = flush stderr in
+  if Sys.file_exists etc_file then etc_file
+  else if Sys.file_exists share_file then share_file
+  else ""
+
+let open_gw_etc_file fname =
+  try Some (Secure.open_in (gw_etc_file fname)) with
+    Sys_error _ -> None
 
 (* ************************************************************************ *)
 (*  [Fonc] base_etc_file : config -> string -> string                       *)

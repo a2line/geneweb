@@ -1533,6 +1533,8 @@ let print_misc_file misc_fname =
   match misc_fname with
     Css fname | Js fname | Otf fname | Svg fname | Woff fname | Eot fname |
     Ttf fname | Woff2 fname ->
+      let _ = Printf.eprintf "Print_misc_file: %s\n" fname in
+      let _ = flush stderr in
       begin
         try
           let ic = Secure.open_in_bin fname in
@@ -1554,6 +1556,8 @@ let print_misc_file misc_fname =
 
 let misc_request fname =
   let fname = Util.gw_etc_file fname in
+  let _ = Printf.eprintf "Misc_request: %s\n" fname in
+  let _ = flush stderr in
   if fname <> "" then
     let misc_fname =
       if Filename.check_suffix fname ".css" then Css fname
@@ -1666,6 +1670,8 @@ let connection (addr, request) script_name contents =
       if not accept then only_log from
       else
         try
+          let _ = Printf.eprintf "Accept: %s\n" script_name in
+          let _ = flush stderr in
           let (contents, env) = build_env request contents in
           if image_request script_name env then ()
           else if misc_request script_name then ()
