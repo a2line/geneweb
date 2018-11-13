@@ -208,6 +208,10 @@ val has_image : config -> base -> person -> bool
 val image_file_name : string -> string
 val source_image_file_name : config -> string -> string
 
+val has_keydir : config -> base -> person -> bool
+val keydir : config -> base -> person -> string option
+val get_keydir : config -> base -> person -> istr list
+
 val image_size : string -> (int * int) option
 val limited_image_size :
   int -> int -> string -> (int * int) option -> (int * int) option

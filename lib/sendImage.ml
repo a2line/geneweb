@@ -6,6 +6,7 @@ open Gwdb
 open Util
 
 type image_type = JPEG | GIF | PNG
+type image_kind = KeyImage | KeyDir
 
 let image_types = [JPEG; GIF; PNG]
 
@@ -56,32 +57,74 @@ let raw_get conf key =
   try List.assoc key conf.env with Not_found -> incorrect conf
 
 (* print delete image link *)
-let print_link_delete_image conf base p =
-  if Util.has_image conf base p then
+let print_link_delete_image conf base digest p =
+  let _ = Printf.eprintf "Print_link_delete\n" in
+  let _ = flush stderr in
+  if Util.has_image conf base p || Util.has_keydir conf base p then
     begin
+      let title = (capitale (transl conf "suppress images")) in
+      Wserver.printf "<h2>\n";
+      Wserver.printf "%s\n" title;
+      Wserver.printf "</h2>\n";
+      Wserver.printf
+        "<form method=\"post\" action=\"%s\" enctype=\"multipart/form-data\">\n"
+        conf.command;
       Wserver.printf "<p>\n";
+      Util.hidden_env conf;
+      Wserver.printf
+        "<input type=\"hidden\" name=\"m\" value=\"DEL_IMAGE\"%s>\n" conf.xhs;
+      Wserver.printf "<input type=\"hidden\" name=\"i\" value=\"%d\"%s>\n"
+        (Adef.int_of_iper (get_key_index p)) conf.xhs;
+      Wserver.printf "<input type=\"hidden\" name=\"digest\" value=\"%s\"%s>\n"
+        digest conf.xhs;
+      Wserver.printf "%s%s\n" (capitale (transl conf "file")) (Util.transl conf ":");
+      Wserver.printf "<input \
+        type=\"file\" class=\"form-control\" name=\"file\" size=\"50\" \
+        maxlength=\"250\" accept=\"image/*\"%s>\n" conf.xhs;
+      Wserver.printf "</p>\n";
+      Wserver.printf
+        "<button type=\"submit\" class=\"btn btn-secondary btn-lg mt-2\">\n";
+      Wserver.printf "%s" (capitale (transl_nth conf "validate/delete" 1));
+      Wserver.printf "</button>\n";
+      Wserver.printf
+        "<input type=\"checkbox\" class=\"form-check-input btn-lg ml-2 mt-4\" \
+        name=\"keydir\" id=\"keydir\">\n";
+      Wserver.printf "<span class=\"text-nowrap ml-4\" >%s</span>"
+        (capitale (transl_nth conf "from keydir" 0));
+      Wserver.printf "</form>\n";
+    end
+
+(*      Wserver.printf "<p>\n";
       begin
-        Wserver.printf "<a href=\"%sm=DEL_IMAGE&i=%d\">" (commd conf)
-          (Adef.int_of_iper (get_key_index p));
+        Wserver.printf "<a href=\"%sm=DEL_IMAGE&i=%d%s&file=%s\"%s>" (commd conf)
+          (Adef.int_of_iper (get_key_index p))
+          (if kind = KeyDir then "&keydir=on" else "") fname conf.xhs;
         Wserver.printf "%s %s" (capitale (transl conf "delete"))
           (transl_nth conf "image/images" 0);
         Wserver.printf "</a>"
       end;
       Wserver.printf "</p>\n"
-    end
+*)
 
 (* Send image form *)
 
-let print_send_image conf base p =
+let print_send_image conf base p kind =
   let title h =
-    if Util.has_image conf base p then
-      Wserver.printf "%s"
-        (capitale
-           (transl_decline conf "modify" (transl_nth conf "image/images" 0)))
+    if kind = KeyImage then
+      if Util.has_image conf base p then
+        Wserver.printf "%s"
+          (capitale
+             (transl_decline conf "modify" (transl_nth conf "image/images" 0)))
+      else
+        Wserver.printf "%s"
+          (capitale
+             (transl_decline conf "add" (transl_nth conf "image/images" 0)))
     else
-      Wserver.printf "%s"
-        (capitale
-           (transl_decline conf "add" (transl_nth conf "image/images" 0)));
+      if Util.has_keydir conf base p then
+        Wserver.printf "%s"
+          (capitale
+             (transl_decline conf "add" (transl_nth conf "to keydir" 0)))
+      else ();
     if h then ()
     else
       let fn = p_first_name base p in
@@ -108,7 +151,7 @@ let print_send_image conf base p =
     digest conf.xhs;
   Wserver.printf "%s%s\n" (capitale (transl conf "file")) (Util.transl conf ":");
   Wserver.printf "<input \
-type=\"file\" class=\"form-control\" name=\"file\" size=\"50\" maxlength=\"250\" accept=\"image/*\"%s>\n"
+    type=\"file\" class=\"form-control\" name=\"file\" size=\"50\" maxlength=\"250\" accept=\"image/*\"%s>\n"
     conf.xhs;
   Wserver.printf "</p>\n";
   begin match p_getint conf.base_env "max_images_size" with
@@ -122,11 +165,28 @@ type=\"file\" class=\"form-control\" name=\"file\" size=\"50\" maxlength=\"250\"
     "<button type=\"submit\" class=\"btn btn-secondary btn-lg mt-2\">\n";
   Wserver.printf "%s" (capitale (transl_nth conf "validate/delete" 0));
   Wserver.printf "</button>\n";
+  Wserver.printf
+    "<input type=\"checkbox\" class=\"form-check-input btn-lg ml-2 mt-4\" name=\"keydir\" id=\"keydir\">\n";
+  Wserver.printf "<span class=\"text-nowrap ml-4\" >%s</span>" (capitale (transl_nth conf "send to keydir" 0));
   Wserver.printf "</form>\n";
-  print_link_delete_image conf base p;
+  Wserver.printf "<p><hr><p>\n";
+  let _ = Printf.eprintf "End print_send_image 1\n" in
+  let _ = flush stderr in
+  print_link_delete_image conf base digest p;
+  let _ = Printf.eprintf "End print_send_image 2\n" in
+  let _ = flush stderr in
   Hutil.trailer conf
 
 let print conf base =
+  let _ = Printf.eprintf "Print\n" in
+  let _ =  List.iter
+    (fun (k, v) ->
+       Printf.eprintf "Env_var: %s, %s\n" k v)
+    conf.env
+  in
+  let _ = flush stderr in
+  let kind = try List.assoc "keydir" conf.env with Not_found -> "" in
+  let kind = if kind = "on" then KeyDir else KeyImage in
   match p_getint conf.env "i" with
     Some ip ->
       let p = poi base (Adef.iper_of_int ip) in
@@ -134,39 +194,48 @@ let print conf base =
       let sn = p_surname base p in
       if sou base (get_image p) <> "" || fn = "?" || sn = "?" then
         Hutil.incorrect_request conf
-      else print_send_image conf base p
+      else print_send_image conf base p kind
   | _ -> Hutil.incorrect_request conf
 
 (* Delete image form *)
 
 let print_delete_image conf base p =
+  let keydir = default_image_name base p in
+  let fname = try List.assoc "file_name" conf.env with Not_found -> "" in
+  let fname = if fname = "" then keydir else fname in
+  let kind = try List.assoc "keydir" conf.env with Not_found -> "" in
+  let kind = if kind = "on" then KeyDir else KeyImage in
+  let ffname = if kind = KeyDir then Filename.concat keydir fname else fname in
+
   let title h =
-    Wserver.printf "%s"
+    Wserver.printf "%s%s%s"
       (capitale
-         (transl_decline conf "delete" (transl_nth conf "image/images" 0)));
+         (transl_decline conf "delete" (transl_nth conf "image/images" 0)))
+         (transl conf ":") ffname;
     if h then ()
-    else
-      let fn = p_first_name base p in
-      let sn = p_surname base p in
-      let occ =
-        if fn = "?" || sn = "?" then Adef.int_of_iper (get_key_index p)
-        else get_occ p
-      in
-      Wserver.printf ": "; Wserver.printf "%s.%d %s" fn occ sn
+    else ()
   in
+
   Hutil.header conf title;
   Wserver.printf "\n";
-  Wserver.printf "<form method=\"post\" action=\"%s\">\n" conf.command;
+  Wserver.printf "<form method=\"post\" action=\"%s\"%s>\n"
+    conf.command  conf.xhs;
   html_p conf;
   Util.hidden_env conf;
   Wserver.printf
-    "<input type=\"hidden\" name=\"m\" value=\"DEL_IMAGE_OK\">\n";
-  Wserver.printf "<input type=\"hidden\" name=\"i\" value=\"%d\">\n\n"
-    (Adef.int_of_iper (get_key_index p));
+    "<input type=\"hidden\" name=\"m\" value=\"DEL_IMAGE_OK\"%s>\n" conf.xhs;
+  Wserver.printf
+    "<input type=\"hidden\" name=\"file\" value=\"%s\"%s>\n"
+      fname conf.xhs;
+  Wserver.printf
+    "<input type=\"hidden\" name=\"keydir\" value=\"%s\"%s>\n"
+      (if kind = KeyDir then "on" else "") conf.xhs;
+  Wserver.printf "<input type=\"hidden\" name=\"i\" value=\"%d\"%s>\n\n"
+      (Adef.int_of_iper (get_key_index p)) conf.xhs;
   Wserver.printf "\n";
   html_p conf;
   Wserver.printf
-    "<button type=\"submit\" class=\"btn btn-secondary btn-lg\">\n";
+    "<button type=\"submit\" class=\"btn btn-secondary btn-lg\"%s>\n" conf.xhs;
   Wserver.printf "%s" (capitale (transl_nth conf "validate/delete" 0));
   Wserver.printf "</button>\n";
   Wserver.printf "</form>\n";
@@ -174,6 +243,13 @@ let print_delete_image conf base p =
   Hutil.trailer conf
 
 let print_del conf base =
+  let _ = Printf.eprintf "Print_del\n" in
+  let _ =  List.iter
+    (fun (k, v) ->
+       if k <> "file" then Printf.eprintf "Env_var: %s, %s\n" k v)
+    conf.env
+  in
+  let _ = flush stderr in
   match p_getint conf.env "i" with
     Some ip ->
       let p = poi base (Adef.iper_of_int ip) in
@@ -273,7 +349,15 @@ let dump_bad_image conf s =
       end
   | _ -> ()
 
-let effective_send_ok conf base p file =
+let effective_send_ok conf base p file kind =
+  let _ = Printf.eprintf "Effective_send_ok\n" in
+  let _ =  List.iter
+    (fun (k, v) ->
+       Printf.eprintf "Env_var: %s, %s\n" k v)
+    conf.env
+  in
+  let _ = flush stderr in
+  let filename = raw_get conf ("file_name") in
   let strm = Stream.of_string file in
   let (request, content) = Wserver.get_request_and_content strm in
   let content =
@@ -298,16 +382,26 @@ let effective_send_ok conf base p file =
             error_too_big_image conf base p (String.length content) len
         | _ -> typ, content
   in
-  let bfname = default_image_name base p in
-  let bfdir =
-    let bfdir = List.fold_right
+  let keyname = default_image_name base p in
+  let bfname = if kind = KeyImage then keyname
+    else Filename.remove_extension filename
+  in
+  let bfdir = List.fold_right
       Filename.concat [Util.base_path conf.bname; "documents"] "portraits"
-    in
-    if Sys.file_exists bfdir then bfdir
+  in
+  if Sys.file_exists bfdir then bfdir
+  else
+    let d = Filename.concat (Util.base_path conf.bname) "documents" in
+    let d1 = Filename.concat d "portraits" in
+    (try Unix.mkdir d 0o777 with Unix.Unix_error (_, _, _) -> ());
+    (try Unix.mkdir d1 0o777 with Unix.Unix_error (_, _, _) -> ());
+    d1
+  in
+  let bfkdir = Filename.concat bfdir keyname in
+  let bfdir =
+    if kind = KeyDir && Sys.file_exists bfkdir then bfkdir
     else
-      let d = Filename.concat (Util.base_path conf.bname) "documents" in
-      let d1 = Filename.concat d "portraits" in
-      (try Unix.mkdir d 0o777 with Unix.Unix_error (_, _, _) -> ());
+      let d1 = bfkdir in
       (try Unix.mkdir d1 0o777 with Unix.Unix_error (_, _, _) -> ());
       d1
   in
@@ -317,7 +411,8 @@ let effective_send_ok conf base p file =
   let changed =
     U_Send_image (Util.string_gen_person base (gen_person_of_person p))
   in
-  History.record conf base changed "si"; print_sent conf base p
+  History.record conf base changed
+    (if kind = KeyImage then "si" else "ki"); print_sent conf base p
 
 let print_send_ok conf base =
   try
@@ -325,10 +420,12 @@ let print_send_ok conf base =
       let s = raw_get conf "i" in
       try int_of_string s with Failure _ -> incorrect conf
     in
+    let kind = raw_get conf "keydir" in
+    let kind = if kind = "on" then KeyDir else KeyImage in
     let p = poi base (Adef.iper_of_int ip) in
     let digest = Update.digest_person (UpdateInd.string_person_of base p) in
     if digest = raw_get conf "digest" then
-      let file = raw_get conf "file" in effective_send_ok conf base p file
+      let file = raw_get conf "file" in effective_send_ok conf base p file kind
     else Update.error_digest conf
   with Update.ModErr -> ()
 
@@ -347,16 +444,43 @@ let print_deleted conf base p =
   Hutil.trailer conf
 
 let effective_delete_ok conf base p =
-  let bfname = default_image_name base p in
+  let _ =  List.iter
+    (fun (k, v) ->
+       Printf.eprintf "Env_var: %s, %s\n" k v)
+    conf.env
+  in
+  let _ = flush stderr in
+  let name = try List.assoc "file" conf.env with Not_found -> "" in
+  let kind = try List.assoc "keydir" conf.env with Not_found -> "" in
+  let kind = if kind = "on" then KeyDir else KeyImage in
+  let _ = Printf.eprintf "\nEffective_delete, name: %s\n" name in
+
+  let keydir = default_image_name base p in
+  let bfname = if kind = KeyDir then Filename.concat keydir name else name in
   let fname = List.fold_right
     Filename.concat [Util.base_path conf.bname; "documents"; "portraits"] bfname in
-  if move_file_to_old conf fname bfname = 0 then incorrect conf;
+  let _ = Printf.eprintf "Effective_delete (mid 1) %s\n" fname in
+  if kind = KeyImage && move_file_to_old conf fname bfname = 0 then incorrect conf
+  else Sys.remove fname;
+  let _ = Printf.eprintf "Effective_delete (mid 2)\n" in
+  let _ = flush stderr in
   let changed =
     U_Delete_image (Util.string_gen_person base (gen_person_of_person p))
   in
-  History.record conf base changed "di"; print_deleted conf base p
+  History.record conf base changed
+    (if kind = KeyImage then "di" else "dk"); print_deleted conf base p;
+  Printf.eprintf "Effective_delete (end)\n";
+  flush stderr
 
 let print_del_ok conf base =
+  let _ = Printf.eprintf "Print_del_ok\n" in
+  let _ =  List.iter
+    (fun (k, v) ->
+       Printf.eprintf "Env_var: %s, %s\n" k v)
+    conf.env
+  in
+  let _ = flush stderr in
+  (*let fname = Util.p_getenv env "name" in*)
   try
     match p_getint conf.env "i" with
       Some ip ->
