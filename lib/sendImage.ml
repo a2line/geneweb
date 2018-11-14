@@ -389,13 +389,14 @@ let effective_send_ok conf base p file kind =
   let bfdir = List.fold_right
       Filename.concat [Util.base_path conf.bname; "documents"] "portraits"
   in
-  if Sys.file_exists bfdir then bfdir
-  else
-    let d = Filename.concat (Util.base_path conf.bname) "documents" in
-    let d1 = Filename.concat d "portraits" in
-    (try Unix.mkdir d 0o777 with Unix.Unix_error (_, _, _) -> ());
-    (try Unix.mkdir d1 0o777 with Unix.Unix_error (_, _, _) -> ());
-    d1
+  let bfdir =
+    if Sys.file_exists bfdir then bfdir
+    else
+      let d = Filename.concat (Util.base_path conf.bname) "documents" in
+      let d1 = Filename.concat d conf.bname in
+      (try Unix.mkdir d 0o777 with Unix.Unix_error (_, _, _) -> ());
+      (try Unix.mkdir d1 0o777 with Unix.Unix_error (_, _, _) -> ());
+      d1
   in
   let bfkdir = Filename.concat bfdir keyname in
   let bfdir =
