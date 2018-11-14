@@ -2649,7 +2649,8 @@ let auto_image_file conf base p =
 
 let keydir conf base p =
   let s = default_image_name base p in
-  let f = Filename.concat (base_path ["images"] conf.bname) s in
+  let f = List.fold_right
+    Filename.concat [base_path conf.bname; "documents"; "portraits"] s in
   try if Sys.is_directory f then Some f
   else None
   with Sys_error _ -> None

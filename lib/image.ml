@@ -38,6 +38,8 @@ let content ct len fname =
     [Rem] : Ne pas utiliser en dehors de ce module.                           *)
 (* ************************************************************************** *)
 let print_image_type fname ctype =
+  let _ = Printf.eprintf "Print_image_type: %s\n" fname in
+  let _ = flush stderr in
   match try Some (Secure.open_in_bin fname) with Sys_error _ -> None with
     Some ic ->
       let buf = Bytes.create 1024 in
