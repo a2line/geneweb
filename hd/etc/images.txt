@@ -17,44 +17,69 @@
 <div class="container">
 %message_to_wizard;
 %include_perso_header;
-
+%(
 Dummy images.txt template for i=%index;%sp;
-(%first_name; %surname;%if;(occ!="") (%occ;)%end;) (digest = %digest;)<br>
+(%first_name; %surname;%if;(occ!="") (%occ;)%end;) (digest = %digest;)<br>%)
 
-  <h1>
-    Send images
-  </h1>
-  <form method="post" action="%action;" enctype="multipart/form-data">
-  <input type="hidden" name="m" value="SND_IMAGE_OK">
-  <input type="hidden" name="digest" value="%digest;">
-  <input type="hidden" name="i" value="%index;">
-  <input type="file" name="file" class="form-control" size="50" maxlength="250" accept="image/*">
-  </p>
-  <button type="submit" class="btn btn-secondary btn-lg mt-2"> Ok </button>
-  <input type="checkbox" name="keydir" id="keydir" class="form-check-input btn-lg ml-2 mt-4" value="on">
-  <span class="text-nowrap ml-4" >[*send to keydir]</span><br>
-  An image not sent to keydir becomes the "portrait" in the perso page.<br>
-  It replaces the previous one which is sent to "old" folder.
-  </form>
-<p>
+%if;(evar.m="DEL_IMAGE")
+   <div class="col-6">
+    <h1>Delete portrait</h1>
+    <a role="button" href="%prefix;m=DEL_IMAGE_OK&i=%index;" class="btn btn-danger">CONFIRM PORTRAIT DELETION</a>
+  </div>
+%elseif;(evar.m="SND_IMAGE")
+<div class="row mt-3">
+  <div class="col-6">
+    <h1>Send portait</h1>
+    <form class="form-inline" method="post" action="%action;" enctype="multipart/form-data">
+      <input type="hidden" name="m" value="SND_IMAGE_OK">
+      <input type="hidden" name="digest" value="%digest;">
+      <input type="hidden" name="i" value="%index;">
+      <div class="custom-file col">
+        <input type="file" name="file" class="custom-file-input" id="portraits_file" accept="image/*">
+        <label class="custom-file-label" data-button="My broweuisret uisrte " for="customFile">Choose file</label>
+      </div>
+      <button class="btn btn-primary ml-1 col-2" type="submit" class="btn mt-2">SEND</button>
+      %( affiche bien le nom de fichier <input type="file" name="file" class="form-control accept="image/*">%)
+    </form>
+    <span>Previous portait is sent to <code>old</code> folder.</span>
+  </div>
+  <div class="col-6">
+    <h1>Delete portrait</h1>
+    <a role="button" href="%prefix;m=DEL_IMAGE&i=%index;" class="btn btn-danger">DELETE PORTRAIT</a>
+  </div>
+</div>
 <hr>
-<p>
-
-  <h1>
-    Delete images
-  </h1>
-  <form method="post" action="%action;" enctype="multipart/form-data">
-  <input type="hidden" name="m" value="DEL_IMAGE_OK">
-  <input type="hidden" name="digest" value="%digest;">
-  <input type="hidden" name="i" value="%index;">
-  <input type="file" name="file" class="form-control" size="50" maxlength="250" accept="image/*">
-  </p>
-  <button type="submit" class="btn btn-secondary btn-lg mt-2"> Ok </button>
-  <input type="checkbox" name="keydir" id="keydir" class="form-check-input btn-lg ml-2 mt-4" value="on">
-  <span class="text-nowrap ml-4" >[*delete from keydir]</span>
-  </button>
-  </form>
-
+<div class="row mt-3">
+  <div class="col-6">
+    <h1>Send other image</h1>
+    <form class="form-inline" method="post" action="%action;" enctype="multipart/form-data">
+      <input type="hidden" name="m" value="SND_IMAGE_OK">
+      <input type="hidden" name="digest" value="%digest;">
+      <input type="hidden" name="i" value="%index;">
+      <input type="hidden" name="keydir" id="keydir" value="on">
+      <div class="custom-file col">
+        <input type="file" name="file" class="custom-file-input" id="others_files" accept="image/*"%( multiple%)>
+        <label class="custom-file-label" data-button="My browse text" for="customFile"><span>Choose file</span></label>
+      </div>
+      <button class="btn btn-primary ml-1 col-2" type="submit" class="btn mt-2">SEND</button>
+    </form>
+  </div>
+  <div class="col-6">
+    <h1>Delete other image</h1>
+    <form class="form-inline" method="post" action="%action;" enctype="multipart/form-data">
+      <input type="hidden" name="m" value="DEL_IMAGE_OK">
+      <input type="hidden" name="digest" value="%digest;">
+      <input type="hidden" name="i" value="%index;">
+      <input type="hidden" name="keydir" id="keydir" value="on">
+      <div class="custom-file col">
+        <input type="file" name="file" class="custom-file-input" id="delete_file" accept="image/*">
+        <label class="custom-file-label" for="delete_file">Delete file</label>
+      </div>
+      <button type="submit" class="btn btn-danger ml-1 col-3">DELETE IMAGE</button>
+    </form>
+  </div>
+</div>
+%end;
 %base_trailer;
 %include.copyr;
 </div>
