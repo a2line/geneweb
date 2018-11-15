@@ -907,10 +907,22 @@ let rename_image_file conf base op sp =
       let s = default_image_name_of_key sp.first_name sp.surname sp.occ in
       let f = List.fold_right
         Filename.concat [Util.base_path conf.bname; "documents"; "portraits"] s in
-      let new_f =
-        if Filename.check_suffix old_f ".gif" then f ^ ".gif" else f ^ ".jpg"
+      let ext = Filename.extension old_f in
+      (* only gif, png and jpf files are allowed there !! *)
+      let new_f = f ^ ext in
+      (try Sys.rename old_f new_f with Sys_error _ -> ());
+      (* old_f is of the form ppp.oc.nnn/filename.ext *)
+      let old_f = Filename.basename old_f in
+      let old_key = Filename.chop_suffix old_f ext in
+      let old_d = List.fold_right
+        Filename.concat [Util.base_path conf.bname; "documents"; "others"] old_key
       in
-      (try Sys.rename old_f new_f with Sys_error _ -> ())
+      let new_d = List.fold_right
+        Filename.concat [Util.base_path conf.bname; "documents"; "others"] s
+      in
+      let _ = Printf.eprintf "Renaming folders: %s -> %s\n" old_d new_d in
+      let _ = flush stderr in
+      (try Sys.rename old_d new_d with Sys_error _ -> ())
   | _ -> ()
 
 let rparents_of rparents =

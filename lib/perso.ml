@@ -4314,6 +4314,7 @@ and eval_str_person_field conf base env (p, p_auth as ep) =
         Vbool _ -> ""
       | _ -> string_of_int (Adef.int_of_iper (get_key_index p))
       end
+  | "keydir" -> default_image_name base p
   | "mark_descendants" ->
       begin match get_env "desc_mark" env with
         Vdmark r ->

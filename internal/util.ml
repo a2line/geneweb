@@ -2333,10 +2333,10 @@ let personal_image_file_name conf str =
 
 let source_image_file_name conf str =
   let fname1 =
-    List.fold_right Filename.concat [base_path conf.bname; "src"; "images"] str
+    List.fold_right Filename.concat [base_path conf.bname; "documents"] str
   in
   let fname2 =
-    List.fold_right Filename.concat [Secure.base_dir (); "src"; "images"] str
+    List.fold_right Filename.concat [Secure.base_dir (); "documents"] str
   in
   if Sys.file_exists fname1 then fname1 else fname2
 
@@ -2650,7 +2650,7 @@ let auto_image_file conf base p =
 let keydir conf base p =
   let s = default_image_name base p in
   let f = List.fold_right
-    Filename.concat [base_path conf.bname; "documents"; "portraits"] s in
+    Filename.concat [base_path conf.bname; "documents"; "others"] s in
   try if Sys.is_directory f then Some f
   else None
   with Sys_error _ -> None
@@ -2658,7 +2658,9 @@ let keydir conf base p =
 let get_keydir conf base p =
   match keydir conf base p with
     Some f ->
-      List.map (fun f -> Gwdb.insert_string base f) (Array.to_list (Sys.readdir f))
+      List.fold_right (fun f l ->
+        if f.[0] <> '.' then (Gwdb.insert_string base f :: l) else l)
+          (Array.to_list (Sys.readdir f)) []
   | None -> []
 
 (* ********************************************************************** *)
