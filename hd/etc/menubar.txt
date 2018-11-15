@@ -38,6 +38,7 @@
           <li class="nav-item dropdown">
             <a id="load_once_p_mod" class="nav-link dropdown-toggle dropdown-toggle-split" data-toggle="dropdown"
               href="#" role="button" aria-haspopup="true" aria-expanded="false" title="[*module]1"%( data-offset="10,20"%)>
+              <i class="fas fa-address-card fa-fw" aria-hidden="true"></i>
               <span class="sr-only">[*module]1</span>%nn;
             </a>
             <div class="dropdown-menu">
@@ -175,7 +176,7 @@ fr: Sélectionnez les modules en cliquant sur le bouton correspondant (max 15).
                 <div class="dropdown-divider"></div>
                 <a class="dropdown-item" href="%prefix;m=CHG_EVT_IND_ORD;i=%index;" title="[*changed order of person's events]"><span class="fa fa-sort fa-fw mr-2"></span>[*invert::event/events]1</a>
                 %if;(bvar.can_send_image != "no" and image = "" and first_name != "?" and surname != "?")
-                  <a class="dropdown-item" href="%prefix;m=SND_IMAGE;i=%index;" %laI;><span class="far fa-file-image fa-fw mr-2"></span>%if;has_image;[*modify picture]%else;[*add picture]%end;</a>
+                  <a class="dropdown-item" href="%prefix;m=SND_IMAGE;i=%index;" %laI;><span class="far fa-image fa-fw mr-2"></span>[*add]/[delete] [image/images]0</a>
                 %end;
                 <div class="dropdown-divider"></div>
                 <a class="dropdown-item" href="%prefix;m=MRG;i=%index;" title="[*merge] %first_name;.%occ; %surname; [with]…"><span class="fa fa-compress fa-fw text-danger mr-2"></span>[*merge::person/persons]1</a>
@@ -340,6 +341,14 @@ fr: Sélectionnez les modules en cliquant sur le bouton correspondant (max 15).
               %end;
             </div>
           </li>
+          %if;(nb_keydir_img>0)
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="modal" data-target="#carousel_modal" title=""[*photos & documents]">
+                <span class="fa fa-images fa-fw" aria-hidden="true"></span>%nn;
+                <span class="sr-only">[*add]/[remove] [image/images]1</span>%nn;
+              </a>
+            </li>              
+          %end;
         </ul>
       </div>
     </nav>
@@ -347,3 +356,85 @@ fr: Sélectionnez les modules en cliquant sur le bouton correspondant (max 15).
   </div>
   %if;(evar.m="C" and not cancel_links)%import;cousins_tools;%end;
 %end;
+%( Carousel of keydir images in a modal %)
+<div class="modal fade" id="carousel_modal" tabindex="-1" role="dialog" aria-labelledby="docscarouselmodal" aria-hidden="true">
+  <div class="modal-dialog%( modal-lg%)" role="document">
+    <div class="modal-content">%(<div><div><div>%)
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="far fa-folder-open fa-fw mr-1" aria-hidden="true"></i>%first_name; %surname;%if;(occ!="0") (%occ;)%end; |
+          <i class="far fa-image fa-fw mr-1" aria-hidden="true"></i>%nb_keydir_img;%( %if;(nb_keydir_img>1)[image/images]1%elseif;(nb_keydir_img=1)[image/images]0%end;%)
+        </h5>
+        <button class="btn btn-link btn-sm ml-1" role="button" data-target="#carousel" data-slide="prev">
+          <i class="fa fa-chevron-left" aria-hidden="true"></i>
+          <span class="sr-only">Previous</span>
+        </button>
+        <button class="btn btn-link btn-sm ml-1" role="button" data-target="#carousel" data-slide="next">
+          <i class="fa fa-chevron-right" aria-hidden="true"></i>
+          <span class="sr-only">Next</span>
+        </button>
+        <button role="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+      %if;(nb_keydir_img>0)
+        <div class="modal-body">
+          %(navigation buttons | TODO: manage active, better looking too! with <li> active></li>%)
+          <!--<div class="btn-group btn-group-sm d-flex justify-content-center " role="group" aria-label="Slider button group">
+            <button class="btn btn-light mr-2" role="button" data-target="#carousel" data-slide="prev">
+              <i class="fa fa-chevron-left" aria-hidden="true"></i>
+              <span class="sr-only">Previous</span>
+            </button>
+            %let;keydirmax;%if;(nb_keydir_img>9)9%else;%nb_keydir_img;%end;%in;
+            %for;i;0;keydirmax;
+               <button class="btn btn-light%if;(keydirmax>5 and (i=3 or i=6)) ml-2%end;" role="button" data-target="#carousel" data-slide-to="%i;"%( title="%expr(i+1)"%)>
+                <i class="fas fa-circle" aria-hidden="true"></i>
+                <span class="sr-only">%expr(i+1)</span>
+              </button>
+            %end;
+            %if;(nb_keydir_img>9)<button class="btn btn-light mx-1" role="button" href="#TODO">+10</button>%end;
+            <button class="btn btn-light ml-2" role="button" data-target="#carousel" data-slide="next">
+              <i class="fa fa-chevron-right" aria-hidden="true"></i>
+              <span class="sr-only">Next</span>
+            </button>
+          </div> -->
+          %(the carousel itself inside the body of the modal%)
+          <div id="carousel" class="carousel slide" data-ride="carousel" data-interval="3000">
+            <ol class="carousel-indicators">
+              %for;i;0;keydirmax;
+                <li %if;(i=0)class="active"%end; data-target="#carousel" data-slide-to="%i;"></li>
+              %end;
+            </ol>
+            <div class="carousel-inner" %(style="max-height:600px;%)">
+              %reset_count;
+              %if;has_keydir;
+                %foreach;img_in_keydir;
+                  %incr_count;
+                  <div class="carousel-item%if;is_first; active%end;">
+                    <a class="h-75" href="?m=IM&s=others/%keydict;%keydir_img;" target="_blank"><img class="d-block w-100" src="?m=IM&s=others/%keydir;/%keydir_img;" alt="%count; slide"></a>
+                    <div class="carousel-caption d-none d-md-block%( text-dark%)">
+                      <h5>%keydir_img;</h5>
+                      <p>%count;/%nb_keydir_img;</p>
+                    </div>
+                  </div>
+                %end;
+              %end;
+            </div>
+            <a class="carousel-control-prev" href="#carousel" role="button" data-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="sr-only">Previous</span>
+            </a>
+            <a class="carousel-control-next" href="#carousel" role="button" data-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="sr-only">Next</span>
+            </a>
+          </div>
+        </div>
+      %end;
+      <div class="modal-footer">
+        <a role="button" href="?m=SND_IMAGE;i=%index;" class="btn btn-primary">[*add]/[delete] [image/images]1</a>
+        %(<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>%)
+      </div>
+    </div>
+  </div>
+</div>

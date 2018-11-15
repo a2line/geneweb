@@ -936,10 +936,15 @@ let print_sent conf base p =
   in
   Hutil.header conf title;
   Wserver.printf "<ul>\n";
-  Wserver.printf "<li>";
-  Wserver.printf "%s" (referenced_person_text conf base p);
-  Wserver.printf "</li>";
-  Wserver.printf "</ul>\n";
+  html_li conf;
+  Wserver.printf "\n%s" (referenced_person_text conf base p);
+  Wserver.printf "\n<li>";
+  Wserver.printf "\n<a href=\"%sm=SND_IMAGE&i=%d\">" (commd conf)
+          (Adef.int_of_iper (get_key_index p));
+  Wserver.printf "%s/%s %s" (capitale (transl conf "add"))
+    (transl conf "delete")(transl_nth conf "image/images" 0);
+  Wserver.printf "</a></li><br>";
+  Wserver.printf "\n</ul>\n";
   Hutil.trailer conf
 
 let write_file fname content =
@@ -1128,7 +1133,7 @@ let print_send_ok conf base =
     else Update.error_digest conf
   with Update.ModErr -> ()
 
-(* Delete image form validated *)
+(* Delete image form validated, same page as "image received" except title*)
 
 let print_deleted conf base p =
   let title _ =
@@ -1138,8 +1143,13 @@ let print_deleted conf base p =
   Wserver.printf "<ul>\n";
   html_li conf;
   Wserver.printf "\n%s" (referenced_person_text conf base p);
-  Wserver.printf "\n";
-  Wserver.printf "</ul>\n";
+  Wserver.printf "\n<li>";
+  Wserver.printf "\n<a href=\"%sm=SND_IMAGE&i=%d\">" (commd conf)
+          (Adef.int_of_iper (get_key_index p));
+  Wserver.printf "%s/%s %s" (capitale (transl conf "add"))
+    (transl conf "delete")(transl_nth conf "image/images" 0);
+  Wserver.printf "</a></li><br>";
+  Wserver.printf "\n</ul>\n";
   Hutil.trailer conf
 
 let effective_delete_ok conf base p =

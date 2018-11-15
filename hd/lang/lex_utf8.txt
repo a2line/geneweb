@@ -1,3 +1,12 @@
+    select input
+de: wählen
+en: choose
+fr: sélect.
+
+    previous image
+en: previous portait will be sent to <code>/old</code> subfolder.
+fr: l’ancien portrait sera envoyé dans le sous-répertoire <code>/old</code>.
+
     reset to
 co: risturà
 en: reset to
@@ -1843,12 +1852,12 @@ co: aghjunghje una fiura
 cs: přidat :a: obrázek
 da: tilføj billede
 de: hinzufügen Bild
-en: add picture
+en: add portrait/remove portrait
 eo: aldoni :a: bildo:a:+n
 es: agregar imagen
 et: lisa pilt
 fi: lisää kuva
-fr: ajouter portrait
+fr: ajouter portrait/supprimer portrait
 he:  תמונה  הוספה
 is: bæta við mynd
 it: aggiungere immagine
