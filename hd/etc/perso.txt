@@ -22,7 +22,6 @@
 </head>
 <body%body_prop;>
 <div class="container">
-%let;perso_keydir;%first_name_key;.%occ;.%surname_key;%in;
 <a type="button" class="btn" data-toggle="modal" data-target="#carousel_modal">Médiathèque</a>
 <div class="modal fade" id="carousel_modal" tabindex="-1" role="dialog" aria-labelledby="docscarouselmodal" aria-hidden="true">
   <div class="modal-dialog%( modal-lg%)" role="document">
@@ -69,7 +68,7 @@
               %foreach;img_in_keydir;
                 %incr_count;
                 <div class="carousel-item%if;is_first; active%end;">
-                  <a class="h-75" href="?m=IM&s=%perso_keydir;/%keydir_img;" target="_blank"><img class="d-block w-100" src="?m=IM&s=%perso_keydir;/%keydir_img;" alt="%count; slide"></a>
+                  <a class="h-75" href="?m=IM&s=%keydir;/%keydir_img;" target="_blank"><img class="d-block w-100" src="?m=IM&s=%keydir;/%keydir_img;" alt="%count; slide"></a>
                   <div class="carousel-caption d-none d-md-block%( text-dark%)">
                     <h5>%keydir_img;</h5>
                     <p>%count;/%nb_keydir_img;</p>
