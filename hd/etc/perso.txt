@@ -21,6 +21,81 @@
   %base_header;
 </head>
 <body%body_prop;>
+<div class="container">
+%let;perso_keydir;%first_name_key;.%occ;.%surname_key;%in;
+<a type="button" class="btn" data-toggle="modal" data-target="#carousel_modal">Médiathèque</a>
+<div class="modal fade" id="carousel_modal" tabindex="-1" role="dialog" aria-labelledby="docscarouselmodal" aria-hidden="true">
+  <div class="modal-dialog%( modal-lg%)" role="document">
+    <div class="modal-content">%(<div><div><div>%)
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="far fa-folder-open fa-fw ml-1 mr-2" aria-hidden="true"></i>%first_name; %surname;%if;(occ!="0") (%occ;)%end;<br>
+          <i class="far fa-file fa-fw ml-1 mr-2" aria-hidden="true"></i>%nb_keydir_img; documents
+        </h5>
+        <button role="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        %(navigation buttons | TODO: manage active, better looking too! with <li active></li> %)
+        <div class="btn-group btn-group-sm d-flex justify-content-center" role="group" aria-label="Slider button group">
+          <button class="btn btn-light mr-2" role="button" data-target="#carousel" data-slide="prev">
+            <i class="fa fa-chevron-left" aria-hidden="true"></i>
+            <span class="sr-only">Previous</span>
+          </button>
+          %let;keydirmax;%if;(nb_keydir_img>9)9%else;%nb_keydir_img;%end;%in;
+          %for;i;0;keydirmax;
+             <button class="btn btn-light%if;(keydirmax>5 and (i=3 or i=6)) ml-2%end;" role="button" data-target="#carousel" data-slide-to="%i;"%( title="%expr(i+1)"%)>
+              <i class="fas fa-circle" aria-hidden="true"></i>
+              <span class="sr-only">%expr(i+1)</span>
+            </button>
+          %end;
+          %if;(nb_keydir_img>9)<button class="btn btn-light mx-1" role="button" href="#TODO">+10</button>%end;
+          <button class="btn btn-light ml-2" role="button" data-target="#carousel" data-slide="next">
+            <i class="fa fa-chevron-right" aria-hidden="true"></i>
+            <span class="sr-only">Next</span>
+          </button>
+        </div>
+        %(the carousel itself inside the body of the modal%)
+        <div id="carousel" class="carousel slide mt-3" data-ride="carousel" data-interval="3000">
+          <ol class="carousel-indicators">
+            %for;i;0;keydirmax;
+              <li %if;(i=0)class="active"%end; data-target="#carousel" data-slide-to="%i;"></li>
+            %end;
+          </ol>
+          <div class="carousel-inner" %(style="max-height:600px;%)">
+            %reset_count;
+            %if;has_keydir;
+              %foreach;img_in_keydir;
+                %incr_count;
+                <div class="carousel-item%if;is_first; active%end;">
+                  <a class="h-75" href="?m=IM&s=%perso_keydir;/%keydir_img;" target="_blank"><img class="d-block w-100" src="?m=IM&s=%perso_keydir;/%keydir_img;" alt="%count; slide"></a>
+                  <div class="carousel-caption d-none d-md-block%( text-dark%)">
+                    <h5>%keydir_img;</h5>
+                    <p>%count;/%nb_keydir_img;</p>
+                  </div>
+                </div>
+              %end;
+            %end;
+          </div>
+          <a class="carousel-control-prev" href="#carousel" role="button" data-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="sr-only">Previous</span>
+          </a>
+          <a class="carousel-control-next" href="#carousel" role="button" data-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="sr-only">Next</span>
+          </a>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a role="button" href="?m=SND_IMAGE;i=%index;" class="btn btn-primary">Add/remove image/document</a>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 %message_to_wizard;
 <a href="#content" class="sr-only sr-only-focusable">Skip navigation menu</a>
 <div class="container%if;(evar.wide="on")-fluid%end;">
