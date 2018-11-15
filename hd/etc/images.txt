@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="%lang;">
+<head>
+  <!-- $Id: images.txt, v7.00-exp 15/11/2018 09:21:253 hg $ -->
+  <!-- Copyright (c) 1998-2017 INRIA -->
+  <title>%nn;
+      [*manage::image/images]1 # %index;
+  </title>
+  <meta name="robots" content="none">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="shortcut icon" href="%image_prefix;/favicon_gwd.png">
+  %include.css;
+  %base_header;
+</head>
+<body%body_prop; id="person">
+<div class="container">
+%message_to_wizard;
+%include_perso_header;
+
+Dummy images.txt template for i=%index;%sp;
+(%first_name; %surname;%if;(occ!="") (%occ;)%end;) (digest = %digest;)<br>
+
+  <h1>
+    Send images
+  </h1>
+  <form method="post" action="%action;" enctype="multipart/form-data">
+  <input type="hidden" name="m" value="SND_IMAGE_OK">
+  <input type="hidden" name="digest" value="%digest;">
+  <input type="hidden" name="i" value="%index;">
+  <input type="file" name="file" class="form-control" size="50" maxlength="250" accept="image/*">
+  </p>
+  <button type="submit" class="btn btn-secondary btn-lg mt-2"> Ok </button>
+  <input type="checkbox" name="keydir" id="keydir" class="form-check-input btn-lg ml-2 mt-4" value="on">
+  <span class="text-nowrap ml-4" >[*send to keydir]</span><br>
+  An image not sent to keydir becomes the "portrait" in the perso page.<br>
+  It replaces the previous one which is sent to "old" folder.
+  </form>
+<p>
+<hr>
+<p>
+
+  <h1>
+    Delete images
+  </h1>
+  <form method="post" action="%action;" enctype="multipart/form-data">
+  <input type="hidden" name="m" value="DEL_IMAGE_OK">
+  <input type="hidden" name="digest" value="%digest;">
+  <input type="hidden" name="i" value="%index;">
+  <input type="file" name="file" class="form-control" size="50" maxlength="250" accept="image/*">
+  </p>
+  <button type="submit" class="btn btn-secondary btn-lg mt-2"> Ok </button>
+  <input type="checkbox" name="keydir" id="keydir" class="form-check-input btn-lg ml-2 mt-4" value="on">
+  <span class="text-nowrap ml-4" >[*delete from keydir]</span>
+  </button>
+  </form>
+
+%base_trailer;
+%include.copyr;
+</div>
+%include.js;
+</body>
+</html>

@@ -1172,7 +1172,9 @@ let defaultHandler : handler =
 
   ; snd_image_ok = begin fun self conf base ->
       if conf.wizard && conf.can_send_image then SendImage.print_send_ok conf base
-      else self.incorrect_request self conf base
+      else
+        let _ = Printf.eprintf "Incorrect snd_image_ok\n" in
+        self.incorrect_request self conf base
     end
 
   ; src = begin fun _self conf base ->
