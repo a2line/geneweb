@@ -5675,8 +5675,9 @@ let print_foreach conf base print_ast eval_expr =
     else
       let img_list = get_keydir conf base p in
       Mutil.list_iter_first
-        (fun first a ->
+        (fun first (a, n) ->
           let env = ("keydir_img", Vstring (sou base a)) :: env in
+          let env = ("keydir_img_note", Vstring n) :: env in
           let env = ("first", Vbool first) :: env in
           List.iter (print_ast env ep) al)
         img_list

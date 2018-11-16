@@ -210,7 +210,7 @@ val source_image_file_name : config -> string -> string
 
 val has_keydir : config -> base -> person -> bool
 val keydir : config -> base -> person -> string option
-val get_keydir : config -> base -> person -> istr list
+val get_keydir : config -> base -> person -> (istr * string) list
 
 val image_size : string -> (int * int) option
 val limited_image_size :

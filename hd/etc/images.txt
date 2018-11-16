@@ -15,6 +15,7 @@
 <div class="container">
 %message_to_wizard;
 %include_perso_header;
+
 %if;(evar.m="SND_IMAGE")
   <div class="row">
     <div class="col-6 border border-bottom-0 border-top-0 border-left-0">
@@ -29,11 +30,12 @@
         </div>
         <button class="btn btn-primary ml-1 col-2" type="submit" class="btn mt-2 text-capitalize">[*send]</button>
       </form>
-      <span>[*previous image]</span> %(TODO: print only if old img already exists%)
+      <span>[*previous portrait]</span><br>
+      <span>[*if previous portrait exists]<span>
+       %(TODO: print only if old img already exists%)
     </div>
     <div class="col-6">
-      %(TODO: has_image ne fonctionne pas dans ce contexte %)
-      %if;(1=1 or has_image)
+      %if;(has_image)
         <h1><i class="fas fa-portrait fa-fw text-danger mr-1"></i>[*add picture]1</h1>
         <a role="button" href="%prefix;m=DEL_IMAGE&i=%index;" class="btn btn-danger">[*add picture]1</a>
       %end;
@@ -56,23 +58,28 @@
       </form>
     </div>
     <div class="col-6">
-      %(TODO: nb_keydir_img ne fonctionne pas dans ce contexte %)
-      %if;(1=1 or nb_keydir_img>0)
-        <h1><i class="fas fa-image fa-fw text-danger mr-1"></i>[*delete] [image/images]0</h1>
-        <form class="form-row" method="post" action="%action;" enctype="multipart/form-data">
-          <input type="hidden" name="m" value="DEL_IMAGE_OK">
-          <input type="hidden" name="digest" value="%digest;">
-          <input type="hidden" name="i" value="%index;">
-          <input type="hidden" name="keydir" id="keydir" value="on">
-          <div class="custom-file col">
-            <input type="file" name="file" class="custom-file-input" id="delete_file" accept="image/*"%( multiple%) lang="%lang;">
-            <label class="custom-file-label text-truncate" for="delete_file">[*select] [image/images]0</label>
-          </div>
-          <button type="submit" class="btn btn-danger ml-1 col-3">[*delete] [image/images]0</button>
-        </form>
+      %if;(has_keydir and nb_keydir_img>0)
+    <h1><i class="fas fa-image fa-fw text-primary mr-1"></i>[*available images]</h1>
+      <form class="form" method="post" action="%action;" enctype="multipart/form-data">
+        <input type="hidden" name="m" value="DEL_IMAGE_OK">
+        <input type="hidden" name="digest" value="%digest;">
+        <input type="hidden" name="i" value="%index;">
+        <input type="hidden" name="keydir" id="keydir" value="on">
+        %foreach;img_in_keydir;
+            <input type="radio" name="file_name" value="%keydir_img;">&nbsp;%keydir_img;%sp;
+            ( <i title="%keydir_img_note;" class="fas fa-image fa-fw text-primary mr-1"></i>)<br>
+            <input type="hidden" name="file" value="%keydir_img;">
+        %end;
+        <br>
+        <button type="submit" class="btn btn-danger ml-1 col-4">[*delete] [image/images]0</button>
+      </form>
+      <span>[*previous image %s:::/keydir] (keydir=%keydir;)</span><br>
+      <span>[*if previous image exists %s:::/keydir]<span>
+      %(TODO: print only if old img already exists%)
       %end;
     </div>
   </div>
+    <p>
 %elseif;(evar.m="DEL_IMAGE")
   <div class="col-6">
     <h1><i class="fas fa-portrait fa-fw text-danger mr-1"></i>[*add picture]1</h1>
@@ -84,9 +91,9 @@
 </div>
 %include.js;
 <script>
-$('.custom-file-input').on('change', function() { 
-   let fileName = $(this).val().split('\\').pop(); 
-   $(this).next('.custom-file-label').addClass("selected").html(fileName); 
+$('.custom-file-input').on('change', function() {
+   let fileName = $(this).val().split('\\').pop();
+   $(this).next('.custom-file-label').addClass("selected").html(fileName);
 });
 </script>
 %( Possible heavier futur script to manage multiple files inputs

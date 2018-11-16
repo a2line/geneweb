@@ -3,9 +3,25 @@ de: wählen
 en: choose
 fr: sélect.
 
-    previous image
+    previous portrait
 en: previous portait will be sent to <code>/old</code> subfolder.
 fr: l’ancien portrait sera envoyé dans le sous-répertoire <code>/old</code>.
+
+    previous image %s
+en: previous image will be sent to <code>/old%s</code> subfolder.
+fr: l’ancienne image sera envoyée dans le sous-répertoire <code>/old%s</code>.
+
+    if previous portrait exists
+en: if a previous portait already exists in <code>/old</code>, it will be destroyed.
+fr: si un ancien portrait existe déjà dans <code>/old</code>, il sera détruit.
+
+    if previous image exists %s
+en: if a previous image already exists in <code>/old%s</code>, it will be destroyed.
+fr: si une ancienne image existe déjà dans <code>/old%s</code>, elle sera détruite.
+
+    available images
+en: available images
+fr: images disponibles
 
     reset to
 co: risturà
@@ -986,33 +1002,33 @@ sv: januari/februari/mars/april/maj/juni/juli/augusti/september/oktober/november
 zh: 1月/2月/3月/4月/5月/6月/7月/8月/9月/10月/11月/12月
 
     (thousand separator)
-af:  
+af:
 ar: .
-bg:  
+bg:
 br: .
 ca: .
-co:  
-cs:  
+co:
+cs:
 da: .
 de: .
 en: ,
 eo: .
 es: .
-et:  
+et:
 fi: .
-fr:  
+fr:
 he: ,
 is: .
 it: .
 lv: '
 nl: .
 no: .
-oc:  
+oc:
 pl: .
 pt: .
 ro: .
 ru: '
-sk:  
+sk:
 sl: .
 sv: .
 zh: .
@@ -2462,7 +2478,7 @@ da: og
 de: und
 en: and
 eo: kaj
-es: y/e 
+es: y/e
 et: ja
 fi: ja
 fr: et
@@ -3099,7 +3115,7 @@ sl: začetek
 sv: börjar
 
     benediction
-co: benedizzione	
+co: benedizzione
 de: Segnung
 en: Blessing
 es: bendición
@@ -5086,7 +5102,7 @@ oc: afichar la data de maridatge
 ru: показать дату брака
 
     display notes/sources inline
-co: include e note/fonte à u cuntenutu 
+co: include e note/fonte à u cuntenutu
 de: einschließen der Notizen/Quellen und Inhalt
 en: Add notes & sources
 es: incluir las notas/fuentes en el contenido
@@ -7062,7 +7078,7 @@ et:
 fi:
 fr: en
 he:  ב-
-is:  
+is:
 it: nel
 lv: gads:
 nl: in
@@ -10252,7 +10268,7 @@ et: :i:
 fi: :e:
 fr: le
 he:   ב-
-is:  
+is:
 it: il
 lv: datums:
 nl: op
@@ -12245,7 +12261,7 @@ sl: sin/hčerka/otrok
 sv: son/dotter/barn
 
     sons/daughters/children
-co: figlioli/figliole/zitelli	
+co: figlioli/figliole/zitelli
 en: sons/daughters/children
 fr: fils/filles/enfants
 
@@ -15344,7 +15360,7 @@ en: permute the events of family %s
 fr: permuter les événements de la famille %s
 
     full width/columns
-co: affissu larghezza sana/affissu nant'à duie culonne 
+co: affissu larghezza sana/affissu nant'à duie culonne
 en: full width display/columns display
 fr: affichage pleine largeur/affichage sur deux colonnes
 

@@ -2658,8 +2658,17 @@ let keydir conf base p =
 let get_keydir conf base p =
   match keydir conf base p with
     Some f ->
-      List.fold_right (fun f l ->
-        if f.[0] <> '.' then (Gwdb.insert_string base f :: l) else l)
+      List.fold_right (fun f1 l ->
+        if f1.[0] <> '.' &&  Filename.extension f1 <> ".txt" then
+          let n =
+            let ext = Filename.extension f1 in
+            let fname = Filename.chop_suffix f1 ext in
+            let tname = fname ^ ".txt" in
+            let _ = Printf.eprintf "Tname: %s\n" tname in
+            let _ = flush stderr in
+            if Sys.file_exists (Filename.concat f tname) then tname else "none"
+          in
+          ((Gwdb.insert_string base f1, n) :: l) else l)
           (Array.to_list (Sys.readdir f)) []
   | None -> []
 

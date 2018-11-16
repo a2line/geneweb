@@ -179,6 +179,13 @@ and eval_simple_var conf base env p =
   | ["first_name_alias"] -> eval_string_env "first_name_alias" env
   | ["has_aliases"] -> bool_val (p.aliases <> [])
   | ["has_birth_date"] -> bool_val (Adef.od_of_cdate p.birth <> None)
+  | ["has_image"] -> bool_val (Util.has_image conf base (poi base p.key_index))
+  | ["has_keydir"] ->
+        let p = poi base p.key_index in
+        bool_val (Util.has_keydir conf base p)
+  | ["keydir"] ->
+        let p = poi base p.key_index in
+        str_val (Util.default_image_name base p)
   | ["has_pevent_birth"] ->
       let rec loop pevents =
         match pevents with
@@ -263,6 +270,18 @@ and eval_simple_var conf base env p =
         Vbool x -> bool_val x
       | _ -> raise Not_found
       end
+  | ["keydir_img"] ->
+      begin match get_env "keydir_img" env with
+        Vstring s -> str_val s
+      | _ -> raise Not_found
+      end
+  | ["keydir_img_note"] ->
+      begin match get_env "keydir_img_note" env with
+        Vstring s -> str_val s
+      | _ -> raise Not_found
+      end
+  | ["nb_keydir_img"] ->
+      str_val (string_of_int (List.length (get_keydir conf base (poi base p.key_index))))
   | ["nb_pevents"] -> str_val (string_of_int (List.length p.pevents))
   | ["not_dead"] -> bool_val (p.death = NotDead)
   | ["notes"] -> str_val (quote_escaped p.notes)
@@ -746,12 +765,13 @@ and eval_string_env var env =
 
 (* print *)
 
-let print_foreach print_ast _eval_expr =
-  let rec print_foreach env p _loc s sl _ al =
+let print_foreach conf base print_ast _eval_expr =
+  let rec print_foreach conf base env p _loc s sl _ al =
     match s :: sl with
       ["alias"] -> print_foreach_string env p al p.aliases s
     | ["first_name_alias"] ->
         print_foreach_string env p al p.first_names_aliases s
+    | ["img_in_keydir"] -> print_foreach_img_in_keydir conf base env al p
     | ["qualifier"] -> print_foreach_string env p al p.qualifiers s
     | ["surname_alias"] -> print_foreach_string env p al p.surnames_aliases s
     | ["relation"] -> print_foreach_relation env p al p.rparents
@@ -759,6 +779,21 @@ let print_foreach print_ast _eval_expr =
     | ["pevent"] -> print_foreach_pevent env p al p.pevents
     | ["witness"] -> print_foreach_witness env p al p.pevents
     | _ -> raise Not_found
+
+  and print_foreach_img_in_keydir conf base env al p =
+    let _ =
+      let p1 = poi base p.key_index in
+      let img_list = get_keydir conf base p1 in
+      Mutil.list_iter_first
+        (fun first (a, n) ->
+          let env = ("keydir_img", Vstring (sou base a)) :: env in
+          let env = ("keydir_img_note", Vstring n) :: env in
+          let env = ("first", Vbool first) :: env in
+          List.iter (print_ast env p) al)
+        img_list
+      in
+      ()
+
   and print_foreach_string env p al list lab =
     let _ =
       List.fold_left
@@ -821,7 +856,7 @@ let print_foreach print_ast _eval_expr =
         end
     | _ -> ()
   in
-  print_foreach
+  print_foreach conf base
 
 (* ******** *)
 
@@ -887,7 +922,7 @@ let print_send_image conf base sp digest =
          Templ.eval_transl = (fun _ -> Templ.eval_transl conf);
          Templ.eval_predefined_apply = (fun _ -> raise Not_found);
          Templ.get_vother = get_vother; Templ.set_vother = set_vother;
-         Templ.print_foreach = print_foreach}
+         Templ.print_foreach = print_foreach conf base}
         env sp
 
 let print conf base =
@@ -924,7 +959,7 @@ let print_del conf base =
          Templ.eval_transl = (fun _ -> Templ.eval_transl conf);
          Templ.eval_predefined_apply = (fun _ -> raise Not_found);
          Templ.get_vother = get_vother; Templ.set_vother = set_vother;
-         Templ.print_foreach = print_foreach}
+         Templ.print_foreach = print_foreach conf base}
         [] sp
   | _ -> Hutil.incorrect_request conf
 
