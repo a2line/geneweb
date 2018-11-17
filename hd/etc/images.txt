@@ -16,19 +16,21 @@
 %message_to_wizard;
 %include_perso_header;
 
-%if;(evar.m="SND_IMAGE")
+%if;(evar.m="IMAGE")
   <div class="row">
     <div class="col-6 border border-bottom-0 border-top-0 border-left-0">
       <h1><i class="fas fa-portrait fa-fw text-primary mr-1"></i>[*add picture]0</h1>
-      <form class="form-row" method="post" action="%action;" enctype="multipart/form-data">
-        <input type="hidden" name="m" value="SND_IMAGE_OK">
+      <form class="form-row" method="post" action="%action;"
+        enctype="multipart/form-data">
+        <input type="hidden" name="m" value="IMAGE_OK">
         <input type="hidden" name="digest" value="%digest;">
         <input type="hidden" name="i" value="%index;">
+        <input type="hidden" name="notes" value="%index;">
         <div class="custom-file col">
           <input type="file" name="file" class="custom-file-input" id="portrait_file" accept="image/*" lang="%lang;">
           <label class="custom-file-label text-truncate" for="portrait_file">[*select] [image/images]0</label>
         </div>
-        <button class="btn btn-primary ml-1 col-2" type="submit" %if;(evar.m!="SND_IMAGE")disabled%end;
+        <button class="btn btn-primary ml-1 col-2" type="submit" %if;(evar.m!="IMAGE")disabled%end;
           class="btn mt-2 text-capitalize">[*send]</button>
       </form>
       <span>[*previous portrait]</span><br>
@@ -46,8 +48,9 @@
   <div class="row mt-3">
     <div class="col-6 border border-bottom-0 border-top-0 border-left-0">
       <h1><i class="fas fa-image fa-fw text-primary mr-1"></i>[*add] [image/images]0</h1>
-      <form class="form-row" method="post" action="%action;" enctype="multipart/form-data">
-        <input type="hidden" name="m" value="SND_IMAGE_OK">
+      <form class="form-row" method="post" action="%action;"
+        enctype="multipart/form-data">
+        <input type="hidden" name="m" value="IMAGE_OK">
         <input type="hidden" name="digest" value="%digest;">
         <input type="hidden" name="i" value="%index;">
         <input type="hidden" name="keydir" id="keydir" value="on">
@@ -56,7 +59,7 @@
           <input type="file" name="file" class="custom-file-input" id="others_file" accept="image/*"%( multiple%) lang="%lang;">
           <label class="custom-file-label text-truncate" for="others_file"><span>[*select] [image/images]0</span></label>
         </div>
-        <button class="btn btn-primary ml-1 col-2" type="submit" %if;(evar.m!="SND_IMAGE")disabled%end;
+        <button class="btn btn-primary ml-1 col-2" type="submit" %if;(evar.m!="IMAGE")disabled%end;
           class="btn mt-2">[*send]</button>
         <div class="row ml-2">
           <div class="d-inline col-9 py-1">%include.toolbar;</div>
@@ -67,9 +70,10 @@
       </form>
     </div>
     <div class="col-6">
-      %if;(has_keydir and nb_keydir_img>0)
+      %if;(keydir_img_nbr>0)
     <h1><i class="fas fa-image fa-fw text-primary mr-1"></i>[*available images]</h1>
-      <form class="form" method="post" action="%action;" enctype="multipart/form-data">
+      <form class="form" method="post" action="%action;"
+        enctype="multipart/form-data">
         <input type="hidden" name="m" value="DEL_IMAGE_OK">
         <input type="hidden" name="digest" value="%digest;">
         <input type="hidden" name="i" value="%index;">
@@ -81,7 +85,7 @@
                 checked%nn;
               %end;
             >&nbsp;%keydir_img;%sp;
-            ( <a href="%prefix;m=SND_IMAGE&get_notes=on&i=%index;&notes_name=%keydir_img;"
+            ( <a href="%prefix;m=IMAGE&get_notes=on&i=%index;&notes_name=%keydir_img;"
                   title="[*image comment]" %nn;
                   %if;(evar.get_notes="on" and keydir_img=evar.notes_name)
                     id="get_notes" %nn;

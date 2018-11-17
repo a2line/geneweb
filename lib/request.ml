@@ -121,6 +121,8 @@ let family_m conf base =
       | "HIST_CLEAN_OK" -> handler.hist_clean_ok
       | "HIST_DIFF" -> handler.hist_diff
       | "HIST_SEARCH" -> handler.hist_search
+      | "IMAGE" -> handler.image
+      | "IMAGE_OK" -> handler.image_ok
       | "IMH" -> handler.imh
       | "INV_FAM" -> handler.inv_fam
       | "INV_FAM_OK" -> handler.inv_fam_ok
@@ -166,9 +168,6 @@ let family_m conf base =
       | "RL" -> handler.rl
       | "RLM" -> handler.rlm
       | "S" -> handler.s
-      | "SND_IMAGE" -> handler.snd_image
-      | "SND_IMAGE_OK" -> handler.snd_image_ok
-      | "SND_IMAGE_NOTES_OK" -> handler.snd_image_notes_ok
       | "SRC" -> handler.src
       | "STAT" -> handler.stat
       | "CHANGE_WIZ_VIS" -> handler.change_wiz_vis
@@ -469,7 +468,7 @@ let this_request_updates_database conf =
         "KILL_ANC" | "MOD_FAM_OK" | "MOD_IND_OK" | "MOD_NOTES_OK" |
         "MOD_WIZNOTES_OK" | "MRG_DUP_IND_Y_N" | "MRG_DUP_FAM_Y_N" |
         "MRG_IND" | "MRG_MOD_FAM_OK" | "MRG_MOD_IND_OK" | "MOD_DATA_OK" |
-        "SND_IMAGE_OK" ->
+        "IMAGE_OK" ->
           true
       | "API_BASE_WARNINGS" | "API_IMAGE_UPDATE" | "API_REMOVE_IMAGE_EXT" |
         "API_REMOVE_IMAGE_EXT_ALL" | "API_DEL_PERSON_OK" |

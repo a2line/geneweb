@@ -327,6 +327,8 @@ and handler =
   ; hist_clean_ok : handler_base
   ; hist_diff : handler_base
   ; hist_search : handler_base
+  ; image : handler_base
+  ; image_ok : handler_base
   ; imh : handler_base
   ; inv_fam : handler_base
   ; inv_fam_ok : handler_base
@@ -372,9 +374,6 @@ and handler =
   ; rl : handler_base
   ; rlm : handler_base
   ; s : handler_base
-  ; snd_image : handler_base
-  ; snd_image_ok : handler_base
-  ; snd_image_notes_ok : handler_base
   ; src : handler_base
   ; stat : handler_base
   ; change_wiz_vis : handler_base
@@ -506,6 +505,8 @@ let dummyHandler =
   ; hist_clean_ok = dummy_base
   ; hist_diff = dummy_base
   ; hist_search = dummy_base
+  ; image = dummy_base
+  ; image_ok = dummy_base
   ; imh = dummy_base
   ; inv_fam = dummy_base
   ; inv_fam_ok = dummy_base
@@ -551,9 +552,6 @@ let dummyHandler =
   ; rl = dummy_base
   ; rlm = dummy_base
   ; s = dummy_base
-  ; snd_image = dummy_base
-  ; snd_image_ok = dummy_base
-  ; snd_image_notes_ok = dummy_base
   ; src = dummy_base
   ; stat = dummy_base
   ; change_wiz_vis = dummy_base
@@ -889,6 +887,17 @@ let defaultHandler : handler =
       History.print_search conf base
     end
 
+  ; image = begin fun self conf base ->
+      if conf.wizard && conf.can_send_image then SendImage.print conf base
+      else self.incorrect_request self conf base
+    end
+
+  ; image_ok = begin fun self conf base ->
+      if conf.wizard && conf.can_send_image then SendImage.print_send_ok conf base
+      else
+        self.incorrect_request self conf base
+    end
+
   ; imh = begin fun _self conf _base ->
       Image.print_html conf
     end
@@ -1165,23 +1174,6 @@ let defaultHandler : handler =
 
   ; s = begin fun self conf base ->
       SearchName.print conf base specify self.unknown
-    end
-
-  ; snd_image = begin fun self conf base ->
-      if conf.wizard && conf.can_send_image then SendImage.print conf base
-      else self.incorrect_request self conf base
-    end
-
-  ; snd_image_ok = begin fun self conf base ->
-      if conf.wizard && conf.can_send_image then SendImage.print_send_ok conf base
-      else
-        self.incorrect_request self conf base
-    end
-
-  ; snd_image_notes_ok = begin fun self conf base ->
-      if conf.wizard && conf.can_send_image then SendImage.print_send_notes_ok conf base
-      else
-        self.incorrect_request self conf base
     end
 
   ; src = begin fun _self conf base ->

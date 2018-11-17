@@ -127,7 +127,7 @@
             <a href="%prefix;m=HIST_DIFF;t=SUM;f=%history_file;" style="display:inline-block;width:125px" title="[*revision history]">∴ [*history]</a>
           %end;
           %if;(bvar.can_send_image != "no" and image = "" and first_name != "?" and surname != "?")
-          <a href="%prefix;m=SND_IMAGE;i=%index;" style="display:inline-block;width:125px" %laI; >🎴 [*send::image/images]0</a>%nn;
+          <a href="%prefix;m=IMAGE;i=%index;" style="display:inline-block;width:125px" %laI; >🎴 [*send::image/images]0</a>%nn;
             %if;(auto_image_file_name != "")<a href="%prefix;m=DEL_IMAGE;i=%index;" style="color:red;display:inline-block;width:125px"><small>[*delete::image/images]0</small></a>%end;
           %end;
           %if;has_possible_duplications;
@@ -1081,7 +1081,7 @@
 %end;
 %define;sosainfo()
   %if;not cancel_links;
-    %if;(sosa=1)[*Sosa] 1 
+    %if;(sosa=1)[*Sosa] 1
     %elseif;(has_sosa and sosa != 1)
       %let;l_sosa_ref;%apply;a_of_b%with;%and;%apply;link_name("sosa_ref")%end;%in;
       <a href="%prefix;m=A;t=D;image=%evar.image;;i=%sosa_ref.index;;i1=%index;;l=%max_desc_level;" title="%apply;a_of_b%with;[*ancestors]%and;%sosa_ref;%end; [up to] %self;">[*Sosa] %sosa;</a>
@@ -1335,7 +1335,7 @@
         %if;(wizard and not cancel_links and family_cnt != 1)
           %if;(family_cnt != 1)
             <span class="button">
-              <a href="%prefix;m=INV_FAM;i=%index;;f=%family.index;" 
+              <a href="%prefix;m=INV_FAM;i=%index;;f=%family.index;"
                title="[*invert::family/families]1" style="border:0px;font-size:17px">⇪</a>
             </span>
             %if;(family.father.index = prev_family.father.index
@@ -1345,7 +1345,7 @@
             %end;
           %end;
         %end;
-        %(<span class="button"><a id="chg_evt_fam" href="%prefix;m=CHG_EVT_FAM_ORD;i=%family.index;;ip=%index;" 
+        %(<span class="button"><a id="chg_evt_fam" href="%prefix;m=CHG_EVT_FAM_ORD;i=%family.index;;ip=%index;"
          style="border:0px;font-size:17px" title="[*invert::event/events]1 [family/families]0">⇳</a></span>%)
         %apply;content_family("self","spouse")
         %if;(evar.opt = "from" and wizard)<em>(%origin_file;)</em>%nl;%end;
@@ -1392,7 +1392,7 @@
 %include.copyr;
   </div>
 %end;
- </div> 
+ </div>
 </div>
 %include.js;
 </body>

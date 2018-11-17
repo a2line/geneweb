@@ -267,13 +267,23 @@ and eval_simple_var conf base env p =
         Vstring s -> str_val s
       | _ -> raise Not_found
       end
+  | ["keydir_img_nbr"] ->
+      str_val (string_of_int (List.length (get_keydir conf base (poi base p.key_index))))
   | ["keydir_img_notes"] ->
       begin match get_env "keydir_img_notes" env with
         Vstring s -> str_val s
       | _ -> str_val ""
       end
-  | ["nb_keydir_img"] ->
-      str_val (string_of_int (List.length (get_keydir conf base (poi base p.key_index))))
+  | ["keydir_img_src"] ->
+      begin match get_env "keydir_img_src" env with
+        Vstring s -> str_val s
+      | _ -> str_val ""
+      end
+  | ["keydir_img_title"] ->
+      begin match get_env "keydir_img_title" env with
+        Vstring s -> str_val s
+      | _ -> str_val ""
+      end
   | ["nb_pevents"] -> str_val (string_of_int (List.length p.pevents))
   | ["not_dead"] -> bool_val (p.death = NotDead)
   | ["notes"] -> str_val (quote_escaped p.notes)
@@ -777,9 +787,26 @@ let print_foreach conf base print_ast _eval_expr =
     let rec loop first cnt =
       function
        (a, n) :: l ->
+       (*
+          let t, s =
+            match (String.index_opt n '\n') with
+              Some i ->
+                let t = String.sub n 0 i in
+                let s1 = if (String.length n) > i then (String.sub n (i + 1)
+                  (String.length n - i - 1)) else ""
+                in
+                match (String.index_opt s1 '\n') with
+                  Some j -> t, String.sub s1 0 j
+                | None -> t, ""
+            | None -> "", ""
+          in
+        *)
+          let t, s = "Title", "Source" in
           let env =
             ("keydir_img", Vstring (sou base a)) ::
             ("keydir_img_notes", Vstring n) ::
+            ("keydir_img_title", Vstring t) ::
+            ("keydir_img_src", Vstring s) ::
             ("first", Vbool first) :: ("last", Vbool (l = [])) ::
             ("cnt", Vint cnt) :: env
           in
@@ -902,7 +929,10 @@ let error_too_big_image conf base p len max_len =
   raise Update.ModErr
 
 let raw_get conf key =
-  try List.assoc key conf.env with Not_found -> incorrect conf
+  try List.assoc key conf.env with Not_found ->
+    let _ = Printf.eprintf "Incorr req (raw_get %s)\n" key in
+    let _ = flush stderr in
+    incorrect conf
 
 (* Send image form *)
 
@@ -997,7 +1027,7 @@ let print_sent conf base p =
   html_li conf;
   Wserver.printf "\n%s" (referenced_person_text conf base p);
   Wserver.printf "\n<li>";
-  Wserver.printf "\n<a href=\"%sm=SND_IMAGE&i=%d\">" (commd conf)
+  Wserver.printf "\n<a href=\"%sm=IMAGE&i=%d\">" (commd conf)
           (Adef.int_of_iper (get_key_index p));
   Wserver.printf "%s/%s %s" (capitale (transl conf "add"))
     (transl conf "delete")(transl_nth conf "image/images" 0);
@@ -1006,6 +1036,8 @@ let print_sent conf base p =
   Hutil.trailer conf
 
 let write_file fname content =
+  let _ = Printf.eprintf "Content: %s\n" content in
+  let _ = flush stderr in
   let oc = Secure.open_out_bin fname in
   output_string oc content; flush oc; close_out oc
 
@@ -1231,7 +1263,7 @@ let print_deleted conf base p =
   html_li conf;
   Wserver.printf "\n%s" (referenced_person_text conf base p);
   Wserver.printf "\n<li>";
-  Wserver.printf "\n<a href=\"%sm=SND_IMAGE&i=%d\">" (commd conf)
+  Wserver.printf "\n<a href=\"%sm=IMAGE&i=%d\">" (commd conf)
           (Adef.int_of_iper (get_key_index p));
   Wserver.printf "%s/%s %s" (capitale (transl conf "add"))
     (transl conf "delete")(transl_nth conf "image/images" 0);

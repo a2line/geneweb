@@ -25,7 +25,7 @@
 %define;nav()
   <div class="container fixed-top" role="navigation">
     <nav class="navbar navbar-light bg-white justify-content-end" id="banner">
-      <nav class="nav nav-pills nav-fill">    
+      <nav class="nav nav-pills nav-fill">
         <a class="nav-item nav-link" href="#person" title="[*person/persons]0"><i class="fa fa-user fa-fw" aria-hidden="true"></i><span class="d-none d-lg-inline-flex ml-1">[*person/persons]0</span></a>
         <a class="nav-item nav-link" href="#birth" title="[*birth]"><i class="fa fa-birthday-cake fa-fw" aria-hidden="true"></i><span class="d-none d-md-inline-flex ml-1">[*birth]</span></a>
         <a class="nav-item nav-link" href="#baptism" title="[*baptism]"><i class="fa fa-dove fa-fw" aria-hidden="true"></i><span class="d-none d-md-inline-flex ml-1">[*baptism]</span></a>
@@ -752,7 +752,7 @@
   <h5 class="card-title"><b>[*other action][:] </b>
     <a href="%prefix;m=CHG_EVT_IND_ORD;i=%index;" title="[*changed order of person's events]">[*invert::event/events]1</a> |
     %if;(bvar.can_send_image != "no" and image = "" and first_name != "?" and surname != "?")
-      <a href="%prefix;m=SND_IMAGE;i=%index;">[*modify::]/[delete::]/[add picture]0</a>
+      <a href="%prefix;m=IMAGE;i=%index;">[*modify::]/[delete::]/[add picture]0</a>
     %end; | <a href="%prefix;m=MRG;i=%index;">[*merge::]</a> | <a href="%prefix;m=DEL_IND;i=%index;">[*delete::]</a></h5>
   <div class="form-group mt-4">
     <div class="row">
@@ -933,7 +933,7 @@
     </div>
     <button type="submit" class="btn btn-outline-success btn-sm col-2" title="[*validate/delete]0"><i class="fa fa-share fa-rotate-180 mx-1" aria-hidden="true"></i><span class="sr-only font-weight-bold">[*validate/delete]0</span></button>
   </div>
-  
+
 </div></div>
   <div class="card">
     %apply;card_header("birth","birth")
@@ -1088,7 +1088,7 @@
       %end;
     </div>
   </div>
-  
+
   <div class="card">
     %apply;card_header("events","event/events")
     <div class="card-body">

@@ -4315,8 +4315,20 @@ and eval_str_person_field conf base env (p, p_auth as ep) =
       | _ -> string_of_int (Adef.int_of_iper (get_key_index p))
       end
   | "keydir" -> default_image_name base p
+  | "keydir_img_nbr" ->
+    string_of_int (List.length (get_keydir conf base p))
   | "keydir_img_notes" ->
       begin match get_env "keydir_img_notes" env with
+        Vstring s -> s
+      | _ -> raise Not_found
+      end
+  | "keydir_img_src" ->
+      begin match get_env "keydir_img_src" env with
+        Vstring s -> s
+      | _ -> raise Not_found
+      end
+  | "keydir_img_title" ->
+      begin match get_env "keydir_img_title" env with
         Vstring s -> s
       | _ -> raise Not_found
       end
@@ -4376,8 +4388,6 @@ and eval_str_person_field conf base env (p, p_auth as ep) =
           "</ul>\n"
         else ""
       else ""
-  | "nb_keydir_img" ->
-    string_of_int (List.length (get_keydir conf base p))
   | "nb_children_total" ->
       let n =
         List.fold_left
@@ -5682,12 +5692,29 @@ let print_foreach conf base print_ast eval_expr =
       let rec loop first cnt =
         function
          (a, n) :: l ->
-            let env =
-              ("keydir_img", Vstring (sou base a)) ::
-              ("keydir_img_notes", Vstring n) ::
-              ("first", Vbool first) :: ("last", Vbool (l = [])) ::
-              ("cnt", Vint cnt) :: env
-            in
+       (*
+          let t, s =
+            match (String.index_opt n '\n') with
+              Some i ->
+                let t = String.sub n 0 i in
+                let s1 = if (String.length n) > i then (String.sub n (i + 1)
+                  (String.length n - i - 1)) else ""
+                in
+                match (String.index_opt s1 '\n') with
+                  Some j -> t, String.sub s1 0 j
+                | None -> t, ""
+            | None -> "", ""
+          in
+        *)
+          let t, s = "Title", "Source" in
+          let env =
+            ("keydir_img", Vstring (sou base a)) ::
+            ("keydir_img_notes", Vstring n) ::
+            ("keydir_img_title", Vstring t) ::
+            ("keydir_img_src", Vstring s) ::
+            ("first", Vbool first) :: ("last", Vbool (l = [])) ::
+            ("cnt", Vint cnt) :: env
+          in
             List.iter (print_ast env ep) al; loop false (cnt + 1) l
         | [] -> ()
       in
