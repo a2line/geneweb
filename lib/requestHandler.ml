@@ -321,6 +321,7 @@ and handler =
   ; forum_search : handler_base
   ; forum_val : handler_base
   ; forum_view : handler_base
+  ; get_image_notes : handler_base
   ; h : handler_base
   ; hist : handler_base
   ; hist_clean : handler_base
@@ -374,6 +375,7 @@ and handler =
   ; s : handler_base
   ; snd_image : handler_base
   ; snd_image_ok : handler_base
+  ; snd_image_notes_ok : handler_base
   ; src : handler_base
   ; stat : handler_base
   ; change_wiz_vis : handler_base
@@ -499,6 +501,7 @@ let dummyHandler =
   ; forum_search = dummy_base
   ; forum_val = dummy_base
   ; forum_view = dummy_base
+  ; get_image_notes = dummy_base
   ; h = dummy_base
   ; hist = dummy_base
   ; hist_clean = dummy_base
@@ -552,6 +555,7 @@ let dummyHandler =
   ; s = dummy_base
   ; snd_image = dummy_base
   ; snd_image_ok = dummy_base
+  ; snd_image_notes_ok = dummy_base
   ; src = dummy_base
   ; stat = dummy_base
   ; change_wiz_vis = dummy_base
@@ -858,6 +862,12 @@ let defaultHandler : handler =
   ; forum_val = if_enabled_forum Forum.print_valid
 
   ; forum_view = if_enabled_forum Forum.print
+
+  ; get_image_notes = begin fun self conf base ->
+      if conf.wizard && conf.can_send_image then SendImage.print_get_notes conf base
+      else
+        self.incorrect_request self conf base
+    end
 
   ; h = begin fun _self conf base ->
       match p_getenv conf.env "v" with
@@ -1173,7 +1183,12 @@ let defaultHandler : handler =
   ; snd_image_ok = begin fun self conf base ->
       if conf.wizard && conf.can_send_image then SendImage.print_send_ok conf base
       else
-        let _ = Printf.eprintf "Incorrect snd_image_ok\n" in
+        self.incorrect_request self conf base
+    end
+
+  ; snd_image_notes_ok = begin fun self conf base ->
+      if conf.wizard && conf.can_send_image then SendImage.print_send_notes_ok conf base
+      else
         self.incorrect_request self conf base
     end
 

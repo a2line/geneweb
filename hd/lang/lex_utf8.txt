@@ -23,6 +23,10 @@ fr: si une ancienne image existe déjà dans <code>/old%s</code>, elle sera dét
 en: available images
 fr: images disponibles
 
+    image comment
+en: comment for this image
+fr: commentaire associé à cette image
+
     reset to
 co: risturà
 en: reset to

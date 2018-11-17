@@ -2655,15 +2655,24 @@ let keydir conf base p =
   else None
   with Sys_error _ -> None
 
-let get_keydir_img_note conf base p fname =
+let get_keydir_img_notes conf base p fname =
   let keyd = default_image_name base p in
   let fname = List.fold_right Filename.concat [base_path conf.bname; "documents"; "others"; keyd] (fname ^ ".txt") in
   let s = if Sys.file_exists fname then
     let ic = Secure.open_in fname in
     let s = really_input_string ic (in_channel_length ic) in
     close_in ic; s
-    else "none"
+    else ""
   in s
+
+let out_keydir_img_notes conf base p fname s =
+  let keyd = default_image_name base p in
+  let fname = List.fold_right Filename.concat [base_path conf.bname; "documents"; "others"; keyd] (fname ^ ".txt") in
+  try
+    let oc = Secure.open_out fname in
+    output_string oc s;
+    close_out oc;
+  with Sys_error _ -> ()
 
 let get_keydir conf base p =
   match keydir conf base p with
@@ -2675,7 +2684,7 @@ let get_keydir conf base p =
             let fname = Filename.chop_suffix f1 ext in
             let _ = Printf.eprintf "Tname: %s\n" fname in
             let _ = flush stderr in
-            get_keydir_img_note conf base p fname
+            get_keydir_img_notes conf base p fname
           in
           ((Gwdb.insert_string base f1, n) :: l) else l)
           (Array.to_list (Sys.readdir f)) []
