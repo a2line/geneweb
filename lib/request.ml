@@ -115,7 +115,6 @@ let family_m conf base =
       | "FORUM_SEARCH" -> handler.forum_search
       | "FORUM_VAL" -> handler.forum_val
       | "FORUM_VIEW" -> handler.forum_view
-      | "GET_IMAGE_NOTES" -> handler.get_image_notes
       | "H" -> handler.h
       | "HIST" -> handler.hist
       | "HIST_CLEAN" -> handler.hist_clean

@@ -5678,14 +5678,20 @@ let print_foreach conf base print_ast eval_expr =
   and print_foreach_img_in_keydir env al (p, p_auth as ep) =
     if not p_auth && is_hide_names conf p then ()
     else
-      let img_list = get_keydir conf base p in
-      Mutil.list_iter_first
-        (fun first (a, n) ->
-          let env = ("keydir_img", Vstring (sou base a)) :: env in
-          let env = ("keydir_img_notes", Vstring n) :: env in
-          let env = ("first", Vbool first) :: env in
-          List.iter (print_ast env ep) al)
-        img_list
+      let list = get_keydir conf base p in
+      let rec loop first cnt =
+        function
+         (a, n) :: l ->
+            let env =
+              ("keydir_img", Vstring (sou base a)) ::
+              ("keydir_img_notes", Vstring n) ::
+              ("first", Vbool first) :: ("last", Vbool (l = [])) ::
+              ("cnt", Vint cnt) :: env
+            in
+            List.iter (print_ast env ep) al; loop false (cnt + 1) l
+        | [] -> ()
+      in
+      loop true 1 list
   and print_foreach_nobility_title env al (p, p_auth as ep) =
     if p_auth then
       let titles = nobility_titles_list conf base p in

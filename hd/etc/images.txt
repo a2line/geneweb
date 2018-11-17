@@ -16,7 +16,7 @@
 %message_to_wizard;
 %include_perso_header;
 
-%if;(evar.m="SND_IMAGE" or evar.m="GET_IMAGE_NOTES")
+%if;(evar.m="SND_IMAGE")
   <div class="row">
     <div class="col-6 border border-bottom-0 border-top-0 border-left-0">
       <h1><i class="fas fa-portrait fa-fw text-primary mr-1"></i>[*add picture]0</h1>
@@ -52,6 +52,7 @@
         <input type="hidden" name="i" value="%index;">
         <input type="hidden" name="keydir" id="keydir" value="on">
         <div class="custom-file col">
+          %( ce champ file (XX) doit êrte rempli automatiquement si on sélectionne une image %)
           <input type="file" name="file" class="custom-file-input" id="others_file" accept="image/*"%( multiple%) lang="%lang;">
           <label class="custom-file-label text-truncate" for="others_file"><span>[*select] [image/images]0</span></label>
         </div>
@@ -74,18 +75,28 @@
         <input type="hidden" name="i" value="%index;">
         <input type="hidden" name="keydir" id="keydir" value="on">
         %foreach;img_in_keydir;
-            <input type="radio" name="file_name" value="%keydir_img;">&nbsp;%keydir_img;%sp;
-            ( <a href="%prefix;m=GET_IMAGE_NOTES&i=%index;&notes_name=%keydir_img;"
-                  title="%if;(keydir_img_notes!="")%keydir_img_notes;%else;[no notes]%end;"
-                  %if;(evar.m="GET_IMAGE_NOTES" and keydir_img=evar.notes_name)
-                    id="get_notes"
-                  %end;>%nn;
-                 <i class="fas fa-image fa-fw text-primary mr-1"></i>
+            %( remplir le champ file de l'autre form (XX) quand on clique sur le radio bouton %)
+            <input type="radio" name="file_name" value="%keydir_img;" %nn;
+              %if;(evar.get_notes="on" and keydir_img=evar.notes_name)
+                checked%nn;
+              %end;
+            >&nbsp;%keydir_img;%sp;
+            ( <a href="%prefix;m=SND_IMAGE&get_notes=on&i=%index;&notes_name=%keydir_img;"
+                  title="[*image comment]" %nn;
+                  %if;(evar.get_notes="on" and keydir_img=evar.notes_name)
+                    id="get_notes" %nn;
+                  %end; onclick="get_notes(%cnt;); return false;" %nn;
+                  %if;(keydir_img_notes!="")
+                    tabindex="0" data-trigger="focus" data-toggle="popover"
+                    data-placement="bottom" data-html="true" %nn;
+                    data-content="%keydir_img_notes;"%nn;
+                  %end;
+              >%nn;
+                 <i class="fas fa-image fa-fw text-primary mr-1"></i>%nn;
               </a>)<br>
             <input type="hidden" name="file" value="%keydir_img;">
-            %if;(evar.m="GET_IMAGE_NOTES" and keydir_img=evar.notes_name)
-              <input type="hidden" id="notes_content" value="%keydir_img_notes;">
-            %end;
+            %( on a déjà el contenu de %keydir_img_notes;!! Comment le partager avec le popover? %)
+            <input type="hidden" id="notes_content_%cnt;" value="%keydir_img_notes;">
         %end;
         <br>
         <button type="submit" class="btn btn-danger ml-1 col-4">[*delete] [image/images]0</button>
@@ -112,10 +123,25 @@ $('.custom-file-input').on('change', function() {
    let fileName = $(this).val().split('\\').pop();
    $(this).next('.custom-file-label').addClass("selected").html(fileName);
 });
-$('#get_notes').on('click', function ()
-{ $('#notes_edit').val($('#notes_content').val())
-});
+// Initialize Bootstrap tooltip and popover component, dismiss on next click function
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+})
+$(function () {
+  $('[data-toggle="popover"]').popover()
+})
+$('.popover-dismiss').popover({
+  trigger: 'focus'
+})
+</script>
 
+<script>
+%( On doit pouvoir faie mieux et éviter l'appel au serveur à al façon popover %)
+function get_notes (cnt) {
+var notes = "notes_content_"+cnt;
+var item = document.getElementById(notes).value;
+document.getElementById("notes_edit").value=item;
+}
 </script>
 %( Possible heavier futur script to manage multiple files inputs
    https://github.com/Johann-S/bs-custom-file-input/blob/master/dist/bs-custom-file-input.min.js

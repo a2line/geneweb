@@ -1,13 +1,5 @@
-(* $Id: sendImage.ml,v 5.7 2007-09-12 09:58:44 ddr Exp $ *)
+(* $Id: sendImage.ml,v 5.7 2018/11/17 09:58:44 hg Exp $ *)
 
-(*
-open Config
-open Def
-open Gwdb
-open Util
-*)
-
-(* ********** *)
 open Config
 open Def
 open Gwdb
@@ -24,7 +16,7 @@ let string_person_of base p =
   in
   Futil.map_person_ps fp (sou base) (gen_person_of_person p)
 
-(* Interpretation of template file 'updind.txt' *)
+(* Interpretation of template file taken from 'updind.txt' *)
 
 type 'a env =
     Vstring of string
@@ -771,7 +763,9 @@ let print_foreach conf base print_ast _eval_expr =
       ["alias"] -> print_foreach_string env p al p.aliases s
     | ["first_name_alias"] ->
         print_foreach_string env p al p.first_names_aliases s
-    | ["img_in_keydir"] -> print_foreach_img_in_keydir conf base env al p
+    | ["img_in_keydir"] ->
+        print_foreach_img_in_keydir env p al
+          (get_keydir conf base (poi base p.key_index))
     | ["qualifier"] -> print_foreach_string env p al p.qualifiers s
     | ["surname_alias"] -> print_foreach_string env p al p.surnames_aliases s
     | ["relation"] -> print_foreach_relation env p al p.rparents
@@ -779,21 +773,20 @@ let print_foreach conf base print_ast _eval_expr =
     | ["pevent"] -> print_foreach_pevent env p al p.pevents
     | ["witness"] -> print_foreach_witness env p al p.pevents
     | _ -> raise Not_found
-
-  and print_foreach_img_in_keydir conf base env al p =
-    let _ =
-      let p1 = poi base p.key_index in
-      let img_list = get_keydir conf base p1 in
-      Mutil.list_iter_first
-        (fun first (a, n) ->
-          let env = ("keydir_img", Vstring (sou base a)) :: env in
-          let env = ("keydir_img_notes", Vstring n) :: env in
-          let env = ("first", Vbool first) :: env in
-          List.iter (print_ast env p) al)
-        img_list
-      in
-      ()
-
+  and print_foreach_img_in_keydir env p al list =
+    let rec loop first cnt =
+      function
+       (a, n) :: l ->
+          let env =
+            ("keydir_img", Vstring (sou base a)) ::
+            ("keydir_img_notes", Vstring n) ::
+            ("first", Vbool first) :: ("last", Vbool (l = [])) ::
+            ("cnt", Vint cnt) :: env
+          in
+          List.iter (print_ast env p) al; loop false (cnt + 1) l
+      | [] -> ()
+    in
+    loop true 1 list
   and print_foreach_string env p al list lab =
     let _ =
       List.fold_left
@@ -1043,8 +1036,10 @@ let move_file_to_old conf fname bfname keydir =
           (try Sys.remove old_file_t with Sys_error _ -> ());
         (try Unix.mkdir old_dir 0o777 with Unix.Unix_error (_, _, _) -> ());
         (try Unix.mkdir old_dir_key 0o777 with Unix.Unix_error (_, _, _) -> ());
-        (try Unix.rename cur_file old_file with Unix.Unix_error (_, _, _) -> ());
-        (try Unix.rename cur_file_t old_file_t with Unix.Unix_error (_, _, _) -> ());
+        if Sys.file_exists cur_file then
+          (try Unix.rename cur_file old_file with Unix.Unix_error (_, _, _) -> ());
+        if Sys.file_exists cur_file_t then
+          (try Unix.rename cur_file_t old_file_t with Unix.Unix_error (_, _, _) -> ());
         cnt + 1
       else cnt)
     0 image_types
@@ -1105,6 +1100,8 @@ let effective_send_ok conf base p file kind =
     conf.env
   in
   let _ = flush stderr in
+  (* filename est vide si on a pas sélactionné de fichier *)
+  (* remplir le champ file quand on clique sur le radio bouton *)
   let filename = raw_get conf ("file_name") in
   let notes = raw_get conf ("notes") in
   let strm = Stream.of_string file in
@@ -1162,8 +1159,12 @@ let effective_send_ok conf base p file kind =
   in
   let fname = Filename.concat bfdir bfname in
   let _moved = move_file_to_old conf fname bfname keyname in
-  write_file (fname ^ extension_of_type typ) content;
-  write_file (fname ^ ".txt") notes;
+  let _ = Printf.eprintf "Trying to write: (%s) and (%s)\n" filename notes in
+  let _ = flush stderr in
+  if filename <> "" then
+    write_file (fname ^ extension_of_type typ) content;
+  if notes <> "" then
+    write_file (fname ^ ".txt") notes;
   let changed =
     U_Send_image (Util.string_gen_person base (gen_person_of_person p))
   in
