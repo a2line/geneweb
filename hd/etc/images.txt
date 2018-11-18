@@ -65,7 +65,7 @@
           <label class="custom-file-label text-truncate" for="others_file">
             <span>[*select] [image/images]0</span></label>
         </div>
-        <button class="btn btn-primary ml-2 col-2 snd-btn-others" type="submit" >[*send]</button>
+        <button class="btn btn-primary ml-2 col-2 snd-btn-others" type="submit" disabled>[*send]</button>
         %(TODO: print only if old img already exists%)
         <span>[*previous image]/%keydir;</code>.<br>[*if previous image exists]</span>
       </form>
@@ -109,7 +109,7 @@
             <input type="hidden" id="notes_content_%cnt;" value="%keydir_img_notes;">
           %end;
           <div class="d-flex mt-2">
-            <button type="submit" class="btn btn-danger ml-auto col-6"><i class="fa fa-trash-alt mr-2"></i>[*delete selected image]0</button>
+            <button type="submit" class="btn btn-danger ml-auto col-6 delete-image-btn" disabled><i class="fa fa-trash-alt mr-2"></i>[*delete selected image]0</button>
           </div>
         </form>
         %(
