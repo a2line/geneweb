@@ -88,7 +88,9 @@
             <div class="custom-control custom-radio">
               <input type="radio" id="customRadio%keydir_img;" name="file_name" class="custom-control-input"
                   value="%keydir_img;"%if;(evar.get_notes="on" and keydir_img=evar.notes_name) checked%end;>
-              <label class="custom-control-label" for="customRadio%keydir_img;">%keydir_img;
+              <label class="custom-control-label" for="customRadio%keydir_img;">
+                %if;(keydir_img_title!="")%keydir_img_title;%else;%keydir_img;%end; %nn;
+                %if;(keydir_img_src!="")(%keydir_img_src;)%end;
                 <a class="ml-1" href="?m=IM&s=others/%keydir;/%keydir_img;" target="_blank"
                    title="[*image/images]0"><i class="far fa-file-image fa-fw text-primary"></i></a>
                 <a href="%prefix;m=IMAGE&get_notes=on&i=%index;&notes_name=%keydir_img;" title="[*image comment]" %nn;

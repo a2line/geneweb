@@ -2678,7 +2678,11 @@ let get_keydir conf base p =
   match keydir conf base p with
     Some f ->
       List.fold_right (fun f1 l ->
-        if f1.[0] <> '.' &&  Filename.extension f1 <> ".txt" then
+        if f1.[0] <> '.' && Filename.extension f1 <> ".txt" &&
+          ( Filename.extension f1 = ".jpg" ||
+            Filename.extension f1 = ".gif" ||
+            Filename.extension f1 = ".png" )
+        then
           let n =
             let ext = Filename.extension f1 in
             let fname = Filename.chop_suffix f1 ext in
@@ -2686,9 +2690,11 @@ let get_keydir conf base p =
             let _ = flush stderr in
             get_keydir_img_notes conf base p fname
           in
+          (* vérifier ici le type des images autorisées  *)
           ((Gwdb.insert_string base f1, n) :: l) else l)
           (Array.to_list (Sys.readdir f)) []
   | None -> []
+
 
 (* ********************************************************************** *)
 (*  [Fonc] image_and_size : config -> base -> person -> image_size        *)
