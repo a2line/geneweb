@@ -28,10 +28,10 @@
         <input type="hidden" name="i" value="%index;">
         <input type="hidden" name="notes" value="%index;">
         <div class="custom-file col">
-          <input type="file" name="file" class="custom-file-input" id="portrait_file" accept="image/*" lang="%lang;">
+          <input type="file" name="file" class="custom-file-input custom-portrait" id="portrait_file" accept="image/*" lang="%lang;">
           <label class="custom-file-label text-truncate" for="portrait_file">[*select] [image/images]0</label>
         </div>
-        <button class="btn btn-primary ml-2 col-2" type="submit"%if;(evar.m!="IMAGE") disabled%end;>[*send]</button>
+        <button class="btn btn-primary ml-2 col-2 snd-btn-portrait" type="submit" disabled>[*send]</button>
       </form>
       %(TODO: print only if old img already exists%)
       <span>[*previous portrait exist]</span><br>
@@ -55,10 +55,10 @@
         <textarea class="form-control col-12 mt-2" id="notes_comments" name="notes" rows="5" placeholder="[*image comment]"></textarea>
         <div class="custom-file col mt-2">
           %( ce champ file (XX) doit êrte rempli automatiquement si on sélectionne une image %)
-          <input type="file" name="file" class="custom-file-input" id="others_file" accept="image/*"%( multiple%) lang="%lang;">
+          <input type="file" name="file" class="custom-file-input custom-others" id="others_file" accept="image/*"%( multiple%) lang="%lang;">
           <label class="custom-file-label text-truncate" for="others_file"><span>[*select] [image/images]0</span></label>
         </div>
-        <button class="btn btn-primary ml-2 mt-2 col-2" type="submit"%if;(evar.m!="IMAGE") disabled%end;>[*send]</button>
+        <button class="btn btn-primary ml-2 mt-2 col-2 snd-btn-others" type="submit" disabled>[*send]</button>
         %(TODO: print only if old img already exists%)
         <span>[*previous image]/%keydir;</code>.<br>[*if previous image exists]</span>
       </form>
@@ -112,11 +112,18 @@
 %include.copyr;
 </div>
 %include.js;
-<script>
-$('.custom-file-input').on('change', function() {
+%define;input_snd(xxx,yyy)
+$('.xxx').on('change', function() {
+   %(replace input label with file name%)
    let fileName = $(this).val().split('\\').pop();
    $(this).next('.custom-file-label').addClass("selected").html(fileName);
+   %(enable send button if input is non empty%)
+   if ($(this).val() != '') { $('.yyy').attr('disabled', false); }
 });
+%end;
+<script>
+%apply;input_snd("custom-portrait","snd-btn-portrait")
+%apply;input_snd("custom-others","snd-btn-others")
 // Initialize Bootstrap tooltip and popover component, dismiss on next click function
 $(function () {
   $('[data-toggle="tooltip"]').tooltip()
@@ -127,10 +134,7 @@ $(function () {
 $('.popover-dismiss').popover({
   trigger: 'focus'
 })
-</script>
-
-<script>
-%( On doit pouvoir faie mieux et éviter l'appel au serveur à al façon popover %)
+%( On doit pouvoir faie mieux et éviter l'appel au serveur à la façon popover %)
 function get_notes (cnt) {
 var notes = "notes_content_"+cnt;
 var item = document.getElementById(notes).value;
