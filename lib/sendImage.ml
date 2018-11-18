@@ -262,6 +262,7 @@ and eval_simple_var conf base env p =
         Vbool x -> bool_val x
       | _ -> raise Not_found
       end
+(*| ["keydir"] -> str_val (default_image_name base (poi base p.key_index))*)
   | ["keydir_img"] ->
       begin match get_env "keydir_img" env with
         Vstring s -> str_val s
@@ -271,18 +272,46 @@ and eval_simple_var conf base env p =
       str_val (string_of_int (List.length (get_keydir conf base (poi base p.key_index))))
   | ["keydir_img_notes"] ->
       begin match get_env "keydir_img_notes" env with
-        Vstring s -> str_val s
-      | _ -> str_val ""
+        Vstring f ->
+          let ext = Filename.extension f in
+          let fname = Filename.chop_suffix f ext in
+          str_val (get_keydir_img_notes conf base (poi base p.key_index) fname)
+      | _ -> raise Not_found
       end
   | ["keydir_img_src"] ->
       begin match get_env "keydir_img_src" env with
-        Vstring s -> str_val s
-      | _ -> str_val ""
+        Vstring f ->
+          begin
+            let ext = Filename.extension f in
+            let fname = Filename.chop_suffix f ext in
+            let n = get_keydir_img_notes conf base (poi base p.key_index) fname in
+            match (String.index_opt n '\n') with
+              Some i ->
+                let s1 = if (String.length n) > i then (String.sub n (i + 1)
+                  (String.length n - i - 1)) else ""
+                in
+                begin
+                  match (String.index_opt s1 '\n') with
+                    Some j -> str_val (String.sub s1 0 j)
+                  | None -> str_val ""
+                end
+            | None -> str_val ""
+          end
+      | _ -> raise Not_found
       end
   | ["keydir_img_title"] ->
       begin match get_env "keydir_img_title" env with
-        Vstring s -> str_val s
-      | _ -> str_val ""
+        Vstring f ->
+          begin
+            let ext = Filename.extension f in
+            let fname = Filename.chop_suffix f ext in
+            let n = get_keydir_img_notes conf base (poi base p.key_index) fname in
+            match (String.index_opt n '\n') with
+              Some i ->
+                str_val (String.sub n 0 i)
+            | None -> str_val ""
+          end
+      | _ -> raise Not_found
       end
   | ["nb_pevents"] -> str_val (string_of_int (List.length p.pevents))
   | ["not_dead"] -> bool_val (p.death = NotDead)
@@ -786,27 +815,12 @@ let print_foreach conf base print_ast _eval_expr =
   and print_foreach_img_in_keydir env p al list =
     let rec loop first cnt =
       function
-       (a, n) :: l ->
-          let t, s =
-            match (String.index_opt n '\n') with
-              Some i ->
-                let t = String.sub n 0 i in
-                let s1 = if (String.length n) > i then (String.sub n (i + 1)
-                  (String.length n - i - 1)) else ""
-                in
-                begin
-                  match (String.index_opt s1 '\n') with
-                    Some j -> t, String.sub s1 0 j
-                  | None -> t, ""
-                end
-            | None -> "", ""
-          in
+        a :: l ->
           let env =
-            ("keydir_img", Vstring (sou base a)) ::
-            ("keydir_img_notes", Vstring n) ::
-            ("keydir_img_title", Vstring t) ::
-            ("keydir_img_src", Vstring s) ::
-            ("first", Vbool first) :: ("last", Vbool (l = [])) ::
+            ("keydir_img", Vstring a) ::
+            ("keydir_img_notes", Vstring a) ::
+            ("keydir_img_src", Vstring a) ::
+            ("keydir_img_title", Vstring a) ::
             ("cnt", Vint cnt) :: env
           in
           List.iter (print_ast env p) al; loop false (cnt + 1) l
@@ -947,6 +961,7 @@ let print_send_image conf base sp digest =
      Templ.print_foreach = print_foreach conf base}
     env sp
 
+(*
 let print_get_notes conf base =
   let ip =
     let s = raw_get conf "i" in
@@ -962,11 +977,12 @@ let print_get_notes conf base =
   let fname = List.fold_right
     Filename.concat [Util.base_path conf.bname; "documents"; "others"; keydir] name
   in
-  let notes = Util.get_keydir_img_notes conf base p fname in
   let env =
-    ["digest", Vstring digest;
-     "keydir_img_notes", Vstring notes;
-     "notes", Vstring notes]
+    ("digest", Vstring digest) ::
+    ("keydir_img", Vstring fname) ::
+    ("keydir_img_notes", Vstring fname) ::
+    ("keydir_img_src", Vstring fname) ::
+    ("keydir_img_title", Vstring fname) :: env
   in
   Hutil.interp conf "images"
     {Templ.eval_var = eval_var conf base;
@@ -975,7 +991,7 @@ let print_get_notes conf base =
      Templ.get_vother = get_vother; Templ.set_vother = set_vother;
      Templ.print_foreach = print_foreach conf base}
     env sp
-
+*)
 
 let print conf base =
   let _ = Printf.eprintf "\nPrintx\n" in
@@ -1138,8 +1154,13 @@ let effective_send_ok conf base p file kind =
     else raw_get conf ("which_img_name")
   in
   let _ = Printf.eprintf "New filename: %s (%s)\n" filename which_img_mode in
+  let notes = try Util.sanitize_html
+        (only_printable_or_nl (Mutil.strip_all_trailing_spaces
+        (List.assoc "notes_comments" conf.env)))
+    with Not_found -> ""
+  in
+  let _ = Printf.eprintf "Notes: %s\n" notes in
   let _ = flush stderr in
-  let notes = raw_get conf ("notes") in
   let strm = Stream.of_string file in
   let (request, content) = Wserver.get_request_and_content strm in
   let content =
@@ -1212,27 +1233,6 @@ let effective_send_ok conf base p file kind =
   in
   History.record conf base changed
     (if kind = KeyImage then "si" else "ki"); print_confirm conf base p "image received"
-
-let print_send_notes_ok conf base =
-  let _ = Printf.eprintf "\nPrint_send_noets_ok\n" in
-  let _ =  List.iter
-    (fun (k, v) ->
-       if k <> "file" then Printf.eprintf "Env_var: %s, %s\n" k v)
-    conf.env
-  in
-  let _ = Printf.eprintf "----\n" in
-  let ip =
-    let s = raw_get conf "i" in
-    try int_of_string s with Failure _ -> incorrect conf
-  in
-  let p = poi base (Adef.iper_of_int ip) in
-  let notes = raw_get conf "notes" in
-  let name = raw_get conf "file_name" in
-  let keydir = default_image_name base p in
-  let fname = List.fold_right
-    Filename.concat [Util.base_path conf.bname; "documents"; "others"; keydir] name
-  in
-  write_file (fname ^ ".txt") notes
 
 let print_send_ok conf base =
   let _ = Printf.eprintf "\nPrint_send_ok\n" in
