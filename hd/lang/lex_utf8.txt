@@ -1,31 +1,31 @@
     select input
 de: wählen
-en: choose
-fr: sélect.
+en: choose file
+fr: sélect. fichier
 
-    previous portrait
-en: previous portait will be sent to <code>/old</code> subfolder.
-fr: l’ancien portrait sera envoyé dans le sous-répertoire <code>/old</code>.
+    delete portrait
+en: delete portrait
+fr: supprimer le portrait
 
-    previous image %s
-en: previous image will be sent to <code>/old%s</code> subfolder.
-fr: l’ancienne image sera envoyée dans le sous-répertoire <code>/old%s</code>.
+    delete selected image
+en: delete selected image
+fr: supprimer l’image séléctionnée
 
-    if previous portrait exists
-en: if a previous portait already exists in <code>/old</code>, it will be destroyed.
-fr: si un ancien portrait existe déjà dans <code>/old</code>, il sera détruit.
+    previous portrait exist
+en: previous portait will be moved to <code>/documents/old</code>.<br>If a previous portait already exists in this subfolder, it will be destroyed.
+fr: le portrait précédent sera déplacé dans <code>/documents/old</code>.<br>Si un ancien portrait existe déjà dans ce sous-répertoire, il sera détruit.
 
-    if previous image exists %s
-en: if a previous image already exists in <code>/old%s</code>, it will be destroyed.
-fr: si une ancienne image existe déjà dans <code>/old%s</code>, elle sera détruite.
+    previous image
+en: previous image will be moved to <code>/documents/old
+fr: l’image précédente sera déplacé dans <code>/documents/old
 
-    available images
-en: available images
-fr: images disponibles
+    if previous image exists
+en: if a previous image already exists in this subfolder, it will be destroyed.
+fr: si une ancienne image existe déjà dans ce sous-répertoire, elle sera détruite.
 
     image comment
-en: comment for this image
-fr: commentaire associé à cette image
+en: add a comment for the image.
+fr: ajouter un commentaire à l’image.
 
     reset to
 co: risturà
@@ -1872,12 +1872,12 @@ co: aghjunghje una fiura
 cs: přidat :a: obrázek
 da: tilføj billede
 de: hinzufügen Bild
-en: add portrait/remove portrait
+en: add portrait
 eo: aldoni :a: bildo:a:+n
 es: agregar imagen
 et: lisa pilt
 fi: lisää kuva
-fr: ajouter portrait/supprimer portrait
+fr: ajouter portrait
 he:  תמונה  הוספה
 is: bæta við mynd
 it: aggiungere immagine
@@ -9022,7 +9022,7 @@ co: mudificà a fiura
 cs: změnit :a: obrázek
 da: ændre billede
 de: ändern +before Bild
-en: update Picture
+en: update portrait
 eo: modifi :a: bildo:a:+n
 es: modificar imagen
 et: muuda :g: pilt

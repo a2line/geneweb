@@ -15,11 +15,12 @@
 <div class="container">
 %message_to_wizard;
 %include_perso_header;
-
 %if;(evar.m="IMAGE")
   <div class="row">
     <div class="col-6 border border-bottom-0 border-top-0 border-left-0">
-      <h1><i class="fas fa-portrait fa-fw text-primary mr-1"></i>[*add picture]0</h1>
+      <div class="d-inline-flex justify-content-around">
+        <h1>%(<i class="fa fa-portrait fa-fw mr-1"></i>%)%if;(has_image)[*modify picture]%else;[*add picture]%end;</h1>
+      </div>
       <form class="form-row" method="post" action="%action;"
         enctype="multipart/form-data">
         <input type="hidden" name="m" value="IMAGE_OK">
@@ -30,91 +31,80 @@
           <input type="file" name="file" class="custom-file-input" id="portrait_file" accept="image/*" lang="%lang;">
           <label class="custom-file-label text-truncate" for="portrait_file">[*select] [image/images]0</label>
         </div>
-        <button class="btn btn-primary ml-1 col-2" type="submit" %if;(evar.m!="IMAGE")disabled%end;
-          class="btn mt-2 text-capitalize">[*send]</button>
+        <button class="btn btn-primary ml-2 col-2" type="submit"%if;(evar.m!="IMAGE") disabled%end;>[*send]</button>
       </form>
-      <span>[*previous portrait]</span><br>
-      <span>[*if previous portrait exists]<span>
-       %(TODO: print only if old img already exists%)
-    </div>
-    <div class="col-6">
+      %(TODO: print only if old img already exists%)
+      <span>[*previous portrait exist]</span><br>
       %if;(has_image)
-        <h1><i class="fas fa-portrait fa-fw text-danger mr-1"></i>[*add picture]1</h1>
-        <a role="button" href="%prefix;m=DEL_IMAGE&i=%index;" class="btn btn-danger">[*add picture]1</a>
+        <div class="d-flex">
+          <a role="button" href="%prefix;m=DEL_IMAGE&i=%index;" class="btn btn-danger ml-auto" title="[*delete portrait]"><i class="fas fa-trash-alt mr-2"></i>[*delete portrait]</a>
+        </div>
       %end;
-    </div>
-  </div>
-  <hr>
-  <div class="row mt-3">
-    <div class="col-6 border border-bottom-0 border-top-0 border-left-0">
-      <h1><i class="fas fa-image fa-fw text-primary mr-1"></i>[*add] [image/images]0</h1>
+      <hr>
+      <div class"d-inline-flex justify-content-between">
+        <h1 class="mt-3">%(<i class="far fa-file-image fa-fw mr-1"></i>%)[*add] [image/images]0</h1>
+        <span class="d-inline-flex">%include.toolbar;</span>
+      </div>
       <form class="form-row" method="post" action="%action;"
         enctype="multipart/form-data">
         <input type="hidden" name="m" value="IMAGE_OK">
         <input type="hidden" name="digest" value="%digest;">
         <input type="hidden" name="i" value="%index;">
         <input type="hidden" name="keydir" id="keydir" value="on">
-        <div class="custom-file col">
+
+        <textarea class="form-control col-12 mt-2" id="notes_comments" name="notes" rows="5" placeholder="[*image comment]"></textarea>
+        <div class="custom-file col mt-2">
           %( ce champ file (XX) doit êrte rempli automatiquement si on sélectionne une image %)
           <input type="file" name="file" class="custom-file-input" id="others_file" accept="image/*"%( multiple%) lang="%lang;">
           <label class="custom-file-label text-truncate" for="others_file"><span>[*select] [image/images]0</span></label>
         </div>
-        <button class="btn btn-primary ml-1 col-2" type="submit" %if;(evar.m!="IMAGE")disabled%end;
-          class="btn mt-2">[*send]</button>
-        <div class="row ml-2">
-          <div class="d-inline col-9 py-1">%include.toolbar;</div>
-          <textarea class="col-11 form-control" id="notes_edit" name="notes" rows="5">
-          </textarea>%sq;
-          [*image comment]
-        </div>
+        <button class="btn btn-primary ml-2 mt-2 col-2" type="submit"%if;(evar.m!="IMAGE") disabled%end;>[*send]</button>
+        %(TODO: print only if old img already exists%)
+        <span>[*previous image]/%keydir;</code>.<br>[*if previous image exists]</span>
       </form>
     </div>
     <div class="col-6">
       %if;(keydir_img_nbr>0)
-    <h1><i class="fas fa-image fa-fw text-primary mr-1"></i>[*available images]</h1>
-      <form class="form" method="post" action="%action;"
-        enctype="multipart/form-data">
-        <input type="hidden" name="m" value="DEL_IMAGE_OK">
-        <input type="hidden" name="digest" value="%digest;">
-        <input type="hidden" name="i" value="%index;">
-        <input type="hidden" name="keydir" id="keydir" value="on">
-        %foreach;img_in_keydir;
+        <h1>[*delete] [image/images]0</h1>
+        <code><i class="far fa-folder-open mr-1" aria-hidden="true"></i>/documents/others/%keydir;</code> <span class="ml-1">%keydir_img_nbr; %if;(keydir_img_nbr>1)[image/images]1%elseif;(keydir_img_nbr=1)[image/images]0%end;</span>
+        <form class="form" method="post" action="%action;" enctype="multipart/form-data">
+          <input type="hidden" name="m" value="DEL_IMAGE_OK">
+          <input type="hidden" name="digest" value="%digest;">
+          <input type="hidden" name="i" value="%index;">
+          <input type="hidden" name="keydir" id="keydir" value="on">
+          %foreach;img_in_keydir;
             %( remplir le champ file de l'autre form (XX) quand on clique sur le radio bouton %)
-            <input type="radio" name="file_name" value="%keydir_img;" %nn;
-              %if;(evar.get_notes="on" and keydir_img=evar.notes_name)
-                checked%nn;
-              %end;
-            >&nbsp;%keydir_img;%sp;
-            ( <a href="%prefix;m=IMAGE&get_notes=on&i=%index;&notes_name=%keydir_img;"
-                  title="[*image comment]" %nn;
+            <div class="custom-control custom-radio">
+              <input type="radio" id="customRadio%keydir_img;" name="file_name" class="custom-control-input"
+                  value="%keydir_img;"%if;(evar.get_notes="on" and keydir_img=evar.notes_name) checked%end;>
+              <label class="custom-control-label" for="customRadio%keydir_img;">%keydir_img;
+                <a class="ml-1" href="?m=IM&s=others/%keydir;/%keydir_img;" target="_blank"
+                   title="[*image/images]0"><i class="far fa-file-image fa-fw text-primary"></i></a>
+                <a href="%prefix;m=IMAGE&get_notes=on&i=%index;&notes_name=%keydir_img;" title="[*image comment]"%nn;
                   %if;(evar.get_notes="on" and keydir_img=evar.notes_name)
-                    id="get_notes" %nn;
-                  %end; onclick="get_notes(%cnt;); return false;" %nn;
+                    id="get_notes"%nn;
+                  %end; onclick="get_notes(%cnt;); return false;"%nn;
                   %if;(keydir_img_notes!="")
-                    tabindex="0" data-trigger="focus" data-toggle="popover"
-                    data-placement="bottom" data-html="true" %nn;
+                    tabindex="0" data-trigger="focus" data-toggle="popover"%nn;
+                    data-placement="bottom" data-html="true"%nn;
                     data-content="%keydir_img_notes;"%nn;
-                  %end;
-              >%nn;
-                 <i class="fas fa-image fa-fw text-primary mr-1"></i>%nn;
-              </a>)<br>
+                  %end;><i class="far fa-file-alt fa-fw text-primary"></i></a>
+              </label>
+            </div>
             <input type="hidden" name="file" value="%keydir_img;">
             %( on a déjà el contenu de %keydir_img_notes;!! Comment le partager avec le popover? %)
             <input type="hidden" id="notes_content_%cnt;" value="%keydir_img_notes;">
-        %end;
-        <br>
-        <button type="submit" class="btn btn-danger ml-1 col-4">[*delete] [image/images]0</button>
-      </form>
-      <span>[*previous image %s:::/keydir] (keydir=%keydir;)</span><br>
-      <span>[*if previous image exists %s:::/keydir]<span>
-      %(TODO: print only if old img already exists%)
+          %end;
+          <div class="d-flex mt-2">
+            <button type="submit" class="btn btn-danger ml-auto col-6"><i class="fa fa-trash-alt mr-2"></i>[*delete selected image]0</button>
+          </div>
+        </form>
       %end;
     </div>
   </div>
-    <p>
 %elseif;(evar.m="DEL_IMAGE")
   <div class="col-6">
-    <h1><i class="fas fa-portrait fa-fw text-danger mr-1"></i>[*add picture]1</h1>
+    <h1><i class="fas fa-portrait fa-fw text-danger mr-1"></i>[*delete portrait]</h1>
     <a role="button" href="%prefix;m=DEL_IMAGE_OK&i=%index;" class="btn btn-danger ml-5 col-6">[*validate/delete]0%( [add picture]1%)</a>
   </div>
 %end;
@@ -144,7 +134,7 @@ $('.popover-dismiss').popover({
 function get_notes (cnt) {
 var notes = "notes_content_"+cnt;
 var item = document.getElementById(notes).value;
-document.getElementById("notes_edit").value=item;
+document.getElementById("notes_comments").value=item;
 }
 </script>
 %( Possible heavier futur script to manage multiple files inputs
