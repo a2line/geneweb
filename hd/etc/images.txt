@@ -51,14 +51,21 @@
         <input type="hidden" name="digest" value="%digest;">
         <input type="hidden" name="i" value="%index;">
         <input type="hidden" name="keydir" id="keydir" value="on">
+        <input type="hidden" name="which_img_name" id="which_img_name" value="">
+        <input type="hidden" name="which_img_mode" id="which_img_mode" value="both">
 
-        <textarea class="form-control col-12 mt-2" id="notes_comments" name="notes" rows="5" placeholder="[*image comment]"></textarea>
-        <div class="custom-file col mt-2">
-          %( ce champ file (XX) doit êrte rempli automatiquement si on sélectionne une image %)
-          <input type="file" name="file" class="custom-file-input custom-others" id="others_file" accept="image/*"%( multiple%) lang="%lang;">
-          <label class="custom-file-label text-truncate" for="others_file"><span>[*select] [image/images]0</span></label>
+        <textarea class="form-control col-12" id="notes_comments" name="notes"
+          rows="5" placeholder="[*image comment]"></textarea>
+        <div class="custom-file col-12 mt-2">[*comment for the image][:]
+          <span id="which_img_show">[below]</span></div>
+        <div class="custom-file col">
+          <input type="file" name="file" class="custom-file-input custom-others"
+            id="others_file" accept="image/*" %( multiple%) lang="%lang;"
+            onclick="reset_notes("[below]"); return false;" >
+          <label class="custom-file-label text-truncate" for="others_file">
+            <span>[*select] [image/images]0</span></label>
         </div>
-        <button class="btn btn-primary ml-2 mt-2 col-2 snd-btn-others" type="submit" disabled>[*send]</button>
+        <button class="btn btn-primary ml-2 col-2 snd-btn-others" type="submit" >[*send]</button>
         %(TODO: print only if old img already exists%)
         <span>[*previous image]/%keydir;</code>.<br>[*if previous image exists]</span>
       </form>
@@ -66,7 +73,11 @@
     <div class="col-6">
       %if;(keydir_img_nbr>0)
         <h1>[*delete] [image/images]0</h1>
-        <code><i class="far fa-folder-open mr-1" aria-hidden="true"></i>/documents/others/%keydir;</code> <span class="ml-1">%keydir_img_nbr; %if;(keydir_img_nbr>1)[image/images]1%elseif;(keydir_img_nbr=1)[image/images]0%end;</span>
+        <code><i class="far fa-folder-open mr-1" aria-hidden="true">
+          </i>/documents/others/%keydir;</code>
+          <span class="ml-1">%keydir_img_nbr; %nn;
+            %if;(keydir_img_nbr>1)[image/images]1%elseif;(keydir_img_nbr=1)[image/images]0%end;
+          </span>
         <form class="form" method="post" action="%action;" enctype="multipart/form-data">
           <input type="hidden" name="m" value="DEL_IMAGE_OK">
           <input type="hidden" name="digest" value="%digest;">
@@ -80,14 +91,14 @@
               <label class="custom-control-label" for="customRadio%keydir_img;">%keydir_img;
                 <a class="ml-1" href="?m=IM&s=others/%keydir;/%keydir_img;" target="_blank"
                    title="[*image/images]0"><i class="far fa-file-image fa-fw text-primary"></i></a>
-                <a href="%prefix;m=IMAGE&get_notes=on&i=%index;&notes_name=%keydir_img;" title="[*image comment]"%nn;
+                <a href="%prefix;m=IMAGE&get_notes=on&i=%index;&notes_name=%keydir_img;" title="[*image comment]" %nn;
                   %if;(evar.get_notes="on" and keydir_img=evar.notes_name)
-                    id="get_notes"%nn;
-                  %end; onclick="get_notes(%cnt;); return false;"%nn;
+                    id="get_notes" %nn;
+                  %end; onclick='get_notes(%cnt;, "%keydir_img;"); return false;' %nn;
                   %if;(keydir_img_notes!="")
-                    tabindex="0" data-trigger="focus" data-toggle="popover"%nn;
-                    data-placement="bottom" data-html="true"%nn;
-                    data-content="%keydir_img_notes;"%nn;
+                    tabindex="0" data-trigger="focus" data-toggle="popover" %nn;
+                    data-placement="bottom" data-html="true" %nn;
+                    data-content="%keydir_img_notes;" %nn;
                   %end;><i class="far fa-file-alt fa-fw text-primary"></i></a>
               </label>
             </div>
@@ -99,6 +110,13 @@
             <button type="submit" class="btn btn-danger ml-auto col-6"><i class="fa fa-trash-alt mr-2"></i>[*delete selected image]0</button>
           </div>
         </form>
+        %(
+        <div class="d-flex mt-2">
+          <span><button type="button" class="btn btn-danger ml-auto "
+                onclick="reset_notes([below]); return false;">[*reset]0</button>
+          </span>
+        </div>
+        %)
       %end;
     </div>
   </div>
@@ -135,11 +153,22 @@ $('.popover-dismiss').popover({
   trigger: 'focus'
 })
 %( On doit pouvoir faie mieux et éviter l'appel au serveur à la façon popover %)
-function get_notes (cnt) {
+function get_notes (cnt, name) {
 var notes = "notes_content_"+cnt;
 var item = document.getElementById(notes).value;
 document.getElementById("notes_comments").value=item;
+document.getElementById("which_img_show").textContent=name;
+document.getElementById("which_img_name").value=name;
+document.getElementById("which_img_mode").value="comment";
 }
+function reset_notes (cmt) {
+alert("reset notes");
+document.getElementById("notes_comments").value="";
+document.getElementById("which_img_show").value=cmt;
+document.getElementById("which_img_name").value="";
+document.getElementById("which_img_mode").value="both";
+}
+
 </script>
 %( Possible heavier futur script to manage multiple files inputs
    https://github.com/Johann-S/bs-custom-file-input/blob/master/dist/bs-custom-file-input.min.js

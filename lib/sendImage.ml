@@ -787,7 +787,6 @@ let print_foreach conf base print_ast _eval_expr =
     let rec loop first cnt =
       function
        (a, n) :: l ->
-       (*
           let t, s =
             match (String.index_opt n '\n') with
               Some i ->
@@ -795,13 +794,13 @@ let print_foreach conf base print_ast _eval_expr =
                 let s1 = if (String.length n) > i then (String.sub n (i + 1)
                   (String.length n - i - 1)) else ""
                 in
-                match (String.index_opt s1 '\n') with
-                  Some j -> t, String.sub s1 0 j
-                | None -> t, ""
+                begin
+                  match (String.index_opt s1 '\n') with
+                    Some j -> t, String.sub s1 0 j
+                  | None -> t, ""
+                end
             | None -> "", ""
           in
-        *)
-          let t, s = "Title", "Source" in
           let env =
             ("keydir_img", Vstring (sou base a)) ::
             ("keydir_img_notes", Vstring n) ::
@@ -1016,11 +1015,11 @@ let print_del conf base =
         [] sp
   | _ -> Hutil.incorrect_request conf
 
-(* Send image form validated *)
+(* Send and delete image form validated *)
 
-let print_sent conf base p =
+let print_confirm conf base p message =
   let title _ =
-    Wserver.printf "%s" (capitale (transl conf "image received"))
+    Wserver.printf "%s" (capitale (transl conf message))
   in
   Hutil.header conf title;
   Wserver.printf "<ul>\n";
@@ -1134,31 +1133,40 @@ let effective_send_ok conf base p file kind =
   let _ = flush stderr in
   (* filename est vide si on a pas sélactionné de fichier *)
   (* remplir le champ file quand on clique sur le radio bouton *)
-  let filename = raw_get conf ("file_name") in
+  let which_img_mode = raw_get conf ("which_img_mode") in
+  let filename = if which_img_mode = "both" then raw_get conf ("file_name")
+    else raw_get conf ("which_img_name")
+  in
+  let _ = Printf.eprintf "New filename: %s (%s)\n" filename which_img_mode in
+  let _ = flush stderr in
   let notes = raw_get conf ("notes") in
   let strm = Stream.of_string file in
   let (request, content) = Wserver.get_request_and_content strm in
   let content =
-    let s =
-      let rec loop len (strm__ : _ Stream.t) =
-        match Stream.peek strm__ with
-          Some x -> Stream.junk strm__; loop (Buff.store len x) strm
-        | _ -> Buff.get len
+    if which_img_mode = "both" then
+      let s =
+        let rec loop len (strm__ : _ Stream.t) =
+          match Stream.peek strm__ with
+            Some x -> Stream.junk strm__; loop (Buff.store len x) strm
+          | _ -> Buff.get len
+        in
+        loop 0 strm
       in
-      loop 0 strm
-    in
-    content ^ s
+      content ^ s
+    else ""
   in
   let (typ, content) =
-    match image_type content with
-      None ->
-        let ct = Wserver.extract_param "content-type: " '\n' request in
-        dump_bad_image conf content; incorrect_content_type conf base p ct
-    | Some (typ, content) ->
-        match p_getint conf.base_env "max_images_size" with
-          Some len when String.length content > len ->
-            error_too_big_image conf base p (String.length content) len
-        | _ -> typ, content
+    if which_img_mode = "both" then
+      match image_type content with
+        None ->
+          let ct = Wserver.extract_param "content-type: " '\n' request in
+          dump_bad_image conf content; incorrect_content_type conf base p ct
+      | Some (typ, content) ->
+          match p_getint conf.base_env "max_images_size" with
+            Some len when String.length content > len ->
+              error_too_big_image conf base p (String.length content) len
+          | _ -> typ, content
+    else JPEG, content
   in
   let keyname = default_image_name base p in
   let bfname = if kind = KeyImage then keyname
@@ -1190,10 +1198,12 @@ let effective_send_ok conf base p file kind =
       d1
   in
   let fname = Filename.concat bfdir bfname in
-  let _moved = move_file_to_old conf fname bfname keyname in
+  let _moved = if which_img_mode = "both" then move_file_to_old conf fname bfname keyname
+    else 0
+  in
   let _ = Printf.eprintf "Trying to write: (%s) and (%s)\n" filename notes in
   let _ = flush stderr in
-  if filename <> "" then
+  if filename <> "" && which_img_mode = "both" then
     write_file (fname ^ extension_of_type typ) content;
   if notes <> "" then
     write_file (fname ^ ".txt") notes;
@@ -1201,7 +1211,7 @@ let effective_send_ok conf base p file kind =
     U_Send_image (Util.string_gen_person base (gen_person_of_person p))
   in
   History.record conf base changed
-    (if kind = KeyImage then "si" else "ki"); print_sent conf base p
+    (if kind = KeyImage then "si" else "ki"); print_confirm conf base p "image received"
 
 let print_send_notes_ok conf base =
   let _ = Printf.eprintf "\nPrint_send_noets_ok\n" in
@@ -1252,25 +1262,6 @@ let print_send_ok conf base =
     else Update.error_digest conf
   with Update.ModErr -> ()
 
-(* Delete image form validated, same page as "image received" except title*)
-
-let print_deleted conf base p =
-  let title _ =
-    Wserver.printf "%s" (capitale (transl conf "image deleted"))
-  in
-  Hutil.header conf title;
-  Wserver.printf "<ul>\n";
-  html_li conf;
-  Wserver.printf "\n%s" (referenced_person_text conf base p);
-  Wserver.printf "\n<li>";
-  Wserver.printf "\n<a href=\"%sm=IMAGE&i=%d\">" (commd conf)
-          (Adef.int_of_iper (get_key_index p));
-  Wserver.printf "%s/%s %s" (capitale (transl conf "add"))
-    (transl conf "delete")(transl_nth conf "image/images" 0);
-  Wserver.printf "</a></li><br>";
-  Wserver.printf "\n</ul>\n";
-  Hutil.trailer conf
-
 let effective_delete_ok conf base p =
   let _ = Printf.eprintf "\nEffective_delete_ok\n" in
   let _ =  List.iter
@@ -1298,7 +1289,7 @@ let effective_delete_ok conf base p =
     U_Delete_image (Util.string_gen_person base (gen_person_of_person p))
   in
   History.record conf base changed
-    (if kind = KeyImage then "di" else "dk"); print_deleted conf base p
+    (if kind = KeyImage then "di" else "dk"); print_confirm conf base p "image deleted"
 
 let print_del_ok conf base =
   (*let fname = Util.p_getenv env "name" in*)

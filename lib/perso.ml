@@ -5692,7 +5692,6 @@ let print_foreach conf base print_ast eval_expr =
       let rec loop first cnt =
         function
          (a, n) :: l ->
-       (*
           let t, s =
             match (String.index_opt n '\n') with
               Some i ->
@@ -5700,13 +5699,13 @@ let print_foreach conf base print_ast eval_expr =
                 let s1 = if (String.length n) > i then (String.sub n (i + 1)
                   (String.length n - i - 1)) else ""
                 in
-                match (String.index_opt s1 '\n') with
-                  Some j -> t, String.sub s1 0 j
-                | None -> t, ""
+                begin
+                  match (String.index_opt s1 '\n') with
+                    Some j -> t, String.sub s1 0 j
+                  | None -> t, ""
+                end
             | None -> "", ""
           in
-        *)
-          let t, s = "Title", "Source" in
           let env =
             ("keydir_img", Vstring (sou base a)) ::
             ("keydir_img_notes", Vstring n) ::

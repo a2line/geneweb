@@ -27,6 +27,14 @@ fr: si une ancienne image existe déjà dans ce sous-répertoire, elle sera dét
 en: add a comment for the image.
 fr: ajouter un commentaire à l’image.
 
+    comment for the image
+en: comment for the image
+fr: commentaire pour l'image
+
+    below
+en: below
+fr: ci-dessous
+
     reset to
 co: risturà
 en: reset to
