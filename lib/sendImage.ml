@@ -813,7 +813,7 @@ let print_foreach conf base print_ast _eval_expr =
     | ["witness"] -> print_foreach_witness env p al p.pevents
     | _ -> raise Not_found
   and print_foreach_img_in_keydir env p al list =
-    let rec loop first cnt =
+    let rec loop cnt =
       function
         a :: l ->
           let env =
@@ -823,10 +823,10 @@ let print_foreach conf base print_ast _eval_expr =
             ("keydir_img_title", Vstring a) ::
             ("cnt", Vint cnt) :: env
           in
-          List.iter (print_ast env p) al; loop false (cnt + 1) l
+          List.iter (print_ast env p) al; loop (cnt + 1) l
       | [] -> ()
     in
-    loop true 1 list
+    loop 1 list
   and print_foreach_string env p al list lab =
     let _ =
       List.fold_left
@@ -1139,6 +1139,11 @@ let dump_bad_image conf s =
       end
   | _ -> ()
 
+let get conf key =
+  match p_getenv conf.env key with
+    Some v -> v
+  | None -> failwith (key ^ " unbound")
+
 let effective_send_ok conf base p file kind =
   let _ = Printf.eprintf "Effective_send_ok\n" in
   let _ =  List.iter
@@ -1154,10 +1159,9 @@ let effective_send_ok conf base p file kind =
     else raw_get conf ("which_img_name")
   in
   let _ = Printf.eprintf "New filename: %s (%s)\n" filename which_img_mode in
-  let notes = try Util.sanitize_html
-        (only_printable_or_nl (Mutil.strip_all_trailing_spaces
-        (List.assoc "notes_comments" conf.env)))
-    with Not_found -> ""
+  let notes =
+    Util.sanitize_html
+      (only_printable_or_nl (Mutil.strip_all_trailing_spaces (get conf "notes_comments")))
   in
   let _ = Printf.eprintf "Notes: %s\n" notes in
   let _ = flush stderr in
