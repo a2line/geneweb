@@ -1161,7 +1161,7 @@ let effective_send_ok conf base p file kind =
   let _ = Printf.eprintf "New filename: %s (%s)\n" filename which_img_mode in
   let notes =
     Util.sanitize_html
-      (only_printable_or_nl (Mutil.strip_all_trailing_spaces (get conf "notes_comments")))
+      (only_printable_or_nl (Mutil.strip_all_trailing_spaces (get conf "notes")))
   in
   let _ = Printf.eprintf "Notes: %s\n" notes in
   let _ = flush stderr in

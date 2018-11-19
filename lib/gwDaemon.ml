@@ -1626,10 +1626,25 @@ let extract_multipart boundary str =
             in
             let v = String.sub str i (i1 - i) in
             (var ^ "_name", filename) :: (var, v) :: loop i1
+(*
+            let _ = Printf.eprintf "String s (qe1): %s (%d)\n" s (String.length s) in
+            let _ = flush stderr in
         | Some var, None ->
             let var = strip_quotes var in
             let (s, i) = next_line i in
             if s = "" then let (s, i) = next_line i in (var, s) :: loop i
+            else loop i
+*)
+        | Some var, None -> (* %0D%0A for \n*)
+            let var = strip_quotes var in
+            let (s, i) = next_line i in
+            if s = "" then
+              let rec loop' j =
+                let (s, j') = next_line j in
+                if s = boundary then (Wserver.encode (String.sub str (i + 2) (j - i - 2)), j)
+                else loop' j'
+              in
+              let (s, i) = loop' i in (var, s) :: loop i
             else loop i
         | _ -> loop i
       else if s = boundary ^ "--" then []

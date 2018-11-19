@@ -53,7 +53,7 @@
         <input type="hidden" name="keydir" id="keydir" value="on">
         <input type="hidden" name="which_img_name" id="which_img_name" value="">
         <input type="hidden" name="which_img_mode" id="which_img_mode" value="both">
-        <textarea class="form-control col-12" id="notes_comments" name="notes_comments"
+        <textarea class="form-control col-12" id="notes_comments" name="notes"
           rows="5" placeholder="[*image comment]"></textarea>
         <div class="custom-file col-12 mt-2">[*comment for the image][:]
           <span id="which_img_show">[below]</span></div>
