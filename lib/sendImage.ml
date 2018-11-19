@@ -1155,8 +1155,8 @@ let effective_send_ok conf base p file kind =
   (* filename est vide si on a pas sélactionné de fichier *)
   (* remplir le champ file quand on clique sur le radio bouton *)
   let which_img_mode = raw_get conf ("which_img_mode") in
-  let filename = if which_img_mode = "both" then raw_get conf ("file_name")
-    else raw_get conf ("which_img_name")
+  let filename = if which_img_mode = "comment" then raw_get conf ("which_img_name")
+    else raw_get conf ("file_name")
   in
   let _ = Printf.eprintf "New filename: %s (%s)\n" filename which_img_mode in
   let notes =
@@ -1168,17 +1168,17 @@ let effective_send_ok conf base p file kind =
   let strm = Stream.of_string file in
   let (request, content) = Wserver.get_request_and_content strm in
   let content =
-    if which_img_mode = "both" then
-      let s =
-        let rec loop len (strm__ : _ Stream.t) =
-          match Stream.peek strm__ with
-            Some x -> Stream.junk strm__; loop (Buff.store len x) strm
-          | _ -> Buff.get len
+    if which_img_mode = "content" then ""
+      else
+        let s =
+          let rec loop len (strm__ : _ Stream.t) =
+            match Stream.peek strm__ with
+              Some x -> Stream.junk strm__; loop (Buff.store len x) strm
+            | _ -> Buff.get len
+          in
+          loop 0 strm
         in
-        loop 0 strm
-      in
-      content ^ s
-    else ""
+        content ^ s
   in
   let (typ, content) =
     if which_img_mode = "both" then
@@ -1223,12 +1223,12 @@ let effective_send_ok conf base p file kind =
       d1
   in
   let fname = Filename.concat bfdir bfname in
-  let _moved = if which_img_mode = "both" then move_file_to_old conf fname bfname keyname
-    else 0
+  let _moved = if which_img_mode = "comment" then 0
+    else move_file_to_old conf fname bfname keyname
   in
   let _ = Printf.eprintf "Trying to write: (%s) and (%s)\n" filename notes in
   let _ = flush stderr in
-  if filename <> "" && which_img_mode = "both" then
+  if filename <> "" && which_img_mode <> "comment" then
     write_file (fname ^ extension_of_type typ) content;
   if notes <> "" then
     write_file (fname ^ ".txt") notes;
