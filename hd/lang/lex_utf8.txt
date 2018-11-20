@@ -17,7 +17,7 @@ fr: le portrait précédent sera déplacé dans <code>/documents/old</code>.<br>
 
     previous image
 en: previous image will be moved to <code>/documents/old
-fr: l’image précédente sera déplacé dans <code>/documents/old
+fr: l’image précédente sera déplacée dans <code>/documents/old
 
     if previous image exists
 en: if a previous image already exists in this subfolder, it will be destroyed.
@@ -27,13 +27,9 @@ fr: si une ancienne image existe déjà dans ce sous-répertoire, elle sera dét
 en: add a comment for the image.
 fr: ajouter un commentaire à l’image.
 
-    comment for the image
-en: comment for the image
-fr: commentaire pour l'image
-
-    below
-en: below
-fr: ci-dessous
+    update image comment
+en: update image comment
+fr: mettre à jour le commentaire de l’image
 
     reset to
 co: risturà
