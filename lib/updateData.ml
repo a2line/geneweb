@@ -416,6 +416,11 @@ let print_long conf list len =
       Some s -> s
     | None -> ""
   in
+  let nbs =
+    match p_getenv conf.env "nbs" with
+      Some s -> "&nbs=" ^ s
+    | None -> ""
+  in
   (* Construit à partir de la liste de (src * hash) la liste dont      *)
   (* le premier composant est les premières lettres de la sources.     *)
   (* Attention, il ne faut pas faire String.length ini + 1 parce qu'en *)
@@ -491,8 +496,8 @@ let print_long conf list len =
                        accu ^ k ^ "=" ^ string_of_int i ^ "&")
                     "" k
                 in
-                Wserver.printf "<a href=\"%sm=MOD_DATA&data=%s&%s&s=%s#mod\">"
-                  (commd conf) data k (code_varenv ini);
+                Wserver.printf "<a href=\"%sm=MOD_DATA%s&data=%s&%s&s=%s#mod\">"
+                  (commd conf) nbs data k (code_varenv ini);
                 Wserver.printf "%s" (quote_escaped s);
                 Wserver.printf "</a>"
               else
@@ -587,12 +592,17 @@ let print_long conf list len =
 let print_short conf list len =
   let data =
     match p_getenv conf.env "data" with
-      Some s -> s
+      Some s -> "&nbs=" ^ s
     | None -> ""
   in
   let ini =
     match p_getenv conf.env "s" with
       Some s -> s
+    | None -> ""
+  in
+  let nbs =
+    match p_getenv conf.env "nbs" with
+      Some s -> "&nbs=" ^ s
     | None -> ""
   in
   (* Construit la liste des string commençant par ini. *)
@@ -634,8 +644,8 @@ let print_short conf list len =
   Wserver.printf "<p class=\"list_ini\">\n";
   List.iter
     (fun s ->
-       Wserver.printf "<a href=\"%sm=MOD_DATA&data=%s&s=%s\">" (commd conf)
-         data (code_varenv s);
+       Wserver.printf "<a href=\"%sm=MOD_DATA%s&data=%s&s=%s\">"
+         (commd conf) nbs data (code_varenv s);
        Wserver.printf "%s" (no_html_tags s);
        Wserver.printf "</a>\n")
     ini_list;
@@ -971,6 +981,11 @@ let print_mod_ok conf base =
       Some s -> s
     | None -> ""
   in
+  let nbs =
+    match p_getenv conf.env "nbs" with
+      Some s -> "&nbs=" ^ s
+    | None -> ""
+  in
   let env_keys =
     let list = ref [] in
     let keys = List.map fst (fst (get_data conf)) in
@@ -1069,8 +1084,9 @@ let print_mod_ok conf base =
           Wserver.printf "</form>\n"
         end;
       Wserver.printf "<p>\n";
-      Wserver.printf "<a href=\"%sm=MOD_DATA&data=%s&s=%s#%s\" id=\"reference\">"
-        (commd conf) data ini (no_html_tags (quote_escaped (only_printable new_input))) ;
+      Wserver.printf "<a href=\"%sm=MOD_DATA%s&data=%s&s=%s#%s\" id=\"reference\">"
+        (commd conf) nbs data ini
+        (no_html_tags (quote_escaped (only_printable new_input))) ;
       Wserver.printf "%s" (capitale (transl conf "new modification"));
       Wserver.printf "</a>";
       Wserver.printf "</p>\n";
@@ -1083,8 +1099,9 @@ let print_mod_ok conf base =
     Hutil.header conf title;
     Hutil.print_link_to_welcome conf true;
     Wserver.printf "<p>\n";
-    Wserver.printf "<a href=\"%sm=MOD_DATA&data=%s&s=%s#%s\" id=\"reference\">"
-      (commd conf) data ini (no_html_tags (quote_escaped (only_printable new_input)));
+    Wserver.printf "<a href=\"%sm=MOD_DATA%s&data=%s&s=%s#%s\" id=\"reference\">"
+      (commd conf) nbs data ini
+      (no_html_tags (quote_escaped (only_printable new_input)));
     Wserver.printf "%s" (capitale (transl conf "new modification"));
     Wserver.printf "</a>";
     Wserver.printf "</p>\n";
@@ -1105,7 +1122,7 @@ let print_mod_ok conf base =
     [Rem] : Non exporté en clair hors de ce module.                      *)
 (* ********************************************************************* *)
 let remove_suburb s =
-  let re = Str.regexp "^\\[.+\\] - " in
+  let re = Str.regexp "^\\[.+\\] [-–—] " in
   let matched = Str.string_match re s 0 in
   if matched then
     let sub_start = Str.match_end () in
@@ -1129,9 +1146,21 @@ let build_list conf base =
       Some s -> s
     | None -> ""
   in
+  let rev =
+    match p_getenv conf.env "rev" with
+      Some "on" -> true
+    | _ -> false
+  in
   let list = get_all_data conf base in
   (* ! rev_map  = tail-rec ! *)
   let list = List.rev_map (fun (istr, s, k) -> sou base istr, s, k) list in
+  let list = if rev then
+    List.rev_map (fun (str, s, k) ->
+      let pl = Place.fold_place_long false str in
+      let new_str = List.fold_left (fun acc p -> acc ^ (if acc = "" then "" else ", ") ^ p) "" pl in
+      new_str, s, k) list
+    else list
+  in
   (* On tri la liste avant de la combiner *)
   (* sinon on n'élimine pas les doublons. *)
   let list =
@@ -1263,6 +1292,7 @@ type 'a env =
   | Vlist_value of (string * (string * int) list) list
   | Venv_keys of (string * int) list
   | Vint of int
+  | Vcnt of int ref
   | Vstring of string
   | Vbool of bool
   | Vother of 'a
@@ -1323,9 +1353,26 @@ and eval_simple_str_var conf _base env _xx =
   function
     "entry_ini" -> eval_string_env "entry_ini" env
   | "entry_value" -> eval_string_env "entry_value" env
+  | "entry_value_rev" -> eval_string_env "entry_value_rev" env
   | "ini" -> eval_string_env "ini" env
   | "substr" -> eval_string_env "substr" env
   | "cnt" -> eval_int_env "cnt" env
+  | "count" ->
+      begin match get_env "count" env with
+        Vcnt c -> string_of_int !c
+      | _ -> ""
+      end
+  | "incr_count" ->
+      begin match get_env "count" env with
+        Vcnt c -> incr c; ""
+      | _ -> ""
+      end
+  | "reset_count" ->
+      begin match get_env "count" env with
+        Vcnt c -> c := 0; ""
+      | _ -> ""
+      end
+  | "max" -> eval_int_env "max" env
   | "tail" -> eval_string_env "tail" env
   | "keys" ->
       let k =
@@ -1342,6 +1389,20 @@ and eval_simple_str_var conf _base env _xx =
         Vlist_data l -> string_of_int (List.length l)
       | _ -> "0"
       end
+  | "value_list_len" ->
+      let list =
+      match get_env "list_value" env with
+        Vlist_value l ->
+          List.sort
+            (fun (s1, _) (s2, _) ->
+               let rss1 = remove_suburb s1 in
+               let rss2 = remove_suburb s2 in
+               if rss1 = rss2 then Gutil.alphabetic_order s1 s2
+               else Gutil.alphabetic_order rss1 rss2)
+            l
+      | _ -> []
+    in
+    string_of_int (List.length list)
   | "title" ->
       let len =
         match get_env "list" env with
@@ -1369,6 +1430,11 @@ and eval_compound_var conf base env xx sl =
     | ["evar"; "p"; s] ->
         begin match p_getenv conf.env s with
           Some s -> if String.length s > 1 then String.sub s 0 (String.length s - 1) else ""
+        | None -> ""
+        end
+    | ["evar"; "length"; s] ->
+        begin match p_getenv conf.env s with
+          Some s -> string_of_int (String.length s)
         | None -> ""
         end
     | ["evar"; s] ->
@@ -1419,6 +1485,7 @@ let print_foreach conf print_ast _eval_expr =
         | [] -> acc
       in loop [] list_of_char
     in
+    let max = List.length list_of_sub in
     let rec loop first cnt =
       function
       | s :: l ->
@@ -1429,6 +1496,7 @@ let print_foreach conf print_ast _eval_expr =
               ("substr", Vstring s) ::
               ("tail", Vstring tail) ::
               ("first", Vbool first) ::
+              ("max", Vint max) ::
               ("cnt", Vint cnt) :: env
             in
             List.iter (print_ast env xx) al ;
@@ -1457,12 +1525,14 @@ let print_foreach conf print_ast _eval_expr =
       | _ -> []
     in
     let list = build_list_long conf list in
+    let max = List.length list in
     let env = ("env_keys", Venv_keys env_keys) :: env in
     let rec loop cnt =
       function
         (ini_k, list_v) :: l ->
           let env =
             ("cnt", Vint cnt) ::
+            ("max", Vint max) ::
             ("entry_ini", Vstring ini_k) ::
             ("list_value", Vlist_value list_v) :: env
           in
@@ -1483,13 +1553,16 @@ let print_foreach conf print_ast _eval_expr =
             l
       | _ -> []
     in
+    let max = List.length list in
     let rec loop cnt =
       function
         (s, k) :: l ->
           let k = List.sort (fun (s1, _) (s2, _) -> compare s1 s2) k in
           let env =
             ("cnt", Vint cnt) ::
+            ("max", Vint max) ::
             ("entry_value", Vstring s) ::
+            ("entry_value_rev", Vstring (Place.unfold_place_long false s)) ::
             ("keys", Venv_keys k) :: env
           in
           List.iter (print_ast env xx) al; loop (cnt + 1) l
@@ -1503,11 +1576,13 @@ let print_foreach conf print_ast _eval_expr =
       | _ -> []
     in
     let ini_list = build_list_short conf list in
+    let max = List.length ini_list in
     let rec loop cnt =
       function
         ini :: l ->
           let env =
             ("cnt", Vint cnt) ::
+            ("max", Vint max) ::
             ("ini", Vstring ini) :: env
           in
           List.iter (print_ast env xx) al; loop (cnt + 1) l
@@ -1535,7 +1610,9 @@ let print_mod conf base =
   match p_getenv conf.env "data" with
   | Some ("place" | "src" | "occu" | "fn" | "sn") ->
     let list = build_list conf base in
-    let env = ["list", Vlist_data list] in
+    let env = ("list", Vlist_data list) ::
+              ("count", Vcnt (ref 0)) :: []
+    in
     Hutil.interp conf "upddata"
       {Templ.eval_var = eval_var conf base;
        Templ.eval_transl = (fun _ -> Templ.eval_transl conf);
