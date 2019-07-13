@@ -12,7 +12,11 @@ function up( r, a1, a2, sosa, p ) {
 	path1( "tpiS"+sosa, r, a1, a2 );
 	link( "tpiS"+sosa, p );
 }
-function pie( id, r1, r2, a1, a2 ) {
+function pie( id, r1, r2, a1, a2, p ) {
+	var a = document.createElementNS( "http://www.w3.org/2000/svg", "a" );
+	a.setAttributeNS( "http://www.w3.org/1999/xlink", "href", link_to_person + "p=" + p.fn + "&n=" + p.sn + "&oc=" + p.oc );
+	fanchart.append(a);
+
 	var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
 	path.setAttribute( "d",
 		 'M ' + pos_x(r2, a1) + ',' + pos_y(r2, a1) +
@@ -22,15 +26,19 @@ function pie( id, r1, r2, a1, a2 ) {
 		' Z'
 	);
 	path.setAttribute( "id", id );
-	fanchart.append(path);
+	a.append(path);
 }
-function circle( id, r, cx, cy ) {
+function circle( id, r, cx, cy, p ) {
+	var a = document.createElementNS( "http://www.w3.org/2000/svg", "a" );
+	a.setAttributeNS( "http://www.w3.org/1999/xlink", "href", link_to_person + "p=" + p.fn + "&n=" + p.sn + "&oc=" + p.oc );
+	fanchart.append(a);
+
 	var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
 	circle.setAttribute( "cx", cx );
 	circle.setAttribute( "cy", cy );
 	circle.setAttribute( "r", r );
 	circle.setAttribute( "id", id );
-	fanchart.append(circle);
+	a.append(circle);
 }
 function text_S1( x, y, p ) {
 	var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -148,8 +156,8 @@ var r2 = 50;
 var a1, a2;
 
 // Sosa 1
-circle( "S"+sosa, r2, center_x, center_y );
 text_S1( center_x, center_y-10, ancestor["S"+sosa] );
+circle( "S"+sosa, r2, center_x, center_y, ancestor["S"+sosa] );
 
 while( true ) {
 	sosa++;
@@ -183,7 +191,7 @@ while( true ) {
 		} else {
 			text_M4( r1, r2, a1, a2, sosa, ancestor["S"+sosa], "gen"+gen );
 		}
-		pie( "S"+sosa, r1, r2, a1, a2 );
+		pie( "S"+sosa, r1, r2, a1, a2, ancestor["S"+sosa] );
 		up( r1+4, a1, a2, sosa, ancestor["S"+sosa] );
 	}
 }

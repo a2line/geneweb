@@ -39,7 +39,7 @@ text {
  fill: transparent;
 }
 .icon:hover {
- fill: lightgrey;
+ fill: #844404;
 }
 
 circle:hover, path:hover {
