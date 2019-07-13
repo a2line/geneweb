@@ -281,6 +281,12 @@ function no_options () {
    </div>
    <div class="p-2">
       <label>
+        <input type="radio" name="t" value="FC" onclick="no_options()"%/> <span class="fa fa-pizza-slice fa-fw"></span> [
+en: Fan chart
+fr: Arbre en éventail
+]
+      </label><br%/><br%/>
+      <label>
         <input type="radio" name="t" value="P" onclick="book_of_ascendants_options()"%/> <span class="fa fa-newspaper-o fa-fw"></span> [*book of ascendants]
       </label>
       <div class="ml-4">

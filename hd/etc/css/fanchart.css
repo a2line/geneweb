@@ -1,0 +1,48 @@
+@namespace svgns url(http://www.w3.org/2000/svg);
+
+svgns|a {
+  cursor: pointer;
+}
+
+svgns|a text {
+  fill: black;
+}
+
+circle, path {
+ stroke: grey;
+ fill: transparent;
+}
+text {
+ fill: black;
+ text-anchor: middle;
+}
+.gen1 { font-size: 100%; }
+.gen2 { font-size: 90%; }
+.gen3 { font-size: 90%; }
+.gen4 { font-size: 80%; }
+.gen5 { font-size: 70%; }
+.gen6 { font-size: 70%; }
+.gen7 { font-size: 56%; }
+.gen8 { font-size: 54%; }
+.gen1-dates { font-size: 80%; }
+.gen2-dates { font-size: 70%; }
+.gen3-dates { font-size: 70%; }
+.gen4-dates { font-size: 60%; }
+.gen5-dates { font-size: 60%; }
+.gen6-dates { font-size: 60%; }
+.gen7-dates { font-size: 40%; }
+.none {
+ display: none;
+}
+
+.icon {
+ fill: transparent;
+}
+.icon:hover {
+ fill: lightgrey;
+}
+
+circle:hover, path:hover {
+ fill: lightgrey;
+ fill-opacity: 0.5;
+}
