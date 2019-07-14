@@ -6,19 +6,20 @@
 </head>
 
 %define;somebody_fanchart_info(xx)
-"S%xx.anc_sosa.v;":{"fn":"%xx.first_name","sn":"%xx.surname","oc":"%xx.occ","dates":"%xx.birth_date.year;-%xx.death_date.year;"},
+"S%xx.anc_sosa.v;":{"fn":"%xx.first_name","sn":"%xx.surname","oc":"%xx.occ","dates":'%xx.dates;'},
 %end;
 %define;somebody_fanchart_same(xx)
 "S%xx.anc_sosa.v;":{"fn":"=","sn":"%xx.same","oc":"","dates":""},
 %end;
 
 <body>
-<svg id="fanchart" viewBox="0 0 1400 950" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg>
+<svg id="fanchart" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg>
 </body>
 
 <script>
 var link_to_person = "%prefix;";
-var link_to_fanchart = "%prefix;m=A&t=FC&v=8&";
+var link_to_fanchart = "%prefix;m=A&t=FC&v=10&";
+var max_gen = %evar.v;;
 
 var ancestor = {
 %foreach;ancestor_level(evar.v)

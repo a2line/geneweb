@@ -1,5 +1,10 @@
 @namespace svgns url(http://www.w3.org/2000/svg);
 
+body {
+  margin: 0;
+  padding: 0;
+}
+
 svgns|a {
   cursor: pointer;
 }
