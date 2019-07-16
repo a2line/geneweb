@@ -47,3 +47,36 @@ circle:hover, path:hover {
  font-size: 100%;
  fill: transparent;
 }
+
+#places, svg {
+ position: absolute;
+ left: 0;
+ top: 0;
+}
+#buttons {
+ position: absolute;
+ right: 0;
+ top: 0;
+ z-index: 1;
+ background-color: white;
+}
+#places {
+ z-index: 1;
+}
+#places>ul {
+ list-style: none;
+ margin: 0;
+ margin-left: 5px;
+ margin-top: 5px;
+ padding: 0;
+}
+#places>ul>li {
+ font-size: 70%;
+}
+.button {
+ font-size: 100%;
+}
+.button:hover {
+ color: #844404;
+ cursor: pointer;
+}

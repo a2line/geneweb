@@ -1,4 +1,6 @@
 var fanchart = document.getElementById( "fanchart" );
+var places_list = document.getElementById( "places_list" );
+var refresh = document.getElementById( "refresh" );
 
 function pos_x( r, a ) {
 	return center_x + r * Math.cos( Math.PI / 180 * a );
@@ -29,6 +31,14 @@ function pie( id, r1, r2, a1, a2, p ) {
 		' Z'
 	);
 	path.setAttribute( "id", id );
+	var c = "";
+	if( p.birth_place !== undefined && p.birth_place != "" ) {
+		c += " "+lieux[p.birth_place].c;
+	}
+	if( p.death_place !== undefined && p.death_place != "" ) {
+		c += " "+lieux[p.death_place].c;
+	}
+	path.setAttribute( "class", c );
 	a.append(path);
 
 	if( p.fn == "=" ) {
@@ -52,6 +62,14 @@ function circle( id, r, cx, cy, p ) {
 	circle.setAttribute( "cy", cy );
 	circle.setAttribute( "r", r );
 	circle.setAttribute( "id", id );
+	var c = "";
+	if( p.birth_place !== undefined && p.birth_place != "" ) {
+		c += " "+lieux[p.birth_place].c;
+	}
+	if( p.death_place !== undefined && p.death_place != "" ) {
+		c += " "+lieux[p.death_place].c;
+	}
+	circle.setAttribute( "class", c );
 	a.append(circle);
 }
 function text_S1( x, y, p ) {
@@ -117,7 +135,7 @@ function link( pid, p, l ) {
 	}
 
 	var a = document.createElementNS( "http://www.w3.org/2000/svg", "a" );
-	a.setAttributeNS( "http://www.w3.org/1999/xlink", "href", link_to_fanchart + "p=" + p.fn + "&n=" + p.sn + "&oc=" + p.oc );
+	a.setAttributeNS( "http://www.w3.org/1999/xlink", "href", link_to_fanchart + "v=" + max_gen + "&p=" + p.fn + "&n=" + p.sn + "&oc=" + p.oc );
 	fanchart.append(a);
 
 	var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -244,7 +262,7 @@ fanchart.onmousemove = function(e) {
 
 const d_all = 220;
 //const a_r = [   50,  50,   50,   50,  100,  100,  150,  150,  150,  100 ];
-const a_r = [   50,   40,   40,   40,   70,   60,  100,  150,  130,  90 ];
+const a_r = [   50,   40,   40,   40,   70,   60,  100,  150,  130,   90 ];
 const a_m = [ "S1", "C3", "C3", "C3", "R3", "R3", "R2", "R1", "R1", "R1" ];
 
 var ak = Object.keys(ancestor)
@@ -256,7 +274,58 @@ for( var i = 0 ; i < max_gen && i < a_r.length ; i++ ) {
 }
 const center_x = max_r+5;
 const center_y = max_r+5;
-fanchart.setAttribute( "viewBox", "0 0 " + (2*max_r+10) + " " + Math.round(10+max_r*(1+Math.sin(Math.PI/180*(d_all-180)/2))) );
+
+function fitScreen() {
+	fanchart.setAttribute( "viewBox", "0 0 " + (2*max_r+10) + " " + Math.max(10+max_r+a_r[0],Math.round(10+max_r*(1+Math.sin(Math.PI/180*(d_all-180)/2)))) );
+}
+fitScreen();
+refresh.onclick = fitScreen;
+
+var lieux = {};
+ak.forEach( function(s) {
+	var p = ancestor[s];
+	if( p.birth_place !== undefined && p.birth_place != "" ) {
+		if( lieux[p.birth_place] === undefined ) {
+			lieux[p.birth_place] = { "cnt": 1 };
+		} else {
+			lieux[p.birth_place].cnt++;
+		}
+	}
+	if( p.death_place !== undefined && p.death_place != "" ) {
+		if( lieux[p.death_place] === undefined ) {
+			lieux[p.death_place] = { "cnt": 1 };
+		} else {
+			lieux[p.death_place].cnt++;
+		}
+	}
+});
+var lieux_a = [];
+for( var key in lieux ) {
+	lieux_a.push([key, lieux[key]]);
+}
+lieux_a.sort( function(e1,e2) {
+	return e2[1].cnt - e1[1].cnt
+});
+lieux_a.forEach( function( l, i ) {
+	lieux[l[0]].c = "L"+i;
+	if( i < 20 ) {
+		var li = document.createElement( "li" );
+		li.textContent = l[0];
+		li.onmouseenter = function() {
+			var a = document.getElementsByClassName( "L"+i );
+			for( var e of a ) {
+				e.classList.add( "highlight" );
+			}
+		};
+		li.onmouseleave = function() {
+			var a = document.getElementsByClassName( "L"+i );
+			for( var e of a ) {
+				e.classList.remove( "highlight" );
+			}
+		};
+		places_list.append( li );
+	}
+});
 
 var standard_height, standard_width;
 var standard = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -315,3 +384,27 @@ while( true ) {
 document.documentElement.style.overflow = 'hidden';
 fanchart.setAttribute( "width", window.innerWidth );
 fanchart.setAttribute( "height", window.innerHeight );
+
+document.getElementById("places-tools").onclick = function() {
+	document.getElementById( "places" ).classList.toggle("none");
+};
+document.getElementById("zoom-in").onclick = function() {
+	var a = fanchart.getAttribute( "viewBox" ).split(/[\s,]/);
+	var x = Number(a[0]);
+	var y = Number(a[1]);
+	var w = a[2];
+	var h = a[3];
+	h = Math.round(h/1.25);
+	w = Math.round(w/1.25);
+	fanchart.setAttribute( "viewBox", x + ' ' + y + ' ' + w + ' ' + h );
+};
+document.getElementById("zoom-out").onclick = function() {
+	var a = fanchart.getAttribute( "viewBox" ).split(/[\s,]/);
+	var x = Number(a[0]);
+	var y = Number(a[1]);
+	var w = a[2];
+	var h = a[3];
+	h = Math.round(h*1.25);
+	w = Math.round(w*1.25);
+	fanchart.setAttribute( "viewBox", x + ' ' + y + ' ' + w + ' ' + h );
+};
