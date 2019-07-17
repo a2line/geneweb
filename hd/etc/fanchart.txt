@@ -12,13 +12,14 @@
 "S%xx.anc_sosa.v;":{"fn":"=","sn":"%xx.same","oc":"","dates":""},
 %end;
 
-<body>
+<body id="body">
 <div id="places" class="none"><ul id="places_list"></ul></div>
 <div id="buttons">
 <span id="refresh" class="button" title="Ajuster à la fenêtre">&#x21bb;</span><br>
-<span id="zoom-in" class="button" title="Zoomer">&#xff0b;</span><br>
-<span id="zoom-out" class="button" title="Dézoomer">&#xff0d;</span><br>
-<span id="places-tools" class="button" title="Afficher boîte de colorisation des lieux">&#x1f310;</span>
+<span id="zoom-in" class="button" title="Zoomer">&#x1f50e;</span><br>
+<span id="zoom-out" class="button" title="Dézoomer">&#x1f50d;</span><br>
+<span id="places-tools" class="button" title="Afficher/masquer boîte de colorisation des lieux">&#x1f310;</span><br>
+<span id="places-colors" class="button" title="Activer/désactiver colorisation globale des lieux">&#x1f3a8;</span>
 </div>
 <svg id="fanchart" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg>
 </body>

@@ -1,5 +1,49 @@
 @namespace svgns url(http://www.w3.org/2000/svg);
 
+body.place_color .L0 {fill-opacity: 0.3; fill: lime;}
+body.place_color .L1 {fill-opacity: 0.3; fill: blue;}
+body.place_color .L2 {fill-opacity: 0.3; fill: yellow;}
+body.place_color .L3 {fill-opacity: 0.3; fill: deeppink;}
+body.place_color .L4 {fill-opacity: 0.3; fill: orchid;}
+body.place_color .L5 {fill-opacity: 0.3; fill: magenta;}
+body.place_color .L6 {fill-opacity: 0.3; fill: aquamarine;}
+body.place_color .L7 {fill-opacity: 0.3; fill: lavender;}
+body.place_color .L8 {fill-opacity: 0.3; fill: bisque;}
+body.place_color .L9 {fill-opacity: 0.3; fill: turquoise;}
+body.place_color .L10 {fill-opacity: 0.3; fill: palegreen;}
+body.place_color .L11 {fill-opacity: 0.3; fill: khaki;}
+body.place_color .L12 {fill-opacity: 0.3; fill: gold;}
+body.place_color .L13 {fill-opacity: 0.3; fill: orange;}
+body.place_color .L14 {fill-opacity: 0.3; fill: deepskyblue;}
+body.place_color .L15 {fill-opacity: 0.3; fill: sandybrown;}
+body.place_color .L16 {fill-opacity: 0.3; fill: red;}
+body.place_color .L17 {fill-opacity: 0.3; fill: orange;}
+body.place_color .L18 {fill-opacity: 0.3; fill: black;}
+body.place_color .L19 {fill-opacity: 0.3; fill: grey;}
+body.place_color .L20 {fill-opacity: 0.3; fill: darkkhaki;}
+
+body.place_color #L0 { color: lime; }
+body.place_color #L1 { color: blue; }
+body.place_color #L2 { color: yellow; }
+body.place_color #L3 { color: deeppink; }
+body.place_color #L4 { color: orchid; }
+body.place_color #L5 { color: magenta; }
+body.place_color #L6 { color: aquamarine; }
+body.place_color #L7 { color: lavender; }
+body.place_color #L8 { color: bisque; }
+body.place_color #L9 { color: turquoise; }
+body.place_color #L10 { color: palegreen; }
+body.place_color #L11 { color: khaki; }
+body.place_color #L12 { color: gold; }
+body.place_color #L13 { color: orange; }
+body.place_color #L14 { color: deepskyblue; }
+body.place_color #L15 { color: sandybrown; }
+body.place_color #L16 { color: red; }
+body.place_color #L17 { color: orange; }
+body.place_color #L18 { color: black; }
+body.place_color #L19 { color: grey; }
+body.place_color #L20 { color: darkkhaki; }
+
 body {
   margin: 0;
   padding: 0;
@@ -37,6 +81,12 @@ text {
  fill: coral;
  fill-opacity: 0.5;
 }
+.hl_b {
+ color: coral;
+}
+.hl_d {
+ color: orchid;
+}
 
 circle:hover, path:hover {
  fill: lightgrey;
@@ -62,6 +112,8 @@ circle:hover, path:hover {
 }
 #places {
  z-index: 1;
+ overflow: scroll;
+ height: 100%;
 }
 #places>ul {
  list-style: none;
