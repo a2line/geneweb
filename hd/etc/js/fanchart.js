@@ -1,6 +1,5 @@
 var fanchart = document.getElementById( "fanchart" );
 var places_list = document.getElementById( "places_list" );
-var refresh = document.getElementById( "refresh" );
 
 function pos_x( r, a ) {
 	return center_x + r * Math.cos( Math.PI / 180 * a );
@@ -18,7 +17,9 @@ function pie( id, r1, r2, a1, a2, p ) {
 		a = fanchart;
 	} else {
 		a = document.createElementNS( "http://www.w3.org/2000/svg", "a" );
-		a.setAttributeNS( "http://www.w3.org/1999/xlink", "href", link_to_person + "p=" + p.fn + "&n=" + p.sn + "&oc=" + p.oc );
+		var oc = p.oc;
+		if( oc != "" && oc != 0 ) { oc = "&oc=" + oc } else { oc = "" }
+		a.setAttributeNS( "http://www.w3.org/1999/xlink", "href", link_to_person + "p=" + p.fnk + "&n=" + p.snk + oc );
 		fanchart.append(a);
 	}
 
@@ -39,7 +40,6 @@ function pie( id, r1, r2, a1, a2, p ) {
 		c += " "+lieux[p.death_place].c;
 	}
 	if( p.death_age !== undefined && p.death_age != "" ) {
-console.log( p.death_age );
 		c += " DA"+(Math.trunc(p.death_age/10)*10);
 	}
 	path.setAttribute( "class", c );
@@ -51,6 +51,10 @@ console.log( p.death_age );
 		if( p.birth_place !== undefined && p.death_place != "" ) {
 			document.getElementById( lieux[p.death_place].c ).classList.add("hl_d");
 		}
+		if( p.death_age !== undefined && p.death_age != "" ) {
+			var c = "DA"+(Math.trunc(p.death_age/10)*10);
+			document.getElementById( c ).classList.add("hl_b");
+		}
 	};
 	path.onmouseleave = function() {
 		if( p.birth_place !== undefined && p.birth_place != "" ) {
@@ -58,6 +62,10 @@ console.log( p.death_age );
 		}
 		if( p.birth_place !== undefined && p.death_place != "" ) {
 			document.getElementById( lieux[p.death_place].c ).classList.remove("hl_d");
+		}
+		if( p.death_age !== undefined && p.death_age != "" ) {
+			var c = "DA"+(Math.trunc(p.death_age/10)*10);
+			document.getElementById( c ).classList.remove("hl_b");
 		}
 	};
 
@@ -102,7 +110,9 @@ function pie_m( id, r1, r2, a1, a2, p ) {
 }
 function circle( id, r, cx, cy, p ) {
 	var a = document.createElementNS( "http://www.w3.org/2000/svg", "a" );
-	a.setAttributeNS( "http://www.w3.org/1999/xlink", "href", link_to_person + "p=" + p.fn + "&n=" + p.sn + "&oc=" + p.oc );
+	var oc = p.oc;
+	if( oc != "" && oc != 0 ) { oc = "&oc=" + oc } else { oc = "" }
+	a.setAttributeNS( "http://www.w3.org/1999/xlink", "href", link_to_person + "p=" + p.fnk + "&n=" + p.snk + oc );
 	fanchart.append(a);
 
 	var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -129,6 +139,10 @@ function circle( id, r, cx, cy, p ) {
 		if( p.birth_place !== undefined && p.death_place != "" ) {
 			document.getElementById( lieux[p.death_place].c ).classList.add("hl_d");
 		}
+		if( p.death_age !== undefined && p.death_age != "" ) {
+			var c = "DA"+(Math.trunc(p.death_age/10)*10);
+			document.getElementById( c ).classList.add("hl_b");
+		}
 	};
 	circle.onmouseleave = function() {
 		if( p.birth_place !== undefined && p.birth_place != "" ) {
@@ -136,6 +150,10 @@ function circle( id, r, cx, cy, p ) {
 		}
 		if( p.birth_place !== undefined && p.death_place != "" ) {
 			document.getElementById( lieux[p.death_place].c ).classList.remove("hl_d");
+		}
+		if( p.death_age !== undefined && p.death_age != "" ) {
+			var c = "DA"+(Math.trunc(p.death_age/10)*10);
+			document.getElementById( c ).classList.remove("hl_b");
 		}
 	};
 }
@@ -205,7 +223,9 @@ function link( pid, p, l ) {
 	}
 
 	var a = document.createElementNS( "http://www.w3.org/2000/svg", "a" );
-	a.setAttributeNS( "http://www.w3.org/1999/xlink", "href", link_to_fanchart + "v=" + max_gen + "&p=" + p.fn + "&n=" + p.sn + "&oc=" + p.oc );
+	var oc = p.oc;
+	if( oc != "" && oc != 0 ) { oc = "&oc=" + oc } else { oc = "" }
+	a.setAttributeNS( "http://www.w3.org/1999/xlink", "href", link_to_fanchart + "p=" + p.fnk + "&n=" + p.snk + oc + "&v=" + max_gen );
 	fanchart.append(a);
 
 	var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -281,30 +301,30 @@ function text_R1( r1, r2, a1, a2, sosa, p ) {
 	text2( "tp1S"+sosa, p.fn + ' ' + p.sn, "", l, h );
 }
 
-fanchart.onwheel = function( event ) {
-console.log( "AVANT", fanchart.getAttribute( "viewBox" ) );
-console.log( event.clientX, event.clientY );
+function zoom (x, y, factor, direction) {
+  //console.log( "AVANT", fanchart.getAttribute( "viewBox" ) );
+  //console.log( event.clientX, event.clientY );
 	var a = fanchart.getAttribute( "viewBox" ).split(/[\s,]/);
 	var x = Number(a[0]);
 	var y = Number(a[1]);
 	var w = a[2];
 	var h = a[3];
-	if( event.deltaY < 0 ) {
-		// Zoom in
-		h = Math.round(h/1.25);
-		w = Math.round(w/1.25);
-		x += Math.round( event.clientX * 0.25 );
-		y += Math.round( event.clientY * 0.25 );
+	if( direction > 0 ) {
+		h = Math.round(h/factor);
+		w = Math.round(w/factor);
 	} else {
-		// Zoom out
-		h = Math.round(h*1.25);
-		w = Math.round(w*1.25);
-		x -= Math.round( event.clientX * 0.25 );
-		y -= Math.round( event.clientY * 0.25 );
+		h = Math.round(h*factor);
+		w = Math.round(w*factor);
 	}
+	x += direction * Math.round( event.clientX * (factor-1) );
+	y += direction * Math.round( event.clientY * (factor-1) );
 	fanchart.setAttribute( "viewBox", x + ' ' + y + ' ' + w + ' ' + h );
-console.log( "APRES", fanchart.getAttribute( "viewBox" ) );
-};
+  //console.log( "APRES", fanchart.getAttribute( "viewBox" ) );
+}
+
+fanchart.addEventListener( "wheel", function( event ) {
+	zoom( event.clientX, event.clientY, zoom_factor, (event.deltaY < 0 ? +1 : -1) );
+}, { passive: false });
 
 var drag_state = false;
 fanchart.onmousedown = function(e) {
@@ -331,6 +351,7 @@ fanchart.onmousemove = function(e) {
 };
 
 const security = 0.95;
+const zoom_factor = 1.25;
 const d_all = 220;
 //const a_r = [   50,  50,   50,   50,  100,  100,  150,  150,  150,  100 ];
 //const a_r = [   50,   40,   40,   40,   70,   60,  100,  150,  130,   90 ];
@@ -351,7 +372,6 @@ function fitScreen() {
 	fanchart.setAttribute( "viewBox", "0 0 " + (2*max_r+10) + " " + Math.max(10+max_r+a_r[0],Math.round(10+max_r*(1+Math.sin(Math.PI/180*(d_all-180)/2)))) );
 }
 fitScreen();
-refresh.onclick = fitScreen;
 
 var lieux = {};
 ak.forEach( function(s) {
@@ -390,24 +410,24 @@ lieux_a.sort( function(e1,e2) {
 });
 lieux_a.forEach( function( l, i ) {
 	lieux[l[0]].c = "L"+i;
-	//if( i < 20 ) {
-		var li = document.createElement( "li" );
-		li.textContent = l[0] + ' (' + lieux[l[0]].cnt + ")";
-		li.setAttribute( "id", "L"+i );
-		li.onmouseenter = function() {
-			var a = document.getElementsByClassName( "L"+i );
-			for( var e of a ) {
-				e.classList.add( "highlight" );
-			}
-		};
-		li.onmouseleave = function() {
-			var a = document.getElementsByClassName( "L"+i );
-			for( var e of a ) {
-				e.classList.remove( "highlight" );
-			}
-		};
-		places_list.append( li );
-	//}
+	var li = document.createElement( "li" );
+	li.innerHTML = '<span class="L'+i+'">■</span><span id="L'+i+'">' + l[0] + '</span> (' + lieux[l[0]].cnt + ')';
+	if( i >= 20 ) {
+		li.setAttribute( "class", "P20" );
+	}
+	li.onmouseenter = function() {
+		var a = document.getElementsByClassName( "L"+i );
+		for( var e of a ) {
+			e.classList.add( "highlight" );
+		}
+	};
+	li.onmouseleave = function() {
+		var a = document.getElementsByClassName( "L"+i );
+		for( var e of a ) {
+			e.classList.remove( "highlight" );
+		}
+	};
+	places_list.append( li );
 });
 
 var standard_height, standard_width;
@@ -467,7 +487,7 @@ while( true ) {
 			pie_m( "mS"+sosa, r1, r1+10, a1, a2+delta, ancestor["S"+sosa] );
 		}
 		pie( "S"+sosa, r1+10, r2, a1, a2, ancestor["S"+sosa] );
-		up( r1+10+4, a1, a2, sosa, ancestor["S"+sosa] );
+		up( r1+10, a1, a2, sosa, ancestor["S"+sosa] );
 	}
 }
 
@@ -475,32 +495,36 @@ document.documentElement.style.overflow = 'hidden';
 fanchart.setAttribute( "width", window.innerWidth );
 fanchart.setAttribute( "height", window.innerHeight );
 
-document.getElementById("places-tools").onclick = function() {
-	document.getElementById( "places" ).classList.toggle("none");
+// Tools
+document.getElementById("b-refresh").onclick = fitScreen;
+document.getElementById("b-zoom-in").onclick = function() {
+	zoom( 0, 0, zoom_factor, +1 );
 };
-document.getElementById("death-age").onclick = function() {
-	document.getElementById( "body" ).classList.toggle("death-age");
+document.getElementById("b-zoom-out").onclick = function() {
+	zoom( 0, 0, zoom_factor, -1 );
 };
-document.getElementById("places-colors").onclick = function() {
-	document.getElementById( "body" ).classList.toggle("place_color");
+document.getElementById("b-places-hl").onclick = function() {
+	document.body.className = "places-list place_hl";
+	tool = "place_hl";
 };
-document.getElementById("zoom-in").onclick = function() {
-	var a = fanchart.getAttribute( "viewBox" ).split(/[\s,]/);
-	var x = Number(a[0]);
-	var y = Number(a[1]);
-	var w = a[2];
-	var h = a[3];
-	h = Math.round(h/1.25);
-	w = Math.round(w/1.25);
-	fanchart.setAttribute( "viewBox", x + ' ' + y + ' ' + w + ' ' + h );
+document.getElementById("b-places-colorise").onclick = function() {
+	document.body.className = "places-list place_color";
+	tool = "place_color";
 };
-document.getElementById("zoom-out").onclick = function() {
-	var a = fanchart.getAttribute( "viewBox" ).split(/[\s,]/);
-	var x = Number(a[0]);
-	var y = Number(a[1]);
-	var w = a[2];
-	var h = a[3];
-	h = Math.round(h*1.25);
-	w = Math.round(w*1.25);
-	fanchart.setAttribute( "viewBox", x + ' ' + y + ' ' + w + ' ' + h );
+document.getElementById("b-death-age").onclick = function() {
+	document.body.className = "death-age";
+	tool = "death-age";
 };
+document.getElementById("b-no-tool").onclick = function() {
+	document.body.className = "";
+	tool = "";
+};
+
+// Initial state for tools
+if( tool == "place_hl" ) {
+	document.body.className = "places-list place_hl";
+} else if( tool == "place_color" ) {
+	document.body.className = "places-list place_color";
+} else if( tool == "death-age" ) {
+	document.body.className = "death-age";
+}
