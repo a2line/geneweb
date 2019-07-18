@@ -25,9 +25,9 @@ function pie( id, r1, r2, a1, a2, p ) {
 	var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
 	path.setAttribute( "d",
 		 'M ' + pos_x(r2, a1) + ',' + pos_y(r2, a1) +
-		' A ' + r2 + ' ' + r2 + ' 0 0 1 ' + pos_x(r2, a2) + ',' + pos_y(r2, a2) +
+		' A ' + r2 + ' ' + r2 + ' 0 ' + (a2 - a1 > 180 ? 1 : 0) + ' 1 ' + pos_x(r2, a2) + ',' + pos_y(r2, a2) +
 		' L ' + pos_x(r1, a2) + ',' + pos_y(r1, a2) +
-		' A ' + r1 + ' ' + r1 + ' 0 0 0 ' + pos_x(r1, a1) + ',' + pos_y(r1, a1) +
+		' A ' + r1 + ' ' + r1 + ' 0 ' + (a2 - a1 > 180 ? 1 : 0) + ' 0 ' + pos_x(r1, a1) + ',' + pos_y(r1, a1) +
 		' Z'
 	);
 	path.setAttribute( "id", id );
@@ -67,6 +67,34 @@ function pie( id, r1, r2, a1, a2, p ) {
 			ref.classList.remove( "highlight" );
 		});
 	}
+}
+function pie_m( id, r1, r2, a1, a2, p ) {
+	var a;
+	var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+	path.setAttribute( "d",
+		 'M ' + pos_x(r2, a1) + ',' + pos_y(r2, a1) +
+		' A ' + r2 + ' ' + r2 + ' 0 ' + (a2 - a1 > 180 ? 1 : 0) + ' 1 ' + pos_x(r2, a2) + ',' + pos_y(r2, a2) +
+		' L ' + pos_x(r1, a2) + ',' + pos_y(r1, a2) +
+		' A ' + r1 + ' ' + r1 + ' 0 ' + (a2 - a1 > 180 ? 1 : 0) + ' 0 ' + pos_x(r1, a1) + ',' + pos_y(r1, a1) +
+		' Z'
+	);
+	path.setAttribute( "id", id );
+	var c = "";
+	if( p.marriage_place !== undefined && p.marriage_place != "" ) {
+		c += " "+lieux[p.marriage_place].c;
+	}
+	path.setAttribute( "class", c );
+	fanchart.append(path);
+	path.onmouseenter = function() {
+		if( p.marriage_place !== undefined && p.marriage_place != "" ) {
+			document.getElementById( lieux[p.birth_marriage].c ).classList.add("hl_m");
+		}
+	};
+	path.onmouseleave = function() {
+		if( p.marriage_place !== undefined && p.marriage_place != "" ) {
+			document.getElementById( lieux[p.marriage_place].c ).classList.remove("hl_m");
+		}
+	};
 }
 function circle( id, r, cx, cy, p ) {
 	var a = document.createElementNS( "http://www.w3.org/2000/svg", "a" );
@@ -128,7 +156,7 @@ function path1( id, r, a1, a2 ) {
 	path.setAttribute( "class", "none" );
 	path.setAttribute( "d",
 		 'M ' + pos_x(r, a1) + ',' + pos_y(r, a1) +
-		' A ' + r + ' ' + r + ' 0 0 1 ' + pos_x(r, a2) + ',' + pos_y(r, a2)
+		' A ' + r + ' ' + r + ' 0 ' + (a2 - a1 > 180 ? 1 : 0) + ' 1 ' + pos_x(r, a2) + ',' + pos_y(r, a2)
 	);
 	path.setAttribute( "id", id );
 	fanchart.append(path);
@@ -298,7 +326,8 @@ fanchart.onmousemove = function(e) {
 const security = 0.95;
 const d_all = 220;
 //const a_r = [   50,  50,   50,   50,  100,  100,  150,  150,  150,  100 ];
-const a_r = [   50,   40,   40,   40,   70,   60,  100,  150,  130,   90 ];
+//const a_r = [   50,   40,   40,   40,   70,   60,  100,  150,  130,   90 ];
+const a_r = [   50,   50,   50,   50,   80,   70,  100,  150,  130,   90 ];
 const a_m = [ "S1", "C3", "C3", "C3", "R3", "R3", "R2", "R1", "R1", "R1" ];
 
 var ak = Object.keys(ancestor)
@@ -332,6 +361,13 @@ ak.forEach( function(s) {
 			lieux[p.death_place] = { "cnt": 1 };
 		} else {
 			lieux[p.death_place].cnt++;
+		}
+	}
+	if( p.marriage_place !== undefined && p.marriage_place != "" ) {
+		if( lieux[p.marriage_place] === undefined ) {
+			lieux[p.marriage_place] = { "cnt": 1 };
+		} else {
+			lieux[p.marriage_place].cnt++;
 		}
 	}
 });
@@ -405,16 +441,23 @@ while( true ) {
 	if( ancestor["S"+sosa] !== undefined ) {
 		ancestor["S"+sosa].dates = ancestor["S"+sosa].dates.replace( /\s?<\/?bdo[^>]*>/g, "" );
 		if( a_m[gen-1] == "C3" ) {
-			text_C3( r1, r2, a1, a2, sosa, ancestor["S"+sosa] );
+			text_C3( r1+10, r2, a1, a2, sosa, ancestor["S"+sosa] );
 		} else if( a_m[gen-1] == "R3" ) {
-			text_R3( r1, r2, a1, a2, sosa, ancestor["S"+sosa] );
+			text_R3( r1+10, r2, a1, a2, sosa, ancestor["S"+sosa] );
 		} else if( a_m[gen-1] == "R2" ) {
-			text_R2( r1, r2, a1, a2, sosa, ancestor["S"+sosa] );
+			text_R2( r1+10, r2, a1, a2, sosa, ancestor["S"+sosa] );
 		} else if( a_m[gen-1] == "R1" ) {
-			text_R1( r1, r2, a1, a2, sosa, ancestor["S"+sosa] );
+			text_R1( r1+10, r2, a1, a2, sosa, ancestor["S"+sosa] );
 		}
-		pie( "S"+sosa, r1, r2, a1, a2, ancestor["S"+sosa] );
-		up( r1+4, a1, a2, sosa, ancestor["S"+sosa] );
+		if( sosa % 2 == 0 ) {
+			if( ancestor["S"+sosa].marriage_date !== undefined ) {
+				var l = path1( "pmS"+sosa, r1+2, a1, a2+delta );
+				text2( "pmS"+sosa, ancestor["S"+sosa].marriage_date, "", l, 8 );
+			}
+			pie_m( "mS"+sosa, r1, r1+10, a1, a2+delta, ancestor["S"+sosa] );
+		}
+		pie( "S"+sosa, r1+10, r2, a1, a2, ancestor["S"+sosa] );
+		up( r1+10+4, a1, a2, sosa, ancestor["S"+sosa] );
 	}
 }
 

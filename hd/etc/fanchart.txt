@@ -6,7 +6,15 @@
 </head>
 
 %define;somebody_fanchart_info(xx)
-"S%xx.anc_sosa.v;":{"fn":"%xx.first_name","sn":"%xx.surname","oc":"%xx.occ","dates":'%xx.dates;',"birth_place":"%xx.birth_place;","death_place":"%xx.death_place"},
+"S%xx.anc_sosa.v;":{"fn":"%xx.first_name","sn":"%xx.surname","oc":"%xx.occ","dates":'%xx.dates;',"birth_place":"%xx.birth_place;","death_place":"%xx.death_place"
+  %if;xx.is_male;
+    %foreach;ancestor.family;
+      %if;(family.index = ancestor.family.index)
+        ,"marriage_date":"%marriage_date.year","marriage_place":"%marriage_place"
+      %end;
+    %end;
+  %end;
+},
 %end;
 %define;somebody_fanchart_same(xx)
 "S%xx.anc_sosa.v;":{"fn":"=","sn":"%xx.same","oc":"","dates":""},
