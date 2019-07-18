@@ -44,6 +44,20 @@ body.place_color #L18 { color: black; }
 body.place_color #L19 { color: grey; }
 body.place_color #L20 { color: darkkhaki; }
 
+body.death-age .DA0 { fill-opacity: 0.3; fill: rgb(0, 0, 0)}
+body.death-age .DA10 { fill-opacity: 0.3; fill: rgb(30, 0, 0)}
+body.death-age .DA20 { fill-opacity: 0.3; fill: rgb(50, 0, 0)}
+body.death-age .DA30 { fill-opacity: 0.3; fill: rgb(70, 0, 0)}
+body.death-age .DA40 { fill-opacity: 0.3; fill: rgb(90, 0, 0)}
+body.death-age .DA50 { fill-opacity: 0.3; fill: rgb(110, 0, 0)}
+body.death-age .DA60 { fill-opacity: 0.3; fill: rgb(130, 0, 0)}
+body.death-age .DA70 { fill-opacity: 0.3; fill: rgb(150, 0, 0)}
+body.death-age .DA80 { fill-opacity: 0.3; fill: rgb(170, 0, 0)}
+body.death-age .DA90 { fill-opacity: 0.3; fill: rgb(190, 0, 0)}
+body.death-age .DA100 { fill-opacity: 0.3; fill: rgb(210, 0, 0)}
+body.death-age .DA110 { fill-opacity: 0.3; fill: rgb(230, 0, 0)}
+body.death-age .DA120 { fill-opacity: 0.3; fill: rgb(250, 0, 0)}
+
 body {
   margin: 0;
   padding: 0;

@@ -38,6 +38,10 @@ function pie( id, r1, r2, a1, a2, p ) {
 	if( p.death_place !== undefined && p.death_place != "" ) {
 		c += " "+lieux[p.death_place].c;
 	}
+	if( p.death_age !== undefined && p.death_age != "" ) {
+console.log( p.death_age );
+		c += " DA"+(Math.trunc(p.death_age/10)*10);
+	}
 	path.setAttribute( "class", c );
 	a.append(path);
 	path.onmouseenter = function() {
@@ -87,7 +91,7 @@ function pie_m( id, r1, r2, a1, a2, p ) {
 	fanchart.append(path);
 	path.onmouseenter = function() {
 		if( p.marriage_place !== undefined && p.marriage_place != "" ) {
-			document.getElementById( lieux[p.birth_marriage].c ).classList.add("hl_m");
+			document.getElementById( lieux[p.marriage_place].c ).classList.add("hl_m");
 		}
 	};
 	path.onmouseleave = function() {
@@ -112,6 +116,9 @@ function circle( id, r, cx, cy, p ) {
 	}
 	if( p.death_place !== undefined && p.death_place != "" ) {
 		c += " "+lieux[p.death_place].c;
+	}
+	if( p.death_age !== undefined && p.death_age != "" ) {
+		c += " DA"+(Math.trunc(p.death_age/10)*10);
 	}
 	circle.setAttribute( "class", c );
 	a.append(circle);
@@ -370,6 +377,9 @@ ak.forEach( function(s) {
 			lieux[p.marriage_place].cnt++;
 		}
 	}
+	if( p.death_age !== undefined ) {
+		ancestor[s].death_age = p.death_age.replace( /[^0123456789]/g, "" );
+	}
 });
 var lieux_a = [];
 for( var key in lieux ) {
@@ -467,6 +477,9 @@ fanchart.setAttribute( "height", window.innerHeight );
 
 document.getElementById("places-tools").onclick = function() {
 	document.getElementById( "places" ).classList.toggle("none");
+};
+document.getElementById("death-age").onclick = function() {
+	document.getElementById( "body" ).classList.toggle("death-age");
 };
 document.getElementById("places-colors").onclick = function() {
 	document.getElementById( "body" ).classList.toggle("place_color");

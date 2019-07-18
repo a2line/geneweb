@@ -6,7 +6,7 @@
 </head>
 
 %define;somebody_fanchart_info(xx)
-"S%xx.anc_sosa.v;":{"fn":"%xx.first_name","sn":"%xx.surname","oc":"%xx.occ","dates":'%xx.dates;',"birth_place":"%xx.birth_place;","death_place":"%xx.death_place"
+"S%xx.anc_sosa.v;":{"fn":"%xx.first_name","sn":"%xx.surname","oc":"%xx.occ","dates":'%xx.dates;',"birth_place":"%xx.birth_place;","death_place":"%xx.death_place","death_age":"%xx.death_age"
   %if;xx.is_male;
     %foreach;ancestor.family;
       %if;(family.index = ancestor.family.index)
@@ -27,7 +27,8 @@
 <span id="zoom-in" class="button" title="Zoomer">&#x1f50e;</span><br>
 <span id="zoom-out" class="button" title="Dézoomer">&#x1f50d;</span><br>
 <span id="places-tools" class="button" title="Afficher/masquer boîte de colorisation des lieux">&#x1f310;</span><br>
-<span id="places-colors" class="button" title="Activer/désactiver colorisation globale des lieux">&#x1f3a8;</span>
+<span id="places-colors" class="button" title="Activer/désactiver colorisation globale des lieux">&#x1f3a8;</span><br>
+<span id="death-age" class="button" title="Activer/désactiver la colorisation de l'âge de décès">&#x271d;</span><br>
 </div>
 <svg id="fanchart" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg>
 </body>
