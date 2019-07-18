@@ -79,6 +79,9 @@ text {
  fill: black;
  text-anchor: middle;
 }
+textPath {
+ dominant-baseline: central;
+}
 .dates { font-size: 80%; }
 .none {
  display: none;

@@ -216,11 +216,11 @@ function link( pid, p, l ) {
 function text_C3( r1, r2, a1, a2, sosa, p ) {
 	var l, h;
 	h = Math.abs(r2-r1)/3;
-	l = path1( "tp1S"+sosa, (r2-r1)*2/3 + r1, a1, a2 );
+	l = path1( "tp1S"+sosa, (r2-r1)*3/4 + r1, a1, a2 );
 	text2( "tp1S"+sosa, p.fn, "", l, h );
-	l = path1( "tp2S"+sosa, (r2-r1)/3 + r1, a1, a2 );
+	l = path1( "tp2S"+sosa, (r2-r1)*2/4 + r1, a1, a2 );
 	text2( "tp2S"+sosa, p.sn, "", l, h );
-	l = path1( "tp3S"+sosa, r1+2, a1, a2 );
+	l = path1( "tp3S"+sosa, (r2-r1)/4 + r1, a1, a2 );
 	text2( "tp3S"+sosa, p.dates, "dates", l, h );
 }
 function text_R3( r1, r2, a1, a2, sosa, p ) {
@@ -228,15 +228,15 @@ function text_R3( r1, r2, a1, a2, sosa, p ) {
 	if( a1 >= -90 ) {
 		my_r1 = r1;
 		my_r2 = r2;
-		my_a3 = a2 - (a2-a1)/12;
-		my_a2 = a2 - (a2-a1)*5/12;
-		my_a1 = a2 - (a2-a1)*9/12;
+		my_a3 = a2 - (a2-a1)/4;
+		my_a2 = a2 - (a2-a1)*2/4;
+		my_a1 = a2 - (a2-a1)*3/4;
 	} else {
 		my_r1 = r2;
 		my_r2 = r1;
-		my_a3 = a1 + (a2-a1)/12;
-		my_a2 = a1 + (a2-a1)*5/12;
-		my_a1 = a1 + (a2-a1)*9/12;
+		my_a3 = a1 + (a2-a1)/4;
+		my_a2 = a1 + (a2-a1)*2/4;
+		my_a1 = a1 + (a2-a1)*3/4;
 	}
 	h = Math.abs(a2-a1)/360*2*Math.PI*r1 / 3;
 	l = path2( "tp1S"+sosa, my_r1, my_r2, my_a1 );
@@ -251,13 +251,13 @@ function text_R2( r1, r2, a1, a2, sosa, p ) {
 	if( a1 >= -90 ) {
 		my_r1 = r1;
 		my_r2 = r2;
-		my_a2 = a2 - 0.5;
-		my_a1 = a2 - (a2-a1)*6/12;
+		my_a2 = a2 - (a2-a1)/3;
+		my_a1 = a2 - (a2-a1)*2/3;
 	} else {
 		my_r1 = r2;
 		my_r2 = r1;
-		my_a2 = a1 + 0.5;
-		my_a1 = a1 + (a2-a1)*6/12;
+		my_a2 = a1 + (a2-a1)/3
+		my_a1 = a1 + (a2-a1)*2/3;
 	}
 	h = Math.abs(a2-a1)/360*2*Math.PI*r1 / 2;
 	l = path2( "tp1S"+sosa, my_r1, my_r2, my_a1 );
@@ -270,11 +270,11 @@ function text_R1( r1, r2, a1, a2, sosa, p ) {
 	if( a1 >= -90 ) {
 		my_r1 = r1;
 		my_r2 = r2;
-		my_a1 = a2 - (a2-a1)/4;
+		my_a1 = a2 - (a2-a1)/2;
 	} else {
 		my_r1 = r2;
 		my_r2 = r1;
-		my_a1 = a1 + (a2-a1)/4;
+		my_a1 = a1 + (a2-a1)/2;
 	}
 	h = Math.abs(a2-a1)/360*2*Math.PI*r1;
 	l = path2( "tp1S"+sosa, my_r1, my_r2, my_a1 );
@@ -461,8 +461,8 @@ while( true ) {
 		}
 		if( sosa % 2 == 0 ) {
 			if( ancestor["S"+sosa].marriage_date !== undefined ) {
-				var l = path1( "pmS"+sosa, r1+2, a1, a2+delta );
-				text2( "pmS"+sosa, ancestor["S"+sosa].marriage_date, "", l, 8 );
+				var l = path1( "pmS"+sosa, r1+5, a1, a2+delta );
+				text2( "pmS"+sosa, ancestor["S"+sosa].marriage_date, "", l, 10 );
 			}
 			pie_m( "mS"+sosa, r1, r1+10, a1, a2+delta, ancestor["S"+sosa] );
 		}
