@@ -18,7 +18,7 @@
 },
 %end;
 %define;somebody_fanchart_same(xx)
-"S%xx.anc_sosa.v;":{"fn":"=","sn":"%xx.same","oc":"","dates":""},
+"S%xx.anc_sosa.v;":{"fn":"=","sn":"%xx.same","fnk":"%xx.first_name_key","snk":"%xx.surname_key;","oc":"","dates":"","has_parents":%if(xx.has_parents)true%else;false%end;},
 %end;
 
 <body id="body">

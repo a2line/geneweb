@@ -30,7 +30,7 @@ body.place_color svg .L6 {fill: #f0ead6;}
 body.place_color svg .L7 {fill: #d5ae41;}
 body.place_color svg .L8 {fill: #be9ec9;}
 body.place_color svg .L9 {fill: #f1ea7f;}
-body.place_color svg .L10 {fill: #ffaa56;}
+body.place_color svg .L10 {fill: #9393ff;}
 body.place_color svg .L11 {fill: #aaff56;}
 body.place_color svg .L12 {fill: #bcbcbe;}
 body.place_color svg .L13 {fill: #a9754f;}
@@ -52,7 +52,7 @@ body.place_color #L6 .square { color: #f0ead6; }
 body.place_color #L7 .square { color: #d5ae41; }
 body.place_color #L8 .square { color: #be9ec9; }
 body.place_color #L9 .square { color: #f1ea7f; }
-body.place_color #L10 .square { color: #ffaa56; }
+body.place_color #L10 .square { color: #9393ff; }
 body.place_color #L11 .square { color: #aaff56; }
 body.place_color #L12 .square { color: #bcbcbe; }
 body.place_color #L13 .square { color: #a9754f; }
@@ -120,13 +120,13 @@ path {
 }
 circle, path.contour {
  stroke: #A0A0A0;
- stroke-width: 1px;
+ stroke-width: 0.1%;
  fill: transparent;
 }
 path.middle {
  stroke: #A0A0A0;
  stroke-dasharray: 5px;
- stroke-width: 1px;
+ stroke-width: 0.1%;
  fill: transparent;
 }
 text {
@@ -145,6 +145,13 @@ textPath {
  fill: transparent;
 }
 .icon:hover {
+ fill: green;
+}
+
+.no-link {
+ fill: transparent;
+}
+.no-link:hover {
  fill: brown;
 }
 
