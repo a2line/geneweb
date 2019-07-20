@@ -12,17 +12,6 @@ function up( r, a1, a2, sosa, p ) {
 	link( "tpiS"+sosa, p, l );
 }
 function pie( id, r1, r2, a1, a2, p ) {
-	var a;
-	if( p.fn == "=" ) {
-		a = fanchart;
-	} else {
-		a = document.createElementNS( "http://www.w3.org/2000/svg", "a" );
-		var oc = p.oc;
-		if( oc != "" && oc != 0 ) { oc = "&oc=" + oc } else { oc = "" }
-		a.setAttributeNS( "http://www.w3.org/1999/xlink", "href", link_to_person + "p=" + p.fnk + "&n=" + p.snk + oc );
-		fanchart.append(a);
-	}
-
 	var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
 	path.setAttribute( "d",
 		 'M ' + pos_x(r2, a1) + ',' + pos_y(r2, a1) +
@@ -32,7 +21,7 @@ function pie( id, r1, r2, a1, a2, p ) {
 		' Z'
 	);
 	path.setAttribute( "id", id );
-	var c = "";
+	var c = (p.fn == "=" ? "" : "link");
 	if( p.birth_place !== undefined && p.birth_place != "" ) {
 		c += " "+lieux[p.birth_place].c;
 	}
@@ -43,13 +32,20 @@ function pie( id, r1, r2, a1, a2, p ) {
 		c += " DA"+(Math.trunc(p.death_age/10)*10);
 	}
 	path.setAttribute( "class", c );
-	a.append(path);
+	fanchart.append(path);
+	if( p.fn != "=" ) {
+		path.onclick = function() {
+			var oc = p.oc;
+			if( oc != "" && oc != 0 ) { oc = "&oc=" + oc } else { oc = "" }
+			window.location = link_to_person + "p=" + p.fnk + "&n=" + p.snk + oc
+		};
+	}
 	path.onmouseenter = function() {
 		if( p.birth_place !== undefined && p.birth_place != "" ) {
-			document.getElementById( lieux[p.birth_place].c ).classList.add("hl_b");
+			document.getElementById( "bi-" + lieux[p.birth_place].c ).classList.remove("hidden");
 		}
-		if( p.birth_place !== undefined && p.death_place != "" ) {
-			document.getElementById( lieux[p.death_place].c ).classList.add("hl_d");
+		if( p.death_place !== undefined && p.death_place != "" ) {
+			document.getElementById( "de-" + lieux[p.death_place].c ).classList.remove("hidden");
 		}
 		if( p.death_age !== undefined && p.death_age != "" ) {
 			var c = "DA"+(Math.trunc(p.death_age/10)*10);
@@ -58,10 +54,10 @@ function pie( id, r1, r2, a1, a2, p ) {
 	};
 	path.onmouseleave = function() {
 		if( p.birth_place !== undefined && p.birth_place != "" ) {
-			document.getElementById( lieux[p.birth_place].c ).classList.remove("hl_b");
+			document.getElementById( "bi-" + lieux[p.birth_place].c ).classList.add("hidden");
 		}
-		if( p.birth_place !== undefined && p.death_place != "" ) {
-			document.getElementById( lieux[p.death_place].c ).classList.remove("hl_d");
+		if( p.death_place !== undefined && p.death_place != "" ) {
+			document.getElementById( "de-" + lieux[p.death_place].c ).classList.add("hidden");
 		}
 		if( p.death_age !== undefined && p.death_age != "" ) {
 			var c = "DA"+(Math.trunc(p.death_age/10)*10);
@@ -81,7 +77,6 @@ function pie( id, r1, r2, a1, a2, p ) {
 	}
 }
 function pie_m( id, r1, r2, a1, a2, p ) {
-	var a;
 	var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
 	path.setAttribute( "d",
 		 'M ' + pos_x(r2, a1) + ',' + pos_y(r2, a1) +
@@ -99,22 +94,16 @@ function pie_m( id, r1, r2, a1, a2, p ) {
 	fanchart.append(path);
 	path.onmouseenter = function() {
 		if( p.marriage_place !== undefined && p.marriage_place != "" ) {
-			document.getElementById( lieux[p.marriage_place].c ).classList.add("hl_m");
+			document.getElementById( "ma-" + lieux[p.marriage_place].c ).classList.remove("hidden");
 		}
 	};
 	path.onmouseleave = function() {
 		if( p.marriage_place !== undefined && p.marriage_place != "" ) {
-			document.getElementById( lieux[p.marriage_place].c ).classList.remove("hl_m");
+			document.getElementById( "ma-" + lieux[p.marriage_place].c ).classList.add("hidden");
 		}
 	};
 }
 function circle( id, r, cx, cy, p ) {
-	var a = document.createElementNS( "http://www.w3.org/2000/svg", "a" );
-	var oc = p.oc;
-	if( oc != "" && oc != 0 ) { oc = "&oc=" + oc } else { oc = "" }
-	a.setAttributeNS( "http://www.w3.org/1999/xlink", "href", link_to_person + "p=" + p.fnk + "&n=" + p.snk + oc );
-	fanchart.append(a);
-
 	var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
 	circle.setAttribute( "cx", cx );
 	circle.setAttribute( "cy", cy );
@@ -130,14 +119,19 @@ function circle( id, r, cx, cy, p ) {
 	if( p.death_age !== undefined && p.death_age != "" ) {
 		c += " DA"+(Math.trunc(p.death_age/10)*10);
 	}
-	circle.setAttribute( "class", c );
-	a.append(circle);
+	circle.setAttribute( "class", "link "+c );
+	fanchart.append(circle);
+	circle.onclick = function() {
+		var oc = p.oc;
+		if( oc != "" && oc != 0 ) { oc = "&oc=" + oc } else { oc = "" }
+		window.location = link_to_person + "p=" + p.fnk + "&n=" + p.snk + oc
+	};
 	circle.onmouseenter = function() {
 		if( p.birth_place !== undefined && p.birth_place != "" ) {
-			document.getElementById( lieux[p.birth_place].c ).classList.add("hl_b");
+			document.getElementById( "bi-" + lieux[p.birth_place].c ).classList.remove("hidden");
 		}
 		if( p.birth_place !== undefined && p.death_place != "" ) {
-			document.getElementById( lieux[p.death_place].c ).classList.add("hl_d");
+			document.getElementById( "de-" + lieux[p.death_place].c ).classList.remove("hidden");
 		}
 		if( p.death_age !== undefined && p.death_age != "" ) {
 			var c = "DA"+(Math.trunc(p.death_age/10)*10);
@@ -146,10 +140,10 @@ function circle( id, r, cx, cy, p ) {
 	};
 	circle.onmouseleave = function() {
 		if( p.birth_place !== undefined && p.birth_place != "" ) {
-			document.getElementById( lieux[p.birth_place].c ).classList.remove("hl_b");
+			document.getElementById( "bi-" + lieux[p.birth_place].c ).classList.add("hidden");
 		}
 		if( p.birth_place !== undefined && p.death_place != "" ) {
-			document.getElementById( lieux[p.death_place].c ).classList.remove("hl_d");
+			document.getElementById( "de-" + lieux[p.death_place].c ).classList.add("hidden");
 		}
 		if( p.death_age !== undefined && p.death_age != "" ) {
 			var c = "DA"+(Math.trunc(p.death_age/10)*10);
@@ -222,16 +216,15 @@ function link( pid, p, l ) {
 		ts = Math.round( 100 * l / 2 / standard_width );
 	}
 
-	var a = document.createElementNS( "http://www.w3.org/2000/svg", "a" );
-	var oc = p.oc;
-	if( oc != "" && oc != 0 ) { oc = "&oc=" + oc } else { oc = "" }
-	a.setAttributeNS( "http://www.w3.org/1999/xlink", "href", link_to_fanchart + "p=" + p.fnk + "&n=" + p.snk + oc + "&v=" + max_gen );
-	fanchart.append(a);
-
 	var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-	text.setAttribute( "class", "icon"  );
+	text.setAttribute( "class", "link icon"  );
 	text.innerHTML = '<textPath xlink:href="#' + pid + '" startOffset="50%" style="font-size:'+ts+'%;">&#x25B2;</textPath>';
-	a.append(text);
+	fanchart.append(text);
+	text.onclick = function () {
+		var oc = p.oc;
+		if( oc != "" && oc != 0 ) { oc = "&oc=" + oc } else { oc = "" }
+		window.location = link_to_fanchart + "p=" + p.fnk + "&n=" + p.snk + oc + "&v=" + max_gen + "&tool=" + tool;
+	};
 }
 function text_C3( r1, r2, a1, a2, sosa, p ) {
 	var l, h;
@@ -301,7 +294,7 @@ function text_R1( r1, r2, a1, a2, sosa, p ) {
 	text2( "tp1S"+sosa, p.fn + ' ' + p.sn, "", l, h );
 }
 
-function zoom (x, y, factor, direction) {
+function zoom (zx, zy, factor, direction) {
   //console.log( "AVANT", fanchart.getAttribute( "viewBox" ) );
   //console.log( event.clientX, event.clientY );
 	var a = fanchart.getAttribute( "viewBox" ).split(/[\s,]/);
@@ -316,8 +309,8 @@ function zoom (x, y, factor, direction) {
 		h = Math.round(h*factor);
 		w = Math.round(w*factor);
 	}
-	x += direction * Math.round( event.clientX * (factor-1) );
-	y += direction * Math.round( event.clientY * (factor-1) );
+	x += direction * Math.round( zx * (factor-1) );
+	y += direction * Math.round( zy * (factor-1) );
 	fanchart.setAttribute( "viewBox", x + ' ' + y + ' ' + w + ' ' + h );
   //console.log( "APRES", fanchart.getAttribute( "viewBox" ) );
 }
@@ -368,8 +361,12 @@ for( var i = 0 ; i < max_gen && i < a_r.length ; i++ ) {
 const center_x = max_r+5;
 const center_y = max_r+5;
 
+var ratio;
 function fitScreen() {
-	fanchart.setAttribute( "viewBox", "0 0 " + (2*max_r+10) + " " + Math.max(10+max_r+a_r[0],Math.round(10+max_r*(1+Math.sin(Math.PI/180*(d_all-180)/2)))) );
+	var w = 2*max_r+10;
+	var h = Math.max(10+max_r+a_r[0],Math.round(10+max_r*(1+Math.sin(Math.PI/180*(d_all-180)/2))));
+	fanchart.setAttribute( "viewBox", "0 0 " + w + " " + h );
+	ratio = w / h;
 }
 fitScreen();
 
@@ -411,10 +408,9 @@ lieux_a.sort( function(e1,e2) {
 lieux_a.forEach( function( l, i ) {
 	lieux[l[0]].c = "L"+i;
 	var li = document.createElement( "li" );
-	li.innerHTML = '<span class="L'+i+'">■</span><span id="L'+i+'">' + l[0] + '</span> (' + lieux[l[0]].cnt + ')';
-	if( i >= 20 ) {
-		li.setAttribute( "class", "P20" );
-	}
+	li.innerHTML = '<span id="bi-L'+i+'" class="hidden">°</span><span id="ma-L'+i+'" class="hidden">x</span><span id="de-L'+i+'" class="hidden">&dagger;</span><span class="square">■</span> ' + l[0];
+	li.setAttribute( "id", "L"+i );
+	li.setAttribute( "title", lieux[l[0]].cnt + " occurence(s)" );
 	li.onmouseenter = function() {
 		var a = document.getElementsByClassName( "L"+i );
 		for( var e of a ) {
@@ -468,7 +464,7 @@ while( true ) {
 		a1 += delta;
 		a2 += delta;
 	}
-	if( ancestor["S"+sosa] !== undefined ) {
+	if( ancestor["S"+sosa] !== undefined && ancestor["S"+sosa].fn != "?" ) {
 		ancestor["S"+sosa].dates = ancestor["S"+sosa].dates.replace( /\s?<\/?bdo[^>]*>/g, "" );
 		if( a_m[gen-1] == "C3" ) {
 			text_C3( r1+10, r2, a1, a2, sosa, ancestor["S"+sosa] );
@@ -492,16 +488,37 @@ while( true ) {
 }
 
 document.documentElement.style.overflow = 'hidden';
-fanchart.setAttribute( "width", window.innerWidth );
 fanchart.setAttribute( "height", window.innerHeight );
+//fanchart.setAttribute( "width", window.innerWidth );
+fanchart.setAttribute( "width", Math.round(window.innerHeight*ratio) );
+var margin = window.innerWidth - Math.round(window.innerHeight*ratio);
+//fanchart.setAttribute( "right", Math(round(margin/2)) );
+var svg_cx = Math.round(window.innerHeight/2);
+var svg_cy = Math.round(window.innerHeight*ratio/2);
 
 // Tools
 document.getElementById("b-refresh").onclick = fitScreen;
 document.getElementById("b-zoom-in").onclick = function() {
-	zoom( 0, 0, zoom_factor, +1 );
+	zoom( svg_cx, svg_cy, zoom_factor, +1 );
 };
 document.getElementById("b-zoom-out").onclick = function() {
-	zoom( 0, 0, zoom_factor, -1 );
+	zoom( svg_cx, svg_cy, zoom_factor, -1 );
+};
+document.getElementById("b-gen-add").onclick = function() {
+	if( max_gen < 10 ) {
+		var p = ancestor["S1"];
+		var oc = p.oc;
+		if( oc != "" && oc != 0 ) { oc = "&oc=" + oc } else { oc = "" }
+		window.location = link_to_person + "m=A&t=FC&mono=" + mono + "&tool=" + tool + "&p=" + p.fnk + "&n=" + p.snk + oc + "&v=" + (max_gen+1);
+	}
+};
+document.getElementById("b-gen-del").onclick = function() {
+	if( max_gen > 1 ) {
+		var p = ancestor["S1"];
+		var oc = p.oc;
+		if( oc != "" && oc != 0 ) { oc = "&oc=" + oc } else { oc = "" }
+		window.location = link_to_person + "m=A&t=FC&mono=" + mono + "&tool=" + tool + "&p=" + p.fnk + "&n=" + p.snk + oc + "&v=" + (max_gen-1);
+	}
 };
 document.getElementById("b-places-hl").onclick = function() {
 	document.body.className = "places-list place_hl";

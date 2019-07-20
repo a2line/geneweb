@@ -1,24 +1,21 @@
-@namespace svgns url(http://www.w3.org/2000/svg);
+@media print {
+  .noprint {
+    display: none;
+  }
+}
 
 svg .highlight {
  fill: coral !important;
  fill-opacity: 0.5 !important;
 }
-.hl_b {
- font-weight: bold;
- background-color: white;
-}
-.hl_m {
- border: 1px solid black;
- background-color: white;
-}
-.hl_d {
- text-decoration: underline;
- background-color: white;
-}
 
 /* places list */
 body:not(.places-list) #places-list {
+  display: none;
+}
+
+/* Place hilight */
+body.place_hl .square, .square {
   display: none;
 }
 
@@ -44,76 +41,76 @@ body.place_color svg .L17 {fill-opacity: 0.5; fill: orange;}
 body.place_color svg .L18 {fill-opacity: 0.5; fill: black;}
 body.place_color svg .L19 {fill-opacity: 0.5; fill: grey;}
 
-body.place_color li.P20 { display: none; }
-body.place_color span.L0 { opacity: 0.5; color: lime; }
-body.place_color span.L1 { opacity: 0.5; color: blue; }
-body.place_color span.L2 { opacity: 0.5; color: yellow; }
-body.place_color span.L3 { opacity: 0.5; color: deeppink; }
-body.place_color span.L4 { opacity: 0.5; color: orchid; }
-body.place_color span.L5 { opacity: 0.5; color: magenta; }
-body.place_color span.L6 { opacity: 0.5; color: aquamarine; }
-body.place_color span.L7 { opacity: 0.5; color: lavender; }
-body.place_color span.L8 { opacity: 0.5; color: bisque; }
-body.place_color span.L9 { opacity: 0.5; color: turquoise; }
-body.place_color span.L10 { opacity: 0.5; color: palegreen; }
-body.place_color span.L11 { opacity: 0.5; color: khaki; }
-body.place_color span.L12 { opacity: 0.5; color: gold; }
-body.place_color span.L13 { opacity: 0.5; color: orange; }
-body.place_color span.L14 { opacity: 0.5; color: deepskyblue; }
-body.place_color span.L15 { opacity: 0.5; color: sandybrown; }
-body.place_color span.L16 { opacity: 0.5; color: red; }
-body.place_color span.L17 { opacity: 0.5; color: orange; }
-body.place_color span.L18 { opacity: 0.5; color: black; }
-body.place_color span.L19 { opacity: 0.5; color: grey; }
+body.place_color .square { display: inline; }
+body.place_color #L0 .square { opacity: 0.5; color: lime; }
+body.place_color #L1 .square { opacity: 0.5; color: blue; }
+body.place_color #L2 .square { opacity: 0.5; color: yellow; }
+body.place_color #L3 .square { opacity: 0.5; color: deeppink; }
+body.place_color #L4 .square { opacity: 0.5; color: orchid; }
+body.place_color #L5 .square { opacity: 0.5; color: magenta; }
+body.place_color #L6 .square { opacity: 0.5; color: aquamarine; }
+body.place_color #L7 .square { opacity: 0.5; color: lavender; }
+body.place_color #L8 .square { opacity: 0.5; color: bisque; }
+body.place_color #L9 .square { opacity: 0.5; color: turquoise; }
+body.place_color #L10 .square { opacity: 0.5; color: palegreen; }
+body.place_color #L11 .square { opacity: 0.5; color: khaki; }
+body.place_color #L12 .square { opacity: 0.5; color: gold; }
+body.place_color #L13 .square { opacity: 0.5; color: orange; }
+body.place_color #L14 .square { opacity: 0.5; color: deepskyblue; }
+body.place_color #L15 .square { opacity: 0.5; color: sandybrown; }
+body.place_color #L16 .square { opacity: 0.5; color: red; }
+body.place_color #L17 .square { opacity: 0.5; color: orange; }
+body.place_color #L18 .square { opacity: 0.5; color: black; }
+body.place_color #L19 .square { opacity: 0.5; color: grey; }
 
 /* death age */
 #death-age {
   margin: 5px;
 }
 
-body.death-age svg .DA0 { fill-opacity: 0.5; fill: rgb(0, 0, 0)}
-body.death-age svg .DA10 { fill-opacity: 0.5; fill: rgb(30, 0, 0)}
-body.death-age svg .DA20 { fill-opacity: 0.5; fill: rgb(50, 0, 0)}
-body.death-age svg .DA30 { fill-opacity: 0.5; fill: rgb(70, 0, 0)}
-body.death-age svg .DA40 { fill-opacity: 0.5; fill: rgb(90, 0, 0)}
-body.death-age svg .DA50 { fill-opacity: 0.5; fill: rgb(110, 0, 0)}
-body.death-age svg .DA60 { fill-opacity: 0.5; fill: rgb(130, 0, 0)}
-body.death-age svg .DA70 { fill-opacity: 0.5; fill: rgb(150, 0, 0)}
-body.death-age svg .DA80 { fill-opacity: 0.5; fill: rgb(170, 0, 0)}
-body.death-age svg .DA90 { fill-opacity: 0.5; fill: rgb(190, 0, 0)}
-body.death-age svg .DA100 { fill-opacity: 0.5; fill: rgb(210, 0, 0)}
-body.death-age svg .DA110 { fill-opacity: 0.5; fill: rgb(230, 0, 0)}
-body.death-age svg .DA120 { fill-opacity: 0.5; fill: rgb(250, 0, 0)}
+body.death-age svg .DA0 { fill-opacity: 0.5; fill: hsl(0, 100%, 50%)}
+body.death-age svg .DA10 { fill-opacity: 0.5; fill: hsl(30, 100%, 50%)}
+body.death-age svg .DA20 { fill-opacity: 0.5; fill: hsl(50, 100%, 50%)}
+body.death-age svg .DA30 { fill-opacity: 0.5; fill: hsl(70, 100%, 50%)}
+body.death-age svg .DA40 { fill-opacity: 0.5; fill: hsl(90, 100%, 50%)}
+body.death-age svg .DA50 { fill-opacity: 0.5; fill: hsl(110, 100%, 50%)}
+body.death-age svg .DA60 { fill-opacity: 0.5; fill: hsl(130, 100%, 50%)}
+body.death-age svg .DA70 { fill-opacity: 0.5; fill: hsl(150, 100%, 50%)}
+body.death-age svg .DA80 { fill-opacity: 0.5; fill: hsl(170, 100%, 50%)}
+body.death-age svg .DA90 { fill-opacity: 0.5; fill: hsl(190, 100%, 50%)}
+body.death-age svg .DA100 { fill-opacity: 0.5; fill: hsl(210, 100%, 50%)}
+body.death-age svg .DA110 { fill-opacity: 0.5; fill: hsl(230, 100%, 50%)}
+body.death-age svg .DA120 { fill-opacity: 0.5; fill: hsl(250, 100%, 50%)}
 
 body:not(.death-age) #death-age {
   display: none;
 }
 
-body.death-age span.DA0 { color: rgba(0, 0, 0, 0.5)}
-body.death-age span.DA10 { color: rgba(30, 0, 0, 0.5)}
-body.death-age span.DA20 { color: rgba(50, 0, 0, 0.5)}
-body.death-age span.DA30 { color: rgba(70, 0, 0, 0.5)}
-body.death-age span.DA40 { color: rgba(90, 0, 0, 0.5)}
-body.death-age span.DA50 { color: rgba(110, 0, 0, 0.5)}
-body.death-age span.DA60 { color: rgba(130, 0, 0, 0.5)}
-body.death-age span.DA70 { color: rgba(150, 0, 0, 0.5)}
-body.death-age span.DA80 { color: rgba(170, 0, 0, 0.5)}
-body.death-age span.DA90 { color: rgba(190, 0, 0, 0.5)}
-body.death-age span.DA100 { color: rgba(210, 0, 0, 0.5)}
-body.death-age span.DA110 { color: rgba(230, 0, 0, 0.5)}
-body.death-age span.DA120 { color: rgba(250, 0, 0, 0.5)}
+body.death-age span.DA0 { color: hsla(0, 100%, 50%, 0.5)}
+body.death-age span.DA10 { color: hsla(30, 100%, 50%, 0.5)}
+body.death-age span.DA20 { color: hsla(50, 100%, 50%, 0.5)}
+body.death-age span.DA30 { color: hsla(70, 100%, 50%, 0.5)}
+body.death-age span.DA40 { color: hsla(90, 100%, 50%, 0.5)}
+body.death-age span.DA50 { color: hsla(110, 100%, 50%, 0.5)}
+body.death-age span.DA60 { color: hsla(130, 100%, 50%, 0.5)}
+body.death-age span.DA70 { color: hsla(150, 100%, 50%, 0.5)}
+body.death-age span.DA80 { color: hsla(170, 100%, 50%, 0.5)}
+body.death-age span.DA90 { color: hsla(190, 100%, 50%, 0.5)}
+body.death-age span.DA100 { color: hsla(210, 100%, 50%, 0.5)}
+body.death-age span.DA110 { color: hsla(230, 100%, 50%, 0.5)}
+body.death-age span.DA120 { color: hsla(250, 100%, 50%, 0.5)}
+
+.hl_b {
+  font-weight: bold;
+}
 
 body {
   margin: 0;
   padding: 0;
 }
 
-svgns|a {
+svg .link {
   cursor: pointer;
-}
-
-svgns|a text {
-  fill: black;
 }
 
 circle, path {
@@ -140,35 +137,35 @@ textPath {
  fill-opacity: 0.5;
 }
 
-/*
-circle:hover, path:hover {
- fill: lightgrey;
- fill-opacity: 0.5;
-}
-*/
-
 #standard {
  font-size: 100%;
  fill: transparent;
 }
 
-#places-list, svg, #death-age {
+#places-list, #death-age {
+ position: absolute;
+ right: 0;
+ top: 0;
+}
+svg {
  position: absolute;
  left: 0;
  top: 0;
 }
 #buttons {
  position: absolute;
- right: 0;
+ left: 0;
  top: 0;
  z-index: 1;
  background-color: white;
+ margin: 2px;
 }
 
 #places-list {
- z-index: 1;
  overflow: scroll;
  height: 100%;
+ width: 18%;
+ white-space: nowrap;
 }
 /*
 #places-list>ul>li {
@@ -185,7 +182,7 @@ ul {
 }
 
 .button {
- font-size: 100%;
+ font-size: 140%;
  text-align: center;
 }
 .button:hover {
@@ -194,4 +191,12 @@ ul {
 
 svg.mono text {
  font-family: monospace;
+}
+
+.hidden {
+	visibility: hidden;
+}
+
+.disabled {
+  color: lightgrey;
 }
