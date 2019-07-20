@@ -7,7 +7,7 @@
 </head>
 
 %define;somebody_fanchart_info(xx)
-"S%xx.anc_sosa.v;":{"fn":"%if(xx.public_name != "")%xx.public_name;%else;%xx.first_name;%end;","fnk":"%xx.first_name_key","sn":"%xx.surname","snk":"%xx.surname_key;","oc":"%xx.occ","dates":'%xx.dates;',"birth_place":"%xx.birth_place;","death_place":"%xx.death_place","death_age":"%xx.death_age"%nn;
+"S%xx.anc_sosa.v;":{"fn":"%if(xx.public_name != "")%xx.public_name;%else;%xx.first_name;%end;","fnk":"%xx.first_name_key","sn":"%xx.surname","snk":"%xx.surname_key;","oc":"%xx.occ","dates":'%xx.dates;',"birth_place":"%xx.birth_place;","death_place":"%xx.death_place","death_age":"%xx.death_age","has_parents":%if(xx.has_parents)true%else;false%end;%nn;
   %if;xx.is_male;
     %foreach;ancestor.family;
       %if(family.index = ancestor.family.index)

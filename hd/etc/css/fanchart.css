@@ -20,85 +20,85 @@ body.place_hl .square, .square {
 }
 
 /* Colorise places */
-body.place_color svg .L0 {fill-opacity: 0.5; fill: lime;}
-body.place_color svg .L1 {fill-opacity: 0.5; fill: blue;}
-body.place_color svg .L2 {fill-opacity: 0.5; fill: yellow;}
-body.place_color svg .L3 {fill-opacity: 0.5; fill: deeppink;}
-body.place_color svg .L4 {fill-opacity: 0.5; fill: orchid;}
-body.place_color svg .L5 {fill-opacity: 0.5; fill: magenta;}
-body.place_color svg .L6 {fill-opacity: 0.5; fill: aquamarine;}
-body.place_color svg .L7 {fill-opacity: 0.5; fill: lavender;}
-body.place_color svg .L8 {fill-opacity: 0.5; fill: bisque;}
-body.place_color svg .L9 {fill-opacity: 0.5; fill: turquoise;}
-body.place_color svg .L10 {fill-opacity: 0.5; fill: palegreen;}
-body.place_color svg .L11 {fill-opacity: 0.5; fill: khaki;}
-body.place_color svg .L12 {fill-opacity: 0.5; fill: gold;}
-body.place_color svg .L13 {fill-opacity: 0.5; fill: orange;}
-body.place_color svg .L14 {fill-opacity: 0.5; fill: deepskyblue;}
-body.place_color svg .L15 {fill-opacity: 0.5; fill: sandybrown;}
-body.place_color svg .L16 {fill-opacity: 0.5; fill: red;}
-body.place_color svg .L17 {fill-opacity: 0.5; fill: orange;}
-body.place_color svg .L18 {fill-opacity: 0.5; fill: black;}
-body.place_color svg .L19 {fill-opacity: 0.5; fill: grey;}
+body.place_color svg .L0 {fill: #6f9fd8;}
+body.place_color svg .L1 {fill: #bfd641;}
+body.place_color svg .L2 {fill: #d69c2f;}
+body.place_color svg .L3 {fill: #ffaa56;}
+body.place_color svg .L4 {fill: #e8b5ce;}
+body.place_color svg .L5 {fill: #d2c29d;}
+body.place_color svg .L6 {fill: #f0ead6;}
+body.place_color svg .L7 {fill: #d5ae41;}
+body.place_color svg .L8 {fill: #be9ec9;}
+body.place_color svg .L9 {fill: #f1ea7f;}
+body.place_color svg .L10 {fill: #ffaa56;}
+body.place_color svg .L11 {fill: #aaff56;}
+body.place_color svg .L12 {fill: #bcbcbe;}
+body.place_color svg .L13 {fill: #a9754f;}
+body.place_color svg .L14 {fill: #ecdb54;}
+body.place_color svg .L15 {fill: #aaffff;}
+body.place_color svg .L16 {fill: #dbb1cd;}
+body.place_color svg .L17 {fill: #ec9787;}
+body.place_color svg .L18 {fill: #eadedb;}
+body.place_color svg .L19 {fill: #aa56ff;}
 
 body.place_color .square { display: inline; }
-body.place_color #L0 .square { opacity: 0.5; color: lime; }
-body.place_color #L1 .square { opacity: 0.5; color: blue; }
-body.place_color #L2 .square { opacity: 0.5; color: yellow; }
-body.place_color #L3 .square { opacity: 0.5; color: deeppink; }
-body.place_color #L4 .square { opacity: 0.5; color: orchid; }
-body.place_color #L5 .square { opacity: 0.5; color: magenta; }
-body.place_color #L6 .square { opacity: 0.5; color: aquamarine; }
-body.place_color #L7 .square { opacity: 0.5; color: lavender; }
-body.place_color #L8 .square { opacity: 0.5; color: bisque; }
-body.place_color #L9 .square { opacity: 0.5; color: turquoise; }
-body.place_color #L10 .square { opacity: 0.5; color: palegreen; }
-body.place_color #L11 .square { opacity: 0.5; color: khaki; }
-body.place_color #L12 .square { opacity: 0.5; color: gold; }
-body.place_color #L13 .square { opacity: 0.5; color: orange; }
-body.place_color #L14 .square { opacity: 0.5; color: deepskyblue; }
-body.place_color #L15 .square { opacity: 0.5; color: sandybrown; }
-body.place_color #L16 .square { opacity: 0.5; color: red; }
-body.place_color #L17 .square { opacity: 0.5; color: orange; }
-body.place_color #L18 .square { opacity: 0.5; color: black; }
-body.place_color #L19 .square { opacity: 0.5; color: grey; }
+body.place_color #L0 .square { color: #6f9fd8; }
+body.place_color #L1 .square { color: #bfd641; }
+body.place_color #L2 .square { color: #d69c2f; }
+body.place_color #L3 .square { color: #ffaa56; }
+body.place_color #L4 .square { color: #e8b5ce; }
+body.place_color #L5 .square { color: #d2c29d; }
+body.place_color #L6 .square { color: #f0ead6; }
+body.place_color #L7 .square { color: #d5ae41; }
+body.place_color #L8 .square { color: #be9ec9; }
+body.place_color #L9 .square { color: #f1ea7f; }
+body.place_color #L10 .square { color: #ffaa56; }
+body.place_color #L11 .square { color: #aaff56; }
+body.place_color #L12 .square { color: #bcbcbe; }
+body.place_color #L13 .square { color: #a9754f; }
+body.place_color #L14 .square { color: #ecdb54; }
+body.place_color #L15 .square { color: #aaffff; }
+body.place_color #L16 .square { color: #dbb1cd; }
+body.place_color #L17 .square { color: #ec9787; }
+body.place_color #L18 .square { color: #eadedb; }
+body.place_color #L19 .square { color: #aa56ff; }
 
 /* death age */
 #death-age {
   margin: 5px;
 }
 
-body.death-age svg .DA0 { fill-opacity: 0.5; fill: hsl(0, 100%, 50%)}
-body.death-age svg .DA10 { fill-opacity: 0.5; fill: hsl(30, 100%, 50%)}
-body.death-age svg .DA20 { fill-opacity: 0.5; fill: hsl(50, 100%, 50%)}
-body.death-age svg .DA30 { fill-opacity: 0.5; fill: hsl(70, 100%, 50%)}
-body.death-age svg .DA40 { fill-opacity: 0.5; fill: hsl(90, 100%, 50%)}
-body.death-age svg .DA50 { fill-opacity: 0.5; fill: hsl(110, 100%, 50%)}
-body.death-age svg .DA60 { fill-opacity: 0.5; fill: hsl(130, 100%, 50%)}
-body.death-age svg .DA70 { fill-opacity: 0.5; fill: hsl(150, 100%, 50%)}
-body.death-age svg .DA80 { fill-opacity: 0.5; fill: hsl(170, 100%, 50%)}
-body.death-age svg .DA90 { fill-opacity: 0.5; fill: hsl(190, 100%, 50%)}
-body.death-age svg .DA100 { fill-opacity: 0.5; fill: hsl(210, 100%, 50%)}
-body.death-age svg .DA110 { fill-opacity: 0.5; fill: hsl(230, 100%, 50%)}
-body.death-age svg .DA120 { fill-opacity: 0.5; fill: hsl(250, 100%, 50%)}
+body.death-age svg .DA0 { fill: hsl(0, 100%, 50%)}
+body.death-age svg .DA10 { fill: hsl(30, 100%, 50%)}
+body.death-age svg .DA20 { fill: hsl(50, 100%, 50%)}
+body.death-age svg .DA30 { fill: hsl(70, 100%, 50%)}
+body.death-age svg .DA40 { fill: hsl(90, 100%, 50%)}
+body.death-age svg .DA50 { fill: hsl(110, 100%, 50%)}
+body.death-age svg .DA60 { fill: hsl(130, 100%, 50%)}
+body.death-age svg .DA70 { fill: hsl(150, 100%, 50%)}
+body.death-age svg .DA80 { fill: hsl(170, 100%, 50%)}
+body.death-age svg .DA90 { fill: hsl(190, 100%, 50%)}
+body.death-age svg .DA100 { fill: hsl(210, 100%, 50%)}
+body.death-age svg .DA110 { fill: hsl(230, 100%, 50%)}
+body.death-age svg .DA120 { fill: hsl(250, 100%, 50%)}
 
 body:not(.death-age) #death-age {
   display: none;
 }
 
-body.death-age span.DA0 { color: hsla(0, 100%, 50%, 0.5)}
-body.death-age span.DA10 { color: hsla(30, 100%, 50%, 0.5)}
-body.death-age span.DA20 { color: hsla(50, 100%, 50%, 0.5)}
-body.death-age span.DA30 { color: hsla(70, 100%, 50%, 0.5)}
-body.death-age span.DA40 { color: hsla(90, 100%, 50%, 0.5)}
-body.death-age span.DA50 { color: hsla(110, 100%, 50%, 0.5)}
-body.death-age span.DA60 { color: hsla(130, 100%, 50%, 0.5)}
-body.death-age span.DA70 { color: hsla(150, 100%, 50%, 0.5)}
-body.death-age span.DA80 { color: hsla(170, 100%, 50%, 0.5)}
-body.death-age span.DA90 { color: hsla(190, 100%, 50%, 0.5)}
-body.death-age span.DA100 { color: hsla(210, 100%, 50%, 0.5)}
-body.death-age span.DA110 { color: hsla(230, 100%, 50%, 0.5)}
-body.death-age span.DA120 { color: hsla(250, 100%, 50%, 0.5)}
+body.death-age span.DA0 { color: hsl(0, 100%, 50%)}
+body.death-age span.DA10 { color: hsl(30, 100%, 50%)}
+body.death-age span.DA20 { color: hsl(50, 100%, 50%)}
+body.death-age span.DA30 { color: hsl(70, 100%, 50%)}
+body.death-age span.DA40 { color: hsl(90, 100%, 50%)}
+body.death-age span.DA50 { color: hsl(110, 100%, 50%)}
+body.death-age span.DA60 { color: hsl(130, 100%, 50%)}
+body.death-age span.DA70 { color: hsl(150, 100%, 50%)}
+body.death-age span.DA80 { color: hsl(170, 100%, 50%)}
+body.death-age span.DA90 { color: hsl(190, 100%, 50%)}
+body.death-age span.DA100 { color: hsl(210, 100%, 50%)}
+body.death-age span.DA110 { color: hsl(230, 100%, 50%)}
+body.death-age span.DA120 { color: hsl(250, 100%, 50%)}
 
 .hl_b {
   font-weight: bold;
@@ -113,8 +113,20 @@ svg .link {
   cursor: pointer;
 }
 
-circle, path {
- stroke: grey;
+path {
+ stroke: transparent;
+ stroke-width: 1px;
+ fill: transparent;
+}
+circle, path.contour {
+ stroke: #A0A0A0;
+ stroke-width: 1px;
+ fill: transparent;
+}
+path.middle {
+ stroke: #A0A0A0;
+ stroke-dasharray: 5px;
+ stroke-width: 1px;
  fill: transparent;
 }
 text {
@@ -133,8 +145,7 @@ textPath {
  fill: transparent;
 }
 .icon:hover {
- fill: black;
- fill-opacity: 0.5;
+ fill: brown;
 }
 
 #standard {
@@ -194,7 +205,7 @@ svg.mono text {
 }
 
 .hidden {
-	visibility: hidden;
+  visibility: hidden;
 }
 
 .disabled {

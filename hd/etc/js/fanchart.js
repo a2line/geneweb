@@ -11,7 +11,7 @@ function up( r, a1, a2, sosa, p ) {
 	l = path1( "tpiS"+sosa, r, a1, a2 );
 	link( "tpiS"+sosa, p, l );
 }
-function pie( id, r1, r2, a1, a2, p ) {
+function pie_bg( id, r1, r2, a1, a2, p ) {
 	var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
 	path.setAttribute( "d",
 		 'M ' + pos_x(r2, a1) + ',' + pos_y(r2, a1) +
@@ -21,7 +21,7 @@ function pie( id, r1, r2, a1, a2, p ) {
 		' Z'
 	);
 	path.setAttribute( "id", id );
-	var c = (p.fn == "=" ? "" : "link");
+	var c = "";
 	if( p.birth_place !== undefined && p.birth_place != "" ) {
 		c += " "+lieux[p.birth_place].c;
 	}
@@ -31,6 +31,19 @@ function pie( id, r1, r2, a1, a2, p ) {
 	if( p.death_age !== undefined && p.death_age != "" ) {
 		c += " DA"+(Math.trunc(p.death_age/10)*10);
 	}
+	path.setAttribute( "class", c );
+	fanchart.append(path);
+}
+function pie( id, r1, r2, a1, a2, p ) {
+	var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+	path.setAttribute( "d",
+		 'M ' + pos_x(r2, a1) + ',' + pos_y(r2, a1) +
+		' A ' + r2 + ' ' + r2 + ' 0 ' + (a2 - a1 > 180 ? 1 : 0) + ' 1 ' + pos_x(r2, a2) + ',' + pos_y(r2, a2) +
+		' L ' + pos_x(r1, a2) + ',' + pos_y(r1, a2) +
+		' A ' + r1 + ' ' + r1 + ' 0 ' + (a2 - a1 > 180 ? 1 : 0) + ' 0 ' + pos_x(r1, a1) + ',' + pos_y(r1, a1) +
+		' Z'
+	);
+	var c = (p.fn == "=" ? "" : "link");
 	path.setAttribute( "class", c );
 	fanchart.append(path);
 	if( p.fn != "=" ) {
@@ -76,7 +89,7 @@ function pie( id, r1, r2, a1, a2, p ) {
 		});
 	}
 }
-function pie_m( id, r1, r2, a1, a2, p ) {
+function pie_m_bg( id, r1, r2, a1, a2, p ) {
 	var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
 	path.setAttribute( "d",
 		 'M ' + pos_x(r2, a1) + ',' + pos_y(r2, a1) +
@@ -92,6 +105,17 @@ function pie_m( id, r1, r2, a1, a2, p ) {
 	}
 	path.setAttribute( "class", c );
 	fanchart.append(path);
+}
+function pie_m( id, r1, r2, a1, a2, p ) {
+	var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+	path.setAttribute( "d",
+		 'M ' + pos_x(r2, a1) + ',' + pos_y(r2, a1) +
+		' A ' + r2 + ' ' + r2 + ' 0 ' + (a2 - a1 > 180 ? 1 : 0) + ' 1 ' + pos_x(r2, a2) + ',' + pos_y(r2, a2) +
+		' L ' + pos_x(r1, a2) + ',' + pos_y(r1, a2) +
+		' A ' + r1 + ' ' + r1 + ' 0 ' + (a2 - a1 > 180 ? 1 : 0) + ' 0 ' + pos_x(r1, a1) + ',' + pos_y(r1, a1) +
+		' Z'
+	);
+	fanchart.append(path);
 	path.onmouseenter = function() {
 		if( p.marriage_place !== undefined && p.marriage_place != "" ) {
 			document.getElementById( "ma-" + lieux[p.marriage_place].c ).classList.remove("hidden");
@@ -103,7 +127,28 @@ function pie_m( id, r1, r2, a1, a2, p ) {
 		}
 	};
 }
-function circle( id, r, cx, cy, p ) {
+function pie_contour( r1, r2, a1, a2 ) {
+	var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+	path.setAttribute( "d",
+		 'M ' + pos_x(r2, a1) + ',' + pos_y(r2, a1) +
+		' A ' + r2 + ' ' + r2 + ' 0 ' + (a2 - a1 > 180 ? 1 : 0) + ' 1 ' + pos_x(r2, a2) + ',' + pos_y(r2, a2) +
+		' L ' + pos_x(r1, a2) + ',' + pos_y(r1, a2) +
+		' A ' + r1 + ' ' + r1 + ' 0 ' + (a2 - a1 > 180 ? 1 : 0) + ' 0 ' + pos_x(r1, a1) + ',' + pos_y(r1, a1) +
+		' Z'
+	);
+	path.setAttribute( "class", "contour" );
+	fanchart.append(path);
+}
+function pie_middle( r1, r2, a ) {
+	var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+	path.setAttribute( "d",
+		 'M ' + pos_x(r2, a) + ',' + pos_y(r2, a) +
+		' L ' + pos_x(r1, a) + ',' + pos_y(r1, a)
+	);
+	path.setAttribute( "class", "middle" );
+	fanchart.append(path);
+}
+function circle_bg( id, r, cx, cy, p ) {
 	var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
 	circle.setAttribute( "cx", cx );
 	circle.setAttribute( "cy", cy );
@@ -119,7 +164,15 @@ function circle( id, r, cx, cy, p ) {
 	if( p.death_age !== undefined && p.death_age != "" ) {
 		c += " DA"+(Math.trunc(p.death_age/10)*10);
 	}
-	circle.setAttribute( "class", "link "+c );
+	circle.setAttribute( "class", c );
+	fanchart.append(circle);
+}
+function circle( id, r, cx, cy, p ) {
+	var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+	circle.setAttribute( "cx", cx );
+	circle.setAttribute( "cy", cy );
+	circle.setAttribute( "r", r );
+	circle.setAttribute( "class", "link" );
 	fanchart.append(circle);
 	circle.onclick = function() {
 		var oc = p.oc;
@@ -279,7 +332,7 @@ function text_R2( r1, r2, a1, a2, sosa, p ) {
 	text2( "tp2S"+sosa, p.dates, "dates", l, h );
 }
 function text_R1( r1, r2, a1, a2, sosa, p ) {
-	var my_r1, my_r2, my_a1, my_a2, l; h;
+	var my_r1, my_r2, my_a1, my_a2, l, h;
 	if( a1 >= -90 ) {
 		my_r1 = r1;
 		my_r2 = r2;
@@ -445,6 +498,7 @@ var delta = d_all;
 
 // Sosa 1
 ancestor["S"+sosa].dates = ancestor["S"+sosa].dates.replace( /\s?<\/?bdo[^>]*>/g, "" );
+circle_bg( "S"+sosa, r2, center_x, center_y, ancestor["S"+sosa] );
 text_S1( center_x, center_y-10, ancestor["S"+sosa] );
 circle( "S"+sosa, r2, center_x, center_y, ancestor["S"+sosa] );
 
@@ -465,25 +519,32 @@ while( true ) {
 		a2 += delta;
 	}
 	if( ancestor["S"+sosa] !== undefined && ancestor["S"+sosa].fn != "?" ) {
+		var same = (ancestor["S"+sosa].fn == "=" ? true : false);
 		ancestor["S"+sosa].dates = ancestor["S"+sosa].dates.replace( /\s?<\/?bdo[^>]*>/g, "" );
-		if( a_m[gen-1] == "C3" ) {
+		pie_bg( "S"+sosa, r1+10, r2, a1, a2, ancestor["S"+sosa] );
+		if( a_m[gen-1] == "C3" && !same) {
 			text_C3( r1+10, r2, a1, a2, sosa, ancestor["S"+sosa] );
-		} else if( a_m[gen-1] == "R3" ) {
+		} else if( a_m[gen-1] == "R3" && !same) {
 			text_R3( r1+10, r2, a1, a2, sosa, ancestor["S"+sosa] );
-		} else if( a_m[gen-1] == "R2" ) {
+		} else if( a_m[gen-1] == "R2" && !same) {
 			text_R2( r1+10, r2, a1, a2, sosa, ancestor["S"+sosa] );
-		} else if( a_m[gen-1] == "R1" ) {
+		} else if( a_m[gen-1] == "R1" || same) {
 			text_R1( r1+10, r2, a1, a2, sosa, ancestor["S"+sosa] );
 		}
 		if( sosa % 2 == 0 ) {
+			pie_m_bg( "mS"+sosa, r1, r1+10, a1, a2+delta, ancestor["S"+sosa] );
 			if( ancestor["S"+sosa].marriage_date !== undefined ) {
 				var l = path1( "pmS"+sosa, r1+5, a1, a2+delta );
 				text2( "pmS"+sosa, ancestor["S"+sosa].marriage_date, "", l, 10 );
 			}
+			pie_contour( r1, r2, a1, a2+delta );
+			pie_middle( r1+10, r2, a2 );
 			pie_m( "mS"+sosa, r1, r1+10, a1, a2+delta, ancestor["S"+sosa] );
 		}
 		pie( "S"+sosa, r1+10, r2, a1, a2, ancestor["S"+sosa] );
-		up( r1+10, a1, a2, sosa, ancestor["S"+sosa] );
+		if( !same && ancestor["S"+sosa].has_parents) {
+			up( r1+10, a1, a2, sosa, ancestor["S"+sosa] );
+		}
 	}
 }
 
