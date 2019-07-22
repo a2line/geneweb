@@ -8,10 +8,10 @@
 
 %define;somebody_fanchart_info(xx)
 "S%xx.anc_sosa.v;":{"fn":"%if(xx.public_name != "")%xx.public_name;%else;%xx.first_name;%end;","fnk":"%xx.first_name_key","sn":"%xx.surname","snk":"%xx.surname_key;","oc":"%xx.occ","dates":'%xx.dates;',"birth_place":"%xx.birth_place;","death_place":"%xx.death_place","death_age":"%xx.death_age","has_parents":%if(xx.has_parents)true%else;false%end;%nn;
-  %if;xx.is_male;
-    %foreach;ancestor.family;
-      %if(family.index = ancestor.family.index)
-        ,"marriage_date":"%marriage_date.year","marriage_place":"%marriage_place"
+  %if(xx.is_male)
+    %foreach;xx.family;
+      %if(family.index = xx.family.index)
+        ,"marriage_date":"%family.marriage_date.year;","marriage_place":"%marriage_place;"
       %end;
     %end;
   %end;
@@ -40,14 +40,15 @@
 </ul>
 </div>
 <div id="buttons" class="noprint">
-<span id="b-refresh" class="button" title="Ajuster à la fenêtre">&#x21bb;</span>
+<span id="b-home" class="button" title="Accueil"><strong>&#8962;</strong></span>
+<span id="b-refresh" class="button" title="Ajuster à la fenêtre"><strong>&#x21bb;</strong></span>
 <span id="b-zoom-in" class="button" title="Zoomer">&#x1f50e;</span>
 <span id="b-zoom-out" class="button" title="Dézoomer">&#x1f50d;</span>
-<span id="b-gen-add" class="button%if(evar.v >= 10) disabled%end;" title="Ajouter une génération">&#xff0b;</span>
-<span id="b-gen-del" class="button%if(evar.v <= 1) disabled%end;" title="Supprimer une génération">&#xff0d;</span>
+<span id="b-gen-add" class="button%if(evar.v >= 10) disabled%end;" title="Ajouter une génération"><strong>&#xff0b;</strong></span>
+<span id="b-gen-del" class="button%if(evar.v <= 1) disabled%end;" title="Supprimer une génération"><strong>&#xff0d;</strong></span>
 <span id="b-places-hl" class="button" title="Activer la mise en évidence des lieux">&#x1f310;</span>
 <span id="b-places-colorise" class="button" title="Activer la colorisation globale des lieux">&#x1f3a8;</span>
-<span id="b-death-age" class="button" title="Activer la colorisation de l'âge de décès">&#x271d;</span>
+<span id="b-death-age" class="button" title="Activer la colorisation de l'âge de décès"><strong>&#x271d;</strong></span>
 <span id="b-no-tool" class="button" title="Désactiver les outils">&#x274c;</span>
 </div>
 <svg id="fanchart" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" %if(evar.mono = "on")class="mono"%end;></svg>

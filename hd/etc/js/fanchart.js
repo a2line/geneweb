@@ -366,13 +366,8 @@ function text_R1( r1, r2, a1, a2, sosa, p ) {
 }
 
 function zoom (zx, zy, factor, direction) {
-  //console.log( "AVANT", fanchart.getAttribute( "viewBox" ) );
-  //console.log( event.clientX, event.clientY );
-	var a = fanchart.getAttribute( "viewBox" ).split(/[\s,]/);
-	var x = Number(a[0]);
-	var y = Number(a[1]);
-	var w = a[2];
-	var h = a[3];
+	var w = svg_viewbox_w;
+	var h = svg_viewbox_h;
 	if( direction > 0 ) {
 		h = Math.round(h/factor);
 		w = Math.round(w/factor);
@@ -380,10 +375,10 @@ function zoom (zx, zy, factor, direction) {
 		h = Math.round(h*factor);
 		w = Math.round(w*factor);
 	}
-	x += direction * Math.round( zx * (factor-1) );
-	y += direction * Math.round( zy * (factor-1) );
-	fanchart.setAttribute( "viewBox", x + ' ' + y + ' ' + w + ' ' + h );
-  //console.log( "APRES", fanchart.getAttribute( "viewBox" ) );
+	set_svg_viewbox(
+		svg_viewbox_x + Math.round(zx * (svg_viewbox_w - w) / window_w),
+		svg_viewbox_y + Math.round(zy * (svg_viewbox_h - h) / window_h),
+		w, h );
 }
 
 fanchart.addEventListener( "wheel", function( event ) {
@@ -417,8 +412,6 @@ fanchart.onmousemove = function(e) {
 const security = 0.95;
 const zoom_factor = 1.25;
 const d_all = 220;
-//const a_r = [   50,  50,   50,   50,  100,  100,  150,  150,  150,  100 ];
-//const a_r = [   50,   40,   40,   40,   70,   60,  100,  150,  130,   90 ];
 const a_r = [   50,   50,   50,   50,   80,   70,  100,  150,  130,   90 ];
 const a_m = [ "S1", "C3", "C3", "C3", "R3", "R3", "R2", "R1", "R1", "R1" ];
 
@@ -429,17 +422,27 @@ var max_r = 0 ;
 for( var i = 0 ; i < max_gen && i < a_r.length ; i++ ) {
 	max_r += a_r[i];
 }
-const center_x = max_r+5;
-const center_y = max_r+5;
 
-var ratio;
-function fitScreen() {
-	var w = 2*max_r+10;
-	var h = Math.max(10+max_r+a_r[0],Math.round(10+max_r*(1+Math.sin(Math.PI/180*(d_all-180)/2))));
-	fanchart.setAttribute( "viewBox", "0 0 " + w + " " + h );
-	ratio = w / h;
+const svg_margin = 5;
+const center_x = max_r + svg_margin;
+const center_y = max_r + svg_margin;
+
+const svg_w = 2 * center_x;
+const svg_h = 2 * svg_margin + max_r +
+              Math.max( a_r[0], Math.round( max_r * Math.sin(Math.PI/180*(d_all-180)/2) ) );
+const svg_ratio = svg_w / svg_h;
+
+var svg_viewbox_x, svg_viewbox_y, svg_viewbox_w, svg_viewbox_h;
+function set_svg_viewbox( x, y, w, h ) {
+	svg_viewbox_x = x;
+	svg_viewbox_y = y;
+	svg_viewbox_w = w;
+	svg_viewbox_h = h;
+	fanchart.setAttribute( "viewBox", x + " " + y + " " + w + " " + h );
 }
-fitScreen();
+function fitScreen() {
+	set_svg_viewbox( 0, 0, svg_w, svg_h );
+}
 
 var lieux = {};
 ak.forEach( function(s) {
@@ -536,18 +539,20 @@ while( true ) {
 		a1 += delta;
 		a2 += delta;
 	}
-	if( ancestor["S"+sosa] !== undefined && ancestor["S"+sosa].fn != "?" ) {
+	if( ancestor["S"+sosa] !== undefined ) {
 		var same = (ancestor["S"+sosa].fn == "=" ? true : false);
 		ancestor["S"+sosa].dates = ancestor["S"+sosa].dates.replace( /\s?<\/?bdo[^>]*>/g, "" );
 		pie_bg( "S"+sosa, r1+10, r2, a1, a2, ancestor["S"+sosa] );
-		if( a_m[gen-1] == "C3" ) {
-			text_C3( r1+10, r2, a1, a2, sosa, ancestor["S"+sosa] );
-		} else if( a_m[gen-1] == "R3" && !same) {
-			text_R3( r1+10, r2, a1, a2, sosa, ancestor["S"+sosa] );
-		} else if( a_m[gen-1] == "R2" && !same) {
-			text_R2( r1+10, r2, a1, a2, sosa, ancestor["S"+sosa] );
-		} else if( a_m[gen-1] == "R1" || same) {
-			text_R1( r1+10, r2, a1, a2, sosa, ancestor["S"+sosa] );
+		if( ancestor["S"+sosa].fn != "?" ) {
+			if( a_m[gen-1] == "C3" ) {
+				text_C3( r1+10, r2, a1, a2, sosa, ancestor["S"+sosa] );
+			} else if( a_m[gen-1] == "R3" && !same) {
+				text_R3( r1+10, r2, a1, a2, sosa, ancestor["S"+sosa] );
+			} else if( a_m[gen-1] == "R2" && !same) {
+				text_R2( r1+10, r2, a1, a2, sosa, ancestor["S"+sosa] );
+			} else if( a_m[gen-1] == "R1" || same) {
+				text_R1( r1+10, r2, a1, a2, sosa, ancestor["S"+sosa] );
+			}
 		}
 		if( sosa % 2 == 0 ) {
 			pie_m_bg( "mS"+sosa, r1, r1+10, a1, a2+delta, ancestor["S"+sosa] );
@@ -570,22 +575,28 @@ while( true ) {
 	}
 }
 
-document.documentElement.style.overflow = 'hidden';
-fanchart.setAttribute( "height", window.innerHeight );
-//fanchart.setAttribute( "width", window.innerWidth );
-fanchart.setAttribute( "width", Math.round(window.innerHeight*ratio) );
-var margin = window.innerWidth - Math.round(window.innerHeight*ratio);
-//fanchart.setAttribute( "right", Math(round(margin/2)) );
-var svg_cx = Math.round(window.innerHeight/2);
-var svg_cy = Math.round(window.innerHeight*ratio/2);
+//document.documentElement.style.overflow = 'hidden';
+
+const window_h = window.innerHeight;
+const window_w = Math.round( window_h * svg_ratio );
+const window_cx = Math.round( window_w / 2 );
+const window_cy = Math.round( window_h / 2 );
+
+fanchart.setAttribute( "height", window_h );
+fanchart.setAttribute( "width", window_w );
 
 // Tools
-document.getElementById("b-refresh").onclick = fitScreen;
+document.getElementById("b-home").onclick = function() {
+	window.location = link_to_person;
+};
+document.getElementById("b-refresh").onclick = function() {
+	fitScreen();
+};
 document.getElementById("b-zoom-in").onclick = function() {
-	zoom( svg_cx, svg_cy, zoom_factor, +1 );
+	zoom( window_cx, window_cy, zoom_factor, +1 );
 };
 document.getElementById("b-zoom-out").onclick = function() {
-	zoom( svg_cx, svg_cy, zoom_factor, -1 );
+	zoom( window_cx, window_cy, zoom_factor, -1 );
 };
 document.getElementById("b-gen-add").onclick = function() {
 	if( max_gen < 10 ) {
@@ -628,3 +639,5 @@ if( tool == "place_hl" ) {
 } else if( tool == "death-age" ) {
 	document.body.className = "death-age";
 }
+
+fitScreen();
