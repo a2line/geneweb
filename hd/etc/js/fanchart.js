@@ -396,16 +396,9 @@ fanchart.onmouseup = function() {
 fanchart.onmousemove = function(e) {
 	if( drag_state ) {
 		e.preventDefault();
-		var a = fanchart.getAttribute( "viewBox" ).split(/[\s,]/);
-		var x = Number(a[0]);
-		var y = Number(a[1]);
-		var w = a[2];
-		var h = a[3];
-		var vp_h = fanchart.getAttribute( "heigth" );
-		var vp_w = fanchart.getAttribute( "width" );
-		x -= e.movementX;
-		y -= e.movementY;
-		fanchart.setAttribute( "viewBox", x + ' ' + y + ' ' + w + ' ' + h );
+		set_svg_viewbox( svg_viewbox_x - Math.round(e.movementX * svg_viewbox_w / window_w),
+                                 svg_viewbox_y - Math.round(e.movementY * svg_viewbox_h / window_h),
+                                 svg_viewbox_w, svg_viewbox_h );
 	}
 };
 
