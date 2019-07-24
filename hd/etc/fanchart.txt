@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>Arbre en éventail</title>
 <link rel="stylesheet" href="%if;(cgi)%bvar.static_path;%end;css/fanchart.css">
+<style title="fc-auto"></style>
 </head>
 
 %define;somebody_fanchart_info(xx)
@@ -22,6 +23,7 @@
 %end;
 
 <body id="body">
+<canvas id="pixel" width="1" height="1" style="display: none;"></canvas>
 <div id="places-list"><ul id="places_list"></ul></div>
 <div id="death-age"><b>Âge au décès</b><ul>
 <li id="DA0"><span class="DA0">■</span> 0-9</li>
@@ -52,6 +54,7 @@
 <span id="b-no-tool" class="button" title="Désactiver les outils">&#x274c;</span>
 </div>
 <svg id="fanchart" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" %if(evar.mono = "on")class="mono"%end;></svg>
+
 </body>
 
 <script>

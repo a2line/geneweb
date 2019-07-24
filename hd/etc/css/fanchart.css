@@ -1,25 +1,4 @@
 :root {
-  --fc-color-01: #6f9fd8;
-  --fc-color-02: #bfd641;
-  --fc-color-03: #d69c2f;
-  --fc-color-04: #ffaa56;
-  --fc-color-05: #e8b5ce;
-  --fc-color-06: #d2c29d;
-  --fc-color-07: #f0ead6;
-  --fc-color-08: #d5ae41;
-  --fc-color-09: #be9ec9;
-  --fc-color-10: #f1ea7f;
-  --fc-color-11: #9393ff;
-  --fc-color-12: #aaff56;
-  --fc-color-13: #bcbcbe;
-  --fc-color-14: #a9754f;
-  --fc-color-15: #ecdb54;
-  --fc-color-16: #aaffff;
-  --fc-color-17: #dbb1cd;
-  --fc-color-18: #ec9787;
-  --fc-color-19: #eadedb;
-  --fc-color-20: #aa56ff;
-
   --fc-stroke-width: 0.1%;
   --fc-stroke-dasharray: 5px;
 }
@@ -31,8 +10,17 @@
 }
 
 svg .highlight {
- fill: coral !important;
- fill-opacity: 0.5 !important;
+ fill: lightgrey !important;
+}
+svg .text_highlight {
+ fill: black !important;
+}
+
+svg .same_hl .bg {
+ fill: lightgrey !important;
+}
+svg .same_hl .text {
+ fill: black !important;
 }
 
 /* places list */
@@ -69,85 +57,44 @@ body.place_hl .square, .square {
 }
 
 /* Colorise places */
-body.place_color svg .L0  {fill: var(--fc-color-01);}
-body.place_color svg .L1  {fill: var(--fc-color-02);}
-body.place_color svg .L2  {fill: var(--fc-color-03);}
-body.place_color svg .L3  {fill: var(--fc-color:04);}
-body.place_color svg .L4  {fill: var(--fc-color-05);}
-body.place_color svg .L5  {fill: var(--fc-color-06);}
-body.place_color svg .L6  {fill: var(--fc-color-07);}
-body.place_color svg .L7  {fill: var(--fc-color-08);}
-body.place_color svg .L8  {fill: var(--fc-color-09);}
-body.place_color svg .L9  {fill: var(--fc-color-10);}
-body.place_color svg .L10 {fill: var(--fc-color-11);}
-body.place_color svg .L11 {fill: var(--fc-color-12);}
-body.place_color svg .L12 {fill: var(--fc-color-13);}
-body.place_color svg .L13 {fill: var(--fc-color-14);}
-body.place_color svg .L14 {fill: var(--fc-color-15);}
-body.place_color svg .L15 {fill: var(--fc-color-16);}
-body.place_color svg .L16 {fill: var(--fc-color-17);}
-body.place_color svg .L17 {fill: var(--fc-color-18);}
-body.place_color svg .L18 {fill: var(--fc-color-19);}
-body.place_color svg .L19 {fill: var(--fc-color-20);}
-
-body.place_color .square { display: inline; }
-body.place_color #L0 .square  { color: var(--fc-color-01); }
-body.place_color #L1 .square  { color: var(--fc-color-02); }
-body.place_color #L2 .square  { color: var(--fc-color-03); }
-body.place_color #L3 .square  { color: var(--fc-color-04); }
-body.place_color #L4 .square  { color: var(--fc-color-05); }
-body.place_color #L5 .square  { color: var(--fc-color-06); }
-body.place_color #L6 .square  { color: var(--fc-color-07); }
-body.place_color #L7 .square  { color: var(--fc-color-08); }
-body.place_color #L8 .square  { color: var(--fc-color-09); }
-body.place_color #L9 .square  { color: var(--fc-color-10); }
-body.place_color #L10 .square { color: var(--fc-color-11); }
-body.place_color #L11 .square { color: var(--fc-color-12); }
-body.place_color #L12 .square { color: var(--fc-color-13); }
-body.place_color #L13 .square { color: var(--fc-color-14); }
-body.place_color #L14 .square { color: var(--fc-color-15); }
-body.place_color #L15 .square { color: var(--fc-color-16); }
-body.place_color #L16 .square { color: var(--fc-color-17); }
-body.place_color #L17 .square { color: var(--fc-color-18); }
-body.place_color #L18 .square { color: var(--fc-color-19); }
-body.place_color #L19 .square { color: var(--fc-color-20); }
+body.place_color .square { display: inline; color: transparent; }
 
 /* death age */
 #death-age {
   margin: 5px;
 }
 
-body.death-age svg .DA0 { fill: hsl(0, 100%, 50%)}
-body.death-age svg .DA10 { fill: hsl(30, 100%, 50%)}
-body.death-age svg .DA20 { fill: hsl(50, 100%, 50%)}
-body.death-age svg .DA30 { fill: hsl(70, 100%, 50%)}
-body.death-age svg .DA40 { fill: hsl(90, 100%, 50%)}
-body.death-age svg .DA50 { fill: hsl(110, 100%, 50%)}
-body.death-age svg .DA60 { fill: hsl(130, 100%, 50%)}
-body.death-age svg .DA70 { fill: hsl(150, 100%, 50%)}
-body.death-age svg .DA80 { fill: hsl(170, 100%, 50%)}
-body.death-age svg .DA90 { fill: hsl(190, 100%, 50%)}
-body.death-age svg .DA100 { fill: hsl(210, 100%, 50%)}
-body.death-age svg .DA110 { fill: hsl(230, 100%, 50%)}
-body.death-age svg .DA120 { fill: hsl(250, 100%, 50%)}
+body.death-age svg .DA0   { fill: hsl(0, 100%, 90%)}
+body.death-age svg .DA10  { fill: hsl(0, 100%, 85%)}
+body.death-age svg .DA20  { fill: hsl(0, 100%, 80%)}
+body.death-age svg .DA30  { fill: hsl(0, 100%, 75%)}
+body.death-age svg .DA40  { fill: hsl(0, 100%, 70%)}
+body.death-age svg .DA50  { fill: hsl(0, 100%, 65%)}
+body.death-age svg .DA60  { fill: hsl(0, 100%, 60%)}
+body.death-age svg .DA70  { fill: hsl(0, 100%, 55%)}
+body.death-age svg .DA80  { fill: hsl(0, 100%, 50%)}
+body.death-age svg .DA90  { fill: hsl(0, 100%, 45%)}
+body.death-age svg .DA100 { fill: hsl(0, 100%, 40%)}
+body.death-age svg .DA110 { fill: hsl(0, 100%, 35%)}
+body.death-age svg .DA120 { fill: hsl(0, 100%, 30%)}
 
 body:not(.death-age) #death-age {
   display: none;
 }
 
-body.death-age span.DA0 { color: hsl(0, 100%, 50%)}
-body.death-age span.DA10 { color: hsl(30, 100%, 50%)}
-body.death-age span.DA20 { color: hsl(50, 100%, 50%)}
-body.death-age span.DA30 { color: hsl(70, 100%, 50%)}
-body.death-age span.DA40 { color: hsl(90, 100%, 50%)}
-body.death-age span.DA50 { color: hsl(110, 100%, 50%)}
-body.death-age span.DA60 { color: hsl(130, 100%, 50%)}
-body.death-age span.DA70 { color: hsl(150, 100%, 50%)}
-body.death-age span.DA80 { color: hsl(170, 100%, 50%)}
-body.death-age span.DA90 { color: hsl(190, 100%, 50%)}
-body.death-age span.DA100 { color: hsl(210, 100%, 50%)}
-body.death-age span.DA110 { color: hsl(230, 100%, 50%)}
-body.death-age span.DA120 { color: hsl(250, 100%, 50%)}
+body.death-age span.DA0   { color: hsl(0, 100%, 90%)}
+body.death-age span.DA10  { color: hsl(0, 100%, 85%)}
+body.death-age span.DA20  { color: hsl(0, 100%, 80%)}
+body.death-age span.DA30  { color: hsl(0, 100%, 75%)}
+body.death-age span.DA40  { color: hsl(0, 100%, 70%)}
+body.death-age span.DA50  { color: hsl(0, 100%, 65%)}
+body.death-age span.DA60  { color: hsl(0, 100%, 60%)}
+body.death-age span.DA70  { color: hsl(0, 100%, 55%)}
+body.death-age span.DA80  { color: hsl(0, 100%, 50%)}
+body.death-age span.DA90  { color: hsl(0, 100%, 45%)}
+body.death-age span.DA100 { color: hsl(0, 100%, 40%)}
+body.death-age span.DA110 { color: hsl(0, 100%, 35%)}
+body.death-age span.DA120 { color: hsl(0, 100%, 30%)}
 
 .hl_b {
   font-weight: bold;
