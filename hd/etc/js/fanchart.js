@@ -525,7 +525,7 @@ lieux_a.sort( function(e1,e2) {
 });
 var c_h = 0;
 var c_dh = 60;
-var c_l = 40;
+var c_l = 90;
 lieux_a.forEach( function( l, i ) {
 	lieux[l[0]].c = "L"+i;
 	var li = document.createElement( "li" );
@@ -568,7 +568,7 @@ lieux_a.forEach( function( l, i ) {
 	if( c_h >= 360 ) {
 		c_dh = Math.round( c_dh / 2 );
 		c_h = c_dh;
-		c_l += 15;
+		c_l -= 15;
 	}
 });
 
