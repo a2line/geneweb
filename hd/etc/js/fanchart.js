@@ -774,10 +774,16 @@ while( true ) {
 		if( p.fn != "?" ) {
 			var c = "";
 			if( p.birth_place !== undefined && p.birth_place != "" ) {
-				c += " t"+lieux[p.birth_place].c;
+				c += " bi-t"+lieux[p.birth_place].c;
+			}
+			if( p.baptism_place !== undefined && p.baptism_place != "" ) {
+				c += " ba-t"+lieux[p.baptism_place].c;
 			}
 			if( p.death_place !== undefined && p.death_place != "" ) {
-				c += " t"+lieux[p.death_place].c;
+				c += " de-t"+lieux[p.death_place].c;
+			}
+			if( p.burial_place !== undefined && p.burial_place != "" ) {
+				c += " bu-t"+lieux[p.burial_place].c;
 			}
 			if( a_m[gen-1] == "C3" ) {
 				text_C3( pg, r1+10, r2, a1, a2, sosa, p, c );
@@ -794,7 +800,7 @@ while( true ) {
 			if( p.marriage_date !== undefined ) {
 				var c = "";
 				if( p.marriage_place !== undefined && p.marriage_place != "" ) {
-					c += " t"+lieux[p.marriage_place].c;
+					c += " ma-t"+lieux[p.marriage_place].c;
 				}
 				var l = path1( pg, "pmS"+sosa, r1+5, a1, a2+delta );
 				text2( pg, "pmS"+sosa, p.marriage_date, c, l, 10 );
