@@ -20,7 +20,6 @@ function relativeLuminance( color ) {
 	const r = rsrgb <= 0.03928 ? rsrgb / 12.92 : Math.pow((rsrgb + 0.055) / 1.055, 2.4);
 	const g = gsrgb <= 0.03928 ? gsrgb / 12.92 : Math.pow((gsrgb + 0.055) / 1.055, 2.4);
 	const b = bsrgb <= 0.03928 ? bsrgb / 12.92 : Math.pow((bsrgb + 0.055) / 1.055, 2.4);
-console.log( color, data[0], data[1], data[2] );
 	return r * 0.2126 + g * 0.7152 + b * 0.0722;
 }
 function contrastRatio( color1, color2 ) {
@@ -50,6 +49,14 @@ function g( id ) {
 	return g;
 }
 
+function deathAgeClass( age ) {
+	var n = Math.trunc( age / 15 );
+	if( n > 7 ) {
+		n = 7;
+	}
+	return "DA"+n;
+}
+
 function pie_bg( g, r1, r2, a1, a2, p ) {
 	var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
 	path.setAttribute( "d",
@@ -61,13 +68,19 @@ function pie_bg( g, r1, r2, a1, a2, p ) {
 	);
 	var c = "bg";
 	if( p.birth_place !== undefined && p.birth_place != "" ) {
-		c += " "+lieux[p.birth_place].c;
+		c += " bi-"+lieux[p.birth_place].c;
+	}
+	if( p.baptism_place !== undefined && p.baptism_place != "" ) {
+		c += " ba-"+lieux[p.baptism_place].c;
 	}
 	if( p.death_place !== undefined && p.death_place != "" ) {
-		c += " "+lieux[p.death_place].c;
+		c += " de-"+lieux[p.death_place].c;
+	}
+	if( p.burial_place !== undefined && p.burial_place != "" ) {
+		c += " bu-"+lieux[p.burial_place].c;
 	}
 	if( p.death_age !== undefined && p.death_age != "" ) {
-		c += " DA"+(Math.trunc(p.death_age/10)*10);
+		c += " "+deathAgeClass(p.death_age);
 	}
 	path.setAttribute( "class", c );
 	g.append(path);
@@ -92,30 +105,42 @@ function pie( g, r1, r2, a1, a2, p ) {
 		if( p.birth_place !== undefined && p.birth_place != "" ) {
 			document.getElementById( "bi-" + lieux[p.birth_place].c ).classList.remove("hidden");
 		}
-		if( p.death_place !== undefined && p.death_place != "" ) {
-			document.getElementById( "de-" + lieux[p.death_place].c ).classList.remove("hidden");
+		if( p.baptism_place !== undefined && p.baptism_place != "" ) {
+			document.getElementById( "ba-" + lieux[p.baptism_place].c ).classList.remove("hidden");
 		}
 		if( p.marriage_place !== undefined && p.marriage_place != "" ) {
 			document.getElementById( "ma-" + lieux[p.marriage_place].c ).classList.remove("hidden");
 		}
+		if( p.death_place !== undefined && p.death_place != "" ) {
+			document.getElementById( "de-" + lieux[p.death_place].c ).classList.remove("hidden");
+		}
+		if( p.burial_place !== undefined && p.burial_place != "" ) {
+			document.getElementById( "bu-" + lieux[p.burial_place].c ).classList.remove("hidden");
+		}
 		if( p.death_age !== undefined && p.death_age != "" ) {
-			var c = "DA"+(Math.trunc(p.death_age/10)*10);
-			document.getElementById( c ).classList.add("hl_b");
+			var c = deathAgeClass(p.death_age);
+			document.getElementById( c ).classList.add("hl");
 		}
 	};
 	path.onmouseleave = function() {
 		if( p.birth_place !== undefined && p.birth_place != "" ) {
 			document.getElementById( "bi-" + lieux[p.birth_place].c ).classList.add("hidden");
 		}
-		if( p.death_place !== undefined && p.death_place != "" ) {
-			document.getElementById( "de-" + lieux[p.death_place].c ).classList.add("hidden");
+		if( p.baptism_place !== undefined && p.baptism_place != "" ) {
+			document.getElementById( "ba-" + lieux[p.baptism_place].c ).classList.add("hidden");
 		}
 		if( p.marriage_place !== undefined && p.marriage_place != "" ) {
 			document.getElementById( "ma-" + lieux[p.marriage_place].c ).classList.add("hidden");
 		}
+		if( p.death_place !== undefined && p.death_place != "" ) {
+			document.getElementById( "de-" + lieux[p.death_place].c ).classList.add("hidden");
+		}
+		if( p.burial_place !== undefined && p.burial_place != "" ) {
+			document.getElementById( "bu-" + lieux[p.burial_place].c ).classList.add("hidden");
+		}
 		if( p.death_age !== undefined && p.death_age != "" ) {
-			var c = "DA"+(Math.trunc(p.death_age/10)*10);
-			document.getElementById( c ).classList.remove("hl_b");
+			var c = deathAgeClass(p.death_age);
+			document.getElementById( c ).classList.remove("hl");
 		}
 	};
 
@@ -141,7 +166,7 @@ function pie_m_bg( g, r1, r2, a1, a2, p ) {
 	);
 	var c = "";
 	if( p.marriage_place !== undefined && p.marriage_place != "" ) {
-		c += " "+lieux[p.marriage_place].c;
+		c += " ma-"+lieux[p.marriage_place].c;
 	}
 	path.setAttribute( "class", c );
 	g.append(path);
@@ -195,13 +220,19 @@ function circle_bg( g, r, cx, cy, p ) {
 	circle.setAttribute( "r", r );
 	var c = "bg";
 	if( p.birth_place !== undefined && p.birth_place != "" ) {
-		c += " "+lieux[p.birth_place].c;
+		c += " bi-"+lieux[p.birth_place].c;
+	}
+	if( p.baptism_place !== undefined && p.baptism_place != "" ) {
+		c += " ba-"+lieux[p.baptism_place].c;
 	}
 	if( p.death_place !== undefined && p.death_place != "" ) {
-		c += " "+lieux[p.death_place].c;
+		c += " de-"+lieux[p.death_place].c;
+	}
+	if( p.burial_place !== undefined && p.burial_place != "" ) {
+		c += " bu-"+lieux[p.burial_place].c;
 	}
 	if( p.death_age !== undefined && p.death_age != "" ) {
-		c += " DA"+(Math.trunc(p.death_age/10)*10);
+		c += " "+deathAgeClass(p.death_age);
 	}
 	circle.setAttribute( "class", c );
 	g.append(circle);
@@ -222,24 +253,36 @@ function circle( g, r, cx, cy, p ) {
 		if( p.birth_place !== undefined && p.birth_place != "" ) {
 			document.getElementById( "bi-" + lieux[p.birth_place].c ).classList.remove("hidden");
 		}
+		if( p.baptism_place !== undefined && p.baptism_place != "" ) {
+			document.getElementById( "ba-" + lieux[p.baptism_place].c ).classList.remove("hidden");
+		}
 		if( p.death_place !== undefined && p.death_place != "" ) {
 			document.getElementById( "de-" + lieux[p.death_place].c ).classList.remove("hidden");
 		}
+		if( p.burial_place !== undefined && p.burial_place != "" ) {
+			document.getElementById( "bu-" + lieux[p.burial_place].c ).classList.remove("hidden");
+		}
 		if( p.death_age !== undefined && p.death_age != "" ) {
-			var c = "DA"+(Math.trunc(p.death_age/10)*10);
-			document.getElementById( c ).classList.add("hl_b");
+			var c = deathAgeClass(p.death_age);
+			document.getElementById( c ).classList.add("hl");
 		}
 	};
 	circle.onmouseleave = function() {
 		if( p.birth_place !== undefined && p.birth_place != "" ) {
 			document.getElementById( "bi-" + lieux[p.birth_place].c ).classList.add("hidden");
 		}
+		if( p.baptism_place !== undefined && p.baptism_place != "" ) {
+			document.getElementById( "ba-" + lieux[p.baptism_place].c ).classList.add("hidden");
+		}
 		if( p.death_place !== undefined && p.death_place != "" ) {
 			document.getElementById( "de-" + lieux[p.death_place].c ).classList.add("hidden");
 		}
+		if( p.burial_place !== undefined && p.burial_place != "" ) {
+			document.getElementById( "bu-" + lieux[p.burial_place].c ).classList.add("hidden");
+		}
 		if( p.death_age !== undefined && p.death_age != "" ) {
-			var c = "DA"+(Math.trunc(p.death_age/10)*10);
-			document.getElementById( c ).classList.remove("hl_b");
+			var c = deathAgeClass(p.death_age);
+			document.getElementById( c ).classList.remove("hl");
 		}
 	};
 }
@@ -249,10 +292,16 @@ function text_S1( g, x, y, p ) {
 	text.setAttribute( "y", y );
 	var c = "";
 	if( p.birth_place !== undefined && p.birth_place != "" ) {
-		c += " t"+lieux[p.birth_place].c;
+		c += " bi-t"+lieux[p.birth_place].c;
+	}
+	if( p.baptism_place !== undefined && p.baptism_place != "" ) {
+		c += " ba-t"+lieux[p.baptism_place].c;
 	}
 	if( p.death_place !== undefined && p.death_place != "" ) {
-		c += " t"+lieux[p.death_place].c;
+		c += " de-t"+lieux[p.death_place].c;
+	}
+	if( p.burial_place !== undefined && p.burial_place != "" ) {
+		c += " bu-t"+lieux[p.burial_place].c;
 	}
 	text.setAttribute( "class", c );
 	var ts1 = 100;
@@ -322,7 +371,9 @@ function link( g, pid, p, l ) {
 	text.onclick = function () {
 		var oc = p.oc;
 		if( oc != "" && oc != 0 ) { oc = "&oc=" + oc } else { oc = "" }
-		window.location = link_to_fanchart + "p=" + p.fnk + "&n=" + p.snk + oc + "&v=" + max_gen + "&tool=" + tool;
+		window.location = link_to_fanchart + "p=" + p.fnk + "&n=" + p.snk + oc + "&v=" + max_gen + "&tool=" + tool +
+			(has_ba ? "&ba=on" : "") +
+			(has_bu ? "&bu=on" : "");
 	};
 }
 function no_link( g, pid, p, l ) {
@@ -477,16 +528,32 @@ function fitScreen() {
 }
 
 var lieux = {};
+var has_bi = false;
+var has_ba = false;
+var has_ma = false;
+var has_de = false;
+var has_bu = false;
 ak.forEach( function(s) {
 	var p = ancestor[s];
 	if( p.birth_place !== undefined ) {
+		has_bi = true;
 		ancestor[s].birth_place = p.birth_place.replace( /^\?, /, "" );
 	}
-	if( p.death_place !== undefined ) {
-		ancestor[s].death_place = p.death_place.replace( /^\?, /, "" );
+	if( p.baptism_place !== undefined ) {
+		has_ba = true;
+		ancestor[s].baptism_place = p.baptism_place.replace( /^\?, /, "" );
 	}
 	if( p.marriage_place !== undefined ) {
+		has_ma = true;
 		ancestor[s].marriage_place = p.marriage_place.replace( /^\?, /, "" );
+	}
+	if( p.death_place !== undefined ) {
+		has_de = true;
+		ancestor[s].death_place = p.death_place.replace( /^\?, /, "" );
+	}
+	if( p.burial_place !== undefined ) {
+		has_bu = true;
+		ancestor[s].burial_place = p.burial_place.replace( /^\?, /, "" );
 	}
 	if( p.death_age !== undefined ) {
 		ancestor[s].death_age = p.death_age.replace( /[^0123456789]/g, "" );
@@ -496,23 +563,42 @@ ak.forEach( function(s) {
 
 	if( p.birth_place !== undefined && p.birth_place != "" ) {
 		if( lieux[p.birth_place] === undefined ) {
-			lieux[p.birth_place] = { "cnt": 1 };
+			lieux[p.birth_place] = { "cnt": 1, "bi": true };
 		} else {
 			lieux[p.birth_place].cnt++;
+			lieux[p.birth_place].bi = true;
 		}
 	}
-	if( p.death_place !== undefined && p.death_place != "" ) {
-		if( lieux[p.death_place] === undefined ) {
-			lieux[p.death_place] = { "cnt": 1 };
+	if( p.baptism_place !== undefined && p.baptism_place != "" ) {
+		if( lieux[p.baptism_place] === undefined ) {
+			lieux[p.baptism_place] = { "cnt": 1, "ba": true };
 		} else {
-			lieux[p.death_place].cnt++;
+			lieux[p.baptism_place].cnt++;
+			lieux[p.baptism_place].ba = true;
 		}
 	}
 	if( p.marriage_place !== undefined && p.marriage_place != "" ) {
 		if( lieux[p.marriage_place] === undefined ) {
-			lieux[p.marriage_place] = { "cnt": 1 };
+			lieux[p.marriage_place] = { "cnt": 1, "ma": true };
 		} else {
 			lieux[p.marriage_place].cnt++;
+			lieux[p.marriage_place].ma = true;
+		}
+	}
+	if( p.death_place !== undefined && p.death_place != "" ) {
+		if( lieux[p.death_place] === undefined ) {
+			lieux[p.death_place] = { "cnt": 1, "de": true };
+		} else {
+			lieux[p.death_place].cnt++;
+			lieux[p.death_place].de = true;
+		}
+	}
+	if( p.burial_place !== undefined && p.burial_place != "" ) {
+		if( lieux[p.burial_place] === undefined ) {
+			lieux[p.burial_place] = { "cnt": 1, "bu": true };
+		} else {
+			lieux[p.burial_place].cnt++;
+			lieux[p.burial_place].bu = true;
 		}
 	}
 });
@@ -529,33 +615,85 @@ var c_l = 90;
 lieux_a.forEach( function( l, i ) {
 	lieux[l[0]].c = "L"+i;
 	var li = document.createElement( "li" );
-	li.innerHTML = '<span id="bi-L'+i+'" class="hidden">°</span><span id="ma-L'+i+'" class="hidden">x</span><span id="de-L'+i+'" class="hidden">&dagger;</span><span class="square">■</span> ' + l[0];
+	li.innerHTML =
+		(has_bi ? '<span id="bi-L'+i+'" class="hidden">N</span>' : '') +
+		(has_ba ? '<span id="ba-L'+i+'" class="hidden">B</span>' : '') +
+		(has_ma ? '<span id="ma-L'+i+'" class="hidden">M</span>' : '') +
+		(has_de ? '<span id="de-L'+i+'" class="hidden">D</span>' : '') +
+		(has_bu ? '<span id="bu-L'+i+'" class="hidden">S</span>' : '') +
+		'<span class="square">■</span> ' + l[0];
 	li.setAttribute( "id", "L"+i );
 	li.setAttribute( "title", lieux[l[0]].cnt + " occurence(s)" );
 	li.onmouseenter = function() {
-		var a = document.getElementsByClassName( "L"+i );
-		for( var e of a ) {
-			e.classList.add( "highlight" );
+		[ "bi", "ba", "ma", "de", "bu" ].forEach( function(ev) {
+			var a = document.getElementsByClassName( ev+"-L"+i );
+			for( var e of a ) {
+				e.classList.add( "highlight" );
+			}
+			var a = document.getElementsByClassName( ev+"-tL"+i );
+			for( var e of a ) {
+				e.classList.add( "text_highlight" );
+			}
+		});
+		if( lieux[l[0]].bi !== undefined ) {
+			document.getElementById( "bi-L"+i ).classList.remove( "hidden" );
 		}
-		var a = document.getElementsByClassName( "tL"+i );
-		for( var e of a ) {
-			e.classList.add( "text_highlight" );
+		if( lieux[l[0]].ba !== undefined ) {
+			document.getElementById( "ba-L"+i ).classList.remove( "hidden" );
+		}
+		if( lieux[l[0]].ma !== undefined ) {
+			document.getElementById( "ma-L"+i ).classList.remove( "hidden" );
+		}
+		if( lieux[l[0]].de !== undefined ) {
+			document.getElementById( "de-L"+i ).classList.remove( "hidden" );
+		}
+		if( lieux[l[0]].bu !== undefined ) {
+			document.getElementById( "bu-L"+i ).classList.remove( "hidden" );
 		}
 	};
 	li.onmouseleave = function() {
-		var a = document.getElementsByClassName( "L"+i );
-		for( var e of a ) {
-			e.classList.remove( "highlight" );
+		[ "bi", "ba", "ma", "de", "bu" ].forEach( function(ev) {
+			var a = document.getElementsByClassName( ev+"-L"+i );
+			for( var e of a ) {
+				e.classList.remove( "highlight" );
+			}
+			var a = document.getElementsByClassName( ev+"-tL"+i );
+			for( var e of a ) {
+				e.classList.remove( "text_highlight" );
+			}
+		});
+		if( lieux[l[0]].bi !== undefined ) {
+			document.getElementById( "bi-L"+i ).classList.add( "hidden" );
 		}
-		var a = document.getElementsByClassName( "tL"+i );
-		for( var e of a ) {
-			e.classList.remove( "text_highlight" );
+		if( lieux[l[0]].ba !== undefined ) {
+			document.getElementById( "ba-L"+i ).classList.add( "hidden" );
+		}
+		if( lieux[l[0]].ma !== undefined ) {
+			document.getElementById( "ma-L"+i ).classList.add( "hidden" );
+		}
+		if( lieux[l[0]].de !== undefined ) {
+			document.getElementById( "de-L"+i ).classList.add( "hidden" );
+		}
+		if( lieux[l[0]].bu !== undefined ) {
+			document.getElementById( "bu-L"+i ).classList.add( "hidden" );
 		}
 	};
 	places_list.append( li );
 
-	sheet.insertRule( 'body.place_color svg .L'+i+'  {fill: var(--fc-color-'+i+', transparent);}' );
-	sheet.insertRule( 'body.place_color svg .tL'+i+'  {fill: var(--fc-text-color-'+i+', black);}' );
+	sheet.insertRule( 'body.place_color svg.bi .bi-L'+i+'  {fill: var(--fc-color-'+i+', transparent);}' );
+	sheet.insertRule( 'body.place_color svg.bi .bi-tL'+i+'  {fill: var(--fc-text-color-'+i+', black);}' );
+	if( has_ba ) {
+		sheet.insertRule( 'body.place_color svg.ba .ba-L'+i+'  {fill: var(--fc-color-'+i+', transparent);}' );
+		sheet.insertRule( 'body.place_color svg.ba .ba-tL'+i+'  {fill: var(--fc-text-color-'+i+', black);}' );
+	}
+	sheet.insertRule( 'body.place_color svg.ma .ma-L'+i+'  {fill: var(--fc-color-'+i+', transparent);}' );
+	sheet.insertRule( 'body.place_color svg.ma .ma-tL'+i+'  {fill: var(--fc-text-color-'+i+', black);}' );
+	sheet.insertRule( 'body.place_color svg.de .de-L'+i+'  {fill: var(--fc-color-'+i+', transparent);}' );
+	sheet.insertRule( 'body.place_color svg.de .de-tL'+i+'  {fill: var(--fc-text-color-'+i+', black);}' );
+	if( has_bu ) {
+		sheet.insertRule( 'body.place_color svg.bu .bu-L'+i+'  {fill: var(--fc-color-'+i+', transparent);}' );
+		sheet.insertRule( 'body.place_color svg.bu .bu-tL'+i+'  {fill: var(--fc-text-color-'+i+', black);}' );
+	}
 	sheet.insertRule( 'body.place_color #L'+i+' .square  { color: var(--fc-color-'+i+', transparent); }' );
 	root.style.setProperty( '--fc-color-'+i, 'hsl('+c_h+',100%,'+c_l+'%)' );
 	var rb = contrastRatio( 'hsl('+c_h+',100%,'+c_l+'%)', 'black' );
@@ -563,13 +701,30 @@ lieux_a.forEach( function( l, i ) {
 	if( rw > rb ) {
 		root.style.setProperty( '--fc-text-color-'+i, 'white' );
 	}
-	console.log( i, rb, rw );
 	c_h += c_dh;
 	if( c_h >= 360 ) {
 		c_dh = Math.round( c_dh / 2 );
 		c_h = c_dh;
 		c_l -= 15;
 	}
+});
+
+[ "DA0", "DA1", "DA2", "DA3", "DA4", "DA5", "DA6", "DA7" ].forEach( function( id ) {
+	var el = document.getElementById( id );
+	el.onmouseenter = function() {
+		var a = document.getElementsByClassName( id );
+		for( var e of a ) {
+			e.classList.add( "highlight" );
+		}
+		document.getElementById( id ).classList.add("hl");
+	};
+	el.onmouseleave = function() {
+		var a = document.getElementsByClassName( id );
+		for( var e of a ) {
+			e.classList.remove( "highlight" );
+		}
+		document.getElementById( id ).classList.remove("hl");
+	};
 });
 
 var standard_height, standard_width;
@@ -705,6 +860,42 @@ document.getElementById("b-places-hl").onclick = function() {
 document.getElementById("b-places-colorise").onclick = function() {
 	document.body.className = "places-list place_color";
 	tool = "place_color";
+	fanchart.classList.add( "bi" );
+	fanchart.classList.add( "ba" );
+	fanchart.classList.add( "ma" );
+	fanchart.classList.add( "de" );
+	fanchart.classList.add( "bu" );
+	document.getElementById( "bi" ).checked = true;
+	document.getElementById( "ba" ).checked = true;
+	document.getElementById( "ma" ).checked = true;
+	document.getElementById( "de" ).checked = true;
+	document.getElementById( "bu" ).checked = true;
+};
+document.getElementById( "bi" ).checked = true;
+document.getElementById( "ba" ).checked = true;
+document.getElementById( "ma" ).checked = true;
+document.getElementById( "de" ).checked = true;
+document.getElementById( "bu" ).checked = true;
+if( !has_ba ) {
+	document.getElementById( "ba" ).classList.add( "none" );
+}
+if( !has_bu ) {
+	document.getElementById( "bu" ).classList.add( "none" );
+}
+document.getElementById("bi").onclick = function() {
+	fanchart.classList.toggle( "bi" );
+};
+document.getElementById("ba").onclick = function() {
+	fanchart.classList.toggle( "ba" );
+};
+document.getElementById("ma").onclick = function() {
+	fanchart.classList.toggle( "ma" );
+};
+document.getElementById("de").onclick = function() {
+	fanchart.classList.toggle( "de" );
+};
+document.getElementById("bu").onclick = function() {
+	fanchart.classList.toggle( "bu" );
 };
 document.getElementById("b-death-age").onclick = function() {
 	document.body.className = "death-age";
