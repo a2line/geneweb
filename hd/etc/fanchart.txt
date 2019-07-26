@@ -55,7 +55,7 @@
 <span id="b-death-age" class="button" title="Activer la colorisation de l'âge de décès"><strong>&#x271d;</strong></span>
 <span id="b-no-tool" class="button" title="Désactiver les outils">&#x274c;</span>
 </div>
-<svg id="fanchart" class="bi ba ma de bu" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" %if(evar.mono = "on")class="mono"%end;></svg>
+<svg id="fanchart" class="bi ba ma de bu%if(evar.mono = "on") mono%end;" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg>
 
 </body>
 

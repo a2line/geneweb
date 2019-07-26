@@ -7,6 +7,9 @@
   .noprint {
     display: none;
   }
+  #place_list {
+    position: static;
+  }
 }
 
 svg .highlight {
@@ -31,7 +34,7 @@ body:not(.places-list) #places-list {
 #places-list {
  overflow: scroll;
  height: 100%;
- width: 18%;
+ width: var(--fc-tool-size, 18%);
  white-space: nowrap;
 }
 /*

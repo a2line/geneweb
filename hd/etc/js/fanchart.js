@@ -826,6 +826,7 @@ const window_h = window.innerHeight;
 const window_w = Math.round( window_h * svg_ratio );
 const window_cx = Math.round( window_w / 2 );
 const window_cy = Math.round( window_h / 2 );
+root.style.setProperty( '--fc-tool-size', (window.innerWidth - window_w) + "px" );
 
 fanchart.setAttribute( "height", window_h );
 fanchart.setAttribute( "width", window_w );
