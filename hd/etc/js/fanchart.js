@@ -495,7 +495,7 @@ fanchart.onmousemove = function(e) {
 const security = 0.95;
 const zoom_factor = 1.25;
 const d_all = 220;
-const a_r = [   50,   50,   50,   50,   80,   70,  100,  150,  130,   90 ];
+const a_r = [   50,   50,   60,   60,   100,   100,  100,  150,  130,   90 ];
 const a_m = [ "S1", "C3", "C3", "C3", "R3", "R3", "R2", "R1", "R1", "R1" ];
 
 var ak = Object.keys(ancestor)
@@ -823,6 +823,7 @@ while( true ) {
 //document.documentElement.style.overflow = 'hidden';
 
 const window_h = window.innerHeight;
+//const window_h = 2480;
 const window_w = Math.round( window_h * svg_ratio );
 const window_cx = Math.round( window_w / 2 );
 const window_cy = Math.round( window_h / 2 );
@@ -867,11 +868,11 @@ document.getElementById("b-places-hl").onclick = function() {
 document.getElementById("b-places-colorise").onclick = function() {
 	document.body.className = "places-list place_color";
 	tool = "place_color";
-	fanchart.classList.add( "bi" );
-	fanchart.classList.add( "ba" );
+//	fanchart.classList.add( "bi" );
+//	fanchart.classList.add( "ba" );
 	fanchart.classList.add( "ma" );
-	fanchart.classList.add( "de" );
-	fanchart.classList.add( "bu" );
+//	fanchart.classList.add( "de" );
+//	fanchart.classList.add( "bu" );
 	document.getElementById( "bi" ).checked = true;
 	document.getElementById( "ba" ).checked = true;
 	document.getElementById( "ma" ).checked = true;

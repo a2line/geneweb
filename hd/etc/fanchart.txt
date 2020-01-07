@@ -8,17 +8,34 @@
 </head>
 
 %define;somebody_fanchart_info(xx)
-"S%xx.anc_sosa.v;":{"fn":"%if(xx.public_name != "")%xx.public_name;%else;%xx.first_name;%end;","fnk":"%xx.first_name_key","sn":"%xx.surname","snk":"%xx.surname_key;","oc":"%xx.occ","dates":'%xx.dates;',"birth_place":"%xx.birth_place;","death_place":"%xx.death_place","death_age":"%xx.death_age","has_parents":%if(xx.has_parents)true%else;false%end;%nn;
-%if(evar.ba = "on" and xx.baptism_place != ""),"baptism_place":"%xx.baptism_place;"%end;
-%if(evar.bu = "on" and xx.burial_place != ""),"burial_place":"%xx.burial_place;"%end;
+  "S%xx.anc_sosa.v;":{"fn":"%if(xx.public_name != "")%xx.public_name;%else;%xx.first_name;%end;","fnk":"%xx.first_name_key","sn":"%xx.surname","snk":"%xx.surname_key;","oc":"%xx.occ","dates":'%xx.dates;',"birth_place":"%xx.birth_place;","death_place":"%xx.death_place","death_age":"%if;xx.is_dead;%if;xx.computable_death_age;%xx.death_age;%end;%else;%if;xx.computable_age;%xx.age;%end;%end;","has_parents":%if(xx.has_parents)true%else;false%end;%nn;
+  %if(evar.ba = "on" and xx.baptism_place != ""),"baptism_place":"%xx.baptism_place;"%end;
+  %if(evar.bu = "on" and xx.burial_place != ""),"burial_place":"%xx.burial_place;"%end;
   %if(xx.is_male)
     %foreach;xx.family;
       %if(family.index = xx.family.index)
-        ,"marriage_date":"%family.marriage_date.year;","marriage_place":"%marriage_place;"
+        ,"marriage_date":"%if;(family.marriage_date.prec="")%family.marriage_date.year;
+        %else;%(%family.marriage_date.prec;%)%family.marriage_date;%end; %if;(are_not_married)–%end;%nn;
+        %foreach;xx.event;
+          %if;(event.has_spouse and spouse.index = event.spouse.index)
+            %if;(event.name = [divorce event] or event.name = [separate event])
+              %if;event.has_date;-%event.date.prec;%event.date.year;%end;
+              ","marriage_length":"%expr(event.date.year-family.marriage_date.year)%end;
+          %end;
+        %end;%nn;
+        ","marriage_place":"%marriage_place;"%nn;
       %end;
+      %if;(not (are_separated or are_divorced))
+        ,"marriage_length":"%nn;
+          %if;(xx.death_date!="" and xx.spouse.death_date!="")
+            %if;(xx.death_date.year<xx.spouse.death_date.year)%expr(xx.death_date.year-family.marriage_date.year)
+            %else;%expr(xx.spouse.death_date.year-family.marriage_date.year)
+            %end;
+          %end;"
+      %end;%nn;
     %end;
   %end;
-},
+  },
 %end;
 %define;somebody_fanchart_same(xx)
 "S%xx.anc_sosa.v;":{"fn":"=","sn":"%xx.same","fnk":"%xx.first_name_key","snk":"%xx.surname_key;","oc":"","dates":"","has_parents":%if(xx.has_parents)true%else;false%end;},
