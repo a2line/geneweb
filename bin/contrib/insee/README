@@ -1,0 +1,31 @@
+L'objectif de cette moulinette est d'exploiter au mieux les fichiers INSEE :
+
+https://www.data.gouv.fr/fr/datasets/fichier-des-personnes-decedees/
+
+Code officiel géographique
+https://www.insee.fr/fr/information/2560452
+https://www.insee.fr/fr/statistiques/fichier/3720946/cog_ensemble_2019_csv.zip
+
+On va utiliser une base MySQL, voici quelques notes pour la créer :
+mysql -u root -p
+(renseigner le mot de passe puis Entrée)
+mysql> create database insee;
+mysql> create user 'insee'@'localhost' identified by '<mot_de_passe>';
+mysql> grant all privileges on insee.* to 'insee'@'localhost";
+mysql> grant file on *.* to 'insee'@'localhost';
+mysql> exit
+
+Composants de la moulinette :
+ - insee.ml => insee.exe : Outil pour extraire les données d'une base GeneWeb à confronter au fichier INSEE
+ - mysql.sh : Permet de se connecter à la base de donnée (à ajuster)
+ - get-files.sh : Permet de récupérer et mettre à jour le fichier INSEE
+ - load-files.sh : Permet charger tous les fichiers INSEE en base
+ - reload-file.sh : Permet de recharger une année du fichier INSEE en base
+ - get-COG.sh : Permet de récuperer le référentiel des commune de l'INSEE (COG)
+ - ./mysql.sh < load-SQL.sql : Permet le fichier des pays
+ - ./mysql.sh < load-COG.sql : Permet de charger le référenciel COG en base
+ - ./mysql.sh < PlaceNorme.sql : Permet de synthétiser le référentiel COG en une seule table (avec ma convention utilisée dans GeneWeb)
+ - ./mysql.sh < getPlaceLib.sql : Création d'une fonction pour convertir un code INSEE en libellé commune pour une date donnée
+ - ./mysql.sh < processTodo.sh : Création de la procédure qui va confronter les données GeneWeb avec le fichier INSEE
+ - rapport.sh et rapportFormate.sh : Permet de créer un rapport lisible pour piloter les mises à jour dans GeneWeb
+ - run-TODO.sh : Lance l'extraction GeneWeb et la charge en base puis exécute la confrontation au fichier INSEE et génère un rapport

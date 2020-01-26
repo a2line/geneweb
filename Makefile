@@ -28,6 +28,7 @@ EXE = \
 	bin/gwu.exe \
 	bin/setup.exe \
 	bin/update_nldb.exe \
+    bin/contrib/insee/insee \
 
 ###### [BEGIN] Generated files section
 

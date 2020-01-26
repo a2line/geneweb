@@ -1,0 +1,4 @@
+(executables
+  (names insee)
+  (libraries geneweb)
+)
