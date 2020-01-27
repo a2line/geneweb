@@ -54,8 +54,8 @@
 
 (executables
   (package geneweb-bin)
-  (public_names connex gwb2ged gwd gwdiff gwu setup update_nldb)
-  (modules connex gwb2ged gwdiff gwd gwu setup update_nldb)
+  (public_names connex gwb2ged gwd gwdiff gwu setup update_nldb insee)
+  (modules connex gwb2ged gwdiff gwd gwu setup update_nldb insee)
   (libraries unix str %%%GWDB_PKG%%% %%%SOSA_PKG%%% %%%WSERVER_PKG%%% geneweb)
 )
 

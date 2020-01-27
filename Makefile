@@ -28,7 +28,7 @@ EXE = \
 	bin/gwu.exe \
 	bin/setup.exe \
 	bin/update_nldb.exe \
-    bin/contrib/insee/insee \
+	bin/insee.exe \
 
 ###### [BEGIN] Generated files section
 
@@ -170,6 +170,7 @@ distrib: exe
 	cp $(BUILD_DISTRIB_DIR)gwdiff.exe $(DISTRIB_DIR)/gw/gwdiff$(EXT);
 	cp $(BUILD_DISTRIB_DIR)setup.exe $(DISTRIB_DIR)/gw/gwsetup$(EXT);
 	cp $(BUILD_DISTRIB_DIR)update_nldb.exe $(DISTRIB_DIR)/gw/update_nldb$(EXT);
+	cp $(BUILD_DISTRIB_DIR)insee.exe $(DISTRIB_DIR)/gw/insee$(EXT);
 	mkdir $(DISTRIB_DIR)/gw/gwtp_tmp
 	mkdir $(DISTRIB_DIR)/gw/gwtp_tmp/lang
 	cp bin/gwtp/README $(DISTRIB_DIR)/gw/gwtp_tmp/.
