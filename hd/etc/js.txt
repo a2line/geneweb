@@ -3,11 +3,11 @@
   %if;(bvar.use_cdn="yes")
     <script src="https://code.jquery.com/jquery-3.5.0.min.js"
       integrity="sha384-LVoNJ6yst/aLxKvxwp6s2GAabqPczfWh6xzm38S/YtjUyZ+3aTKOnD/OJVGYLZDl" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js"
-      integrity="sha384-6khuMg9gaYr5AxOqhkVIODVIvm9ynTT5J4V1cfthmT+emCG6yVmEZsRHdxlotUnm" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"
+      integrity="sha384-1CmrxMRARb6aLqgBO7yyAxTOQE2AKb9GfXnEo760AUcUmFx3ibVJJAzGytlQcNXd" crossorigin="anonymous"></script>
   %else;
     <script src="%if;(cgi)%bvar.static_path;%end;js/jquery.min.js?version=3.5.0"></script>
-    <script src="%if;(cgi)%bvar.static_path;%end;js/bootstrap.bundle.min.js?version=4.4.1"></script>
+    <script src="%if;(cgi)%bvar.static_path;%end;js/bootstrap.bundle.min.js?version=4.5.0"></script>
   %end;
   %if;(evar.m!="MOD_DATA")
   <script>
