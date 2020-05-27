@@ -158,7 +158,6 @@ let rec print_descend_upto conf base max_cnt ini_p ini_br lev children =
       Wserver.printf "</ul>\n"
     end
 
-
 let print_cousins_side_of conf base max_cnt a ini_p ini_br lev1 lev2 =
   let sib = siblings conf base (get_iper a) in
   if List.exists (sibling_has_desc_lev conf base lev2) sib then
@@ -274,7 +273,6 @@ let print_cousins conf base p lev1 lev2 =
   Wserver.printf "</p>\n";
   Wserver.printf "</div>\n";
   Hutil.trailer conf
-
 
 let print_anniv conf base p dead_people level =
   let module S = Map.Make (struct type t = iper let compare = compare end) in
