@@ -3129,16 +3129,15 @@ let print_reference conf fn occ sn =
 
 
 (* ********************************************************************** *)
-(*  [Fonc] gen_print_tips : conf -> string -> unit                        *)
+(*  [Fonc] gen_print_tips : string -> unit                                *)
 (** [Description] : Affiche un tips.
     [Args] :
-      - conf : configuration de la base
       - s    : le contenu du tips
     [Retour] : Néant
     [Rem] : Non exporté en clair hors de ce module.                       *)
 (* ********************************************************************** *)
-let gen_print_tips conf s =
-  Wserver.printf "<div class=\"tips\">\n";
+let gen_print_tips s =
+  Wserver.printf "<div class=\"tips alert alert-warning\" role=\"alert\">\n";
   Wserver.printf "<table>\n";
   Wserver.printf "<tr>\n";
   Wserver.printf "<td>\n";
@@ -3146,8 +3145,7 @@ let gen_print_tips conf s =
   Wserver.printf "</td>\n";
   Wserver.printf "</tr>\n";
   Wserver.printf "</table>\n";
-  Wserver.printf "</div>\n";
-  Wserver.printf "<br%s>\n" conf.xhs
+  Wserver.printf "</div>\n"
 
 (* ********************************************************************** *)
 (*  [Fonc] print_tips_relationship : conf -> unit                         *)
@@ -3164,7 +3162,7 @@ let print_tips_relationship conf =
   if p_getenv conf.env "em" = Some "R" || p_getenv conf.env "m" = Some "C"
   then
     let s = Utf8.capitalize (transl conf "select person to compute relationship") in
-    gen_print_tips conf s
+    gen_print_tips s
 
 
 (* ********************************************************************** *)

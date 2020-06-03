@@ -295,7 +295,7 @@ val reduce_list : int -> 'a list -> 'a list
 
 val print_reference : config -> string -> int -> string -> unit
 
-val gen_print_tips : config -> string -> unit
+val gen_print_tips : string -> unit
 val print_tips_relationship : config -> unit
 
 val print_image_sex : config -> person -> int -> unit
