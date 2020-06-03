@@ -6620,7 +6620,7 @@ eo: geavoj
 es: abuelos
 et: vanavanemad
 fi: isovanhemmat
-fr: des grands-parents
+fr: grands-parents
 he:   סבים
 is: afi og amma
 it: nonni
@@ -6650,7 +6650,7 @@ eo: gepraavoj
 es: bisabuelos
 et: vanavanavanemad
 fi: iso-isovanhemmat
-fr: des arrière-grands-parents
+fr: arrière-grands-parents
 he:   רב-סבים
 is: langafi og langamma
 it: bisnonni
@@ -6665,6 +6665,12 @@ ru: прапрародители
 sk: praprastarí rodičia
 sl: prastari starši
 sv: gammel-farföräldrar/gammel-morföräldrar
+
+    great-great-grandparents
+de: Ururgroßelternteil
+en: great-great-grandparents
+eo: prapraavo
+fr: arrière-arrière-grands-parents
 
     gregorian/julian/french/hebrew
 af: gregoriaans/juliaans/frans/hebreeus
@@ -10727,6 +10733,7 @@ en: on
 eo: la
 es: el
 et: :i:
+en:
 fi: :e:
 fr: le
 he:   ב-
@@ -10875,7 +10882,7 @@ eo: nur la elektita generacio
 es: solamente la generación elegida
 et: ainult valitud sugupõlv
 fi: vain valittu sukupolvi
-fr: seulement la génération sélectionnée
+fr: seulement cette génération
 he:  דור הנבכר בלבד
 is: aðeins valda kynslóðin
 it: soltanto la generazione selezionata
@@ -12806,7 +12813,7 @@ sv: syskon
     siblings of the grandparents
 co: arcizii è arcizie
 de: Großonkel und Großtanten
-en: granduncles and grandaunts
+en: great-uncles and great-aunts
 fr: grands-oncles et grands-tantes
 it: prozii e prozie
 pt: tios-avôs e tias-avós
@@ -12814,8 +12821,8 @@ sv: syskon till far- och morföräldrar
 
     siblings of the great-grandparents
 co: fratelli è surelle di l’arcicaccari
-en: great-granduncles and great-grandaunts
-fr: arrières-grands-oncles et arrières-grands-tantes
+en: great-great-uncles and great-great-aunts
+fr: arrière-grands-oncles et arrière-grands-tantes
 pt: tios-bisavôs e tias-bisavós
 sv: syskon till föräldrar tre generationer bakåt
 
@@ -14007,6 +14014,10 @@ ru: внуки
 sk: vnúčatá
 sl: vnuki
 sv: barnbarnen
+
+    grandchild/grandchildren
+en: grandchild/grandchildren
+fr: petit-enfant/petits-enfants
 
     the grandparents
 af: die grootouers
