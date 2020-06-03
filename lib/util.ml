@@ -2848,16 +2848,15 @@ let print_reference conf fn occ sn =
 
 
 (* ********************************************************************** *)
-(*  [Fonc] gen_print_tips : conf -> string -> unit                        *)
+(*  [Fonc] gen_print_tips : conf > string -> unit                                *)
 (** [Description] : Affiche un tips.
     [Args] :
-      - conf : configuration de la base
       - s    : le contenu du tips
     [Retour] : Néant
     [Rem] : Non exporté en clair hors de ce module.                       *)
 (* ********************************************************************** *)
 let gen_print_tips conf s =
-  Output.print_string conf "<div class=\"tips\">\n";
+  Output.print_string conf "<div class=\"tips alert alert-warning\" role=\"alert\">\n";
   Output.print_string conf "<table>\n";
   Output.print_string conf "<tr>\n";
   Output.print_string conf "<td>\n";
@@ -2865,8 +2864,7 @@ let gen_print_tips conf s =
   Output.print_string conf "</td>\n";
   Output.print_string conf "</tr>\n";
   Output.print_string conf "</table>\n";
-  Output.print_string conf "</div>\n";
-  Output.print_string conf "<br>\n"
+  Output.print_string conf "</div>\n"
 
 (* ********************************************************************** *)
 (*  [Fonc] print_tips_relationship : conf -> unit                         *)
