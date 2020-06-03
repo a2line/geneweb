@@ -20,56 +20,61 @@
 %include;menubar
 
 %define;title(xxx)
-  <h3>[*xxx]</h3>
-  <div class="tips">
-    <table><tr><td>[*select person to compute relationship]</td></tr></table>
+  <h3>xxx</h3>
+  <div class="alert alert-warning pl-5" role="alert">
+    [*select person to compute relationship]
   </div>
-  <br />
 %end;
 
-%reset_count;
+%define;on_side(xxx)
+  [*on %s's side:::xxx]
+%end;
+%let;my_first_name_key;%first_name_key;%in;
+%let;my_surname_key;%surname_key;%in;
+%let;my_occ;%occ;%in
+%define;url(xxx,yyy)
+  <a href="%prefix;m=RL%nn;
+    %if;("yyy"="asc")&p=%xxx.first_name_key;&n=%xxx.surname_key;%if;(xxx.occ!=0)&oc=%xxx.occ;%end;
+    %elseif;("yyy"="desc")&p=%my_first_name_key;&n=%my_surname_key;%if;(occ!=0)&oc=%my_occ;%end;
+    %end;%nn;
+    &p1=%my_first_name_key;&n1=%my_surname_key;%if;(occ!=0)&oc1=%my_occ;%end;&%if;("yyy"="asc" or "yyy"="desc")l%else;b%end;1=%expr(evar.v1)%nn;
+    &p2=%xxx.first_name_key;&n2=%xxx.surname_key;%if;(xxx.occ!=0)&oc2=%xxx.occ;%end;&%if;("yyy"="asc" or "yyy"="desc")l%else;b%end;2=%evar.v2;%nn;
+    %if;(evar.image="off")&image=off;%end;%nn;
+    %if;(evar.spouse!="")&spouse=%evar.spouse;%end;%nn;
+    %if;(evar.long!="")&long=%evar.long;%end;">%xxx;</a>
+%end;
 %if;(evar.v1=1 and evar.v2=1)
-  %apply;title("siblings")
+  %apply;title([*siblings])
   %if;(has_parents)
+    %let;ind;%self.index;%in;
     %let;my_father;%self.father;%in;
     %let;my_mother;%self.mother;%in;
-    %let;my_first_name_key;%first_name_key;%in;
-    %let;my_surname_key;%surname_key;%in;
     %if;father.has_children;
     <ul>
       %foreach;father.family;
         %if;(has_children and father.spouse = my_mother)
-          <li>From %father; and %father.spouse;
+          <li>%apply;on_side%with;%father;%end; [and] %father.spouse;</li>
             <ul>
+              %reset_count;
               %foreach;child;
-                %incr_count;
-                <li>
-                  %( what is the logic of b1 and b2 ?? sosa_of_branche? %)
-                  <a href="%prefix;;m=RL&p1=%my_first_name_key;&n1=%my_surname_key;&b1=2%nn;
-                    &p2=%child.first_name_key;&n2=%child.surname_key;&b2=2%nn;
-                    %if;(evar.image="off")&image=off;%end;%nn;
-                    %if;(evar.spouse!="")&spouse=%evar.spouse;%end;%nn;
-                    %if;(evar.long!="")&long=%evar.long;%end;">
-                    %(test if not self manqunt%)%child;</a>
+                %if;(child.index!=ind)
+                  %incr_count;
+                  <li>%apply;url("child","")</li>
+                %end;
               %end;
             </ul>
         %end;
       %end;
       %foreach;father.family;
         %if;(has_children and father.spouse != my_mother)
-          <li>From %father; and %father.spouse;
+          <li>%apply;on_side%with;%father;%end; [and] %father.spouse;</li>
             <ul>
               %foreach;child;
                 %incr_count;
-                <li>
-                  <a href="%prefix;;m=RL&p1=%my_first_name_key;&n1=%my_surname_key;&b1=2%nn;
-                    &p2=%child.first_name_key;&n2=%child.surname_key;&b2=2%nn;
-                    %if;(evar.image="off")&image=off;%end;%nn;
-                    %if;(evar.spouse!="")&spouse=%evar.spouse;%end;%nn;
-                    %if;(evar.long!="")&long=%evar.long;%end;">
-                    %child;</a>
+                <li>%apply;url("child","")</li>
               %end;
             </ul>
+          </li>
         %end;
       %end;
       </ul>
@@ -78,17 +83,11 @@
     <ul>
       %foreach;mother.family;
         %if;(has_children and mother.spouse != my_father)
-          <li>From %mother; and %mother.spouse;
+          <li>%apply;on_side%with;%mother;%end; [and] %mother.spouse;</li>
             <ul>
               %foreach;child;
                 %incr_count;
-                <li>
-                  <a href="%prefix;;m=RL&p1=%my_first_name_key;&n1=%my_surname_key;&b1=3%nn;
-                    &p2=%child.first_name_key;&n2=%child.surname_key;&b2=3%nn;
-                    %if;(evar.image="off")&image=off;%end;%nn;
-                    %if;(evar.spouse!="")&spouse=%evar.spouse;%end;%nn;
-                    %if;(evar.long!="")&long=%evar.long;%end;">
-                %child;</a>
+                <li>%apply;url("child","")</li>
               %end;
             </ul>
         %end;
@@ -105,31 +104,59 @@
               %if;(evar.spouse!="")&spouse=%evar.spouse;%end;%nn;
               %if;(evar.long!="")&long=%evar.long;%end;">%self;</a>
   %else;
-    %if;(evar.v2=1)%apply;title("children")
-    %elseif;(evar.v2=2)%apply;title("grandchildren")
-    %elseif;(evar.v2=3)%apply;title("great-grandchildren")
-    %elseif;(evar.v2=4)%apply;title("great-great-grandchildren")
+    %if;(evar.v2=1)%apply;title([*child/children]1)
+    %elseif;(evar.v2=2)%apply;title([*grandchild/grandchildren]1)
+    %elseif;(evar.v2=3)%apply;title([*great-grandchildren])
+    %elseif;(evar.v2=4)%apply;title([*great-great-grandchildren])
     %else;
       %let;lev_dn;%evar.v2; generations below%in
       %apply;title(lev_dn)
     %end;
-    descendants: tbd<br>
+    %if;(evar.v2>2)<div class="alert alert-danger" role="alert"><i class="fa fa-exclamation mr-1"></i>TODO</div>%end;
+    <ul>
+      %reset_count;
+      %foreach;family;
+        %foreach;child;
+          %if;(evar.v2=1)
+            %incr_count;
+            <li>%apply;url("child","desc")</li>
+          %elseif;(evar.v2=2)
+            %foreach;child.family;
+              %foreach;child;
+                %incr_count;
+                <li>%apply;url("child","desc")</li>
+              %end;
+            %end;
+          %end;
+        %end; 
+      %end;
+    </ul>
   %end;
 %elseif;(evar.v2=0)
-  %if;(evar.v1=1)%apply;title("parents")
-  %elseif;(evar.v1=2)%apply;title("grandparents")
-  %elseif;(evar.v1=3)%apply;title("great-grandparents")
-  %elseif;(evar.v1=4)%apply;title("great-great-grandparents")
+  %if;(evar.v1=1)%apply;title([*parents])
+  %elseif;(evar.v1=2)%apply;title([*grand-parents])
+  %elseif;(evar.v1=3)%apply;title([*great-grand-parents])
+  %elseif;(evar.v1=4)%apply;title([*great-great-grandparents])
   %else;
     %let;lev_up;%evar.v1; generations above%in
     %apply;title(lev_up)
   %end;
-  ascendants: tbd<br>
+  <ul>
+    %reset_count;
+    %foreach;ancestor_level;
+      %if;(level=evar.v1+1)
+        %foreach;ancestor;
+          %incr_count;
+          <li>%apply;url("ancestor","asc")</li>
+        %end;
+      %end;
+    %end;
+  </ul>
 %else;
- Should not happen!!
+ That should not happen!
 %end;
 
-<div class="my-3">Total[:] %count; %if;(count=1)[person/persons]0%else;[person/persons]1%end;.</div>
+<div class="my-3">Total[:] %count; %if;(count=0 or count=1)[person/persons]0%else;[person/persons]1%end;.</div>
 
 %include;trl
 %include;copyr

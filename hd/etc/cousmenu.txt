@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="%lang;">
 <head>
-  <!-- $Id: cousmenu.txt,v 5.6 2007-07-25 15:01:02 ddr Exp $ -->
-  <!-- Copyright (c) 1998-2017 INRIA -->
+  <!-- $Id: cousmenu.txt,v 7.0 31/05/2020 18:51:06 ddr Exp $ -->
+  <!-- Copyright (c) 1998-2020 INRIA -->
   <title>%nn;
     %apply;a_of_b_gr_eq_lev%with;
       [*cousins (general term)]%nn;
@@ -23,86 +23,139 @@
 <body%body_prop;>
 %message_to_wizard;
 <div class="container">
+%include;perso_utils
+%include;menubar
 <h1>%nn;
-  %apply;a_of_b_gr_eq_lev%with;
-    [*cousins (general term)]%nn;
-  %and;
-    %if;(public_name != "")%public_name;%else;%first_name;%end;
-    %if;(qualifier != "") <em>%qualifier;</em>%end;
-    %sp;%surname;
-    %if;(alias != "") <em>(%alias;)</em>%end;
-  %end;
+  [*link between]%sp;
+  %if;(public_name != "")%public_name;%else;%first_name;%end;
+  %if;(qualifier != "") <em>%qualifier;</em>%end;
+  %sp;%surname;
+  %(%if;(alias != "") <em>(%alias;)</em>%end;%)
+  %sp;[and] [close family]
 </h1>
-
 %define;nth_cousins(xx)
   [*%s cousins:::xx]%nn;
 %end;
-
-%if;not cancel_links;
-  <div class="btn-group float-%right; mt-2">
-    %if;(referer != "")
-      <a href="%referer;"><span class="fa fa-arrow-left fa-lg" title="<<"></span></a>
-    %end;
-    <a href="%prefix;"><span class="fa fa-home fa-lg" title="[*home]"></span></a>
-  </div>
+%define;link(vvv,www,ttt,ddd)
+  <a role="button" href="?%access;&m=C&v1=vvv&v2=www" class="btn btn-light ddd">ttt</a>
 %end;
-
-<ul>
-  <li>
-  <form method="get" action="%action;">
-    <p>
-      %hidden;
-      <input type="hidden" name="m" value="C"%/>
-      %if;access_by_key;
-        <input type="hidden" name="p" value="%first_name_key_val;"%/>
-        <input type="hidden" name="n" value="%surname_key_val;"%/>
-        %if;(occ != "0")
-          <input type="hidden" name="oc" value="%occ;"%/>
-        %end;
-      %else
-        <input type="hidden" name="i" value="%index;"%/>
+%define;one_ancestor(vvv,www,ttt)
+  %reset_count;
+  %foreach;ancestor_level;
+    %if;(level=vvv+1)
+      %foreach;ancestor;
+        %incr_count;
       %end;
-      <select name="v1">
-        %foreach;cousin_level;
-          <option value="%level;"%if;(level = 2) selected="selected"%end;>%nn;
-          %if;(level = 1)[*siblings]%nn;
-          %elseif;(level = 2)[*cousins]%nn;
-          %elseif;(level = 3)[*2nd cousins]%nn;
-          %elseif;(level = 4)[*3rd cousins]%nn;
-          %else;
-            %apply;nth_cousins%with;
-              %apply;nth%with;zero/[nth (cousin)]%and;%level;%end;
+    %end;
+  %end;
+  %apply;link%with;vvv%and;www%and;%count;&nbsp;ttt%and;%if;(count=0)disabled%end;%end;
+%end;
+%define;link_cousin(vvv,www,ttt)
+  %let;cousin_vvv_www;%cousins.vvv.www;%in;
+  %if;(cousin_vvv_www!=0)
+    <a role="button" href="?%access;&m=C&v1=vvv&v2=www" class="btn btn-light%if;(cousin_vvv_www=0) disabled%end;">%if;(cousin_vvv_www=500)<span class="text-danger" title="max 500">>500</span>%else;%cousin_vvv_www;%end; ttt</a>
+  %end;
+%end;
+%define;cousin(vvv,www)
+  %cousins.vvv.www;
+%end;
+%define;nth_cousins(xx)
+  [%s cousins:::xx]%nn;
+%end;
+%( table of cousins.i.level-xxx+i  %)
+%define;table(xxx)
+  %let;yyy;%expr(xxx+3)%in;
+  %let;zzz;%expr(xxx-1)%in;
+  <table id="quickrel" class="table table-bordered text-center mb-0">
+    %foreach;cousin_level;
+      %if;(level>1 and level<yyy)
+        <tr>
+          %for;i;0;zzz;
+            %if;(i!=0 and level+i=xxx)
+              <td colspan="2">
+                %apply;one_ancestor%with;%i%and;0
+                  %and;%if;(i=4)[great-great-grandparents]%nn;
+                  %elseif;(i=3)[great-grand-parents]%nn;
+                  %elseif;(i=2)[grand-parents]%nn;
+                  %elseif;(i=1)[parents]%nn;
+                  %end;
+                %end;
+              </td>
+            %elseif;(level+i<xxx)
+              %if;(i!=0)
+                <td class="border-0"></td>
+              %end;
+           %else;
+             <td>
+               %if;(i=0 and level=xxx)
+                   %apply;link%with;0%and;0%nn;
+                   %and;%if;is_male;[*him/her]0%elseif;is_female;[*him/her]1%end;%nn;
+                   %and;disabled%end;
+               %else;
+                 %apply;link_cousin%with;%i;%and;%expr(level-xxx+i)%and;
+                   %if;(level-xxx+i=1)
+                     %if;(i=4)[siblings of the great-grandparents]%nn;
+                     %elseif;(i=3)[siblings of the grandparents]%nn;
+                     %elseif;(i=2)[uncles and aunts]%nn;
+                     %elseif;(i=1)[siblings]%nn;
+                     %elseif;(i=0)[child/children]c%nn;
+                     %end;
+                   %elseif;(level-xxx+i=2)
+                     %if;(i=4)%apply;a_of_b%with;[cousins]3%and;[a grandfather/a grandmother/a grandparent]2%end;
+                     %elseif;(i=3)%apply;a_of_b%with;[cousins]3%and;[the father/the mother/a parent]2%end;
+                     %elseif;(i=2)[a cousin]2%nn;
+                     %elseif;(i=1)[a nephew/a niece]4%nn;
+                     %elseif;(i=0)[grandchild/grandchildren]c%nn;
+                     %end;
+                   %elseif;(level-xxx+i=3)
+                     %if;(i=4)[C2P]%nn;
+                     %elseif;(i=3)[2nd cousins]%nn;
+                     %elseif;(i=2)petits-cousins%nn;
+                     %elseif;(i=1)[a great-nephew/a great-niece]4%nn;
+                     %elseif;(i=0)arr-petits-enfants*%nn;
+                     %end;
+                   %elseif;(level-xxx+i=4)
+                     %if;(i=4)[3rd cousins]%nn;
+                     %elseif;(i=3)[PC2]%nn;
+                     %elseif;(i=2)[PPC1 petits-petits-cousins]%nn;
+                     %elseif;(i=1)[PPNV]%nn;
+                     %elseif;(i=0)[PPPenfants]%nn;
+                     %end;
+                   %else;[TODO]
+                   %end;
+                 %end;%( V1/V2 for debug <br>%i/%expr(level-xxx+i)%)
+               %end;
+              </td>
             %end;
           %end;
-          </option>
-         %end;
-      </select>
-      <input type="submit" value="Ok"%/>
-      <br>
-      <label>
-        <input type="checkbox" name="spouse" value="on"%/>
-        [*include spouses]
-      </label>
-    </p>
-  </form>
-  </li>
-  <li>
-    <a href="%prefix;%access;;m=C;v1=2;v2=1">[*uncles and aunts]</a>
-  </li>
-  %if;has_nephews_or_nieces;
-    <li>
-      <a href="%prefix;%access;;m=C;v1=1;v2=2">[*a nephew/a niece]</a>
-    </li>
-  %end;
-</ul>
-%if;(died = "" and (wizard or friend))
-  <ul>
-    <li>
-      <a href="%prefix;%access;;m=C;t=AN">[*birthdays]</a>
-    </li>
-  </ul>
+        </tr>
+      %end;
+    %end;
+    <tr>
+      <td colspan="%zzz;">Descendants of only one ancestor are included in counts (half-siblings/half-cousins&hellip;) </td>
+    </tr>
+  </table>
+  %( TODO : cousins.v1=v2.v2=v1 très gourmand, à optimiser, 
+    déjà vérifier qu'il a des arr-arr-arr-gd-parents pour que cousin.5.5 puisse exister…
+    surement ajouter un bouton pour calculer ces cousins en + ? un autre pour aller plus loin passé 10 (~30s) ?  %)
+    <div class="d-flex flex-wrap">
+      %( %reset_count;
+      %foreach;cousin_level;
+        %incr_count;
+      %end;
+      %let;max;%count;%in;%)
+      <div class="align-self-center col-1">[*autres cousins]</div>
+      %for;i;5;8;
+        <div class="col-1">
+          %apply;link_cousin%with;%i%and;%i%and;
+            %apply;nth_cousins%with;%apply;nth%with;zero/[nth (cousin)]%and;%i%end;%end;
+          %end;
+        </div>
+      %end;
+   </div>
 %end;
-
+%include;cousins_tools
+%apply;table(6)
 %include;trl
 %include;copyr
 </div>
