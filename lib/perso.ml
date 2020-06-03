@@ -818,30 +818,32 @@ let count_cousins_lev conf base max_cnt p lev1 lev2 =
   in
   if some then ()
 
+let get_persons_at_level base p lev2 =
+  match lev2 with
+  | 0 -> [get_iper p]
+  | n ->
+    let rec loop acc lev fam =
+      Array.fold_left
+      (fun acc ifam ->
+        let children = get_children (foi base ifam) in
+        Array.fold_left
+        (fun acc ch ->
+          if not (List.mem ch acc) then
+            if lev < n then
+              loop acc (lev + 1) (get_family (poi base ch))
+            else
+              ch :: acc
+          else acc
+        ) acc children
+      ) acc fam
+    in 
+    loop [] 1 (get_family p)
+  
 let count_cousins conf base p lev1 lev2 =
   match (lev1, lev2) with
   | (0, 0) -> 1 (* self *)
   | (0, lev2) -> (* descendants *)
-        cnt := 0;
-        let ip_l =
-          let rec loop acc lev fam =
-            Array.fold_left
-            (fun acc ifam ->
-              let children = get_children (foi base ifam) in
-              Array.fold_left
-              (fun acc ch ->
-                if not (List.mem ch acc) then
-                  if lev < lev2 then
-                    loop acc (lev + 1) (get_family (poi base ch))
-                  else
-                    ch :: acc
-                else acc
-              ) acc children
-            ) acc fam
-          in 
-          loop [] 1 (get_family p)
-        in
-        List.length ip_l
+        List.length (get_persons_at_level base p lev2)
   | (_, _) ->
         let max_cnt =
           try int_of_string (List.assoc "max_cousins" conf.base_env) with
@@ -4734,7 +4736,8 @@ let print_foreach conf base print_ast eval_expr =
   let rec print_foreach env ini_ep loc s sl ell al =
     let rec loop env (a, _ as ep) efam =
       function
-        [s] -> print_simple_foreach env ell al ini_ep ep efam loc s
+      | ["person_at_level"; lev] -> print_foreach_person_at_level env al ep lev
+      | [s] -> print_simple_foreach env ell al ini_ep ep efam loc s
       | "ancestor" :: sl ->
           let ip_ifamo =
             match get_env "ancestor" env with
@@ -5161,6 +5164,11 @@ let print_foreach conf base print_ast eval_expr =
          let env = ("cell", Vcell cell) :: ("first", Vbool first) :: env in
          List.iter (print_ast env ep) al)
       celll
+  and print_foreach_person_at_level env al (p, _) lev =
+    let l = int_of_string lev in
+    List.iter (fun ip ->
+      let ep = (poi base ip), true in
+      List.iter (print_ast env ep) al) (get_persons_at_level base p l)
   and print_foreach_child env al ep =
     function
       Vfam (ifam, fam, (ifath, imoth, isp), _) ->
