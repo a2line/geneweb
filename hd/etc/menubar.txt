@@ -293,7 +293,7 @@ fr: Sélectionnez les modules en cliquant sur le bouton correspondant (max 15).
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle text-secondary %if;(evar.m="A")active%end;" data-toggle="dropdown" role="button" href="#" aria-haspopup="true" aria-expanded="false"><span class="fa fa-sitemap fa-fw fa-rotate-180" title="[*ancestors]"></span></a>
               <div class="dropdown-menu">
-                <a class="dropdown-item" href="%prefix;%access;;m=A;"><span class="fa fa-cog fa-fw mr-2"></span>[*ancestors]</a>
+                <a class="dropdown-item" href="%prefix;m=A&%access;"><span class="fa fa-cog fa-fw mr-2"></span>[*ancestors]</a>
                 <div class="dropdown-divider"></div>
                 <a class="dropdown-item" id="anc_tree" href="%prefix;%access;;m=A;t=T;v=5;marriage=on;" %laY;><span class="fa fa-sitemap fa-rotate-180 fa-fw mr-2"></span>[*ascendants tree]</a>
                 <a class="dropdown-item" href="%prefix;%access;;m=A;t=H;v=5;" title="[*horizontal tree]"><span class="fa fa-code-branch fa-rotate-90 fa-fw mr-2"></span>[*horizontal tree]</a>
@@ -311,7 +311,7 @@ fr: Sélectionnez les modules en cliquant sur le bouton correspondant (max 15).
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle text-secondary %if;(evar.m="D")active%end;" data-toggle="dropdown" role="button" href="#" aria-haspopup="true" aria-expanded="false"><span class="fa fa-sitemap fa-fw" title="[*descendants]"></span></a>
               <div class="dropdown-menu">
-                <a class="dropdown-item" href="%prefix;m=D;%access;;"><span class="fa fa-cog fa-fw mr-2"></span>[*descendants]</a>
+                <a class="dropdown-item" href="%prefix;m=D&%access;"><span class="fa fa-cog fa-fw mr-2"></span>[*descendants]</a>
                 <div class="dropdown-divider"></div>
                 <a class="dropdown-item" href="%prefix;%access;;m=D;t=T;v=4;"%if;(not has_parents) %laY;%end;><span class="fa fa-sitemap fa-fw mr-2"></span>[*descendants tree]</a>
                 <a class="dropdown-item" href="%prefix;%access;;m=D;t=D;v=%max_desc_level;;"><span class="fa fa-code-branch fa-rotate-90 fa-fw mr-2"></span>[*descendant tree view]</a>
@@ -327,9 +327,9 @@ fr: Sélectionnez les modules en cliquant sur le bouton correspondant (max 15).
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle text-secondary %if;(evar.m="R" or evar.m="F" or (evar.m="C" and evar.t="AN"))active%end;" data-toggle="dropdown" role="button" href="#" aria-haspopup="true" aria-expanded="false" title="[*relationship]"><span class="fa fa-user-friends"></span></a>
             <div class="dropdown-menu">
-              <a class="dropdown-item" href="%prefix;m=R;%access;" %laR;><span class="fa fa-cog fa-fw"></span> [*relationship computing]</a>
+              <a class="dropdown-item" href="%prefix;m=R&%access;" %laR;><span class="fa fa-cog fa-fw"></span> [*relationship computing]</a>
               <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="%prefix;%access;;m=C;v1=2;v2=2" %laR;><span class="fa fa-users-cog fa-fw"></span> [*relationship computing] [with] [close family]</a>
+              <a class="dropdown-item" href="%prefix;%access;&m=C" %laR;><span class="fa fa-users-cog fa-fw"></span> [*relationship link/relationship links]0 [with] [close family]</a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" %nn;
                 href="%prefix;m=F;%access;;%nn;

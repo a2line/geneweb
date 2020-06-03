@@ -3,6 +3,45 @@
 <head>
   <!-- $Id: ancsosa.txt,v7.00 02/05/2018 09:05:52 $ -->
   <!-- Copyright (c) 1998-2017 INRIA -->
+%define;tothegen(xx)
+  [to the %s generation:::xx]%nn;
+%end;
+%define;thegen(xx)
+  [the %s generation:::xx]%nn;
+%end;
+%define;togena(xx)
+  %if;(xx = 1)[specify::generation/generations]0%nn;
+  %elseif;(xx = 2)[to the parents]%nn;
+  %elseif;(xx = 3)[to the grandparents]%nn;
+  %elseif;(xx = 4)[to the great-grandparents]%nn;
+  %else;
+    %apply;tothegen%with;
+      %apply;nth([nth (generation)], xx)
+    %end;
+  %end;
+%end;
+%define;togen(xx)
+  %if;(xx = 1)[specify::generation/generations]0%nn;
+  %elseif;(xx = 2)[to the parents]%nn;
+  %elseif;(xx = 3)[to the grandparents]%nn;
+  %elseif;(xx = 4)[to the great-grandparents]%nn;
+  %else;
+    %apply;tothegen%with;
+      %apply;nth([nth (generation)], xx)
+    %end;
+  %end;
+%end;
+%define;gen(xx)
+  %if;(evar.xx = 1)[*specify::generation/generations]0%nn;
+  %elseif;(evar.xx = 2)[the parents]%nn;
+  %elseif;(evar.xx = 3)[the grandparents]%nn;
+  %elseif;(evar.xx = 4)[the great-grandparents]%nn;
+  %else;
+    %apply;thegen%with;
+      %apply;nth([nth (generation)], evar.xx)
+    %end;
+  %end;
+%end;
   <title>%nn;
     %if;(evar.t = "D")
       [*ancestors] ... [up to] ...%nn;
@@ -19,7 +58,7 @@
         %if;(qualifier != "") %qualifier;%end;
         %sp;%surname;
       %end;
-      %if;(evar.cgl="on")
+      %if;(evar.cgl="on" and evar.t!="N")
         %let;nb_gen;%apply;min(evar.v, max_anc_level)%in;
         %apply;togen(nb_gen).
       %end;
@@ -46,51 +85,6 @@
 %let;birth_symbol;%if;(bvar.birth_symbol != "")%bvar.birth_symbol;%else;&deg;%end;%in;
 %let;death_symbol;%if;(bvar.death_symbol != "")%bvar.death_symbol;%else;&dagger;%end;%in;
 %let;l_up;%if;(evar.i1 != "" or evar.p1 != "")1%end;%in;
-
-%define;tothegen(xx)
-  [to the %s generation:::xx]%nn;
-%end;
-
-%( recopié de perso_utils.txt %)
-%define;thegen(xx)
-  [the %s generation:::xx]%nn;
-%end;
-
-%define;togena(xx)
-  %if;(xx = 1)[specify::generation/generations]0%nn;
-  %elseif;(xx = 2)[to the parents]%nn;
-  %elseif;(xx = 3)[to the grandparents]%nn;
-  %elseif;(xx = 4)[to the great-grandparents]%nn;
-  %else;
-    %apply;tothegen%with;
-      %apply;nth([nth (generation)], xx)
-    %end;
-  %end;
-%end;
-
-%define;togen(xx)
-  %if;(xx = 1)[specify::generation/generations]0%nn;
-  %elseif;(xx = 2)[to the parents]%nn;
-  %elseif;(xx = 3)[to the grandparents]%nn;
-  %elseif;(xx = 4)[to the great-grandparents]%nn;
-  %else;
-    %apply;tothegen%with;
-      %apply;nth([nth (generation)], xx)
-    %end;
-  %end;
-%end;
-
-%define;gen(xx)
-  %if;(evar.xx = 1)[*specify::generation/generations]0%nn;
-  %elseif;(evar.xx = 2)[the parents]%nn;
-  %elseif;(evar.xx = 3)[the grandparents]%nn;
-  %elseif;(evar.xx = 4)[the great-grandparents]%nn;
-  %else;
-    %apply;thegen%with;
-      %apply;nth([nth (generation)], evar.xx)
-    %end;
-  %end;
-%end;
 
 %define;image_MF(xxx)
   %if;(wizard and not cancel_links)

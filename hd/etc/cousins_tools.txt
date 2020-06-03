@@ -1,4 +1,4 @@
-<!-- $Id: cousins_tools.txt, v7.00 03/04/2018 14:04:31 $ -->
+<!-- $Id: cousins_tools.txt, v7.00 31/05/2020 03:18:03 $ -->
 %define;url(vvv,ttt)
   %prefix_base_password_2;
   %foreach;env_binding;
@@ -8,7 +8,6 @@
   %end;
   %if;(evar.vvv="")ttt%end;
 %end;
-
 %define;url2(vvv,ttt,www,uuu)
   %prefix_base_password_2;
   %foreach;env_binding;
@@ -18,11 +17,13 @@
     %end;
   %end;
   %( no need to test for ="" %)
-
 %end;
 <div class="row">
   <div class="form-inline ml-5 mt-1 mb-2">
-    <div class="align-items-center">[*degree of kinship]</div>
+     <a role="button" href="?%foreach;env_binding;%if;(env.key!="v1" and env.key!="v2" and env.key!="")&%env.key;=%env.val;%end;%end;">
+       [*select] [close family]
+     </a>
+    <div class="align-items-center ml-2">| [*degree of kinship]</div>
     <div class="d-inline-flex flex-column ml-2">
       <div class="form-inline">
         <span>[ancestors]</span><i class="fas fa-level-up-alt ml-3 mb-2"></i>
@@ -73,18 +74,14 @@
       </div>
     </div>
     <div class="align-items-center">
-      <a href="%apply;url2%with;v1%and;&v1=%expr(evar.v1+1)
-                %and;v2%and;
-                  %if;(evar.v2!="")&v2=%expr(evar.v2+1)
-                  %else;&v2=%expr(evar.v1+1)
-                  %end;
-                %end;"
+      <a href="%apply;url2%with;v1%and;&v1=%expr(evar.v1+1)%and;v2%and;&v2=%expr(evar.v2+1)%end;%nn;
+                 %if;(evar.v1="" and evar.v2="")&v1=1&v2=1%end;"
          class="btn btn-sm btn-outline-secondary border-0
             %if;((evar.v1!="" and evar.v1=bvar.max_cousins_level) or (evar.v2!="" and evar.v2=bvar.max_cousins_level)) disabled%end;"
             title="[both] +1">+</a>
     </div>
     <div class="mx-2">
-      <a href="%apply;url%with;image%and;%if;(evar.image!="off")&image=off%end;%end;"
+      <a role="button" href="%apply;url%with;image%and;%if;(evar.image!="off")&image=off%end;%end;"
         class="btn btn-outline-secondary btn-sm border-0 px-0"
         title="%if;(evar.image!="off")[*visualize/show/hide/summary]2%else;%nn;
           [*visualize/show/hide/summary]1%end; [image/images]1">
@@ -93,7 +90,7 @@
       </a>
     </div>
     <div class="mx-2">
-      <a href="%apply;url%with;spouse%and;%if;(evar.spouse!="on")&spouse=on%end;%end;"
+      <a role="button" href="%apply;url%with;spouse%and;%if;(evar.spouse!="on")&spouse=on%end;%end;"
         class="btn btn-outline-secondary btn-sm border-0 px-0"
         title="%if;(evar.spouse!="on")[*visualize/show/hide/summary]1%else;%nn;
            [*visualize/show/hide/summary]2%end; [spouse/spouses]1">

@@ -95,7 +95,7 @@
       %if;(pp.has_parents)
         %apply;ancestors_horizontally(
           "pp.father", xx - 1, "ss1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;",
-          "ss1&nbsp;┌──&nbsp;", "ss1&nbsp;|&nbsp;&nbsp;&nbsp;", zz*2)
+          "ss1&nbsp;┌──╴", "ss1&nbsp;|&nbsp;&nbsp;&nbsp;", zz*2)
       %end;
       <samp>ss2</samp>%nn;
       %if;(not cancel_links)
@@ -107,7 +107,7 @@
       %if;(pp.has_parents)
         %apply;ancestors_horizontally(
           "pp.mother", xx - 1, "ss3&nbsp;|&nbsp;&nbsp;&nbsp;",
-          "ss3&nbsp;└──&nbsp;", "ss3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", zz*2+1)
+          "ss3&nbsp;└──╴", "ss3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", zz*2+1)
       %end;
     %else;
       %let;sss;sosa_%pp.sosa;%in;
@@ -145,9 +145,9 @@
       %else;%apply;min(evar.v, max_anc_level, bvar.max_anc_level)%end;
     %in;
     <p>%apply;togena(xx).</p>
-    <table><tr><td style="font-family:monospace;white-space:nowrap;line-height:1.2em;">
+    <table><tr><td style="font-family:monospace;white-space:nowrap;font-size:1.2em;line-height:1.2em;">
     %apply;ancestors_horizontally(
-      "self", xx, "&nbsp;&nbsp;&nbsp;", "──&nbsp;", "&nbsp;&nbsp;&nbsp;", 1)
+      "self", xx, "&nbsp;&nbsp;&nbsp;", "──╴", "&nbsp;&nbsp;&nbsp;", 1)
     </td></tr></table>
 
   %elseif;(evar.t = "E" and evar.sort != "")
