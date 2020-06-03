@@ -243,7 +243,7 @@ let print_cousins conf base p lev1 lev2 =
       Output.print_string conf (Utf8.capitalize_fst (Util.translate_eval s))
     else
       Output.printf conf "%s %d / %s %d" (Utf8.capitalize_fst (transl conf "ancestors")) lev1
-        (Utf8.capitalize_fst (transl conf "descendants")) lev2
+        (transl conf "descendants") lev2
   in
   let max_cnt =
     try int_of_string (List.assoc "max_cousins" conf.base_env) with
@@ -385,8 +385,6 @@ let print_anniv conf base p dead_people level =
     if dead_people then BirthdayDisplay.gen_print_menu_dead conf base f_scan mode
     else BirthdayDisplay.gen_print_menu_birth conf base f_scan mode
 
-let cousmenu_print = Perso.interp_templ "cousmenu"
-
 let print conf base p =
   let max_lev =
     try int_of_string (List.assoc "max_cousins_level" conf.base_env) with
@@ -406,4 +404,4 @@ let print conf base p =
   | (_, _, Some (("AN" | "AD") as t)) when conf.wizard || conf.friend ->
     print_anniv conf base p (t = "AD") max_lev
   | _ ->
-    cousmenu_print conf base p
+    Perso.interp_templ "cousmenu" conf base p
