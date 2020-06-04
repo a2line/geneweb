@@ -818,7 +818,7 @@ let count_cousins_lev conf base max_cnt p lev1 lev2 =
   in
   if some then ()
 
-let get_persons_at_level base p lev2 =
+let get_descendants_at_level base p lev2 =
   match lev2 with
   | 0 -> [get_iper p]
   | n ->
@@ -843,7 +843,7 @@ let count_cousins conf base p lev1 lev2 =
   match (lev1, lev2) with
   | (0, 0) -> 1 (* self *)
   | (0, lev2) -> (* descendants *)
-        List.length (get_persons_at_level base p lev2)
+        List.length (get_descendants_at_level base p lev2)
   | (_, _) ->
         let max_cnt =
           try int_of_string (List.assoc "max_cousins" conf.base_env) with
@@ -2171,6 +2171,11 @@ and eval_simple_str_var conf base env (_, p_auth) =
           get_note_source conf base [] m_auth conf.no_note
             (sou base (get_comment fam))
       | _ -> raise Not_found
+      end
+  | "cnt" ->
+      begin match get_env "cnt" env with
+        Vint c -> string_of_int c
+      | _ -> ""
       end
   | "count" ->
       begin match get_env "count" env with
@@ -4736,7 +4741,6 @@ let print_foreach conf base print_ast eval_expr =
   let rec print_foreach env ini_ep loc s sl ell al =
     let rec loop env (a, _ as ep) efam =
       function
-      | ["person_at_level"; lev] -> print_foreach_person_at_level env al ep lev
       | [s] -> print_simple_foreach env ell al ini_ep ep efam loc s
       | "ancestor" :: sl ->
           let ip_ifamo =
@@ -4937,6 +4941,7 @@ let print_foreach conf base print_ast eval_expr =
     | "cousin_level" -> print_foreach_level "max_cous_level" env al ep
     | "cremation_witness" -> print_foreach_cremation_witness env al ep
     | "death_witness" -> print_foreach_death_witness env al ep
+    | "descendant" -> print_foreach_descendant env al ep
     | "descendant_level" -> print_foreach_descendant_level env al ep
     | "event" -> print_foreach_event env al ep
     | "event_witness" -> print_foreach_event_witness env al ep
@@ -5164,11 +5169,6 @@ let print_foreach conf base print_ast eval_expr =
          let env = ("cell", Vcell cell) :: ("first", Vbool first) :: env in
          List.iter (print_ast env ep) al)
       celll
-  and print_foreach_person_at_level env al (p, _) lev =
-    let l = int_of_string lev in
-    List.iter (fun ip ->
-      let ep = (poi base ip), true in
-      List.iter (print_ast env ep) al) (get_persons_at_level base p l)
   and print_foreach_child env al ep =
     function
       Vfam (ifam, fam, (ifath, imoth, isp), _) ->
@@ -5317,6 +5317,27 @@ let print_foreach conf base print_ast eval_expr =
           else loop events
     in
     loop (events_list conf base p)
+  and print_foreach_descendant env al (p, _) =
+    let lev =
+      match get_env "level" env with
+      | Vint lev -> lev
+      | _ -> 0
+    in
+    let ip_l = get_descendants_at_level base p lev in
+    let rec loop i ip_l =
+      match ip_l with
+      | [] -> ()
+      | ip :: ip_l ->
+          let ep = (poi base ip), true in
+          let env =
+            ("cnt", Vint i)
+            :: ("first", Vbool (i=0))
+            :: ("last", Vbool (ip_l=[]))
+            :: env
+          in
+          List.iter (print_ast env ep) al; loop (succ i) ip_l
+    in
+    loop 0 ip_l
   and print_foreach_descendant_level env al ep =
     let max_level =
       match get_env "max_desc_level" env with
@@ -5326,7 +5347,12 @@ let print_foreach conf base print_ast eval_expr =
     let rec loop i =
       if i > max_level then ()
       else
-        let env = ("level", Vint i) :: env in
+        let env =
+          ("level", Vint i)
+          :: ("first", Vbool (i=0))
+          :: ("last", Vbool (i=max_level))
+          :: env
+        in
         List.iter (print_ast env ep) al; loop (succ i)
     in
     loop 0
@@ -5334,9 +5360,12 @@ let print_foreach conf base print_ast eval_expr =
     let events = events_list conf base p in
     Mutil.list_iter_first
       (fun first evt ->
-         let env = ("event", Vevent (p, evt)) :: env in
-         let env = ("first", Vbool first) :: env in
-         List.iter (print_ast env ep) al)
+        let env =
+          ("event", Vevent (p, evt))
+          :: ("first", Vbool first)
+          :: env
+        in
+        List.iter (print_ast env ep) al)
       events
   and print_foreach_event_witness env al (_, p_auth as ep) =
     if p_auth then
