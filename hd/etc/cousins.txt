@@ -115,7 +115,7 @@
     <ul>
       %reset_count;
       %foreach;descendant_level;
-        %if;(level=evar.v2-1)
+        %if;(level=evar.v2)
           %foreach;descendant; 
             %incr_count;
             <li>%apply;url("descendant","desc")</li>
