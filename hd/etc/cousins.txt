@@ -117,12 +117,8 @@
       %foreach;descendant_level;
         %if;(level=evar.v2-1)
           %foreach;descendant; 
-            %foreach;family;
-              %foreach;child;
-                %incr_count;
-                <li>%apply;url("child","desc")</li>
-              %end;
-            %end;
+            %incr_count;
+            <li>%apply;url("descendant","desc")</li>
           %end;
         %end;
       %end;
