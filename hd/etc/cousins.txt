@@ -112,23 +112,19 @@
       %let;lev_dn;%evar.v2; generations below%in
       %apply;title(lev_dn)
     %end;
-    %if;(evar.v2>2)<div class="alert alert-danger" role="alert"><i class="fa fa-exclamation mr-1"></i>TODO</div>%end;
     <ul>
       %reset_count;
-      %foreach;family;
-        %foreach;child;
-          %if;(evar.v2=1)
-            %incr_count;
-            <li>%apply;url("child","desc")</li>
-          %elseif;(evar.v2=2)
-            %foreach;child.family;
+      %foreach;descendant_level;
+        %if;(level=evar.v2-1)
+          %foreach;descendant; 
+            %foreach;family;
               %foreach;child;
                 %incr_count;
                 <li>%apply;url("child","desc")</li>
               %end;
             %end;
           %end;
-        %end; 
+        %end;
       %end;
     </ul>
   %end;
