@@ -2576,6 +2576,13 @@ and eval_compound_var conf base env (a, _ as ep) loc =
           eval_person_field_var conf base env ep loc sl
       | _ -> raise Not_found
       end
+  | "descendant" :: sl ->
+      begin match get_env "descendant" env with
+        Vind p ->
+          let ep = p, authorized_age conf base p in
+          eval_person_field_var conf base env ep loc sl
+      | _ -> raise Not_found
+      end
   | "enclosing" :: sl ->
       let rec loop =
         function
@@ -5330,7 +5337,8 @@ let print_foreach conf base print_ast eval_expr =
       | ip :: ip_l ->
           let ep = (poi base ip), true in
           let env =
-            ("cnt", Vint i)
+            ("descendant", Vind (poi base ip))
+            :: ("cnt", Vint i)
             :: ("first", Vbool (i=0))
             :: ("last", Vbool (ip_l=[]))
             :: env
