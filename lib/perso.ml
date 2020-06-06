@@ -820,20 +820,20 @@ let count_cousins_lev conf base max_cnt p lev1 lev2 =
 
 let get_descendants_at_level base p lev2 =
   match lev2 with
-  | 0 -> [get_iper p]
+  | 0 -> []
   | n ->
     let rec loop acc lev fam =
       Array.fold_left
       (fun acc ifam ->
-        let children = get_children (foi base ifam) in
-        Array.fold_left
+        let children = Array.to_list (get_children (foi base ifam)) in
+        List.fold_left
         (fun acc ch ->
-          if not (List.mem ch acc) then
-            if lev < n then
-              loop acc (lev + 1) (get_family (poi base ch))
-            else
-              ch :: acc
-          else acc
+          if lev < n then
+            loop acc (lev + 1) (get_family (poi base ch))
+          else
+            if not (List.mem ifam acc) then
+              ifam :: acc
+            else acc
         ) acc children
       ) acc fam
     in 
@@ -843,7 +843,9 @@ let count_cousins conf base p lev1 lev2 =
   match (lev1, lev2) with
   | (0, 0) -> 1 (* self *)
   | (0, lev2) -> (* descendants *)
-        List.length (get_descendants_at_level base p lev2)
+        let ifam_l = get_descendants_at_level base p lev2 in
+        List.fold_left (fun cnt ifam ->
+          cnt + Array.length (get_children (foi base ifam))) 0 ifam_l
   | (_, _) ->
         let max_cnt =
           try int_of_string (List.assoc "max_cousins" conf.base_env) with
@@ -2174,6 +2176,16 @@ and eval_simple_str_var conf base env (_, p_auth) =
       end
   | "cnt" ->
       begin match get_env "cnt" env with
+        Vint c -> string_of_int c
+      | _ -> ""
+      end
+  | "cnt_f" ->
+      begin match get_env "cnt_f" env with
+        Vint c -> string_of_int c
+      | _ -> ""
+      end
+  | "cnt_ch" ->
+      begin match get_env "cnt_ch" env with
         Vint c -> string_of_int c
       | _ -> ""
       end
@@ -4955,6 +4967,7 @@ let print_foreach conf base print_ast eval_expr =
     | "event_witness_relation" ->
         print_foreach_event_witness_relation env al ep
     | "family" -> print_foreach_family env al ini_ep ep
+    | "family_at_level" -> print_foreach_family_at_level env al ini_ep ep
     | "first_name_alias" -> print_foreach_first_name_alias env al ep
     | "nobility_title" -> print_foreach_nobility_title env al ep
     | "parent" -> print_foreach_parent env al ep
@@ -5330,7 +5343,12 @@ let print_foreach conf base print_ast eval_expr =
       | Vint lev -> lev
       | _ -> 0
     in
-    let ip_l = get_descendants_at_level base p lev in
+    let ifam_l = get_descendants_at_level base p lev in
+    let ip_l = List.flatten (List.fold_left
+        (fun acc ifam ->
+          Array.to_list (get_children (foi base ifam)) :: acc
+        ) [] ifam_l)
+    in
     let rec loop i ip_l =
       match ip_l with
       | [] -> ()
@@ -5340,7 +5358,7 @@ let print_foreach conf base print_ast eval_expr =
             ("descendant", Vind (poi base ip))
             :: ("cnt", Vint i)
             :: ("first", Vbool (i=0))
-            :: ("last", Vbool (ip_l=[]))
+            :: ("last", Vbool (ip_l=[] ))
             :: env
           in
           List.iter (print_ast env ep) al; loop (succ i) ip_l
@@ -5580,6 +5598,38 @@ let print_foreach conf base print_ast eval_expr =
 #else
         ()
 #endif
+  and print_foreach_family_at_level env al ini_ep (p, _) =
+    let lev =
+      match get_env "level" env with
+      | Vint lev -> lev
+      | _ -> 0
+    in
+    let ifam_l = get_descendants_at_level base p lev in
+    let rec loop prev i ifam_l =
+      match ifam_l with
+      | [] -> ()
+      | ifam :: ifam_l ->
+          let fam = foi base ifam in
+          let ifath = get_father fam in
+          let imoth = get_mother fam in
+          let ispouse = Gutil.spouse (get_iper p) fam in
+          let cpl = ifath, imoth, ispouse in
+          let m_auth =
+            authorized_age conf base (pget conf base ifath) &&
+            authorized_age conf base (pget conf base imoth)
+          in
+          let vfam = Vfam (ifam, fam, cpl, m_auth) in
+          let env = ("#loop", Vint 0) :: env in
+          let env = ("fam", vfam) :: env in
+          let env = ("family_cnt", Vint (i + 1)) :: env in
+          let env =
+            match prev with
+              Some vfam -> ("prev_fam", vfam) :: env
+            | None -> env
+          in
+          List.iter (print_ast env ini_ep) al; loop (Some vfam) (i + 1) ifam_l
+    in
+    loop None 0 ifam_l
   and print_foreach_first_name_alias env al (p, p_auth as ep) =
     if not p_auth && is_hide_names conf p then ()
     else
