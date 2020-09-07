@@ -153,7 +153,7 @@
             %elseif;(maxlev>9 and evarv>5)%expr(evarv-4)
             %else;1%end;%in;
   %(minv %minv; < evarv %evarv; < maxv %maxv; (maxlev %maxlev;)%)
-  <div class="d-flex justify-content-between">
+  <div class="d-flex justify-content-around">
     <h2 id="a">%if;(evar.t="A")[*male line/female line]0%nn;
     %elseif;(evar.t="C")[*male line/female line]1%nn;
     %else[*ascendants tree]%end;</h2>
