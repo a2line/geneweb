@@ -5197,7 +5197,7 @@ co: include e note/fonte à u cuntenutu
 de: einschließen der Notizen/Quellen und Inhalt
 en: Add notes & sources
 es: incluir las notas/fuentes en el contenido
-fr: inclure les notes/sources au contenu
+fr: inclure notes et sources au contenu
 it: includere le note/fonti al contenuto
 oc: apondre las nòtas dins lo contengut
 pt: incluir as notas/fontes no conteúdo
