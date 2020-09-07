@@ -557,7 +557,7 @@ zzz est lui même si yyy="desc", ou son conjoint si yyy="spous"
   %apply;place_popup%with;xxx%and;burial%end;
 %( Âge %)
   %if;(evar.age="on" and famx=1)
-    <td class="align-middle"%rowspan;>%nn;
+    <td class="align-middle text-center"%rowspan;>%nn;
       %if;xxx.computable_death_age;%xxx.death_age;%end;%nn;
       %if;xxx.computable_age;%xxx.age;%end;%nn;
     </td>
