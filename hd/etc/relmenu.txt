@@ -149,16 +149,16 @@
         <span>[*relationship display options]</span>
           <div class="ml-2 mt-1">
             <div class="custom-control custom-checkbox">
+              <input type=checkbox class="custom-control-input" id="long" name="long">
+              <label class="custom-control-label" for="long">[*long display]</label>
+            </div>
+            <div class="custom-control custom-checkbox">
               <input type=checkbox class="custom-control-input" id="spouse" name="spouse">
               <label class="custom-control-label" for="spouse">[*display spouse]</label>
             </div>
             <div class="custom-control custom-checkbox">
-              <input type=checkbox class="custom-control-input" id="image" name="image">
-              <label class="custom-control-label" for="image">[*display picture]1</label>
-            </div>
-            <div class="custom-control custom-checkbox">
-              <input type=checkbox class="custom-control-input" id="long" name="long">
-              <label class="custom-control-label" for="long">[*long display]</label>
+              <input type="checkbox" class="custom-control-input" id="image" name="image" value="off">
+              <label class="custom-control-label" for="image">[*visualize/show/hide/summary]2 [image/images]1 <span class="text-info">✘</span></label>
             </div>
           </div>
           %(
