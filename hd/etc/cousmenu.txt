@@ -189,6 +189,7 @@
       %end;
    </div>
 %end;
+
 %include;cousins_tools
 %apply;table(6)
 %include;trl
