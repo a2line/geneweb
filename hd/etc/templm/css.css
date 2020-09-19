@@ -32,8 +32,7 @@ legend{margin-left:10px;line-height:25px;height:25px;}
 dt{font-weight:500;}
 dt:first-letter{font-size:120%;font-family:serif;}
 abbr{border-bottom:dashed 1px #000;}
-abbr:hover{cursor:help;}
-.abbr1{border:none;}
+.abbr1{border:none;text-decoration:none;}
 pre{font-size:1em;font-family:monospace,monospace;}
 .ul_0{margin:0;padding-left:10px;list-style-type:none;}
 .color_sosa{color:#FC0;}
