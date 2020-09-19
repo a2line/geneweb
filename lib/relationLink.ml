@@ -213,17 +213,20 @@ let print_someone_and_spouse conf base info in_tab ip n ipl =
       "<table style=\"border:%dpx solid\"><tr><td align=\"center\"%s>" info.bd
       info.td_prop;
   Wserver.printf "%s\n" (someone_text conf base ip);
-  Wserver.print_string (DagDisplay.image_txt conf base (pget conf base ip));
   if s <> "" then
     begin
       Wserver.printf "<br%s>\n" conf.xhs;
       Wserver.printf "&amp;%s" d;
       Wserver.printf " %s\n" s;
       match spo with
-        Some ip ->
-          Wserver.print_string (DagDisplay.image_txt conf base (pget conf base ip))
+        Some sp_ip ->
+          Wserver.printf "<br>%s %s"
+            (DagDisplay.image_txt conf base (pget conf base ip))
+            (DagDisplay.image_txt conf base (pget conf base sp_ip))
       | _ -> ()
-    end;
+    end
+  else
+      Wserver.printf "<br>%s" (DagDisplay.image_txt conf base (pget conf base ip));
   if in_tab && (info.bd > 0 || info.td_prop <> "") then
     Wserver.printf "</td></tr></table>"
 

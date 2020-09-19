@@ -53,29 +53,16 @@ let image_txt conf base p =
       if has_image conf base p then
         match image_and_size conf base p (limited_image_size 100 75) with
           Some (true, f, Some (wid, hei)) ->
-            "<br" ^ conf.xhs ^
-            ">\n<center><table border=\"0\"><tr align=\"left\"><td>\n" ^
-            image_normal_txt conf base p f wid hei ^
-            "</td></tr></table></center>\n"
+            image_normal_txt conf base p f wid hei
         | Some (true, f, None) ->
-            "<br" ^ conf.xhs ^
-            ">\n<center><table border=\"0\"><tr align=\"left\"><td>\n" ^
-            image_normal_txt conf base p f 0 75 ^
-            "</td></tr></table></center>\n"
+            image_normal_txt conf base p f 0 75
         | Some (false, url, Some (wid, hei)) ->
             let url_p = commd conf ^ acces conf base p in
-            "<br" ^ conf.xhs ^
-            ">\n<center><table border=\"0\"><tr align=\"left\"><td>\n" ^
-            image_url_txt_with_size conf url_p url wid hei ^
-            "</td></tr></table></center>\n"
+            image_url_txt_with_size conf url_p url wid hei
         | Some (false, url, None) ->
             let url_p = commd conf ^ acces conf base p in
             let height = 75 in
-            "<br" ^ conf.xhs ^
-            (* La hauteur est ajoutée à la table pour que les textes soient alignés. *)
-            ">\n<center><table border=\"0\" style=\"height: " ^ string_of_int height ^
-            "px\"><tr align=\"left\"><td>\n" ^
-              image_url_txt conf url_p url height ^ "</td></tr></table></center>\n"
+            image_url_txt conf url_p url height
         | _ -> ""
       else
         ""
@@ -684,7 +671,7 @@ let make_tree_hts conf base elem_txt vbar_txt invert set spl d =
       Left ip ->
         let p = pget conf base ip in
         let txt =
-          (image_txt conf base p) ^ string_of_item conf base (elem_txt p)
+          (image_txt conf base p) ^ "<br>" ^ string_of_item conf base (elem_txt p)
         in
         let spouses =
           if (spouse_on && n.chil <> [] || n.pare = []) && not invert then
@@ -724,7 +711,7 @@ let make_tree_hts conf base elem_txt vbar_txt invert set spl d =
                in
                txt ^ "<br" ^ conf.xhs ^ ">\n&amp;" ^ d ^ " " ^
                string_of_item conf base (elem_txt ps) ^
-               image_txt conf base ps)
+               "<br>" ^ image_txt conf base ps)
           txt spouses
     | Right _ -> "&nbsp;"
   in
