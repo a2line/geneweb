@@ -202,9 +202,28 @@ fr: Sélectionnez les modules en cliquant sur le bouton correspondant (max 15).
                     %end;
                   %end;
                 %end;
+                %define;copylink(xx)
+                  [*copy link %s:::xx]
+                %end;
                 <div class="dropdown-divider"></div>
-                <a class="dropdown-item btn simple-copy" role="button" title="[*copy link]" data-wikilink="%[%[%first_name;/%surname;%if;(occ!="0")/%occ;%end;%]%]"><i class="far fa-clipboard fa-fw"></i> %[%[%first_name;/%surname;%if;(occ!="0")/%occ;%end;%]%]</a>
-                <a class="dropdown-item btn full-copy" role="button" title="[*copy link]" data-wikilink="%[%[%first_name;/%surname;/%occ;/%first_name; %surname;%]%]"><i class="far fa-clipboard fa-fw"></i> %[%[%first_name;/%surname;/%occ;/%first_name; %surname;%]%]</a>
+                <div class="btn-group pr-4" role="group">
+                  <button class="dropdown-item permalink-copy mr-1 pr-0" type="button"
+                    title="%apply;copylink([wizard/wizards/friend/friends/exterior]4)" data-wikilink="%base.name;?p=%first_name_key;&n=%surname_key;%if;(occ!="0")&oc=%occ;%end;%foreach;env_binding;%if;(env.key!="p" and env.key!="n" and env.key!="oc" and env.key!="i" and env.key!="")&%env.key=%env.val;%end;%end;"><i class="fas fa-link fa-fw mr-2"></i>[*copy permalink] [wizard/wizards/friend/friends/exterior]4</button>
+                  <button class="disabled dropdown-item mx-0 px-0">/</button>
+                  <button class="mx-1 px-0 dropdown-item permalink-friend-copy" type="button"
+                    title="%apply;copylink([wizard/wizards/friend/friends/exterior]2)">%nn;
+                    [wizard/wizards/friend/friends/exterior]2</button>
+                  <button class="disabled dropdown-item mx-0 px-0">/</button>
+                  <button class="ml-1 px-0 dropdown-item permalink-wizard-copy" type=button"
+                    title="%apply;copylink([wizard/wizards/friend/friends/exterior]0)">%nn;
+                    [wizard/wizards/friend/friends/exterior]0</button>
+                </div>
+                <div class="dropdown-divider"></div>
+                <button class="dropdown-item simple-copy" type="button" title="[*copy link %s:::wiki]"
+                   data-wikilink="%[%[%first_name;/%surname;%if;(occ!="0")/%occ;%end;%]%]">%nn;<i class="far fa-clipboard fa-fw mr-2"></i>%nn;
+                   %[%[%first_name;/%surname;%if;(occ!="0")/%occ;%end;%]%]</button>
+                <button class="dropdown-item full-copy" type="button" title="[*copy link %s:::wikitext]"  
+                  data-wikilink="%[%[%first_name;/%surname;/%occ;/%first_name; %surname;%]%]"><i class="far fa-clipboard fa-fw mr-2"></i>%[%[%first_name;/%surname;/%occ;/%first_name; %surname;%]%]</button>
               </div>
             </li>
           %else;
