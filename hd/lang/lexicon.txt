@@ -4264,12 +4264,16 @@ sk: pokračovať
 sl: nadaljevano
 sv: forts
 
-    copy link
-co: cupià a leia in u preme’papei
-en: copy the link to the clipboard
-fr: copier le lien dans le presse-papier
-pt: copiar o link para a área de transferência
+    copy link %s
+co: cupià a leia %s in u preme’papei
+en: copy the link %s to the clipboard
+fr: copier le lien %s dans le presse-papier
+pt: copiar o link %s para a área de transferência
 sv: kopiera länken
+
+    copy permalink
+en: copy the permalink
+fr: copier le permalien
 
     country
 co: statu
@@ -15489,7 +15493,7 @@ eo: sorĉisto/sorĉistoj/amiko/amikoj/exterior
 es: mago/magos/amigo/amigos/exterior
 et: teadmamees/teadmamehed/sõber/sõbrad/tavakasutaja
 fi: velho/velho/valittu/valittu/exterior
-fr: magicien/magiciens/ami/amis/extérieur
+fr: magicien/magiciens/ami/amis/visiteur
 he:  כגאון / כגאון / מיוחסת / מיוחסת /exterior
 is: uppfæra/uppfæra/vinur/vinur/exterior
 it: wizard/wizard/amico/amico/exterior
