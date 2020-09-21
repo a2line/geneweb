@@ -12213,6 +12213,10 @@ pt: pesquisar todos os
 ru: поиск
 sv: Sök alla
 
+    search %s on Geneanet
+en: search %s on Geneanet
+fr: rechercher %s sur Geneanet
+
     see
 af: sien
 bg: вж.
