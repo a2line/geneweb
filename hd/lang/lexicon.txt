@@ -13096,6 +13096,10 @@ ru: поиск
 sv: Sök alla
 tr: Arama
 
+    search %s on Geneanet
+en: search %s on Geneanet
+fr: rechercher %s sur Geneanet
+
     see
 af: sien
 bg: вж.
