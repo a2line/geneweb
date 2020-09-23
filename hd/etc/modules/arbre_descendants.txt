@@ -40,14 +40,18 @@
     </a>
   %end;
   <br>
-  %if;(evar.image!="off")
+  </div>
+%end;
+
+%define;display_image(xxx)
+  %if;(evar.image!="off" and xxx.has_image)
     %if;xxx.has_image;
       %if;not cancel_links;
         <a href="%xxx.image_url;" class="normal_anchor" %nn;
           target="_blank" title="[*image/images]0 %xxx;">%nn;
       %end;
         <img class="small_image %if;not cancel_links;fade_image%end; align-self-center rounded ml-0 pr-0" %nn;
-          src="%xxx.image_url;" alt="[image/images]0"%/>%nn;
+          src="%xxx.image_url;" style="height:80px;width:auto" alt="[image/images]0"%/>%nn;
       %if;not cancel_links;</a>%end;
     %elseif;(bvar.default_image="yes")
       %if;(wizard and not cancel_links)
@@ -57,14 +61,13 @@
       %end;
       <img class="small_image align-self-center rounded ml-0" style="height:70%%"
         src="%image_prefix;/img_unknown_%if;(xxx.is_female)wo%elseif;(xxx.is_male)%else;u_%end;man.png"
-        alt="[missing image]"%/>
+        style="height:80px;width:auto" alt="[missing image]"%/>
       %if;(wizard and not cancel_links)</a>%end;
     %else;
       <span class="small_image noimage rounded display-4 text-center%nn;
         text-muted ml-0" style="height:100px">%bvar.default_image_no;</span>
     %end;
   %end;
-  </div>
 %end;
 
 %define;add_to_count(nnn)
@@ -118,6 +121,7 @@ Person:            Child1     Child2          Child3
   %if;(lll>evarv)
   %( we are done %)
   %elseif;(lll<=nnn)
+    %let;base_spouse;xxx%in;
     %if;(lll=nnn and "xxx"!="")
       %( Print information at level lll %)
       %if;("ttt"="hbarc" and lll>0 and "xxx"!="self")
@@ -192,7 +196,12 @@ Person:            Child1     Child2          Child3
           %elseif;("ttt"="spouse")
             <td colspan="%fcount;" class="text-center" style="vertical-align:top">
               %apply;display_person("spouse")
-              %if;(has_children)│%end;
+              %if;(has_children)<br>│%end;
+            </td><td>&nbsp;</td>
+          %elseif;("ttt"="image")
+            <td colspan="%fcount;" class="text-center" style="vertical-align:top">
+                %apply;display_image("xxx")&nbsp;
+                %apply;display_image("spouse")<br>|
             </td><td>&nbsp;</td>
           %elseif;("ttt"="vbars")
             %if;(nb_children>0)
@@ -203,6 +212,11 @@ Person:            Child1     Child2          Child3
           %end;
         %end;
       %else;
+        %if;("ttt"="image")
+        <td colspan="www" class="text-center" style="vertical-align:top">
+            %apply;display_image("xxx")
+        </td><td>&nbsp;</td>
+        %end;
         %if;("ttt"="spouse" or "ttt"="vbars" or "ttt"="hbars")
           <td></td><td></td>
         %end;
@@ -343,7 +357,6 @@ Person:            Child1     Child2          Child3
               %env.key;=%env.val;;%end;%nn;
             %end;" class="mx-1"
             title="[*descendants tree] [of] %child.first_name; %child.surname;">&gt;</a>
-
       %end;
     %end;
   %end;
@@ -382,7 +395,14 @@ Person:            Child1     Child2          Child3
       <tr>
         %apply;descendants_at_level("self",0,v,"spouse","center",icount)
       </tr>
+      <tr>
+        %apply;descendants_at_level("self",0,v,"image","center",icount)
+      </tr>
     %end;
+  %elseif;(v=evarv-1)
+  <tr>
+    %apply;descendants_at_level("self",0,v,"image","center",icount)
+  </tr>
   %end;
 %end;
 </table>
