@@ -21,8 +21,6 @@
 
 <div class="container%if;(evar.wide="on")-fluid%end;">
 
-%let;prefix_a;%prefix_base_password;p=%evar.p;;n=%evar.n;%in; %(%access does not work %)
-
 %if;not cancel_links;
   <div class="d-flex justify-content-center">
     %include;home
