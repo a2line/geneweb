@@ -27,21 +27,6 @@
   %include;menubar
 %end;
 
-<script type="text/javascript">
-  <!--
-  function over1(xx)
-  {
-   document.getElementById(xx).style.backgroundColor="#CBFECE";
-   return false;
-  }
-  function out1(xx)
-  {
-   document.getElementById(xx).style.backgroundColor="";
-   return false;
-  }
-  -->
-</script>
-
 %define;implex1(xx)
   onmouseover="over1('xx')" onmouseout="out1('xx')" %nn;
 %end;
@@ -292,8 +277,51 @@
 %mark_descendants;
 %empty_sorted_list; %(persons %)
 %empty_sorted_listb; %( families %)
-%empty_sorted_listc; %( descendnats %)
+%empty_sorted_listc; %( descendants %)
+%if;has_parents;
 
+<button type="button" class="btn btn-outline-primary mr-2" data-toggle="modal" data-target="#switch_modal" 
+  title="[Étendre à un ancêtre proche]">^</button>
+<div class="modal" id="switch_modal" tabindex="-1" aria-labelledby="modal to switch ancestor" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">[*choose an ancestor to navigate with]</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        %foreach;ancestor_level;
+          %if;(level<5)
+            <div><div class="text-center font-weight-bold">[*generation/generations]0 %level;</div>
+            %reset_count;
+            <div class="d-flex justify-content-center align-items-center">
+              %foreach;ancestor;
+                %incr_count;
+                %if;(count%2!=0)<div class="mx-2">%end;
+                <a role="button" class="btn btn-outline-primary light text-center mx-0 mb-2" title="[*select] %ancestor" href="?%nn;
+                  %if;(bvar.access_by_key!="yes")i=%ancestor.index;%nn;
+                  %else;p=%ancestor.first_name_key;&n=%ancestor.surname_key;%if;(ancestor.occ!="0")&oc=%ancestor.occ;%end;%nn;
+                  %end;%nn;
+                  %foreach;env_binding;
+                    %if;(env.key!="" and env.key!="p" and env.key!="n" and env.key!="oc" and env.key!="i" and env.key!="v")&%env.key=%env.val;%nn;%end;
+                  %end;%nn;
+                  &v=%expr(evar.v+level-1)">%ancestor.first_name;<br>%ancestor.surname;<br>%ancestor.dates;%nn;
+                </a>
+                %if;(count%2=0 or level=1)</div>%end;
+              %end;
+            </div></div>
+          %end;
+        %end;
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+%end;
 %apply;togen()
 <p style="line-height:12pt;font-size:12pt;">%apply;desc1(" 0",sex,"0","0","0",l_v,0)</p>
 
@@ -307,6 +335,19 @@
 %include;copyr
 </div>
 %include;js
-
+<script type="text/javascript">
+  <!--
+  function over1(xx)
+  {
+   document.getElementById(xx).style.backgroundColor="#CBFECE";
+   return false;
+  }
+  function out1(xx)
+  {
+   document.getElementById(xx).style.backgroundColor="";
+   return false;
+  }
+  -->
+</script>
 </body>
 </html>
