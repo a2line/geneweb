@@ -291,7 +291,8 @@
           </button>
         </div>
         <div class="modal-body py-2">
-          %foreach;ancestor_level(5)
+          %let;maxlev;%if;(max_anc_level<5)%max_anc_level;%else;5%end;%in;
+          %foreach;ancestor_level(maxlev)
             %if;(level!=1)
               <div class="text-center font-weight-bold mb-2">%nn;
                 %if;(level=2)[*parents]
