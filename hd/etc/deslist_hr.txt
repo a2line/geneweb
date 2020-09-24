@@ -356,5 +356,20 @@
 %include;copyr
 </div>
 %include;js
+<script%if;(templ!="") type="text/javascript"%end;>
+  <!--
+  function over1(xx)
+  {
+   document.getElementById(xx).style.backgroundColor="#CBFECE";
+   return false;
+  }
+  function out1(xx)
+  {
+   document.getElementById(xx).style.backgroundColor="";
+   return false;
+  }
+  -->
+</script>
+
 </body>
 </html>
