@@ -19,7 +19,7 @@
 %include;css
 %include;hed
 </head>
-<body%body_prop;>
+<body%body_prop;> 
 %message_to_wizard;
 <div class="container-fluid">
 %include;perso_utils
@@ -47,7 +47,7 @@
 %end;
 %let;birth_symbol;%if;(bvar.birth_symbol != "")%bvar.birth_symbol;%else;&deg;%end;%in;
 %let;death_symbol;%if;(bvar.death_symbol != "")%bvar.death_symbol;%else;&dagger;%end;%in;
-%let;l_v0;%if;(evar.v > max_desc_level+1)%expr(max_desc_level + 1)%else;%evar.v;%end;%in;
+%let;l_v0;%if;(evar.v > max_desc_level)%expr(max_desc_level)%else;%evar.v;%end;%in;
 %let;l_v;%if;(bvar.max_desc_level = "" or bvar.max_desc_level > l_v0)%l_v0;%else;%bvar.max_desc_level;%end;%in;
 %let;l_max_dates;%if;(bvar.max_dates != "")%bvar.max_dates;%else;200%end;%in;
 
@@ -109,15 +109,15 @@
         %let;l3;
           %if;(curlev != 0 and family_cnt > 1)
             %if;(z2 = 0)
-              %if;(z4 = 1)%l1; %elseif;(z4 = 0)%l1;┃%end;%if;(child_cnt <10) %end;%child_cnt;%nn;
+              %if;(z4 = 1)%l1; %elseif;(z4 = 0)%l1;┃%end;%if;(child_cnt<10) %end;%child_cnt;%nn;
             %else;
-              %if;(z4 = 1)%l1; %elseif;(z4 = 0)%l1;│%end;%if;(child_cnt <10) %end;%child_cnt;%nn;
+              %if;(z4 = 1)%l1; %elseif;(z4 = 0)%l1;│%end;%if;(child_cnt<10) %end;%child_cnt;%nn;
             %end;
           %else;
             %l2;%l21;%nn;
           %end;
         %in;
-        <tt>z1%l3;%nn;
+        <span class="tt">z1%l3;%nn;
           %if;(family_cnt>0)
             %foreach;sorted_listc_item;
               %if;(item.1=index)%incr_count;%end;
@@ -136,16 +136,16 @@
             %end;
             %l22;%nn;
           %end;
-        </tt>
+        </span>
       %else;
-        <tt>z1%l2;%l21;%l211;%nn;
+        <span class="tt">z1%l2;%l21;%l211;%nn;
           %if;(spouse.is_descendant and not cancel_links)
             %let;sss;is_%index;_%family.index;%in;
             <a href="#%sss;" %apply;implex1(sss)>%l212;</a>%nn;
           %else;
             %l212;%nn;
           %end;
-        %l22;</tt>
+        %l22;</span>
       %end;
       %apply;add_in_sorted_list(index)
       %apply;add_in_sorted_listc(index)
@@ -156,7 +156,7 @@
       %else;
         %self; %dates;%if;(self.title!=""), %self.title;%end;%nn;
       %end;
-      %sp;&amp;%if;(on_marriage_date != "")<small>%marriage_date.prec;%marriage_date.year;</small>%end;%sp;
+      %sp;&amp;%if;(on_marriage_date!="")<small>%marriage_date.prec;%marriage_date.year;</small>%end;%sp;
       %if;(not cancel_links)
         <a id="is_%spouse.index;_%family.index;" href="%prefix;&i=%spouse.index;">%spouse;</a> %spouse.dates;%if;(spouse.title!=""), %spouse.title;%end;%nn;
       %else;
@@ -217,7 +217,7 @@
         %if;(has_siblings)◀%else;◁%end;
       %end;
     %in;
-    <tt>z1%l2;%l23;%l231;%l24;%nn;
+    <span class="tt">z1%l2;%l23;%l231;%l24;%nn;
       %reset_count;
       %foreach;sorted_listc_item;
         %if;(item.1=index)%incr_count;%end;
@@ -227,7 +227,7 @@
         <a href="#%sss;" %apply;implex1(sss)>%l231;</a>%nn;
       %else;
         %l231;%nn;
-      %end;</tt>
+      %end;</span>
     %apply;add_in_sorted_list(index)
     %apply;add_in_sorted_listc(index)
     %if;(not cancel_links)
@@ -261,13 +261,15 @@
   %in;
   %let;zl2;%sex;%in;
   %let;l231;%if;(is_male)━%elseif(is_female)─%else;┈%end;%in;
-  <tt>z1%l2;</tt>
+  <span class="tt">z1%l2;</span>
   %( when there is an offset between implex generations, some descendants may be missing %)
   %( case: first occurence at generation n is married to generation n-1 spouse and has children %)
   %( these children will not appear even though asking for desc up to generation n %)
   %if;(not cancel_links)
     %let;sss;i_sp_index%in;
-    <a href="#%sss;" class="mr-1" %apply;implex1(sss)><i class="fa fa-random fa-fw ml-1" aria-hidden="true"></i><span class="sr-only">%sp;(==)%sp;</tt></span>
+    <a href="#%sss;" class="mr-1" %apply;implex1(sss)><i class="fa fa-random fa-fw ml-1" aria-hidden="true"></i>%nn;
+      <span class="sr-only">%sp;(==)%sp;</span>%nn;
+    </a>
   %else;
     <i class="fa fa-random fa-fw ml-1" aria-hidden="true"></i><span class="sr-only">%sp;(==)%sp;</span>
   %end;
@@ -279,51 +281,69 @@
 %empty_sorted_listb; %( families %)
 %empty_sorted_listc; %( descendants %)
 %if;has_parents;
-
-<button type="button" class="btn btn-outline-primary mr-2" data-toggle="modal" data-target="#switch_modal" 
-  title="[Étendre à un ancêtre proche]">^</button>
-<div class="modal" id="switch_modal" tabindex="-1" aria-labelledby="modal to switch ancestor" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">[*choose an ancestor to navigate with]</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        %foreach;ancestor_level;
-          %if;(level<5)
-            <div><div class="text-center font-weight-bold">[*generation/generations]0 %level;</div>
-            %reset_count;
-            <div class="d-flex justify-content-center align-items-center">
+  <div class="modal" id="switch_modal" tabindex="-1" aria-labelledby="modal to switch ancestor" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header py-2">
+          <h5 class="modal-title font-weight-bold" id="exampleModalLabel">[*choose an ancestor]</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body py-2">
+          %foreach;ancestor_level(5)
+            %if;(level!=1)
+              <div class="text-center font-weight-bold mb-2">%nn;
+                %if;(level=2)[*parents]
+                %elseif;(level=3)[*grand-parents]
+                %elseif;(level=4)[*great-grand-parents]
+                %elseif;(level=5)[*great-great-grandparents]
+                %else;[*generation/generations]0 %level;
+                %end;%nn;
+              </div>
+              %reset_count;
               %foreach;ancestor;
                 %incr_count;
-                %if;(count%2!=0)<div class="mx-2">%end;
-                <a role="button" class="btn btn-outline-primary light text-center mx-0 mb-2" title="[*select] %ancestor" href="?%nn;
-                  %if;(bvar.access_by_key!="yes")i=%ancestor.index;%nn;
-                  %else;p=%ancestor.first_name_key;&n=%ancestor.surname_key;%if;(ancestor.occ!="0")&oc=%ancestor.occ;%end;%nn;
-                  %end;%nn;
-                  %foreach;env_binding;
-                    %if;(env.key!="" and env.key!="p" and env.key!="n" and env.key!="oc" and env.key!="i" and env.key!="v")&%env.key=%env.val;%nn;%end;
-                  %end;%nn;
-                  &v=%expr(evar.v+level-1)">%ancestor.first_name;<br>%ancestor.surname;<br>%ancestor.dates;%nn;
-                </a>
-                %if;(count%2=0 or level=1)</div>%end;
+                %if;(count%2!=0)
+                  <div class="d-flex align-items-center mx-0">
+                %end;
+                <div class="col-6%if;(count%2!=0) pl-1 pr-0 mr-1%else; pl-0 pr-1 ml-1%end; mb-2">
+                  <a role="button" class="btn btn-outline-primary text-center w-100 px-1%nn;
+                    %if;(ancestor.first_name="?" and ancestor.surname="?") d-none border-0%end;"
+                    title="[*select] %ancestor" href="?%access;%nn;
+                    %foreach;env_binding;
+                      %if;(env.key!="p" and env.key!="n" and env.key!="oc"
+                       and env.key!="i" and env.key!="v" and env.key!="")
+                        &%env.key=%env.val;%nn;
+                      %end;
+                    %end;%nn;
+                    &v=%expr(evar.v+level-1)">%nn;
+                    %if;(ancestor.first_name!="?" and ancestor.surname!="?")
+                      %ancestor.first_name; %ancestor.surname;%if;(ancestor.dates!="") %ancestor.dates;%else;bla%end;
+                    %end;
+                  </a>
+                </div>
+                %if;(count%2=0)
+                  </div>
+                %end;
               %end;
-            </div></div>
+            %end;
           %end;
-        %end;
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+        </div>
+        <div class="modal-footer py-2">
+          <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">[*close]</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 %end;
 %apply;togen()
-<p style="line-height:12pt;font-size:12pt;">%apply;desc1(" 0",sex,"0","0","0",l_v,0)</p>
+<div class="deslist">
+  %if;has_parents;
+    <div><a role="button" class="text-primary" data-toggle="modal" data-target="#switch_modal" title="[*extend]">&nbsp;&nbsp;^</a></div>
+  %end;
+  %apply;desc1(" 0",sex,"0","0","0",l_v,0)
+</div>
 
 %reset_count;
 %foreach;sorted_list_item;
@@ -335,19 +355,5 @@
 %include;copyr
 </div>
 %include;js
-<script type="text/javascript">
-  <!--
-  function over1(xx)
-  {
-   document.getElementById(xx).style.backgroundColor="#CBFECE";
-   return false;
-  }
-  function out1(xx)
-  {
-   document.getElementById(xx).style.backgroundColor="";
-   return false;
-  }
-  -->
-</script>
 </body>
 </html>
