@@ -310,7 +310,7 @@
                 <div class="col-6%if;(count%2!=0) pl-1 pr-0 mr-1%else; pl-0 pr-1 ml-1%end; mb-2">
                   <a role="button" class="btn btn-outline-primary text-center w-100 px-1%nn;
                     %if;(ancestor.first_name="?" and ancestor.surname="?") d-none border-0%end;"
-                    title="[*select] %ancestor" href="?%access;%nn;
+                    title="[*select] %ancestor" href="?%ancestor.access;%nn;
                     %foreach;env_binding;
                       %if;(env.key!="p" and env.key!="n" and env.key!="oc"
                        and env.key!="i" and env.key!="v" and env.key!="")
