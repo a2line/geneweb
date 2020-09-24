@@ -12413,6 +12413,18 @@ pt: selecionar
 ru: выберите:
 sv: välj
 
+    extend
+en: extend to a near ancestor
+fr: étendre à un ancêtre proche
+
+    choose an ancestor
+en: choose an ancestor
+fr: choisir un ancêtre
+
+    close
+en: close
+fr: fermer
+
     select a letter
 co: sceglie una lettera
 de: wählen Sie einen Zeichen
