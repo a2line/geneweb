@@ -156,7 +156,7 @@
       %else;
         %self; %dates;%if;(self.title!=""), %self.title;%end;%nn;
       %end;
-      %sp;&amp;%if;(on_marriage_date!="")<small>%marriage_date.prec;%marriage_date.year;</small>%end;%sp;
+      %sp;<span class="text-muted">&</span>%if;(on_marriage_date!="")<span class="text-muted">%marriage_date.prec;%marriage_date.year;</span>%end;%sp;
       %if;(not cancel_links)
         <a id="is_%spouse.index;_%family.index;" href="%prefix;&i=%spouse.index;">%spouse;</a> %spouse.dates;%if;(spouse.title!=""), %spouse.title;%end;%nn;
       %else;
@@ -319,7 +319,7 @@
                     %end;%nn;
                     &v=%expr(evar.v+level-1)">%nn;
                     %if;(ancestor.first_name!="?" and ancestor.surname!="?")
-                      %ancestor.first_name; %ancestor.surname;%if;(ancestor.dates!="") %ancestor.dates;%else;bla%end;
+                      %ancestor.first_name; %ancestor.surname;%if;(ancestor.dates!="") %ancestor.dates;%end;
                     %end;
                   </a>
                 </div>
@@ -330,7 +330,7 @@
             %end;
           %end;
         </div>
-        <div class="modal-footer py-2">
+        <div class="modal-footer py-2"> 
           <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">[*close]</button>
         </div>
       </div>
@@ -339,7 +339,7 @@
 %end;
 %apply;togen()
 <div class="deslist">
-  %if;has_parents;
+  %if;(has_parents and evar.templ="" and not cancel_links)
     <div><a role="button" class="text-primary" data-toggle="modal" data-target="#switch_modal" title="[*extend]">&nbsp;&nbsp;^</a></div>
   %end;
   %apply;desc1(" 0",sex,"0","0","0",l_v,0)
