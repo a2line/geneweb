@@ -25,31 +25,15 @@
 %include;perso_utils
 %if;not cancel_links;
   %include;menubar
+    %include;buttons
 %end;
-
 %define;implex1(xx)
   onmouseover="over1('xx')" onmouseout="out1('xx')" %nn;
-%end;
-
-<h1>%nn;
-  %apply;a_of_b_gr_eq_lev%with;
-    [*descendants]%nn;
-  %and;
-    %if;(public_name != "")%public_name;%else;%first_name;%end;
-    %if;(qualifier != "") <em>%qualifier;</em>%end;
-    %sp;%surname;
-    %if;(alias != "") <em>(%alias;)</em>%end;
-  %end;
-</h1>
-
-%if;not cancel_links;
-  %include;buttons
 %end;
 %let;birth_symbol;%if;(bvar.birth_symbol != "")%bvar.birth_symbol;%else;&deg;%end;%in;
 %let;death_symbol;%if;(bvar.death_symbol != "")%bvar.death_symbol;%else;&dagger;%end;%in;
 %let;l_v0;%if;(evar.v > max_desc_level)%expr(max_desc_level)%else;%evar.v;%end;%in;
 %let;l_v;%if;(bvar.max_desc_level = "" or bvar.max_desc_level > l_v0)%l_v0;%else;%bvar.max_desc_level;%end;%in;
-%let;l_max_dates;%if;(bvar.max_dates != "")%bvar.max_dates;%else;200%end;%in;
 %let;l_url;&m=D&t=D%nn;
              %foreach;env_binding;
                %if;(env.key!="p" and env.key!="n" and env.key!="oc"
@@ -59,16 +43,6 @@
               %end;
               &v=%l_v;%nn;
 %in;
-%define;togen()
-  <div class="mt-2">
-    %if;(evar.only!="on")
-      %apply;togend(l_v)
-    %else;
-      [*generation/generations]0 %l_v;
-    %end;
-  </div>
-%end;
-
 %define;desc1(z1,z2,z3,z4,curlev,maxlev,sp_index)
   %let;l1;%if;(z3z4 = "00" or z3z4 = "01")  ┊%else;   %end;%in;
   %let;l2;
@@ -157,7 +131,7 @@
       %if;(family_cnt > 1)
         %self;%nn;
       %elseif;(not cancel_links)
-        <a id="i_%index;" href="?%prefix;%access;">%self;</a> %dates;%if;(self.title!=""), %self.title;%end;%nn;
+        <a id="i_%index;" href="%prefix;%access;">%self;</a> %dates;%if;(self.title!=""), %self.title;%end;%nn;
       %else;
         %self; %dates;%if;(self.title!=""), %self.title;%end;%nn;
       %end;
@@ -201,7 +175,6 @@
               %apply;desc2(zl1,zl2,zl3,zl4,curlev+1,maxlev,spouse.index)
             %end;
           %end;
-
         %end;
       %end;
       %apply;add_in_sorted_listb(ifam)
@@ -243,7 +216,6 @@
     <br>
   %end;
 %end;
-
 %define;desc2(z1,z2,z3,z4,curlev,maxlev,sp_index)
   %let;l1;%if;(z3z4 = "00" or z3z4 = "01")  ┊%else;   %end;%in;
   %let;l2;
@@ -280,11 +252,10 @@
   %end;
   <br>
 %end;
-
 %mark_descendants;
-%empty_sorted_list; %(persons %)
-%empty_sorted_listb; %( families %)
-%empty_sorted_listc; %( descendants %)
+%empty_sorted_list;%( persons %)
+%empty_sorted_listb;%( families %)
+%empty_sorted_listc;%( descendants %)
 %if;has_parents;
   <div class="modal" id="switch_modal" tabindex="-1" aria-labelledby="modal to switch ancestor" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -343,25 +314,28 @@
     </div>
   </div>
 %end;
-%apply;togen()
+<h3>%nn;
+  %apply;a_of_b_gr_eq_lev%with;[*descendants]%and;
+    %if;(public_name!="")%public_name;%else;%first_name;%end; %surname; %end;
+  <small class="text-muted">%apply;togend(l_v)</small>
+</h3>
 <div class="deslist">
   %if;(has_parents and evar.templ="" and not cancel_links)
     <div class="mt-0"><a role="button" class="text-primary" data-toggle="modal" data-target="#switch_modal" title="[*extend]">&nbsp;&nbsp;^</a></div>
   %end;
   %apply;desc1(" 0",sex,"0","0","0",l_v,0)
 </div>
-
 %reset_count;
 %foreach;sorted_list_item;
   %incr_count;
 %end;
-<p>[*total][:] %apply;desc_count(max_desc_level) [descendants] (%count; [person/persons]1 [with] [spouse/spouses]1)
+<div class="mt-2">[*total][:] %apply;desc_count(max_desc_level) [descendants] (%count; [person/persons]1 [with] [spouse/spouses]1)</div>
 
 %include;trl
 %include;copyr
 </div>
 %include;js
-<script%if;(templ!="") type="text/javascript"%end;>
+<script%if;(evar.templ!="") type="text/javascript"%end;>
   <!--
   function over1(xx)
   {
@@ -375,6 +349,5 @@
   }
   -->
 </script>
-
 </body>
 </html>
