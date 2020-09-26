@@ -119,7 +119,7 @@ fr: Sélectionnez les modules en cliquant sur le bouton correspondant (max 15).
             %if(sosa_next.index!="")
               %if;(sosa_prev.index="")
                 <li class="nav-item" title="Sosa 1[:] %self; ">
-                  <a class="nav-link disabled"href="#" tabindex="-1" aria-disabled="true"><span class="far fa-dot-circle" aria-hidden="true"></span><span class="sr-only">·</span></a>%nn;
+                  <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true"><span class="far fa-dot-circle" aria-hidden="true"></span><span class="sr-only">·</span></a>%nn;
                 </li>
               %end;
               <li class="nav-item">
