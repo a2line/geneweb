@@ -339,12 +339,11 @@
   <!--
   function over1(xx)
   {
-   document.getElementById(xx).style.backgroundColor="#CBFECE";
-   return false;
-  }
-  function out1(xx)
-  {
-   document.getElementById(xx).style.backgroundColor="";
+  status = document.getElementById(xx).style.backgroundColor;
+  if (status == "")
+    {document.getElementById(xx).style.backgroundColor="#CBFECE";}
+  else
+    {document.getElementById(xx).style.backgroundColor="";};
    return false;
   }
   -->
