@@ -29,9 +29,6 @@
   %include;menubar
   %include;buttons
 %end;
-%define;implex1(xx)
-  onmouseover="over1('xx')" onmouseout="out1('xx')" %nn;
-%end;
 %let;lvL;
   %if;(bvar.max_anc_level = "")%apply;min(evar.v, max_anc_level, 7)
   %else;%apply;min(evar.v, max_anc_level, bvar.max_anc_level)%end;
@@ -57,7 +54,9 @@
     %end;
   %end;
 </h3>
-
+%(%define;implex(xx)
+  onclick="out('xx')"%sp;
+%end;%)
 %define;ancestors_by_list(xx, nnn)
   %if;(xx.has_parents and nnn > 1)
     <ul>
@@ -92,12 +91,11 @@
           "ss3&nbsp;└──╴", "ss3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", zz*2+1)
       %end;
     %else;
-      %let;sss;sosa_%pp.sosa.v;%in;
       <span>ss2</span>%nn;
       %if;(not cancel_links)
-        <a href="%prefix;%pp.access;" role="button">%pp;</a>%nn;
-        <a href="#%sss;" role="button" %apply;implex1(sss)
-          title="[implex/implexes]0, [see above] [*Sosa] zz">%nn;
+        <a href="%prefix;%pp.access;" role="button" id="implex_%pp.sosa.v;">%pp;</a>%nn;
+        <a href="#sosa_%pp.sosa.v;" role="button" onclick="out('%pp.sosa.v;')"
+          title="[implex/implexes]0, [see above] [*Sosa] %pp.sosa.v;">%nn;
         <i class="fa fa-random fa-fw fa-sm mx-1" aria-hidden="true"></i>
           <span class="sr-only">%sp;(==)%sp;</span></a><br>
       %else;
@@ -518,17 +516,22 @@
 </div>
 %include;js
 <script%if;(evar.templ!="" and evar.t="H") type="text/javascript"%end;>
-  <!--
-  function over1(xx)
-  {
-  status = document.getElementById(xx).style.backgroundColor;
-  if (status == "")
-    {document.getElementById(xx).style.backgroundColor="#CBFECE";}
-  else
-    {document.getElementById(xx).style.backgroundColor="";};
-   return false;
+ <!--
+  function out(xx) {
+    $('#sosa_64,#sosa_32,#sosa_16,#sosa_8,#sosa_4,#sosa_2').css("background-color", "cyan");
+    var sosaid = "sosa_" + xx;
+    var implexid = "implex_" + xx;
+    var hash = "#" + sosaid;
+    $('a[id^="sosa_"]').css("background-color", "");
+    $('a[id^="implex_"]').css("background-color", "");
+    $('a[href^="#sosa_"]').css("background-color", "");
+    $('#' + sosaid).css("background-color", "#CCFFFF");
+    $('#' + implexid).css("background-color", "#CCFFFF");
+    $('[href="' + hash + '"]').css("background-color", "#CCFFFF");
   }
   -->
 </script>
 </body>
 </html>
+
+%($('input[type="checkbox"]:not([id^=t_])[name!="only"][name!="image"][name!="cgl"]').prop("checked", false);%)
