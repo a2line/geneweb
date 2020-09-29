@@ -521,6 +521,8 @@
    $(".filter").on("input", function(e) {
      var input = $(this);
      var val = input.val();
+     if (val == "") { var val = "_";  }
+
      if (input.data("lastval") != val) {
        input.data("lastval", val);
        $('[class^="sn_"]').addClass("d-none");
