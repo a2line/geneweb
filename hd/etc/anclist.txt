@@ -54,9 +54,7 @@
     %end;
   %end;
 </h3>
-%(%define;implex(xx)
-  onclick="out('xx')"%sp;
-%end;%)
+
 %define;ancestors_by_list(xx, nnn)
   %if;(xx.has_parents and nnn > 1)
     <ul>
@@ -69,40 +67,35 @@
     </ul>
   %end;
 %end;
-
-%define;anc_row_hr(pp, xx, ss1, ss2, ss3, zz)
-  %if;(xx > 0)
-    %if;(pp.sosa.v=zz or (not browsing_with_sosa_ref) or evar.implx="")
-      %if;(pp.has_parents)
-        %apply;anc_row_hr(
-          "pp.father", xx - 1, "ss1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;",
-          "ss1&nbsp;┌──╴", "ss1&nbsp;|&nbsp;&nbsp;&nbsp;", zz*2)
-      %end;
-      <span>ss2</span>%nn;
-      %if;(not cancel_links)%nn;
-        <a id="sosa_%pp.sosa.v;" href="%prefix;%pp.access;">%pp;</a>
-      %else;
-        %pp;%nn;
-      %end;
-      %pp.title;%pp.dates;<br>
-      %if;(pp.has_parents)
-        %apply;anc_row_hr(
-          "pp.mother", xx - 1, "ss3&nbsp;|&nbsp;&nbsp;&nbsp;",
-          "ss3&nbsp;└──╴", "ss3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", zz*2+1)
-      %end;
-    %else;
-      <span>ss2</span>%nn;
-      %if;(not cancel_links)
-        <a href="%prefix;%pp.access;" role="button" id="implex_%pp.sosa.v;">%pp;</a>%nn;
-        <a href="#sosa_%pp.sosa.v;" role="button" onclick="out('%pp.sosa.v;')"
-          title="[implex/implexes]0, [see above] [*Sosa] %pp.sosa.v;">%nn;
-        <i class="fa fa-random fa-fw fa-sm mx-1" aria-hidden="true"></i>
-          <span class="sr-only">%sp;(==)%sp;</span></a><br>
-      %else;
-        %pp;<i class="fa fa-random fa-fw fa-sm mx-1" aria-hidden="true"></i>%nn;
-            <span class="sr-only">%sp;(==)%sp;</span><br>
-      %end;
+%define;anc_row_hr(pp, vv, zz, ss1, ss2, ss3)
+  %if;("pp"="self")  <a role="button" onclick="out('%pp.sosa.v;','%evar.surname1;','%evar.surname2;','%evar.surname3;')"
+        "><i class="fa fa-random fa-fw fa-sm mx-1" aria-hidden="true"></i></a><br>%end;
+  %if;(vv > 0 and ((pp.surname is_substr evar.surname1) or (pp.surname is_substr evar.surname2) or (pp.surname is_substr evar.surname3)))
+      
+  %if;(pp.has_parents and (pp.sosa.v=zz or evar.implx!="on"))
+    %apply;anc_row_hr("pp.father", vv-1, zz*2, "ss1     ", "ss1 ┌──╴", "ss1 |   ")
+  %end;
+  %(  or not browsing_with_sosa_ref à replacer ! %)
+  <span>ss2</span>%nn;
+  <span%( id="sosa_%if;(pp.sosa.v!=zz)implex_%end;%pp.sosa.v;%)">%nn;
+    %if;(not cancel_links)<a href="%prefix;%pp.access;" class="sosa_%if;(pp.sosa.v!=zz)implex_%end;%pp.sosa.v; %pp.surname;" role="button">%pp;</a>%nn;
+    %else;%pp;%end;%pp.title;%pp.dates;%nn;
+  </span>
+  %if;(pp.sosa.v!=zz)
+    %if;(not cancel_links)
+      <a role="button" onclick="out('%pp.sosa.v;','%evar.surname1;','%evar.surname2;','%evar.surname3;')"
+        title="[*implex/implexes]0, [see above] [*Sosa] %pp.sosa;">%nn;
+      <i class="fa fa-random fa-fw fa-sm mx-1" aria-hidden="true"></i>
+        <span class="sr-only">%sp;(==)%sp;</span></a>
+    %else;<i class="fa fa-random fa-fw fa-sm mx-1" aria-hidden="true"></i>%nn;
+          <span class="sr-only">%sp;(==)%sp;</span>
     %end;
+  %end;
+  <br>
+  %if;(pp.has_parents and (pp.sosa.v=zz or evar.implx!="on"))
+    %apply;anc_row_hr("pp.mother", vv-1, zz*2+1, "ss3 |   ", "ss3 └──╴", "ss3     ")
+  %end;
+  
   %end;
 %end;
 %if;(evar.v = "" or evar.v <= 1)
@@ -116,7 +109,7 @@
   %elseif;(evar.t="H")
     %( horizontal ascendency %)
     <div class="text-monospace anclist_hr">
-      %apply;anc_row_hr("self", lvL, "&nbsp;&nbsp;&nbsp;", "──╴", "&nbsp;&nbsp;&nbsp;", 1)
+      %apply;anc_row_hr("self", lvL, 1, "   ", "──╴", "   ")
     </div>
 
   %elseif;(evar.t = "E" and evar.sort != "")
@@ -517,17 +510,12 @@
 %include;js
 <script%if;(evar.templ!="" and evar.t="H") type="text/javascript"%end;>
  <!--
-  function out(xx) {
-    $('#sosa_64,#sosa_32,#sosa_16,#sosa_8,#sosa_4,#sosa_2').css("background-color", "cyan");
-    var sosaid = "sosa_" + xx;
-    var implexid = "implex_" + xx;
-    var hash = "#" + sosaid;
-    $('a[id^="sosa_"]').css("background-color", "");
-    $('a[id^="implex_"]').css("background-color", "");
-    $('a[href^="#sosa_"]').css("background-color", "");
-    $('#' + sosaid).css("background-color", "#CCFFFF");
-    $('#' + implexid).css("background-color", "#CCFFFF");
-    $('[href="' + hash + '"]').css("background-color", "#CCFFFF");
+  function out(xx,aa,bb,cc) {
+    $('[class^="sosa_"]').css("background-color","");
+    $('.sosa_'+xx).add('.sosa_implex_'+xx).css("background-color","#CCFFFF");
+    $('[class*="' + aa + '"]').css("background-color","#e6ffff");
+    $('[class*="' + bb + '"]').css("background-color","#f4caff");
+    $('[class*="' + cc + '"]').css("background-color","#cbe074");
   }
   -->
 </script>
