@@ -68,34 +68,36 @@
   %end;
 %end;
 %define;anc_row_hr(pp, vv, zz, ss1, ss2, ss3)
-  %if;("pp"="self")  <a role="button" onclick="out('%pp.sosa.v;','%evar.surname1;','%evar.surname2;','%evar.surname3;')"
+  %(%if;("pp"="self")  <a role="button" onclick="implex('%pp.sosa.v;')"%(filter('%evar.surname1;','%evar.surname2;','%evar.surname3;')"%)
         "><i class="fa fa-random fa-fw fa-sm mx-1" aria-hidden="true"></i></a><br>%end;
-  %if;(vv > 0 and ((pp.surname is_substr evar.surname1) or (pp.surname is_substr evar.surname2) or (pp.surname is_substr evar.surname3)))
-      
-  %if;(pp.has_parents and (pp.sosa.v=zz or evar.implx!="on"))
-    %apply;anc_row_hr("pp.father", vv-1, zz*2, "ss1     ", "ss1 ┌──╴", "ss1 |   ")
-  %end;
-  %(  or not browsing_with_sosa_ref à replacer ! %)
-  <span>ss2</span>%nn;
-  <span%( id="sosa_%if;(pp.sosa.v!=zz)implex_%end;%pp.sosa.v;%)">%nn;
-    %if;(not cancel_links)<a href="%prefix;%pp.access;" class="sosa_%if;(pp.sosa.v!=zz)implex_%end;%pp.sosa.v; %pp.surname;" role="button">%pp;</a>%nn;
-    %else;%pp;%end;%pp.title;%pp.dates;%nn;
-  </span>
-  %if;(pp.sosa.v!=zz)
-    %if;(not cancel_links)
-      <a role="button" onclick="out('%pp.sosa.v;','%evar.surname1;','%evar.surname2;','%evar.surname3;')"
-        title="[*implex/implexes]0, [see above] [*Sosa] %pp.sosa;">%nn;
-      <i class="fa fa-random fa-fw fa-sm mx-1" aria-hidden="true"></i>
-        <span class="sr-only">%sp;(==)%sp;</span></a>
-    %else;<i class="fa fa-random fa-fw fa-sm mx-1" aria-hidden="true"></i>%nn;
-          <span class="sr-only">%sp;(==)%sp;</span>
+  %if;(vv > 0 and ((pp.surname is_substr evar.surname1) or (pp.surname is_substr evar.surname2) or (pp.surname is_substr evar.surname3)))%)
+  %if;(vv>0)
+    %if;(pp.has_parents and (pp.sosa.v=zz or evar.implx!="on"))
+      %apply;anc_row_hr("pp.father", vv-1, zz*2, "ss1     ", "ss1 ┌──╴", "ss1 |   ")
     %end;
-  %end;
-  <br>
-  %if;(pp.has_parents and (pp.sosa.v=zz or evar.implx!="on"))
-    %apply;anc_row_hr("pp.mother", vv-1, zz*2+1, "ss3 |   ", "ss3 └──╴", "ss3     ")
-  %end;
-  
+    %(  or not browsing_with_sosa_ref à replacer ! %)
+    <span class="sn_%pp.surname;">
+    <span>ss2</span>%nn;
+    <span>%nn;
+      %if;(not cancel_links)<a href="%prefix;%pp.access;"
+        class="sosa_%if;(pp.sosa.v!=zz)implex_%end;%pp.sosa.v;" role="button">%pp;</a>%nn;
+      %else;%pp;%end;%pp.title;%pp.dates;%nn;
+    </span>
+    %if;(pp.sosa.v!=zz)
+      %if;(not cancel_links)
+        <a role="button" onclick="implex('%pp.sosa.v;')"
+          title="[*implex/implexes]0, [see above] [*Sosa] %pp.sosa;">%nn;
+        <i class="fa fa-random fa-fw fa-sm mx-1" aria-hidden="true"></i>
+          <span class="sr-only">%sp;(==)%sp;</span></a>
+      %else;<i class="fa fa-random fa-fw fa-sm mx-1" aria-hidden="true"></i>%nn;
+            <span class="sr-only">%sp;(==)%sp;</span>
+      %end;
+    %end;
+    <br>
+    </span>
+    %if;(pp.has_parents and (pp.sosa.v=zz or evar.implx!="on"))
+      %apply;anc_row_hr("pp.mother", vv-1, zz*2+1, "ss3 |   ", "ss3 └──╴", "ss3     ")
+    %end;
   %end;
 %end;
 %if;(evar.v = "" or evar.v <= 1)
@@ -108,7 +110,14 @@
 
   %elseif;(evar.t="H")
     %( horizontal ascendency %)
-    <div class="text-monospace anclist_hr">
+    <form class="mt-2">
+     <div class="form-row align-items-start">
+      <label class="sr-only" for="input1">Filtre 1</label><input type="text" id="input1" value="" placeholder="surname1" title="[surname] filter 1" class="filter form-control-sm">
+      <label class="sr-only" for="input2">Filtre 2</label><input type="text" id="input2" value="" placeholder="surname2" title="[surname] filter 2" class="filter form-control-sm" disabled>
+      <label class="sr-only" for="input3">Filtre 3</label><input type="text" id="input3" value="" placeholder="surname3" title="[surname] filter 3" class="filter form-control-sm" disabled>
+      </div>
+    </form>
+    <div class="text-monospace anclist_hr mt-2">
       %apply;anc_row_hr("self", lvL, 1, "   ", "──╴", "   ")
     </div>
 
@@ -503,19 +512,24 @@
     </table>
   %end;
 %end;
-
 %include;trl
 %include;copyr
 </div>
 %include;js
 <script%if;(evar.templ!="" and evar.t="H") type="text/javascript"%end;>
  <!--
-  function out(xx,aa,bb,cc) {
+   $(".filter").on("input", function(e) {
+     var input = $(this);
+     var val = input.val();
+     if (input.data("lastval") != val) {
+       input.data("lastval", val);
+       $('[class^="sn_"]').addClass("d-none");
+       $('[class*="' + val + '"]').removeClass("d-none");
+       }
+   });
+  function implex(xx) {
     $('[class^="sosa_"]').css("background-color","");
     $('.sosa_'+xx).add('.sosa_implex_'+xx).css("background-color","#CCFFFF");
-    $('[class*="' + aa + '"]').css("background-color","#e6ffff");
-    $('[class*="' + bb + '"]').css("background-color","#f4caff");
-    $('[class*="' + cc + '"]').css("background-color","#cbe074");
   }
   -->
 </script>
