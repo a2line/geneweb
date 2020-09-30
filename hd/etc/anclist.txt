@@ -101,7 +101,8 @@
   %end;
 %end;
 %define;input(xx)
-  <label class="sr-only" for="inputxx">Filtre xx</label><input type="text" id="inputxx" value="" placeholder="surnamexx" title="[surname] filter xx" class="filter form-control-sm">
+  <label class="sr-only" for="inputxx" class="mt-2">Filtre xx</label>
+  <input type="text" id="inputxx" placeholder="[surname/surnames]0xx" title="[*filter by surname]0xx" class="filter form-control-sm mr-1%if;(xx!=1) d-none%end;"%if;(xx!=1) disabled%end;>
 %end;
 %if;(evar.v = "" or evar.v <= 1)
   [*specify::generation/generations]0.
@@ -113,20 +114,17 @@
 
   %elseif;(evar.t="H")
     %( horizontal ascendency %)
-    <form class="mt-2">
-     <div class="form-row align-items-start">
-      
-      %apply;input(1)
-      %apply;input(2)
-      %apply;input(3)
-      %apply;input(4)
-      
+    <form class="form-inline mt-2">
+      <div class="form-row ">
+        <span class="form-control-sm">[*filter by][:]</span>%nn;
+        %apply;input(1)%apply;input(2)%apply;input(3)%apply;input(4)%apply;input(5)   
+        <a id="btnplus" role="button" class="btn btn-primary btn-sm">+</a>
       </div>
     </form>
     <div class="text-monospace anclist_hr mt-2">
       %apply;anc_row_hr("self", lvL, 1, "   ", "──╴", "   ")
     </div>
-
+    
   %elseif;(evar.t = "E" and evar.sort != "")
     %( list eclair sorted by date begin or number of individuals or number of events %)
     %empty_sorted_list;
@@ -524,42 +522,26 @@
 %include;js
 <script%if;(evar.templ!="" and evar.t="H") type="text/javascript"%end;>
  <!--
-  $(".filter").on("input", function(e) {
-    var input1 = $("#input1");
-    var val1 = input1.val();
-    var input2 = $("#input2");
-    var val2 = input2.val();
-    var input3 = $("#input3");
-    var val3 = input3.val();
-    if (val1 == "") { var val1 = "_"; }
-    if (input1.data("lastval") != val1 || input2.data("lastval") != val2 || input3.data("lastval") != val3 ) {
-      $('[class^="sn_"]').addClass("d-none");
-      $('[class*="' + val1 + '"]').removeClass("d-none");
-      $('[class*="' + val2 + '"]').removeClass("d-none");
-      $('[class*="' + val3 + '"]').removeClass("d-none");
-    }
+  $("#btnplus").on("click", function(e) {
+    var len = $('.filter:text:not(:disabled)').length + 1; 
+    $('#input'+len).removeClass("d-none");
+    $('#input'+len).prop('disabled', false);
+    if (len == 5) { $("#btnplus").addClass("disabled"); }
   });
-%(   $(".filter").on("input", function(e) {
-     var input1 = $("#input1");
-     var val1 = input1.val();
-     var input2 = $("#input2");
-     var val2 = input2.val();
-     var input3 = $("#input3");
-     var val3 = input3.val();
-     if (val1 == "") { var val1 = "_";  }
-     %(if (val2 == "") { var val2 = "_";  }
-     if (val3 == "") { var val3 = "_";  }%)
-     
-     if (input1.data("lastval") != val1 || input2.data("lastval") != val2 || input3.data("lastval") != val3) {
-       input.data("lastval", val1);
-       %(input2.data("lastval", val2);
-       input3.data("lastval", val3);%)
-       $('[class^="sn_"]').addClass("d-none");
-       $('[class*="' + val1 + '"]').removeClass("d-none");
-       $('[class*="' + val2 + '"]').removeClass("d-none");
-       $('[class*="' + val3 + '"]').removeClass("d-none");
-     }
-   });%)
+  $(".filter").on("input", function(e) {
+    var input1 = $("#input1").val();
+    var input2 = $("#input2").val();
+    var input3 = $("#input3").val();
+    var input4 = $("#input4").val();
+    var input5 = $("#input5").val();
+    if (input1 == "") { var input1 = "_"; }
+    $('[class^="sn_"]').addClass("d-none");
+    $('[class*="' + input1 + '"]').removeClass("d-none");
+    $('[class*="' + input2 + '"]').removeClass("d-none");
+    $('[class*="' + input3 + '"]').removeClass("d-none");
+    $('[class*="' + input4 + '"]').removeClass("d-none");
+    $('[class*="' + input5 + '"]').removeClass("d-none");
+  });
   function implex(xx) {
     $('[class^="sosa_"]').css("background-color","");
     $('.sosa_'+xx).add('.sosa_implex_'+xx).css("background-color","#CCFFFF");
@@ -568,5 +550,3 @@
 </script>
 </body>
 </html>
-
-%($('input[type="checkbox"]:not([id^=t_])[name!="only"][name!="image"][name!="cgl"]').prop("checked", false);%)
