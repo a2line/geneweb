@@ -17023,3 +17023,7 @@ ru: ваше сообщение ожидает проверки
 sk: tvoja správa čaká na potvrdenie
 sv: ditt meddelande väntar på godkännande
 tr: mesajınız doğrulama için bekliyor
+
+    filter by
+en: filter by
+fr: filtrer par
