@@ -525,17 +525,19 @@
 <script%if;(evar.templ!="" and evar.t="H") type="text/javascript"%end;>
  <!--
   $(".filter").on("input", function(e) {
-    var val1 = $("#input1").val();
-    var val2 = $("#input2").val();
-    var val3 = $("#input3").val();
-    %(if (val2 == "") { var val2 = "_"; }%)
-    %(if (val1 == "") { var val1 = "_"; };%)
-    %(if (val2 == "") { var val2 = "_"; }%)
-    %(if (val3 == "") { var val3 = "_"; };%)
-    $('[class^="sn_"]').addClass("d-none");
-    $('[class*="' + val1 + '"]').removeClass("d-none");
-    $('[class*="' + val2 + '"]').removeClass("d-none");
-    $('[class*="' + val3 + '"]').removeClass("d-none");
+    var input1 = $("#input1");
+    var val1 = input1.val();
+    var input2 = $("#input2");
+    var val2 = input2.val();
+    var input3 = $("#input3");
+    var val3 = input3.val();
+    if (val1 == "") { var val1 = "_"; }
+    if (input1.data("lastval") != val1 || input2.data("lastval") != val2 || input3.data("lastval") != val3 ) {
+      $('[class^="sn_"]').addClass("d-none");
+      $('[class*="' + val1 + '"]').removeClass("d-none");
+      $('[class*="' + val2 + '"]').removeClass("d-none");
+      $('[class*="' + val3 + '"]').removeClass("d-none");
+    }
   });
 %(   $(".filter").on("input", function(e) {
      var input1 = $("#input1");
@@ -548,7 +550,7 @@
      %(if (val2 == "") { var val2 = "_";  }
      if (val3 == "") { var val3 = "_";  }%)
      
-     if (input.data("lastval") != val1 %(|| input2.data("lastval") != val2 || input3.data("lastval") != val3%)) {
+     if (input1.data("lastval") != val1 || input2.data("lastval") != val2 || input3.data("lastval") != val3) {
        input.data("lastval", val1);
        %(input2.data("lastval", val2);
        input3.data("lastval", val3);%)
