@@ -100,6 +100,9 @@
     %end;
   %end;
 %end;
+%define;input(xx)
+  <label class="sr-only" for="inputxx">Filtre xx</label><input type="text" id="inputxx" value="" placeholder="surnamexx" title="[surname] filter xx" class="filter form-control-sm">
+%end;
 %if;(evar.v = "" or evar.v <= 1)
   [*specify::generation/generations]0.
 %else;
@@ -112,9 +115,12 @@
     %( horizontal ascendency %)
     <form class="mt-2">
      <div class="form-row align-items-start">
-      <label class="sr-only" for="input1">Filtre 1</label><input type="text" id="input1" value="" placeholder="surname1" title="[surname] filter 1" class="filter form-control-sm">
-      <label class="sr-only" for="input2">Filtre 2</label><input type="text" id="input2" value="" placeholder="surname2" title="[surname] filter 2" class="filter form-control-sm" disabled>
-      <label class="sr-only" for="input3">Filtre 3</label><input type="text" id="input3" value="" placeholder="surname3" title="[surname] filter 3" class="filter form-control-sm" disabled>
+      
+      %apply;input(1)
+      %apply;input(2)
+      %apply;input(3)
+      %apply;input(4)
+      
       </div>
     </form>
     <div class="text-monospace anclist_hr mt-2">
@@ -518,17 +524,39 @@
 %include;js
 <script%if;(evar.templ!="" and evar.t="H") type="text/javascript"%end;>
  <!--
-   $(".filter").on("input", function(e) {
-     var input = $(this);
-     var val = input.val();
-     if (val == "") { var val = "_";  }
-
-     if (input.data("lastval") != val) {
-       input.data("lastval", val);
+  $(".filter").on("input", function(e) {
+    var val1 = $("#input1").val();
+    var val2 = $("#input2").val();
+    var val3 = $("#input3").val();
+    %(if (val1 == "") { var val1 = "_"; }
+    if (val2 == "") { var val2 = "_"; }
+    if (val3 == "") { var val3 = "_"; } %)
+    $('[class^="sn_"]').addClass("d-none");
+    $('[class*="' + val1 + '"]').removeClass("d-none");
+    $('[class*="' + val2 + '"]').removeClass("d-none");
+    $('[class*="' + val3 + '"]').removeClass("d-none");
+  });
+%(   $(".filter").on("input", function(e) {
+     var input1 = $("#input1");
+     var val1 = input1.val();
+     var input2 = $("#input2");
+     var val2 = input2.val();
+     var input3 = $("#input3");
+     var val3 = input3.val();
+     if (val1 == "") { var val1 = "_";  }
+     if (val2 == "") { var val2 = "_";  }
+     if (val3 == "") { var val3 = "_";  }
+     
+     if (input.data("lastval") != val1 %(|| input2.data("lastval") != val2 || input3.data("lastval") != val3%)) {
+       input.data("lastval", val1);
+       %(input2.data("lastval", val2);
+       input3.data("lastval", val3);%)
        $('[class^="sn_"]').addClass("d-none");
-       $('[class*="' + val + '"]').removeClass("d-none");
-       }
-   });
+       $('[class*="' + val1 + '"]').removeClass("d-none");
+       $('[class*="' + val2 + '"]').removeClass("d-none");
+       $('[class*="' + val3 + '"]').removeClass("d-none");
+     }
+   });%)
   function implex(xx) {
     $('[class^="sosa_"]').css("background-color","");
     $('.sosa_'+xx).add('.sosa_implex_'+xx).css("background-color","#CCFFFF");
