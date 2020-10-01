@@ -68,8 +68,8 @@
   %end;
 %end;
 %define;anc_row_hr(pp, vv, zz, ss1, ss2, ss3)
-  %(%if;("pp"="self")  <a role="button" onclick="implex('%pp.sosa.v;')"%(filter('%evar.surname1;','%evar.surname2;','%evar.surname3;')"%)
-        "><i class="fa fa-random fa-fw fa-sm mx-1" aria-hidden="true"></i></a><br>%end;
+  %(if;("pp"="self")  <a role="button" onclick="implex('%pp.sosa.v;')"%(filter('%evar.surname1;','%evar.surname2;','%evar.surname3;')"
+        "><i class="fa fa-random fa-fw fa-sm mx-1" aria-hidden="true"></i></a><br>%end; %)
   %if;(vv > 0 and ((pp.surname is_substr evar.surname1) or (pp.surname is_substr evar.surname2) or (pp.surname is_substr evar.surname3)))%)
   %if;(vv>0)
     %if;(pp.has_parents and (pp.sosa.v=zz or evar.implx!="on"))
@@ -83,7 +83,7 @@
         class="sosa_%if;(pp.sosa.v!=zz)implex_%end;%pp.sosa.v;" role="button">%pp;</a>%nn;
       %else;%pp;%end;%pp.title;%pp.dates;%nn;
     </span>
-    %if;(pp.sosa.v!=zz)
+    %if;(pp.sosa.v!=zz and evar.force!="on")
       %if;(not cancel_links)
         <a role="button" onclick="implex('%pp.sosa.v;')"
           title="[*implex/implexes]0, [see above] [*Sosa] %pp.sosa;">%nn;
@@ -122,7 +122,26 @@
       </div>
     </form>
     <div class="text-monospace anclist_hr mt-2">
-      %apply;anc_row_hr("self", lvL, 1, "   ", "──╴", "   ")
+      %if;(sosa="" and evar.force!="on")
+        <a href="%prefix_no_iz;%nn;
+          %foreach;env_binding;
+            %if;(not (env.key="pz" or env.key="nz" or env.key="iz" or env.key="ocz" or env.key="force")
+            and env.val!="")&%env.key=%env.val;%end;%nn;
+          %end;%nn;
+          &pz=%first_name_key;&nz=%surname_key;%if;(occ!=0)&ocz=%occ;%end;">[redefine]</a> [Sosa] 1
+        [or]
+        <a href="%prefix_no_iz;
+          %foreach;env_binding;
+            %if;(not (env.key="pz" or env.key="nz" or env.key="iz" or env.key="ocz" or env.key="force")
+            and env.val!="")&%env.key=%env.val;%end;%nn;
+          %end;&force=on">[continue]</a> [without implex display]
+      %else;
+        %if;(evar.force="on")
+          %apply;anc_row_hr("self", lvL, 1, "   ", "──╴", "   ")
+        %else;
+          %apply;anc_row_hr("self", lvL, sosa.v, "   ", "──╴", "   ")
+        %end;
+      %end;
     </div>
     
   %elseif;(evar.t = "E" and evar.sort != "")
