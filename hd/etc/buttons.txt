@@ -16,7 +16,7 @@
           %foreach;env_binding;
             %if;(env.key="m")&m=%if;(cond=1)D%else;A%end;%nn;
             %elseif;(env.key="t")&t=%if;(cond=1)H%else;Z%end;%nn;
-            %elseif;(env.key="v")&v=%if;(evar.v="")1%else;%if;(cond=1)%expr(evar.v-1)%else;%expr(evar.v+1);%end;%end;%nn;
+            %elseif;(env.key="v")&v=%if;(evar.v="")1%else;%if;(cond=1)%expr(evar.v-1)%else;%expr(evar.v+1)%end;%end;%nn;
             %elseif;(env.key!="")&%env.key=%env.val;%nn;
             %end;%nn;
           %end;
@@ -76,7 +76,7 @@
         title="[*add] 1 [generation/generations]0"%sp;
         href="%prefix_base_password;%nn;
               %foreach;env_binding;
-                %if;(env.key="v")&v=%expr(evar.v+1);%nn;
+                %if;(env.key="v")&v=%expr(evar.v+1)%nn;
                 %elseif;(env.key!="")&%env.key=%env.val;%nn;
                 %end;
               %end;">%nn;
@@ -163,7 +163,7 @@
               &pz=%first_name_key;&nz=%surname_key;%if;(occ!=0)&oc=%occ;%end;
             %end;
             %foreach;env_binding;
-              %if;(env.key!="implx" and env.key!="")&%env.key=%env.val;%end;
+              %if;(not (env.key="implx" or env.key="force" or env.key=""))&%env.key=%env.val;%end;
             %end;
             %( if (evar.m="A" and evar.t="H") implex=on means display full implex %)
             %if;(evar.implx!="on")
