@@ -121,7 +121,7 @@
         <a id="btnplus" role="button" class="btn btn-primary btn-sm">+</a>
       </div>
     </form>
-    <div class="text-monospace anclist_hr mt-2">
+    <div class="text-monospace anclist_hr mt-2">%sosa;
       %if;(sosa="" and evar.force!="on")
         <a href="%prefix_no_iz;%nn;
           %foreach;env_binding;
@@ -137,9 +137,9 @@
           %end;&force=on">[continue]</a> [without implex display]
       %else;
         %if;(evar.force="on")
-          %apply;anc_row_hr("self", lvL, 1, "   ", "──╴", "   ")
+          %apply;anc_row_hr("self", lvL, 1, "   ", "──╴", "   ")
         %else;
-          %apply;anc_row_hr("self", lvL, sosa.v, "   ", "──╴", "   ")
+          %apply;anc_row_hr("self", lvL, sosa.v, "   ", "──╴", "   ")
         %end;
       %end;
     </div>
