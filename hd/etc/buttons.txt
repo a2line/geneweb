@@ -143,7 +143,7 @@
     %end;
     %if;(evar.templ="")
       <span class="sr-only">—</span>
-      <a role="button" class="btn btn-link ml-1 px-0 mb-1%if;(evar.t!="Y" or evar.csv="on") disabled%end;"
+      <a role="button" class="btn btn-link ml-1 px-0 mb-1%if;(evar.t="Y" or evar.csv="on") disabled%end;"
         title="Small arrow in corner shows existence of note or source."
         href="%prefix_base_password;%nn;
               %foreach;env_binding;
