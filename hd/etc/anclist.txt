@@ -30,7 +30,7 @@
   %include;buttons
 %end;
 %let;lvL;
-  %if;(bvar.max_anc_level = "")%apply;min(evar.v, max_anc_level, 7)
+  %if;(bvar.max_anc_leevel = "")%apply;min(evar.v, max_anc_level, 7)
   %else;%apply;min(evar.v, max_anc_level, bvar.max_anc_level)%end;
 %in;
 <h3>%nn;
@@ -76,7 +76,7 @@
       %apply;anc_row_hr("pp.father", vv-1, zz*2, "ss1     ", "ss1 ┌──╴", "ss1 |   ")
     %end;
     %(  or not browsing_with_sosa_ref à replacer ! %)
-    <span class="sn_%pp.surname;">
+    <span data-surname="_%pp.surname;">
     <span>ss2</span>%nn;
     <span>%nn;
       %if;(not cancel_links)<a href="%prefix;%pp.access;"
@@ -101,8 +101,8 @@
   %end;
 %end;
 %define;input(xx)
-  <label class="sr-only" for="inputxx" class="mt-2">Filtre xx</label>
-  <input type="text" id="inputxx" placeholder="[surname/surnames]0xx" title="[*filter by surname]0xx" class="filter form-control-sm mr-1%if;(xx!=1) d-none%end;"%if;(xx!=1) disabled%end;>
+  <label class="sr-only mt-2" for="inputxx">Filtre xx</label>
+  <input type="text" id="inputxx" placeholder="[surname/surnames]0xx" title="[filter by::surname/surnames]0xx" class="filter%if;(xx>1) extrafilter%end; form-control-sm mr-1%if;(xx!=1) d-none%end;" disabled>
 %end;
 %if;(evar.v = "" or evar.v <= 1)
   [*specify::generation/generations]0.
@@ -115,13 +115,14 @@
   %elseif;(evar.t="H")
     %( horizontal ascendency %)
     <form class="form-inline mt-2">
-      <div class="form-row ">
+      <div id="filterbysurname" class="form-row d-none">
         <span class="form-control-sm">[*filter by][:]</span>%nn;
         %apply;input(1)%apply;input(2)%apply;input(3)%apply;input(4)%apply;input(5)   
-        <a id="btnplus" role="button" class="btn btn-primary btn-sm">+</a>
+        <button id="btnplus" type="button" class="btn btn-primary btn-sm" title="[*add filter] (max 5)"><i class="fa fa-plus fa-fw"></i></button>
+        <button id="btnclear" type="button" class="btn btn-danger btn-sm ml-1" title="[*clear filters]"><i class="fa fa-times fa-fw"></i></button>
       </div>
     </form>
-    <div class="text-monospace anclist_hr mt-2">%sosa;
+    <div class="text-monospace anclist_hr mt-2">
       %if;(sosa="" and evar.force!="on")
         <a href="%prefix_no_iz;%nn;
           %foreach;env_binding;
@@ -539,33 +540,5 @@
 %include;copyr
 </div>
 %include;js
-<script%if;(evar.templ!="" and evar.t="H") type="text/javascript"%end;>
- <!--
-  $("#btnplus").on("click", function(e) {
-    var len = $('.filter:text:not(:disabled)').length + 1; 
-    $('#input'+len).removeClass("d-none");
-    $('#input'+len).prop('disabled', false);
-    if (len == 5) { $("#btnplus").addClass("disabled"); }
-  });
-  $(".filter").on("input", function(e) {
-    var input1 = $("#input1").val();
-    var input2 = $("#input2").val();
-    var input3 = $("#input3").val();
-    var input4 = $("#input4").val();
-    var input5 = $("#input5").val();
-    if (input1 == "") { var input1 = "_"; }
-    $('[class^="sn_"]').addClass("d-none");
-    $('[class*="' + input1 + '"]').removeClass("d-none");
-    $('[class*="' + input2 + '"]').removeClass("d-none");
-    $('[class*="' + input3 + '"]').removeClass("d-none");
-    $('[class*="' + input4 + '"]').removeClass("d-none");
-    $('[class*="' + input5 + '"]').removeClass("d-none");
-  });
-  function implex(xx) {
-    $('[class^="sosa_"]').css("background-color","");
-    $('.sosa_'+xx).add('.sosa_implex_'+xx).css("background-color","#CCFFFF");
-  }
-  -->
-</script>
 </body>
 </html>
