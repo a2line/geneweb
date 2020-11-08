@@ -224,4 +224,7 @@
         [*visualize/show/hide/summary]1 %if;(evar.csv="on")[table]%else;CSV%end;%nn;
     </a>
   %end;
+  %if;((evar.m="A" and evar.t="H") or (evar.m="D" and evar.t="D"))
+    <button id="btnshowfilter" type="button" class="btn btn-link ml-1 px-0 mb-1"><i class="fas fa-filter" aria-hidden="true"></i> [*filter by::surname/surnames]0</button>
+  %end;
 </div>
