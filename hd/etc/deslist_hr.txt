@@ -48,7 +48,6 @@
               &v=%l_v;%nn;
 %in;
 %define;desc1(z1,z2,z3,z4,curlev,maxlev,sp_index)
-  <span data-surname="_%surname;">
   %(%if;(surname is_substr evar.sn1 or surname is_substr evar.sn2)%)
   %let;l1;%if;(z3z4 = "00" or z3z4 = "01")  ┊%else;   %end;%in;
   %let;l2;
@@ -137,7 +136,7 @@
       %if;(family_cnt > 1)
         %self;%nn;
       %elseif;(not cancel_links)
-        <a id="i_%index;" href="%prefix;%access;">%self;</a> %dates;%if;(self.title!=""), %self.title;%end;%nn;
+        <a data-surname="_%surname;" id="i_%index;" href="%prefix;%access;">%self;</a> %dates;%if;(self.title!=""), %self.title;%end;%nn;
       %else;
         %self; %dates;%if;(self.title!=""), %self.title;%end;%nn;
       %end;
