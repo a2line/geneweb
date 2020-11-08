@@ -17036,6 +17036,14 @@ sk: tvoja správa čaká na potvrdenie
 sv: ditt meddelande väntar på godkännande
 tr: mesajınız doğrulama için bekliyor
 
+    add filter
+en: add a filter
+fr: ajouter un filtre
+
     filter by
 en: filter by
 fr: filtrer par
+
+    clear filters
+en: clear every filters
+fr: effacer tous les filtres
