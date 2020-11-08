@@ -30,6 +30,10 @@
 %define;implex1(xx)
   onmouseover="over1('xx')" onmouseout="out1('xx')" %nn;
 %end;
+%define;input(xx)
+  <label class="sr-only" for="inputxx" class="mt-2">Filtre xx</label>
+  <input type="text" id="inputxx" placeholder="[surname/surnames]0xx" title="[filter by::surname/surnames]0xx" class="filter%if;(xx>1) extrafilter%end; form-control-sm mr-1%if;(xx!=1) d-none%end;" disabled>
+%end;
 %let;birth_symbol;%if;(bvar.birth_symbol != "")%bvar.birth_symbol;%else;&deg;%end;%in;
 %let;death_symbol;%if;(bvar.death_symbol != "")%bvar.death_symbol;%else;&dagger;%end;%in;
 %let;l_v0;%if;(evar.v > max_desc_level)%expr(max_desc_level)%else;%evar.v;%end;%in;
@@ -44,6 +48,8 @@
               &v=%l_v;%nn;
 %in;
 %define;desc1(z1,z2,z3,z4,curlev,maxlev,sp_index)
+  <span data-surname="_%surname;">
+  %(%if;(surname is_substr evar.sn1 or surname is_substr evar.sn2)%)
   %let;l1;%if;(z3z4 = "00" or z3z4 = "01")  ┊%else;   %end;%in;
   %let;l2;
     %if;(curlev != 0)
@@ -124,7 +130,7 @@
           %else;
             %l212;%nn;
           %end;
-        %l22;</span>
+        %l22;</span>      
       %end;
       %apply;add_in_sorted_list(index)
       %apply;add_in_sorted_listc(index)
@@ -144,6 +150,7 @@
       %if;(spouse.first_name!="?" and spouse.surname!="?" and not spouse.is_descendant)
         %apply;add_in_sorted_list(spouse.index)
       %end;
+        </span>
       %if;(spouse.is_descendant and evar.implx="")
         %if;(not cancel_links)
           %let;sss;is_%index;_%family.index;%in;
@@ -215,6 +222,7 @@
     %end;
     <br>
   %end;
+  %(%end;%)
 %end;
 %define;desc2(z1,z2,z3,z4,curlev,maxlev,sp_index)
   %let;l1;%if;(z3z4 = "00" or z3z4 = "01")  ┊%else;   %end;%in;
@@ -256,7 +264,7 @@
 %empty_sorted_list;%( persons %)
 %empty_sorted_listb;%( families %)
 %empty_sorted_listc;%( descendants %)
-%if;has_parents;
+%if;(has_parents and evar.templ="")
   <div class="modal" id="switch_modal" tabindex="-1" aria-labelledby="modal to switch ancestor" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
       <div class="modal-content">
@@ -267,7 +275,12 @@
           </button>
         </div>
         <div class="modal-body py-2">
-          %let;maxlev;%if;(max_anc_level<5)%max_anc_level;%else;5%end;%in;
+          %reset_count;
+          %foreach;ancestor_level(5)
+            %incr_count;
+          %end;
+          %let;maxlev;%if;(count<5)%count;%else;5%end;%in;
+          %reset_count;
           %foreach;ancestor_level(maxlev)
             %if;(level!=1)
               <div class="text-center font-weight-bold mb-2">%nn;
@@ -319,6 +332,14 @@
     %if;(public_name!="")%public_name;%else;%first_name;%end; %surname; %end;
   <small class="text-muted">%apply;togend(l_v)</small>
 </h3>
+<form class="form-inline mt-2">
+  <div id="filterbysurname" class="form-row d-none">
+    <span class="form-control-sm">[*filter by][:]</span>%nn;
+    %apply;input(1)%apply;input(2)%apply;input(3)%apply;input(4)%apply;input(5)   
+    <button id="btnplus" type="button" class="btn btn-primary btn-sm" title="[*add filter] (max 5)"><i class="fa fa-plus fa-fw"></i></button>
+    <button id="btnclear" type="button" class="btn btn-danger btn-sm ml-1" title="[*clear filters]"><i class="fa fa-times fa-fw"></i></button>
+  </div>
+</form>
 <div class="deslist">
   %if;(has_parents and evar.templ="" and not cancel_links)
     <div class="mt-0"><a role="button" class="text-primary" data-toggle="modal" data-target="#switch_modal" title="[*extend]">&nbsp;&nbsp;^</a></div>
