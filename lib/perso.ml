@@ -2121,9 +2121,9 @@ and eval_simple_str_var conf base env (_, p_auth) =
                 Some d when m_auth ->
                   begin match p_getenv conf.base_env "long_date" with
                     Some "yes" ->
-                      " <em>" ^ DateDisplay.string_of_ondate conf d ^
-                      DateDisplay.get_wday conf d ^ "</em>"
-                  | _ -> " <em>" ^ DateDisplay.string_of_ondate conf d ^ "</em>"
+                      " " ^ DateDisplay.string_of_ondate conf d ^
+                      DateDisplay.get_wday conf d
+                  | _ -> " " ^ DateDisplay.string_of_ondate conf d
                   end
               | _ -> ""
               end
@@ -2139,9 +2139,9 @@ and eval_simple_str_var conf base env (_, p_auth) =
                     Some d when m_auth ->
                       begin match p_getenv conf.base_env "long_date" with
                         Some "yes" ->
-                          " <em>" ^ DateDisplay.string_of_ondate conf d ^
-                          DateDisplay.get_wday conf d ^ "</em>"
-                      | _ -> " <em>" ^ DateDisplay.string_of_ondate conf d ^ "</em>"
+                          " " ^ DateDisplay.string_of_ondate conf d ^
+                          DateDisplay.get_wday conf d
+                      | _ -> " " ^ DateDisplay.string_of_ondate conf d
                       end
                   | _ -> ""
                   end
@@ -3220,7 +3220,8 @@ and eval_person_field_var conf base env (p, p_auth as ep) loc =
           VVstring s
       | _ -> raise Not_found
       end
-  | "marriage_date" :: sl ->
+  | "marriage_date" :: sl
+  | "marriage" :: sl ->
       begin match get_env "fam" env with
         Vfam (_, fam, _, true) ->
           begin match Adef.od_of_cdate (get_marriage fam) with
@@ -3381,6 +3382,11 @@ and eval_date_field_var conf d =
           end
       | _ -> VVstring ""
       end
+  | ["date_s"] ->
+    begin match d with
+    | Dgreg (dmy, _) -> VVstring (DateDisplay.prec_year_text conf dmy)
+    | _ -> VVstring ""
+    end
   | [] ->
     VVstring (DateDisplay.string_of_date_aux ~link:false conf ~sep:"&#010;  " d)
   | _ -> raise Not_found
@@ -3514,6 +3520,15 @@ and eval_event_field_var conf base env (p, p_auth)
     "date" :: sl ->
       begin match p_auth, Adef.od_of_cdate date with
         true, Some d -> eval_date_field_var conf d sl
+      | _ -> VVstring ""
+      end
+  | ["date_s"] ->
+      begin match p_auth, Adef.od_of_cdate date with
+      | true, Some d ->
+        begin match d with
+        | Dgreg (dmy, _) -> VVstring (DateDisplay.prec_year_text conf dmy)
+        | _ -> VVstring ""
+        end
       | _ -> VVstring ""
       end
   | "spouse" :: sl ->
@@ -4492,6 +4507,7 @@ and eval_family_field_var conf base env
           let ep = make_ep conf base ifath in
           eval_person_field_var conf base env ep loc sl
       end
+  | ["date_s"] -> VVstring (DateDisplay.short_family_dates_text conf base fam)
   | "marriage_date" :: sl ->
       begin match Adef.od_of_cdate (get_marriage fam) with
         Some d when m_auth -> eval_date_field_var conf d sl
