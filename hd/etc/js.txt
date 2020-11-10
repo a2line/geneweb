@@ -108,7 +108,7 @@
     var input4 = $("#input4").val();
     var input5 = $("#input5").val();
     if (input1 == "") { var input1 = "_"; }
-    $('*[data-surname]').addClass("d-none");
+    $('[data-surname]').addClass("d-none");
     $('[data-surname*="' + input1 + '"]').removeClass("d-none");
     $('[data-surname*="' + input2 + '"]').removeClass("d-none");
     $('[data-surname*="' + input3 + '"]').removeClass("d-none");
@@ -118,6 +118,10 @@
   function implex(xx) {
     $('[class^="sosa_"]').css("background-color","");
     $('.sosa_'+xx).add('.sosa_implex_'+xx).css("background-color","#CCFFFF");
+  }
+  function implexdesc(xx) {
+    $('a[data-index]').css("background-color","");
+    $('a[data-index="' + xx + '"]').css("background-color","#CCFFFF");
   }
   -->
 </script>
