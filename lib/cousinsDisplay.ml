@@ -158,7 +158,6 @@ let rec print_descend_upto conf base max_cnt ini_p ini_br lev children =
       Output.print_string conf "</ul>\n"
     end
 
-
 let print_cousins_side_of conf base max_cnt a ini_p ini_br lev1 lev2 =
   let sib = siblings conf base (get_iper a) in
   if List.exists (sibling_has_desc_lev conf base lev2) sib then
@@ -262,13 +261,16 @@ let print_cousins conf base p lev1 lev2 =
   print_cousins_lev conf base max_cnt p lev1 lev2;
   Output.print_string conf "<div>\n";
   Output.print_string conf "<p>\n";
+  let (cnt2, cnt2_sp) =
+    (CousinsCount.count_cousins_lev conf base max_cnt p lev1 lev2 )
+  in
   if !cnt >= max_cnt then Output.print_string conf "etc...\n"
   else if !cnt > 1 then
-    Output.printf conf "%s%s %d %s" (Utf8.capitalize_fst (transl conf "total"))
-      (Util.transl conf ":") !cnt
-      (Util.translate_eval ("@(c)" ^ transl_nth conf "person/persons" 1));
+    Output.printf conf "%s%s %d (%d) %s " (Utf8.capitalize_fst (transl conf "total"))
+      (Util.transl conf ":") !cnt cnt2
+			(Util.translate_eval ("@(c)" ^ transl_nth conf "person/persons" 1));
   if p_getenv conf.env "spouse" = Some "on" then
-    Output.printf conf " %s %d %s.\n" (transl conf "and") !cnt_sp
+    Output.printf conf " %s %d (%d) %s.\n" (transl conf "and") !cnt_sp cnt2_sp
       (Util.translate_eval ("@(c)" ^ transl_nth conf "spouse/spouses" 1))
   else Output.printf conf ".\n" ;
   Output.print_string conf "</p>\n";
