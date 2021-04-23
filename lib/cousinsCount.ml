@@ -1,5 +1,3 @@
-open Config
-open Def
 open Gwdb
 open Util
 
@@ -40,7 +38,7 @@ let rec count_descend_upto conf base cnt cnt_sp max_cnt ini_p ini_br lev childre
 						(cnt, cnt_sp)))
         (cnt, cnt_sp) children
 
-let count_cousins_side_of conf base cnt cnt_sp max_cnt a ini_p ini_br lev1 lev2 =
+let count_cousins_side_of conf base cnt cnt_sp max_cnt a ini_p ini_br _lev1 lev2 =
   let sib = Cousins.siblings conf base (get_iper a) in
 	if List.exists (Cousins.sibling_has_desc_lev conf base lev2) sib then
 		begin
