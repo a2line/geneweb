@@ -775,7 +775,7 @@ let count_cousins conf base p lev1 lev2 =
         in
         let () = build_sosa_ht conf base in
         let (cnt, _cnt_sp) =
-          CousinsCount.count_cousins_lev conf base max_cnt p lev1 lev2
+          CousinsCount.print_cousins_lev conf base max_cnt p lev1 lev2 false print_sosa
 				in cnt
 
 let default_max_cousin_lev = 5
