@@ -220,7 +220,6 @@ let prerr conf _err fn =
   Hutil.rheader conf title ;
   fn () ;
   Hutil.trailer conf;
-  Output.flush conf ;
 #ifdef API
   end ;
 #endif

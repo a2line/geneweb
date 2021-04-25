@@ -16,7 +16,7 @@ let printer_conf =
                         { status = Wserver.http
                         ; header = Wserver.header
                         ; body = Wserver.print_string
-                        ; flush = Wserver.wflush
+                        ; flush = ignore
                         }
   }
 
@@ -56,7 +56,7 @@ let charset conf =
 
 let header_no_page_title conf title =
   Output.status printer_conf Def.OK;
-  Output.header printer_conf "Content-type: text/html; charset=%s" (charset conf);
+  Output.header printer_conf "Content-Type: text/html; charset=%s" (charset conf);
   Output.print_string printer_conf
     "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\" \
      \"http://www.w3.org/TR/REC-html40/loose.dtd\">\n";
@@ -798,7 +798,7 @@ let print_file conf bname =
   match ic_opt with
   | Some ic ->
     Output.status printer_conf Def.OK;
-    Output.header printer_conf "Content-type: text/html; charset=%s" (charset conf);
+    Output.header printer_conf "Content-Type: text/html; charset=%s" (charset conf);
     copy_from_stream conf (Output.print_string printer_conf) (Stream.of_channel ic);
     close_in ic;
     trailer conf
@@ -1582,8 +1582,8 @@ let print_typed_file conf typ fname =
   match ic_opt with
     Some ic ->
       Output.status printer_conf Def.OK;
-      Output.header printer_conf "Content-type: %s" typ;
-      Output.header printer_conf "Content-length: %d" (in_channel_length ic);
+      Output.header printer_conf "Content-Type: %s" typ;
+      Output.header printer_conf "Content-Length: %d" (in_channel_length ic);
       begin try
         while true do let c = input_char ic in Output.printf printer_conf "%c" c done
       with End_of_file -> ()
@@ -1799,6 +1799,7 @@ let setup (addr, req) comm env_str =
   else if conf.comm = "" then print_file conf "welcome.htm"
   else setup_comm conf comm
 
+(* let g  (addr, request) script_name contents' *)
 let wrap_setup a b c =
 #ifdef WINDOWS
   (* another process have been launched, therefore we lost variables;
@@ -1899,19 +1900,19 @@ let intro () =
   let (gwd_lang, setup_lang) =
     if !daemon then
 #ifdef UNIX
-        let setup_lang =
-          if String.length !lang_param < 2 then default_setup_lang
-          else !lang_param
-        in
-        Printf.printf "To start, open location http://localhost:%d/\n" !port;
-        flush stdout;
-        if Unix.fork () = 0 then
-          begin
-            Unix.close Unix.stdin;
-            null_reopen [Unix.O_WRONLY] Unix.stdout
-          end
-        else exit 0;
-        default_gwd_lang, setup_lang
+      let setup_lang =
+        if String.length !lang_param < 2 then default_setup_lang
+        else !lang_param
+      in
+      Printf.printf "To start, open location http://localhost:%d/\n" !port;
+      flush stdout;
+      if Unix.fork () = 0 then
+        begin
+          Unix.close Unix.stdin;
+          null_reopen [Unix.O_WRONLY] Unix.stdout
+        end
+      else exit 0;
+      default_gwd_lang, setup_lang
 #else
       default_gwd_lang, default_setup_lang
 #endif
@@ -1939,9 +1940,5 @@ let intro () =
   flush stdout
 
 let () =
-#ifdef UNIX
-  intro () ;
-#else
-  if Sys.getenv_opt "WSERVER" = None then intro () ;
-#endif
+  intro ();
   Wserver.f (fun _ -> prerr_endline) None !port 0 None wrap_setup
