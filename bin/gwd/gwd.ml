@@ -9,11 +9,19 @@ open Gwd_lib
 
 module StrSet = Mutil.StrSet
 
+let out_httpStatus status = 
+  GwdLog.syslog `LOG_INFO ("HTTP response : " ^ (Wserver.status_string status) );
+  Wserver.http status
+
+let out_httpHeader s = 
+  GwdLog.syslog `LOG_DEBUG ("HTTP response header : " ^ s);
+  Wserver.header s
+  
 let output_conf =
-  { status = Wserver.http
-  ; header = Wserver.header
+  { status = out_httpStatus
+  ; header = out_httpHeader
   ; body = Wserver.print_string
-  ; flush = Wserver.wflush
+  ; flush = ignore
   }
 
 let printer_conf = { Config.empty with output_conf }
@@ -116,12 +124,12 @@ let copy_file conf fname =
 
 let http conf status =
   Output.status conf status;
-  Output.header conf "Content-type: text/html; charset=iso-8859-1"
+  Output.header conf "Content-Type: text/html; charset=UTF-8"
 
 let robots_txt conf =
   GwdLog.syslog `LOG_NOTICE "Robot request";
   Output.status conf Def.OK;
-  Output.header conf "Content-type: text/plain";
+  Output.header conf "Content-Type: text/plain";
   if copy_file conf "robots" then ()
   else
     begin Output.print_string conf "User-Agent: *\n"; Output.print_string conf "Disallow: /\n" end
@@ -129,14 +137,14 @@ let robots_txt conf =
 let refuse_log conf from =
   GwdLog.syslog `LOG_NOTICE @@ "Excluded: " ^ from ;
   http conf Def.Forbidden;
-  Output.header conf "Content-type: text/html";
+  Output.header conf "Content-Type: text/html";
   Output.print_string conf "Your access has been disconnected by administrator.\n";
   let _ = (copy_file conf "refuse" : bool) in ()
 
 let only_log conf from =
   GwdLog.syslog `LOG_NOTICE @@ "Connection refused from " ^ from;
   http conf Def.OK;
-  Output.header conf "Content-type: text/html; charset=iso-8859-1";
+  Output.header conf "Content-Type: text/html; charset=UTF-8";
   Output.print_string conf "<head><title>Invalid access</title></head>\n";
   Output.print_string conf "<body><h1>Invalid access</h1></body>\n"
 
@@ -321,6 +329,30 @@ let print_redirected conf from request new_addr =
       Output.printf conf "<ul><li><a href=\"%s\">%s</a></li></ul>" link link ;
       Hutil.trailer conf)
 
+let print_refresh conf bname delay =
+  let url =
+    let serv = "http://" ^ Util.get_server_string conf in
+    let req =
+      if conf.cgi then
+        let str = Util.get_request_string conf in
+        let scriptname = String.sub str 0 (String.index str '?') in
+        scriptname ^ "?b=" ^ bname
+      else "/" ^ bname ^ "?"
+    in
+    serv ^ req
+  in
+  http conf Def.OK;
+  Output.header conf "Connection: close";
+  Output.printf conf "<head>\n\
+                  <meta http-equiv=\"REFRESH\"\n\
+                  content=\"%d;URL=%s\">\n\
+                  </head>\n\
+                  <body>\n\
+                  <a href=\"%s\">%s</a>\n\
+                  </body>"
+    delay url url url;
+  Output.flush conf
+
 let nonce_private_key =
   Lazy.from_fun
     (fun () ->
@@ -368,6 +400,7 @@ let trace_auth base_env f =
 
 let unauth_server conf ar =
   let typ = if ar.ar_passwd = "w" then "Wizard" else "Friend" in
+  GwdLog.syslog `LOG_NOTICE (Printf.sprintf "Starting Authentication : base:%s, type:%s" conf.bname typ);
   Output.status conf Def.Unauthorized;
   if !use_auth_digest_scheme then
     let nonce = digest_nonce conf.ctime in
@@ -593,30 +626,6 @@ let index_not_name s =
       | _ -> i
   in
   loop 0
-
-let refresh_url conf bname =
-  let url =
-    let serv = "http://" ^ Util.get_server_string conf in
-    let req =
-      if conf.cgi then
-        let str = Util.get_request_string conf in
-        let scriptname = String.sub str 0 (String.index str '?') in
-        scriptname ^ "?b=" ^ bname
-      else "/" ^ bname ^ "?"
-    in
-    serv ^ req
-  in
-  http conf Def.OK;
-  Output.header conf "Content-type: text/html";
-  Output.printf conf "<head>\n\
-                  <meta http-equiv=\"REFRESH\"\n\
-                  content=\"1;URL=%s\">\n\
-                  </head>\n\
-                  <body>\n\
-                  <a href=\"%s\">%s</a>\n\
-                  </body>"
-    url url url;
-  raise Exit
 
 let http_preferred_language request =
   let v = Mutil.extract_param "accept-language: " '\n' request in
@@ -1046,9 +1055,12 @@ let make_conf from_addr request script_name env =
       let i = index_not_name s in
       if i = String.length s then s
       else
-        let conf = { printer_conf with request } in
-        refresh_url conf (String.sub s 0 i)
-    in
+        let bname = (String.sub s 0 i) in 
+        let conf = { printer_conf with request} in
+        GwdLog.syslog `LOG_INFO (Printf.sprintf "Redirect pages \"%s\" to page \"%s\"" script_name bname);
+        print_refresh conf bname 1;
+        raise Exit
+  in
     let (passwd, env, access_type) =
       let has_passwd = List.mem_assoc "w" env in
       let (x, env) = extract_assoc "w" env in
@@ -1259,12 +1271,17 @@ let log tm conf from gauth request script_name contents =
   else if conf.friend && not conf.wizard then
     Printf.fprintf oc "  User: %s%s(friend)\n" conf.user
       (if conf.user = "" then "" else " ");
-  if user_agent <> "" then Printf.fprintf oc "  Agent: %s\n" user_agent;
+  if user_agent <> "" then 
+    begin
+      Printf.fprintf oc "  Agent: %s\n" user_agent;
+      GwdLog.syslog `LOG_DEBUG (Printf.sprintf "HTTP User-agent : %s" user_agent)
+    end;
   if referer <> "" then
     begin
       Printf.fprintf oc "  Referer: ";
       print_and_cut_if_too_big oc referer;
-      Printf.fprintf oc "\n"
+      Printf.fprintf oc "\n";
+      GwdLog.syslog `LOG_INFO (Printf.sprintf "HTTP Referer : %s" referer)
     end
 
 let log_and_robot_check conf auth from request script_name contents =
@@ -1381,7 +1398,7 @@ let conf_and_connection =
       | _ ->
         try
           let t1 = Unix.gettimeofday () in
-          Request.treat_request conf ;
+          Request.treat_request conf;
           let t2 = Unix.gettimeofday () in
           if t2 -. t1 > slow_query_threshold
           then
@@ -1391,10 +1408,11 @@ let conf_and_connection =
         with
         | Exit -> ()
         | e ->
-#ifdef DEBUG
-          Printexc.print_backtrace stderr ;
-#endif
-          GwdLog.syslog `LOG_CRIT (context conf contents ^ " " ^ Printexc.to_string e)
+          GwdLog.syslog `LOG_CRIT ((context conf contents) ^ " : " ^ (Printexc.to_string e));
+          GwdLog.log @@ (fun oc ->
+             Printf.fprintf oc "Unexcepted exception : %s\n%s\n"
+               (Printexc.to_string e)  (Printexc.get_backtrace ()) );
+          raise e
 
 let chop_extension name =
   let rec loop i =
@@ -1442,117 +1460,89 @@ let image_request conf script_name env =
       in
       let fname = Filename.basename fname in
       let fname = Util.image_file_name fname in
-      let _ = ImageDisplay.print_image_file conf fname in true
-  | _ ->
-      let s = script_name in
-      if Mutil.start_with "images/" 0 s then
-        let i = String.length "images/" in
-        let fname = String.sub s i (String.length s - i) in
-        (* Je ne sais pas pourquoi on fait un basename, mais ça empeche *)
-        (* empeche d'avoir des images qui se trouvent dans le dossier   *)
-        (* image. Si on ne fait pas de basename, alors ça marche.       *)
-        (* let fname = Filename.basename fname in *)
-        let fname = Util.image_file_name fname in
-        let _ = ImageDisplay.print_image_file conf fname in true
-      else false
+      let _ = ImageDisplay.print_image_file conf fname in 
+      true
+  | _ -> false
 
-
-(* Une version un peu à cheval entre avant et maintenant afin de   *)
-(* pouvoir inclure une css, un fichier javascript (etc) facilement *)
-(* et que le cache du navigateur puisse prendre le relais.         *)
-type misc_fname =
-  | Css of string
-  | Eot of string
-  | Js of string
-  | Otf of string
-  | Other of string
-  | Png of string
-  | Svg of string
-  | Ttf of string
-  | Woff of string
-  | Woff2 of string
-
-let content_misc conf len misc_fname =
-  Output.status conf Def.OK;
-  let (fname, t) =
-    match misc_fname with
-    | Css fname -> fname, "text/css"
-    | Eot fname -> fname, "application/font-eot"
-    | Js fname -> fname, "text/javascript"
-    | Otf fname -> fname, "application/font-otf"
-    | Other fname -> fname, "text/plain"
-    | Png fname -> fname, "image/png"
-    | Svg fname -> fname, "application/font-svg"
-    | Ttf fname -> fname, "application/font-ttf"
-    | Woff fname -> fname, "application/font-woff"
-    | Woff2 fname -> fname, "application/font-woff2"
-
+let print_header_misc conf len fname =
+  let ext = String.lowercase_ascii @@ Filename.extension fname in 
+  let content_type =
+    (* for  Internet media type refer to https://www.iana.org/assignments/media-types/media-types.xhtml *)
+    match ext with
+    | ".css" ->  "text/css; charset=UTF-8"
+    | ".eot" -> "application/vnd.ms-fontobject"
+    | ".ico" -> "image/x-icon"
+    | ".js" -> "application/javascript; charset=UTF-8"
+    | ".jpeg"
+    | ".pjpeg"
+    | ".jpg" -> "image/jpeg"
+    | ".gif" -> "image/gif"
+    | ".html"
+    | ".htm" -> "text/html; charset=UTF-8"
+    | ".map" -> "application/json"
+    | ".otf" -> "font/otf"
+    | ".png" -> "image/png"
+    | ".pdf" -> "application/pdf"
+    | ".svg" -> "image/svg+xml"
+    | ".ttf" -> "font/ttf"
+    | ".woff" -> "font/woff"
+    | ".woff2" -> "font/woff2"
+    | _ -> "application/octet-stream"
   in
-  Output.header conf "Content-type: %s" t;
-  Output.header conf "Content-length: %d" len;
-  Output.header conf "Content-disposition: inline; filename=%s"
-    (Filename.basename fname);
-  Output.header conf "Cache-control: private, max-age=%d" (60 * 60 * 24 * 365);
+  Output.status conf Def.OK;
+  Output.header conf "Content-Type: %s" content_type;
+  Output.header conf "Content-Length: %d" len;
+  Output.header conf "Content-Disposition: inline; filename=%s" (Filename.basename fname);
+  Output.header conf "Cache-Control: private, max-age=%d" (60 * 60 * 24 * 365)
+
+let print_misc_file conf fname =
+  let ic = Secure.open_in_bin fname in
+  let buf = Bytes.create 1024 in
+  let len = in_channel_length ic in
+  print_header_misc conf len fname;
+  let rec loop len =
+    if len = 0 then ()
+    else
+      let olen = min (Bytes.length buf) len in
+      really_input ic buf 0 olen;
+      Output.print_string conf (Bytes.sub_string buf 0 olen);
+      loop (len - olen)
+  in
+  loop len;
+  close_in ic;
   Output.flush conf
 
 let find_misc_file name =
   if Sys.file_exists name
   && List.exists (fun p -> Mutil.start_with (Filename.concat p "assets") 0 name) !plugins
-  then name
+  then name, Def.OK
   else
-    let name' = Filename.concat (base_path ["etc"] "") name in
-    if Sys.file_exists name' then name'
-    else
-      let name' = search_in_lang_path @@ Filename.concat "etc" name in
-      if Sys.file_exists name' then name'
-      else ""
-
-let print_misc_file conf misc_fname =
-  match misc_fname with
-  | Other _ -> false
-  | Css fname
-  | Eot fname
-  | Js fname
-  | Otf fname
-  | Png fname
-  | Svg fname
-  | Ttf fname
-  | Woff fname
-  | Woff2 fname
-    ->
-    let ic = Secure.open_in_bin fname in
-    let buf = Bytes.create 1024 in
-    let len = in_channel_length ic in
-    content_misc conf len misc_fname;
-    let rec loop len =
-      if len = 0 then ()
-      else
-        let olen = min (Bytes.length buf) len in
-        really_input ic buf 0 olen;
-        Output.print_string conf (Bytes.sub_string buf 0 olen);
-        loop (len - olen)
+    let search refdir name = 
+      let name' = base_path [refdir] name in
+      if Sys.file_exists name' then name', Def.OK
+      else 
+        let name' = search_in_lang_path @@ Filename.concat refdir name in
+        if Sys.file_exists name' then name', Def.OK else name', Def.Not_Found
     in
-    loop len;
-    close_in ic;
-    true
+    let (subdir, sname) = try let i = String.index name '/' in
+      String.sub name 0 i,
+      String.sub name (i + 1) (String.length name - i - 1)
+    with Not_found -> ("", name) in
+    match subdir with
+    | "images" -> (search "" name)
+    | _ -> (search "etc" name)
 
 let misc_request conf fname =
-  let fname = find_misc_file fname in
-  if fname <> "" then
-    let misc_fname =
-      if Filename.check_suffix fname ".css" then Css fname
-      else if Filename.check_suffix fname ".js" then Js fname
-      else if Filename.check_suffix fname ".otf" then Otf fname
-      else if Filename.check_suffix fname ".svg" then Svg fname
-      else if Filename.check_suffix fname ".woff" then Woff fname
-      else if Filename.check_suffix fname ".eot" then Eot fname
-      else if Filename.check_suffix fname ".ttf" then Ttf fname
-      else if Filename.check_suffix fname ".woff2" then Woff2 fname
-      else if Filename.check_suffix fname ".png" then Png fname
-      else Other fname
-    in
-    print_misc_file conf misc_fname
-  else false
+  let (pname, status) = find_misc_file fname in
+    match status with
+    | Def.Not_Found -> 
+        GwdLog.syslog `LOG_WARNING (Printf.sprintf "File %s not found : %s" fname pname);
+        Printf.eprintf "- File %s not found\n%!" fname;
+        Hutil.error_404 conf fname
+    | Def.OK ->
+        print_misc_file conf pname
+    | _ -> 
+        failwith "Misc_request error : unknown status"
 
 let strip_quotes s =
   let i0 = if String.length s > 0 && s.[0] = '"' then 1 else 0 in
@@ -1626,34 +1616,37 @@ let extract_multipart boundary str =
   str, env
 
 let build_env request contents =
-  let content_type = Mutil.extract_param "content-type: " '\n' request in
+  let content_type = Mutil.extract_param "Content-Type: " '\n' request in
   if is_multipart_form content_type then
     let boundary = extract_boundary content_type in
     let (str, env) = extract_multipart boundary contents in str, env
   else contents, Util.create_env contents
 
 let connection (addr, request) script_name contents' =
-  let from =
+  let from, port =
     match addr with
-      Unix.ADDR_UNIX x -> x
-    | Unix.ADDR_INET (iaddr, _) ->
-        if !no_host_address then Unix.string_of_inet_addr iaddr
+      Unix.ADDR_UNIX x -> x, -1
+    | Unix.ADDR_INET (iaddr, port) ->
+        if !no_host_address then Unix.string_of_inet_addr iaddr, port
         else
-          try (Unix.gethostbyaddr iaddr).Unix.h_name with
-            _ -> Unix.string_of_inet_addr iaddr
+          try (Unix.gethostbyaddr iaddr).Unix.h_name, port with
+            _ -> Unix.string_of_inet_addr iaddr, port
   in
+  GwdLog.syslog `LOG_INFO (Printf.sprintf "Incoming request %s (%s) from %s:%d" script_name contents' from port );
   if script_name = "robots.txt" then robots_txt printer_conf
   else if excluded from then refuse_log printer_conf from
   else
     begin let accept =
       if !only_addresses = [] then true else List.mem from !only_addresses
     in
-      if not accept then only_log printer_conf from
+      if not accept then 
+        only_log printer_conf from
+      else if (Filename.extension script_name) <> "" then 
+        misc_request printer_conf script_name
       else
         try
           let (contents, env) = build_env request contents' in
           if not (image_request printer_conf script_name env)
-          && not (misc_request printer_conf script_name)
           then conf_and_connection from request script_name contents env
         with Exit -> ()
     end
@@ -1664,44 +1657,42 @@ let null_reopen flags fd =
     Unix.dup2 fd2 fd; Unix.close fd2
 
 let geneweb_server () =
-  let auto_call =
-    try let _ = Sys.getenv "WSERVER" in true with Not_found -> false
+  let hostn =
+    match !selected_addr with
+      Some addr -> addr
+    | None -> try Unix.gethostname () with _ -> "computer"
   in
-  if not auto_call then
-    begin let hostn =
-      match !selected_addr with
-        Some addr -> addr
-      | None -> try Unix.gethostname () with _ -> "computer"
-    in
-      Printf.eprintf "GeneWeb %s - " Version.txt;
-      if not !daemon then
+    GwdLog.syslog `LOG_NOTICE
+      ( Printf.sprintf "Starting Geneweb server %s binded with %s:%d"
+                  Version.txt hostn !selected_port );
+    Printf.eprintf "GeneWeb %s - " Version.txt;
+    if not !daemon then
+      begin
+        Printf.eprintf "Possible addresses:\n\
+                  http://localhost:%d/base\n\
+                  http://127.0.0.1:%d/base\n\
+                  http://%s:%d/base\n"
+          !selected_port !selected_port hostn !selected_port;
+        Printf.eprintf "where \"base\" is the name of the database\n\
+                  Type %s to stop the service\n"
+          "control C"
+      end;
+    flush stderr;
+    if !daemon then
+      if Unix.fork () = 0 then
         begin
-          Printf.eprintf "Possible addresses:\n\
-                   http://localhost:%d/base\n\
-                   http://127.0.0.1:%d/base\n\
-                   http://%s:%d/base\n"
-            !selected_port !selected_port hostn !selected_port;
-          Printf.eprintf "where \"base\" is the name of the database\n\
-                   Type %s to stop the service\n"
-            "control C"
-        end;
-      flush stderr;
-      if !daemon then
-        if Unix.fork () = 0 then
-          begin
-            Unix.close Unix.stdin;
-            null_reopen [Unix.O_WRONLY] Unix.stdout;
-            null_reopen [Unix.O_WRONLY] Unix.stderr
-          end
-        else exit 0;
-      try Unix.mkdir (Filename.concat !(Util.cnt_dir) "cnt") 0o777 with
-        Unix.Unix_error (_, _, _) -> ()
-    end;
-  Wserver.f GwdLog.syslog !selected_addr !selected_port !conn_timeout
-    (if Sys.unix then !max_clients else None) connection
+          Unix.close Unix.stdin;
+          null_reopen [Unix.O_WRONLY] Unix.stdout;
+          null_reopen [Unix.O_WRONLY] Unix.stderr
+        end
+      else exit 0;
+    try Unix.mkdir (Filename.concat !(Util.cnt_dir) "cnt") 0o777 with
+      Unix.Unix_error (_, _, _) -> ();
+
+  Wserver.f GwdLog.syslog !selected_addr !selected_port !conn_timeout !max_clients connection
 
 let cgi_timeout conf tmout _ =
-  Output.header conf "Content-type: text/html; charset=iso-8859-1";
+  Output.header conf "Content-type: text/html; charset=UTF-8";
   Output.print_string conf "<head><title>Time out</title></head>\n";
   Output.print_string conf "<body><h1>Time out</h1>\n";
   Output.printf conf "Computation time > %d second(s)\n" tmout;
@@ -1726,11 +1717,11 @@ let geneweb_cgi addr script_name contents =
     with Not_found -> request
   in
   let request = [] in
-  let request = add "cookie" "HTTP_COOKIE" request in
-  let request = add "content-type" "CONTENT_TYPE" request in
-  let request = add "accept-language" "HTTP_ACCEPT_LANGUAGE" request in
-  let request = add "referer" "HTTP_REFERER" request in
-  let request = add "user-agent" "HTTP_USER_AGENT" request in
+  let request = add "Cookie" "HTTP_COOKIE" request in
+  let request = add "Content-Type" "CONTENT_TYPE" request in
+  let request = add "Accept-Language" "HTTP_ACCEPT_LANGUAGE" request in
+  let request = add "Referer" "HTTP_REFERER" request in
+  let request = add "User-Agent" "HTTP_USER_AGENT" request in
   connection (Unix.ADDR_UNIX addr, request) script_name contents
 
 let read_input len =
@@ -1783,12 +1774,6 @@ let slashify s =
 
 let make_cnt_dir x =
   Mutil.mkdir_p x;
-  if Sys.unix then ()
-  else
-    begin
-      Wserver.sock_in := Filename.concat x "gwd.sin";
-      Wserver.sock_out := Filename.concat x "gwd.sou"
-    end;
   Util.cnt_dir := x
 
 let arg_plugin ~check =
@@ -1824,25 +1809,20 @@ let string_of_inet_aux x = Unix.string_of_inet_addr (Unix.gethostbyname x).Unix.
 #endif
 
 let main () =
-#ifdef WINDOWS
-  Wserver.sock_in := "gwd.sin";
-  Wserver.sock_out := "gwd.sou";
-#endif
   let usage =
     "Usage: " ^ Filename.basename Sys.argv.(0) ^
     " [options] where options are:"
   in
-  let force_cgi = ref false in
   let speclist =
     [
       ("-hd", Arg.String Util.add_lang_path, "<DIR> Directory where the directory lang is installed.")
     ; ("-bd", Arg.String Util.set_base_dir, "<DIR> Directory where the databases are installed.")
-    ; ("-wd", Arg.String make_cnt_dir, "<DIR> Directory for socket communication (Windows) and access count.")
+    ; ("-wd", Arg.String make_cnt_dir, "<DIR> Directory for access count.")
     ; ("-cache_langs", Arg.String (fun s -> List.iter (Mutil.list_ref_append cache_langs) @@ String.split_on_char ',' s), " Lexicon languages to be cached.")
-    ; ("-cgi", Arg.Set force_cgi, " Force CGI mode.")
+    ; ("-cgi", Arg.Set Wserver.cgi, " Force CGI mode.")
     ; ("-images_url", Arg.String (fun x -> images_url := x), "<URL> URL for GeneWeb images (default: gwd send them).")
     ; ("-images_dir", Arg.String (fun x -> images_dir := x), "<DIR> Same than previous but directory name relative to current.")
-    ; ("-a", Arg.String (fun x -> selected_addr := Some x), "<ADDRESS> Select a specific address (default = any address of this computer).")
+    ; ("-a", Arg.String (fun x -> selected_addr := Some x), "<ADDRESS> Select a specific address (default = any IP V4 address of this computer).")
     ; ("-p", Arg.Int (fun x -> selected_port := x), "<NUMBER> Select a port number (default = " ^ string_of_int !selected_port ^ ").")
     ; ("-setup_link", Arg.Set setup_link, " Display a link to local gwsetup in bottom of pages.")
     ; ("-allowed_tags", Arg.String (fun x -> Util.allowed_tags_file := x), "<FILE> HTML tags which are allowed to be displayed. One tag per line in file.")
@@ -1856,7 +1836,9 @@ let main () =
     ; ("-no_host_address", Arg.Set no_host_address, " Force no reverse host by address.")
     ; ("-digest", Arg.Set use_auth_digest_scheme, " Use Digest authorization scheme (more secure on passwords)")
     ; ("-add_lexicon", Arg.String (Mutil.list_ref_append lexicon_list), "<FILE> Add file as lexicon.")
-    ; ("-log", Arg.String (fun x -> GwdLog.oc := Some (match x with "-" | "<stdout>" -> stdout | "<stderr>" -> stderr | _ -> open_out x)), {|<FILE> Llog trace to this file. Use "-" or "<stdout>" to redirect output to stdout or "<stderr>" to output log to stderr.|})
+    ; ("-log", Arg.String (fun x -> GwdLog.oc := Some (match x with "2" | "stderr" -> stderr | _ -> open_out x)), 
+                      "<FILE> Log traces to this file (default is no log)\n" ^ 
+                      {|                         - use "2" or "stderr" to redirect to standard error.|})
     ; ("-log_level", Arg.Set_int GwdLog.verbosity, {|<N> Send messages with severity <= <N> to syslog (default: |} ^ string_of_int !GwdLog.verbosity ^ {|).|})
     ; ("-robot_xcl", Arg.String robot_exclude_arg, "<CNT>,<SEC> Exclude connections when more than <CNT> requests in <SEC> seconds.")
     ; ("-min_disp_req", Arg.Int (fun x -> Robot.min_disp_req := x), " Minimum number of requests in robot trace (default: " ^ string_of_int !(Robot.min_disp_req) ^ ").")
@@ -1869,13 +1851,10 @@ let main () =
     ; ("-unsafe_plugin", arg_plugin ~check:false, "<PLUGIN>.cmxs DO NOT USE UNLESS YOU TRUST THE ORIGIN OF <PLUGIN>.")
     ; ("-plugins", arg_plugins ~check:true, "<DIR> load all plugins in <DIR>.")
     ; ("-unsafe_plugins", arg_plugins ~check:false, "<DIR> DO NOT USE UNLESS YOU TRUST THE ORIGIN OF EVERY PLUGIN IN <DIR>.")
-#ifdef UNIX
     ; ("-max_clients", Arg.Int (fun x -> max_clients := Some x), "<NUM> Max number of clients treated at the same time (default: no limit) (not cgi).")
     ; ("-conn_tmout", Arg.Int (fun x -> conn_timeout := x), "<SEC> Connection timeout (default " ^ string_of_int !conn_timeout ^ "s; 0 means no limit)." )
+#ifdef UNIX
     ; ("-daemon", Arg.Set daemon, " Unix daemon mode.")
-#endif
-#ifdef WINDOWS
-    ; ("-noproc", Arg.Set Wserver.noproc ," Do not launch a process at each request.")
 #endif
 #ifdef API
     ; ("-api_h", Arg.String (fun x -> selected_api_host := x), "<HOST> Host for GeneWeb API (default = " ^ !selected_api_host ^ ").")
@@ -1898,7 +1877,7 @@ let main () =
     ]
   in
   let speclist = List.sort compare speclist in
-  let speclist = Arg.align speclist in
+  let speclist = Arg.align ~limit:22 speclist in
   let anonfun s = raise (Arg.Bad ("don't know what to do with " ^ s)) in
 #ifdef UNIX
   default_lang := begin
@@ -1914,8 +1893,8 @@ let main () =
 #endif
   arg_parse_in_file (chop_extension Sys.argv.(0) ^ ".arg") speclist anonfun usage;
   Arg.parse speclist anonfun usage;
-  List.iter register_plugin !plugins ;
-  cache_lexicon () ;
+  List.iter register_plugin !plugins;
+  cache_lexicon ();
   if !images_dir <> "" then
     begin let abs_dir =
       let f =
@@ -1931,11 +1910,10 @@ let main () =
   Wserver.stop_server :=
     List.fold_left Filename.concat !(Util.cnt_dir) ["cnt"; "STOP_SERVER"];
   let (query, cgi) =
-    try Sys.getenv "QUERY_STRING", true with Not_found -> "", !force_cgi
+    try Sys.getenv "QUERY_STRING", true with Not_found -> "", !Wserver.cgi
   in
   if cgi then
     begin
-      Wserver.cgi := true;
       let is_post =
         try Sys.getenv "REQUEST_METHOD" = "POST" with Not_found -> false
       in
@@ -1960,23 +1938,56 @@ let main () =
   else geneweb_server ()
 
 let () =
+#ifdef DEBUG
+  Printexc.record_backtrace true;
+  Sys.enable_runtime_warnings false;
+  GwdLog.verbosity := 7; (* default is Debug verbosity *)
+#endif
   try main ()
   with
   | Unix.Unix_error (Unix.EADDRINUSE, "bind", _) ->
-    Printf.eprintf "\nError: ";
-    Printf.eprintf "the port %d" !selected_port;
-    Printf.eprintf " is already used by another GeneWeb daemon \
-                    or by another program. Solution: kill the other program \
-                    or launch GeneWeb with another port number (option -p)";
-    flush stderr
+    Printf.eprintf 
+      "\nError: the port %d is already used by another server or geneweb program.\n\
+       Solution: kill the other program or launch GeneWeb with another port number\n\
+       (see -p option)\n%!"
+      !selected_port;
+    exit 2
 #ifdef UNIX
   | Unix.Unix_error (Unix.EACCES, "bind", arg) ->
     Printf.eprintf
-      "Error: invalid access to the port %d: users port number less \
-       than 1024 are reserved to the system. Solution: do it as root \
-       or choose another port number greater than 1024."
+      "\nError: invalid access to the port %d :\n\
+       users port number less than 1024 are reserved to the system.\n\
+       Solution: do it as root or choose another port number greater than 1024.\n%!"
       !selected_port;
-    flush stderr;
+    exit 2
 #endif
-  | Dynlink.Error e -> GwdLog.syslog `LOG_CRIT (Dynlink.error_message e)
-  | e -> GwdLog.syslog `LOG_CRIT (Printexc.to_string e)
+  | Dynlink.Error e -> 
+    GwdLog.syslog `LOG_EMERG ("Geneweb terminated : " ^ (Dynlink.error_message e));
+    exit 1
+  | e -> 
+    GwdLog.syslog `LOG_EMERG ("Geneweb terminated : " ^ (Printexc.to_string e));
+#ifdef DEBUG
+    let tm = Unix.localtime (Unix.time ()) in
+    let backtrace = Printexc.get_backtrace () in
+    if not !daemon && not !Wserver.cgi then begin
+      let fname = Wserver.log_exn e backtrace "" "" "" in
+      flush stderr; flush stdout;
+      Printf.eprintf
+        "----- %02d:%02d:%02d - Unexpected error (fatal) : %s\n%!" 
+        tm.Unix.tm_hour tm.Unix.tm_min tm.Unix.tm_sec (Printexc.to_string e);
+      Printf.eprintf "%s\n%!" backtrace;
+      if fname <> "" then Printf.eprintf "----- saved to %s\n%!" fname;
+      Printf.eprintf "----- Geneweb server terminated, press <Enter> to exit\n%!";
+      try ignore @@ read_line () with _ -> ()
+    end else
+    if !daemon then
+      ignore @@ Wserver.log_exn e backtrace "" "" ""
+    else 
+    if !Wserver.cgi then
+       Wserver.print_internal_error e 
+        (try Sys.getenv "REMOTE_HOST" with Not_found ->
+           (try Sys.getenv "REMOTE_ADDR" with Not_found -> ""))
+        (try Sys.getenv "SCRIPT_NAME" with Not_found -> "")
+        (try Sys.getenv "QUERY_STRING" with Not_found -> "");
+#endif
+    exit 1

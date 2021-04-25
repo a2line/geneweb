@@ -30,8 +30,6 @@ val f
   -> (Unix.sockaddr * string list -> string -> string -> unit)
   -> unit
 
-val close_connection : unit -> unit
-
 val printf : ('a, out_channel, unit) format -> 'a
     (* To be called to print page contents. *)
 
@@ -41,9 +39,6 @@ val print_string : string -> unit
 val header : string -> unit
     (* To print an http header line *)
 
-val wflush : unit -> unit
-    (* To flush page contents print. *)
-
 val http : Def.httpStatus -> unit
     (* [Output.status conf answer] sends the http header where [answer]
        represents the answer status. If empty string, "200 OK" is assumed. *)
@@ -52,22 +47,23 @@ val http_redirect_temporarily : string -> unit
     (* [Output.status conf_redirect url] sends the http header where [url]
        represents the Location where the request needs to be redirected. *)
 
-val get_request_and_content : char Stream.t -> string list * string
+val status_string : Def.httpStatus -> string
+
+val log_exn : exn -> string -> string -> string -> string -> string
+
+val print_internal_error : exn -> string -> string -> string -> unit
+
+type http_method
+val get_request_and_content : char Stream.t -> http_method * string * string list * string
 
 val wsocket : unit -> Unix.file_descr
 val woc : unit -> out_channel
 
-val sock_in : string ref
-val sock_out : string ref
-    (* Names of the files used in windows implementation to communicate
-       http requests and html answers. Default "wserver.sin" and
-       "wserver.sou". Can have relative or absolute paths. *)
 val stop_server : string ref
     (* Name of the file whose presence tells the server to stop (at least
        one request is necessary to unfreeze the server to make it check
        that this file exits. Default "STOP_SERVER". Can have relative
        or absolute path. *)
-val noproc : bool ref
 val cgi : bool ref
 
 (* Example:
