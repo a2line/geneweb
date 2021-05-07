@@ -2121,9 +2121,9 @@ and eval_simple_str_var conf base env (_, p_auth) =
                 Some d when m_auth ->
                   begin match p_getenv conf.base_env "long_date" with
                     Some "yes" ->
-                      " " ^ DateDisplay.string_of_ondate conf d ^
-                      DateDisplay.get_wday conf d
-                  | _ -> " " ^ DateDisplay.string_of_ondate conf d
+                      " <em>" ^ DateDisplay.string_of_ondate conf d ^
+                      DateDisplay.get_wday conf d ^ "</em>"
+                  | _ -> " <em>" ^ DateDisplay.string_of_ondate conf d ^ "</em>"
                   end
               | _ -> ""
               end
@@ -2139,9 +2139,9 @@ and eval_simple_str_var conf base env (_, p_auth) =
                     Some d when m_auth ->
                       begin match p_getenv conf.base_env "long_date" with
                         Some "yes" ->
-                          " " ^ DateDisplay.string_of_ondate conf d ^
-                          DateDisplay.get_wday conf d
-                      | _ -> " " ^ DateDisplay.string_of_ondate conf d
+                          " <em>" ^ DateDisplay.string_of_ondate conf d ^
+                          DateDisplay.get_wday conf d ^ "</em>"
+                      | _ -> " <em>" ^ DateDisplay.string_of_ondate conf d ^ "</em>"
                       end
                   | _ -> ""
                   end
