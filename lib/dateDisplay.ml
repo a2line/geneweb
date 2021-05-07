@@ -493,6 +493,8 @@ let month_text d = if d.month = 0 then "" else string_of_int d.month
 (* ************************************************************************ *)
 (*  [Fonc] year_text : Def.dmy -> string                                    *)
 (** [Description] : Renvoie l'année d'une date.
+    si la précision de la date est OrYear ou YearInt, alors la date est
+    renvoyée sous la forme yyy1/yyy2 ou yyy1..yyy2
     [Args] :
       - d : Def.dmy
     [Retour] : string
@@ -501,13 +503,11 @@ let month_text d = if d.month = 0 then "" else string_of_int d.month
 let year_text d =
   match d.prec with
     OrYear d2 ->
-        let y1 = string_of_int d.year in
-        let y2 = string_of_int d2.year2 in
-        if y1 = y2 && y2 <> "" then y1 else y1 ^ "/" ^ y2
+        if d.year = d2.year2 then string_of_int d.year
+        else (string_of_int d.year) ^ "/" ^ string_of_int d2.year2
   | YearInt d2 ->
-        let y1 = string_of_int d.year in
-        let y2 = string_of_int d2.year2 in
-        if y1 = y2 && y2 <> "" then y1 else y1 ^ ".." ^ y2
+        if d.year = d2.year2 then string_of_int d.year
+        else (string_of_int d.year) ^ ".." ^ string_of_int d2.year2
   | _ -> string_of_int d.year
 
 (* ************************************************************************ *)
