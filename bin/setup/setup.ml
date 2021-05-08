@@ -15,7 +15,7 @@ let printer_conf =
   { Config.empty with output_conf =
                         { status = Wserver.http
                         ; header = Wserver.header
-                        ; body = Wserver.print_string
+                        ; body = Wserver.print_contents
                         ; flush = ignore
                         }
   }

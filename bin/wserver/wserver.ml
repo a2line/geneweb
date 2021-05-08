@@ -11,9 +11,24 @@ let wsocket () = !wserver_sock
 let wserver_oc = ref stdout
 let woc () = !wserver_oc
 
-let printnl () =
+let output_nl () =
   if not !cgi then output_byte !wserver_oc 13;
   output_byte !wserver_oc 10
+
+let skip_possible_remaining_chars fd =
+  let b = Bytes.create 3 in
+  try
+    let rec loop () =
+      match Unix.select [fd] [] [] 5.0 with
+      | [_], [], [] ->
+        let len = Unix.read fd b 0 (Bytes.length b) in
+        if len = Bytes.length b then loop ()
+      | _ -> ()
+    in
+    loop ()
+  with 
+  | Unix.Unix_error (Unix.ECONNABORTED, _, _) -> ()
+  | Unix.Unix_error (Unix.ECONNRESET, _, _) -> ()
 
 type printing_status = Nothing | Status | Contents
 
@@ -45,45 +60,40 @@ let status_string status =
     *)
     if !cgi then Printf.fprintf !wserver_oc "Status:%s" (status_string status)
     else Printf.fprintf !wserver_oc "HTTP/1.1 %s" (status_string status);
-    printnl ()
+    output_nl ()
 
 let header s =
   if !printing_state <> Status then
     if !printing_state = Nothing then http Def.OK
     else failwith "Cannot write HTTP headers: page contents already started";
-    if !cgi then
-      (* In CGI mode, it MUST NOT return any header fields that relate to client-side 
-      communication issues and could affect the server's ability to send the response to the client.*)
-      let f, v = try let i = String.index s ':' in
-        (String.sub s 0 i),
-        (String.sub s (i + 2) (String.length s - i - 2))
-      with Not_found -> (s, "")
-      in
-      match String.lowercase_ascii f with
-      | "connection"
-      | "date"
-      | "server" ->  
-        () (* ignore HTTP field, not need in CGI mode*)
-      | _ ->
-        output_string !wserver_oc (f ^ ":" ^ v);
-        printnl ()
-    else
-      (output_string !wserver_oc s; printnl ())
+    (* In CGI mode, it MUST NOT return any header fields that relate to client-side 
+    communication issues and could affect the server's ability to send the response to the client.*)
+    let f, v = try let i = String.index s ':' in
+      (String.sub s 0 i),
+      (String.sub s (i + 2) (String.length s - i - 2))
+    with Not_found -> (s, "")
+    in
+    match String.lowercase_ascii f with
+    | "connection" -> ()
+    | "date"
+    | "server" ->  (* ignore HTTP field, not need in CGI mode*)
+      if not !cgi then (output_string !wserver_oc s; output_nl ())
+    | _ ->
+      if !cgi then output_string !wserver_oc (f ^ ":" ^ v)
+      else output_string !wserver_oc s;
+      output_nl ()
 
-let printf fmt =
+let print_contents s =
   if !printing_state <> Contents then
     begin
       if !printing_state = Nothing then http Def.OK;
-      printnl ();
-      printing_state := Contents
-    end;
-  Printf.fprintf !wserver_oc fmt
-
-let print_string s =
-  if !printing_state <> Contents then
-    begin
-      if !printing_state = Nothing then http Def.OK;
-      printnl ();
+      (*  see RFC 7320, §6.1 : https://tools.ietf.org/html/rfc7230#page-50
+          A server that does not support persistent connections MUST send the
+          "close" connection option in every response message that does not
+          have a 1xx (Informational) status code.*)
+      if not !cgi then 
+        (output_string !wserver_oc "Connection: close"; output_nl ());
+      output_nl ();
       printing_state := Contents
     end ;
   output_string !wserver_oc s
@@ -91,7 +101,7 @@ let print_string s =
 let http_redirect_temporarily url =
   http Def.Found;
   header ("Location: " ^ url);
-  printf ""
+  print_string ""
 
 let buff = ref (Bytes.create 80)
 let store len x =
@@ -152,10 +162,10 @@ let timeout tmout spid _ =
       begin
         http Def.OK;
         header "Content-type: text/html; charset=UTF-8";
-        printf "<head><title>Time out</title></head>\n";
-        printf "<body><h1>Time out</h1>\n";
-        printf "Computation time > %d second(s)\n" tmout;
-        printf "</body>\n";
+        print_string "<head><title>Time out</title></head>\n";
+        print_string "<body><h1>Time out</h1>\n";
+        print_string ("Computation time > " ^ string_of_int tmout ^ "second(s)\n");
+        print_string "</body>\n";
         flush !wserver_oc;
         exit 0
       end
@@ -260,31 +270,33 @@ let print_internal_error e addr path query =
       header "Content-type: text/html; charset=UTF-8";
       header "Connection: close"
     end;
-  printf "<!DOCTYPE html>\n<html><head><title>Geneweb server error</title></head>\n<body>\n\
-          <h1>Unexpected Geneweb error, request not complete :</h1>\n\
-          <pre>- Raised with request %s?%s%s\n\
-          - Mode : %s, process id = %d\n\
-          - HTTP state (printing_state) : %s before exception\n\
-          - Exception : %s\n\
-          - Backtrace :\n<hr>\n%s\n</pre><hr>\n\
-          Saved in %s<hr>\n
-          <a href=\\>[Home page]</a>  \
-          <a href=\"javascript:window.history.go(-1)\">[Previous page]</a>\n\
-          </body>\n</html>\n"
-          path query 
-          ((if addr <> "" then " from " else "") ^ addr)
-          (if !cgi then "CGI script" else "HTTP server") (Unix.getpid ())
-          (match state with 
-            | Nothing -> "Nothing sent"
-            | Status -> "HTTP status sent without content"
-            | Contents -> "Some HTTP data sent" 
-          )
-          (match e with 
-          | Sys_error msg -> "Sys_error - " ^ msg
-          | _ -> Printexc.to_string e
-          )
-          backtrace
-          fname
+  print_string ( Printf.sprintf 
+                "<!DOCTYPE html>\n<html><head><title>Geneweb server error</title></head>\n<body>\n\
+                  <h1>Unexpected Geneweb error, request not complete :</h1>\n\
+                  <pre>- Raised with request %s?%s%s\n\
+                  - Mode : %s, process id = %d\n\
+                  - HTTP state (printing_state) : %s before exception\n\
+                  - Exception : %s\n\
+                  - Backtrace :\n<hr>\n%s\n</pre><hr>\n\
+                  Saved in %s<hr>\n
+                  <a href=\\>[Home page]</a>  \
+                  <a href=\"javascript:window.history.go(-1)\">[Previous page]</a>\n\
+                  </body>\n</html>\n"
+                  path query 
+                  ((if addr <> "" then " from " else "") ^ addr)
+                  (if !cgi then "CGI script" else "HTTP server") (Unix.getpid ())
+                  (match state with 
+                    | Nothing -> "Nothing sent"
+                    | Status -> "HTTP status sent without content"
+                    | Contents -> "Some HTTP data sent" 
+                  )
+                  (match e with 
+                  | Sys_error msg -> "Sys_error - " ^ msg
+                  | _ -> Printexc.to_string e
+                  )
+                  backtrace
+                  fname
+                ) 
 
 let treat_connection tmout callback addr fd =
   let (meth, path_and_query, request, contents) =
@@ -321,15 +333,15 @@ let treat_connection tmout callback addr fd =
       http Def.Method_Not_Allowed;
       header "Content-type: text/html; charset=UTF-8";
       header "Connection: close";
-      printf "<html>\n\
-              <<head>title>Not allowed HTTP method</title></head>\n\
-              <body>Not allowed HTTP method</body>\n\
-              </html>\n";
+      print_string "<html>\n\
+                    <<head>title>Not allowed HTTP method</title></head>\n\
+                    <body>Not allowed HTTP method</body>\n\
+                    </html>\n";
   ;
   if !printing_state = Status then 
     failwith ("Unexcepted HTTP printing state, connection from " ^ (string_of_sockaddr addr) ^ " without content sent :" );
   printing_state := Nothing
-
+  
 (* elementary HTTP server, unix mode with fork   *)
 #ifdef UNIX
 
@@ -375,20 +387,6 @@ let wait_available max_clients s =
       done
   | None -> ()
 
-let skip_possible_remaining_chars fd =
-  if not !connection_closed then
-    let b = Bytes.create 3 in
-    try
-      let rec loop () =
-        match Unix.select [fd] [] [] 5.0 with
-        | [_], [], [] ->
-          let len = Unix.read fd b 0 (Bytes.length b) in
-          if len = Bytes.length b then loop ()
-        | _ -> ()
-      in
-      loop ()
-    with Unix.Unix_error (Unix.ECONNRESET, _, _) -> ()
-  
  let close_connection () =
   if not !connection_closed then begin
     flush !wserver_oc;
@@ -437,7 +435,7 @@ let accept_connection tmout max_clients callback s =
 
 (* elementary HTTP server, basic mode for windows *)
 #ifdef WINDOWS
-type conn_kind = Server | Connected_client  | Closed_client
+type conn_kind = Server | Connected_client | Closed_client
 type conn_info = {
     addr : Unix.sockaddr;
     fd : Unix.file_descr;
@@ -554,7 +552,7 @@ let wserver_basic syslog tmout max_clients g s addr_server =
               close_out_noerr conn.oc;
               Unix.close conn.fd;
               remove_from_poll conn.fd
-          end;
+            end;
           loop lfd (i+1)
       in
       loop l 0
