@@ -20,7 +20,7 @@ let out_httpHeader s =
 let output_conf =
   { status = out_httpStatus
   ; header = out_httpHeader
-  ; body = Wserver.print_string
+  ; body = Wserver.print_contents
   ; flush = ignore
   }
 
@@ -343,7 +343,6 @@ let print_refresh conf bname delay =
     serv ^ req
   in
   http conf Def.OK;
-  Output.header conf "Connection: close";
   Output.printf conf "<head>\n\
                   <meta http-equiv=\"REFRESH\"\n\
                   content=\"%d;URL=%s\">\n\
@@ -1465,9 +1464,8 @@ let image_request conf script_name env =
       true
   | _ -> false
 
-let print_header_misc conf len fname =
+let content_type fname =
   let ext = String.lowercase_ascii @@ Filename.extension fname in 
-  let content_type =
     (* for  Internet media type refer to https://www.iana.org/assignments/media-types/media-types.xhtml *)
     match ext with
     | ".css" ->  "text/css; charset=UTF-8"
@@ -1488,19 +1486,12 @@ let print_header_misc conf len fname =
     | ".ttf" -> "font/ttf"
     | ".woff" -> "font/woff"
     | ".woff2" -> "font/woff2"
-    | _ -> "application/octet-stream"
-  in
-  Output.status conf Def.OK;
-  Output.header conf "Content-Type: %s" content_type;
-  Output.header conf "Content-Length: %d" len;
-  Output.header conf "Content-Disposition: inline; filename=%s" (Filename.basename fname);
-  Output.header conf "Cache-Control: private, max-age=%d" (60 * 60 * 24 * 365)
+    | _ -> ""
 
-let print_misc_file conf fname =
+let print_misc_file conf fname fct =
   let ic = Secure.open_in_bin fname in
   let buf = Bytes.create 1024 in
   let len = in_channel_length ic in
-  print_header_misc conf len fname;
   let rec loop len =
     if len = 0 then ()
     else
@@ -1509,41 +1500,43 @@ let print_misc_file conf fname =
       Output.print_string conf (Bytes.sub_string buf 0 olen);
       loop (len - olen)
   in
+  Output.status conf Def.OK;
+  Output.header conf "Content-Type: %s" fct;
+  Output.header conf "Content-Length: %d" len;
+  Output.header conf "Content-Disposition: inline; filename=%s" (Filename.basename fname);
+  Output.header conf "Cache-Control: private, max-age=%d" (60 * 60 * 24 * 365);
   loop len;
-  close_in ic;
-  Output.flush conf
+  close_in ic
 
-let find_misc_file name =
-  if Sys.file_exists name
-  && List.exists (fun p -> Mutil.start_with (Filename.concat p "assets") 0 name) !plugins
-  then name, Def.OK
+let find_misc_file fname =
+  if Sys.file_exists fname
+  && List.exists (fun p -> Mutil.start_with (Filename.concat p "assets") 0 fname) !plugins
+  then fname, true
   else
-    let search refdir name = 
-      let name' = base_path [refdir] name in
-      if Sys.file_exists name' then name', Def.OK
+    let search refdir fname = 
+      let fname' = base_path [refdir] fname in
+      if Sys.file_exists fname' then fname', true
       else 
-        let name' = search_in_lang_path @@ Filename.concat refdir name in
-        if Sys.file_exists name' then name', Def.OK else name', Def.Not_Found
+        let fname' = search_in_lang_path @@ Filename.concat refdir fname in
+        if Sys.file_exists fname' then fname', true else fname', false
     in
-    let (subdir, sname) = try let i = String.index name '/' in
-      String.sub name 0 i,
-      String.sub name (i + 1) (String.length name - i - 1)
-    with Not_found -> ("", name) in
+    let (subdir, sname) = try let i = String.index fname '/' in
+      String.sub fname 0 i,
+      String.sub fname (i + 1) (String.length fname - i - 1)
+    with Not_found -> ("", fname) in
     match subdir with
-    | "images" -> (search "" name)
-    | _ -> (search "etc" name)
+    | "images" -> (search "" fname)
+    | _ -> (search "etc" fname)
 
 let misc_request conf fname =
-  let (pname, status) = find_misc_file fname in
-    match status with
-    | Def.Not_Found -> 
-        GwdLog.syslog `LOG_WARNING (Printf.sprintf "File %s not found : %s" fname pname);
-        Printf.eprintf "- File %s not found\n%!" fname;
-        Hutil.error_404 conf fname
-    | Def.OK ->
-        print_misc_file conf pname
-    | _ -> 
-        failwith "Misc_request error : unknown status"
+  let fct = content_type fname in 
+  let (pname, valid) = if fct = "" then (base_path ["etc"] fname, false) else find_misc_file fname in
+    if not valid then begin 
+      GwdLog.syslog `LOG_WARNING (Printf.sprintf "File %s not found : %s" fname pname);
+      Printf.eprintf "- File %s not found\n%!" fname;
+      Hutil.error_404 conf fname
+    end else
+      print_misc_file conf pname fct
 
 let strip_quotes s =
   let i0 = if String.length s > 0 && s.[0] = '"' then 1 else 0 in
@@ -1637,12 +1630,13 @@ let connection (addr, request) script_name contents' =
   if script_name = "robots.txt" then robots_txt printer_conf
   else if excluded from then refuse_log printer_conf from
   else
-    begin let accept =
-      if !only_addresses = [] then true else List.mem from !only_addresses
-    in
+    begin
+      let accept =
+        if !only_addresses = [] then true else List.mem from !only_addresses
+      in
       if not accept then 
         only_log printer_conf from
-      else if (Filename.extension script_name) <> "" then 
+      else if (Filename.extension script_name) <> "" || (String.index_opt script_name '/') <> None then 
         misc_request printer_conf script_name
       else
         try
@@ -1970,12 +1964,16 @@ let () =
 #ifdef DEBUG
     let tm = Unix.localtime (Unix.time ()) in
     let backtrace = Printexc.get_backtrace () in
+    let msg = match e with 
+        | Sys_error msg -> "Sys_error - " ^ msg
+        | _ -> Printexc.to_string e
+    in
     if not !daemon && not !Wserver.cgi then begin
       let fname = Wserver.log_exn e backtrace "" "" "" in
       flush stderr; flush stdout;
       Printf.eprintf
         "----- %02d:%02d:%02d - Unexpected error (fatal) : %s\n%!" 
-        tm.Unix.tm_hour tm.Unix.tm_min tm.Unix.tm_sec (Printexc.to_string e);
+        tm.Unix.tm_hour tm.Unix.tm_min tm.Unix.tm_sec msg;
       Printf.eprintf "%s\n%!" backtrace;
       if fname <> "" then Printf.eprintf "----- saved to %s\n%!" fname;
       Printf.eprintf "----- Geneweb server terminated, press <Enter> to exit\n%!";

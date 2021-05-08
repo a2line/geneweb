@@ -30,10 +30,7 @@ val f
   -> (Unix.sockaddr * string list -> string -> string -> unit)
   -> unit
 
-val printf : ('a, out_channel, unit) format -> 'a
-    (* To be called to print page contents. *)
-
-val print_string : string -> unit
+val print_contents : string -> unit
 (* To be called to print page contents. *)
 
 val header : string -> unit
