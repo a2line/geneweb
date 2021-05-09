@@ -6,14 +6,11 @@ let stop_server = ref "STOP_SERVER"
 let cgi = ref false
 
 let wserver_sock = ref Unix.stdout
+let wserver_addr = ref ""
 let wsocket () = !wserver_sock
 
 let wserver_oc = ref stdout
 let woc () = !wserver_oc
-
-let output_nl () =
-  if not !cgi then output_byte !wserver_oc 13;
-  output_byte !wserver_oc 10
 
 let skip_possible_remaining_chars fd =
   let b = Bytes.create 3 in
@@ -48,19 +45,27 @@ let status_string status =
   | Service_Unavailable -> "503 Service Unavailable"
   | HTTP_Version_Not_Supported -> "505 HTTP Version Not Supported"
 
-  let http status =
-    if !printing_state <> Nothing then failwith "HTTP Status already sent";
-    (* ignore translation \n to \r\n under Windows *)
-    set_binary_mode_out !wserver_oc true; 
-    printing_state := Status;
-    (* printing header cgi mode : see https://www.ietf.org/rfc/rfc3875.txt (CGI/1.1) :
-                                 "Status:" status-code SP reason-phrase NL
-       otherwise http mode      : see https://tools.ietf.org/html/rfc7231 (HTTP/1.1 )
-                                 "HTTP/1.1" SP status-code SP reason-phrase NL
-    *)
-    if !cgi then Printf.fprintf !wserver_oc "Status:%s" (status_string status)
-    else Printf.fprintf !wserver_oc "HTTP/1.1 %s" (status_string status);
-    output_nl ()
+let max_http = ref 16000
+let http_buff = Buffer.create !max_http
+
+let buffer_add_nl s =
+  Buffer.add_string http_buff s;
+  if not !cgi then Buffer.add_int8 http_buff 13;
+  Buffer.add_int8 http_buff 10
+
+(* printing header cgi mode : see https://www.ietf.org/rfc/rfc3875.txt (CGI/1.1) :
+                              "Status:" status-code SP reason-phrase NL
+    otherwise http mode      : see https://tools.ietf.org/html/rfc7231 (HTTP/1.1 )
+                              "HTTP/1.1" SP status-code SP reason-phrase NL *)
+let http status =
+  if !printing_state <> Nothing then failwith "HTTP Status already sent";
+  printing_state := Status;
+  let response_status = 
+    if !cgi then Printf.sprintf  "Status:%s" (status_string status)
+    else Printf.sprintf "HTTP/1.1 %s" (status_string status);
+  in
+  Buffer.clear http_buff;
+  buffer_add_nl response_status
 
 let header s =
   if !printing_state <> Status then
@@ -77,31 +82,76 @@ let header s =
     | "connection" -> ()
     | "date"
     | "server" ->  (* ignore HTTP field, not need in CGI mode*)
-      if not !cgi then (output_string !wserver_oc s; output_nl ())
+      if not !cgi then buffer_add_nl s
     | _ ->
-      if !cgi then output_string !wserver_oc (f ^ ":" ^ v)
-      else output_string !wserver_oc s;
-      output_nl ()
+      buffer_add_nl (if !cgi then f ^ ":" ^ v else s)
+
+let print_buffer s =
+  let len = String.length s in
+  let lbuf = Buffer.length http_buff in
+  let n = !max_http - lbuf in
+  if n < len then begin
+    (* Printf.eprintf "%d+%d/%d - %d\n%!" lbuf len max_http n; *)
+    if n > 0 then Buffer.add_string http_buff (String.sub s 0 n);
+    let writed = 
+      try Unix.write_substring !wserver_sock (Buffer.contents http_buff) 0 (lbuf+n)
+      with e -> 
+        Printf.eprintf "Writing error : %s\n%!" (Printexc.to_string e);
+        raise e
+    in
+    if writed <> (lbuf+n) then (* data lost *)
+      Printf.eprintf "%s : %d/%d bytes writed, lost data\n%!" !wserver_addr writed (lbuf+n);
+    Buffer.clear http_buff;
+    if n < !max_http then
+      if n > 0 then Buffer.add_string http_buff (String.sub s n (len-n))
+    else begin
+      (* TODO : to be segmented (n * max_http) to avoid TCP/IP segmentation *)
+      try let writed = Unix.write_substring !wserver_sock s n (len-n) in
+      if writed <> (len-n) then (* data lost *)
+        Printf.eprintf "%s : %d/%d bytes writed, lost data\n%!" !wserver_addr writed (len-n);
+      with e -> 
+        Printf.eprintf "Writing error: %s\n%!" (Printexc.to_string e)
+    end
+  end
+  else
+    Buffer.add_string http_buff s
 
 let print_contents s =
-  if !printing_state <> Contents then
-    begin
-      if !printing_state = Nothing then http Def.OK;
-      (*  see RFC 7320, §6.1 : https://tools.ietf.org/html/rfc7230#page-50
-          A server that does not support persistent connections MUST send the
-          "close" connection option in every response message that does not
-          have a 1xx (Informational) status code.*)
-      if not !cgi then 
-        (output_string !wserver_oc "Connection: close"; output_nl ());
-      output_nl ();
-      printing_state := Contents
-    end ;
-  output_string !wserver_oc s
+  if !printing_state <> Contents then begin
+    if !printing_state = Nothing then http Def.OK;
+    (*  see RFC 7320, §6.1 : https://tools.ietf.org/html/rfc7230#page-50
+        A server that does not support persistent connections MUST send the
+        "close" connection option in every response message that does not
+        have a 1xx (Informational) status code.*)
+    if not !cgi then buffer_add_nl "Connection: close";
+    buffer_add_nl "";
+    if !cgi then begin
+      (* ignore translation \n to \r\n under Windows *)
+      set_binary_mode_out stdout true;
+      print_string (Buffer.contents http_buff)
+    end;
+    printing_state := Contents
+  end;
+  if !cgi then print_string s
+  else if s <> "" then print_buffer s
+
+let flush_contents () =
+  let lbuf = Buffer.length http_buff in
+  if lbuf > 0 then
+    let writed = 
+      try Unix.write_substring !wserver_sock (Buffer.contents http_buff) 0 lbuf 
+      with e -> 
+        Printf.eprintf "Writing error : %s\n%!" (Printexc.to_string e); 0
+    in 
+    if writed <> lbuf then (* data lost *)
+      Printf.eprintf "%s : %d/%d bytes writed, lost data (end)\n%!" !wserver_addr writed lbuf;
+    Buffer.reset http_buff 
 
 let http_redirect_temporarily url =
   http Def.Found;
   header ("Location: " ^ url);
-  print_string ""
+  print_contents "";
+  flush_contents ()
 
 let buff = ref (Bytes.create 80)
 let store len x =
@@ -162,11 +212,12 @@ let timeout tmout spid _ =
       begin
         http Def.OK;
         header "Content-type: text/html; charset=UTF-8";
-        print_string "<head><title>Time out</title></head>\n";
-        print_string "<body><h1>Time out</h1>\n";
-        print_string ("Computation time > " ^ string_of_int tmout ^ "second(s)\n");
-        print_string "</body>\n";
-        flush !wserver_oc;
+        print_contents "<head><title>Time out</title></head>\n";
+        print_contents "<body><h1>Time out</h1>\n";
+        print_contents ("Computation time > " ^ string_of_int tmout ^ "second(s)\n");
+        print_contents "</body>\n";
+        (* flush !wserver_oc; *)
+        flush_contents ();
         exit 0
       end
     else exit 0;
@@ -241,7 +292,7 @@ let log_exn e info addr path query =
               )
               (match !printing_state with 
               | Nothing -> "Nothing sent"
-              | Status -> "HTTP status sent without content"
+              | Status -> "HTTP status set without content"
               | Contents -> "Some HTTP data sent" 
               )
               info 
@@ -264,13 +315,11 @@ let print_internal_error e addr path query =
   let backtrace = Printexc.get_backtrace () in
   let fname = log_exn e backtrace addr path query in 
   let state = !printing_state in
-  if !printing_state = Nothing then 
+  if !printing_state <> Contents then begin
     http (if !cgi then Def.OK else Def.Internal_Server_Error);
-  if !printing_state = Status then begin
-      header "Content-type: text/html; charset=UTF-8";
-      header "Connection: close"
-    end;
-  print_string ( Printf.sprintf 
+    header "Content-type: text/html; charset=UTF-8";
+  end;
+  print_contents ( Printf.sprintf 
                 "<!DOCTYPE html>\n<html><head><title>Geneweb server error</title></head>\n<body>\n\
                   <h1>Unexpected Geneweb error, request not complete :</h1>\n\
                   <pre>- Raised with request %s?%s%s\n\
@@ -287,7 +336,7 @@ let print_internal_error e addr path query =
                   (if !cgi then "CGI script" else "HTTP server") (Unix.getpid ())
                   (match state with 
                     | Nothing -> "Nothing sent"
-                    | Status -> "HTTP status sent without content"
+                    | Status -> "HTTP status set without content"
                     | Contents -> "Some HTTP data sent" 
                   )
                   (match e with 
@@ -333,7 +382,7 @@ let treat_connection tmout callback addr fd =
       http Def.Method_Not_Allowed;
       header "Content-type: text/html; charset=UTF-8";
       header "Connection: close";
-      print_string "<html>\n\
+      print_contents "<html>\n\
                     <<head>title>Not allowed HTTP method</title></head>\n\
                     <body>Not allowed HTTP method</body>\n\
                     </html>\n";
@@ -344,8 +393,6 @@ let treat_connection tmout callback addr fd =
   
 (* elementary HTTP server, unix mode with fork   *)
 #ifdef UNIX
-
-let connection_closed = ref false
 
 let rec list_remove x =
   function
@@ -387,15 +434,6 @@ let wait_available max_clients s =
       done
   | None -> ()
 
- let close_connection () =
-  if not !connection_closed then begin
-    flush !wserver_oc;
-    (try Unix.shutdown !wserver_sock Unix.SHUTDOWN_SEND with _ ->());
-    skip_possible_remaining_chars !wserver_sock ;
-    close_out !wserver_oc ;
-    connection_closed := true
-  end
-
 let accept_connection tmout max_clients callback s =
   wait_available max_clients s;
   let (t, addr) = Unix.accept s in
@@ -407,7 +445,8 @@ let accept_connection tmout max_clients callback s =
         if max_clients = None && Unix.fork () <> 0 then exit 0;
         Unix.close s;
         wserver_sock := t;
-        wserver_oc := Unix.out_channel_of_descr t;
+        (* wserver_oc := Unix.out_channel_of_descr t;*)
+        flush_contents ();
         if tmout > 0 then begin 
           let spid = Unix.fork () in
             if spid > 0 then begin
@@ -418,8 +457,12 @@ let accept_connection tmout max_clients callback s =
               exit 0
             end
         end;
-        treat_connection tmout callback addr t ;
-        close_connection () ;
+        treat_connection tmout callback addr t;
+        (* flush !wserver_oc;*)
+        flush_contents ();
+        (try Unix.shutdown !wserver_sock Unix.SHUTDOWN_SEND with _ ->());
+        skip_possible_remaining_chars !wserver_sock;
+        (*close_out_noerr !wserver_oc;*)
         exit 0
       with
       | Unix.Unix_error (Unix.ECONNRESET, "read", _) -> exit 0
@@ -476,13 +519,12 @@ let wserver_basic syslog tmout max_clients g s addr_server =
       (Printexc.to_string exc)
   in
   let err_nb = ref 0 in
-  let flush_nosyserr conn = 
+  (* let flush_nosyserr conn = 
     try flush conn.oc with 
     | Sys_error msg -> incr err_nb; Printf.eprintf "Flush error %s : %s\n%!" (string_of_sockaddr conn.addr) msg
     | e -> raise e 
-  in
+  in *)
   let mem_limit = ref (used_mem ()) in 
-  Printf.eprintf "Starting with timeout=%.0f sec., max connection=%d, %d ko of memory used\n%!" conn_tmout max_conn !mem_limit;
   syslog `LOG_DEBUG (Printf.sprintf "Starting with timeout=%.0f sec., %d ko of memory used" conn_tmout !mem_limit);
   while true do
     Unix.sleepf 0.01;
@@ -497,7 +539,7 @@ let wserver_basic syslog tmout max_clients g s addr_server =
             let ttl =  Unix.time() -. conn.start_time in
             if (ttl >= conn_tmout) && (conn.kind = Connected_client) then begin
                 shutdown_noerr conn;
-                close_out_noerr conn.oc;
+                (* close_out_noerr conn.oc;*)
                 Unix.close conn.fd;
                 Printf.eprintf "%s connection closed (timeout)\n%!" (string_of_sockaddr conn.addr);
                 syslog `LOG_DEBUG (Printf.sprintf "%s connection closed (timeout)" (string_of_sockaddr conn.addr) );
@@ -545,11 +587,16 @@ let wserver_basic syslog tmout max_clients g s addr_server =
           end else begin (* treat incoming connection *)
             let conn = List.find ( fun t -> t.fd = fd ) !cl in
               wserver_sock := conn.fd;
-              wserver_oc := conn.oc;
-              treat_connection tmout g conn.addr fd;
-              flush_nosyserr conn;
+              wserver_addr :=(string_of_sockaddr conn.addr);
+              begin try 
+                treat_connection tmout g conn.addr fd;
+                flush_contents ();
+              with 
+              | Unix.Unix_error (Unix.ECONNRESET, "write", _) -> ()
+              | Unix.Unix_error (Unix.ECONNABORTED, "write", _) -> ()
+              | e -> raise e
+              end;
               shutdown_noerr conn;
-              close_out_noerr conn.oc;
               Unix.close conn.fd;
               remove_from_poll conn.fd
             end;

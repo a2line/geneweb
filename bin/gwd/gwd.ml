@@ -1847,6 +1847,9 @@ let main () =
     ; ("-unsafe_plugins", arg_plugins ~check:false, "<DIR> DO NOT USE UNLESS YOU TRUST THE ORIGIN OF EVERY PLUGIN IN <DIR>.")
     ; ("-max_clients", Arg.Int (fun x -> max_clients := Some x), "<NUM> Max number of clients treated at the same time (default: no limit) (not cgi).")
     ; ("-conn_tmout", Arg.Int (fun x -> conn_timeout := x), "<SEC> Connection timeout (default " ^ string_of_int !conn_timeout ^ "s; 0 means no limit)." )
+#ifdef WINDOWS
+    ; ("-buf_size", Arg.Int (fun x -> Wserver.max_http := x), "<NUM> Size (oct.) of HTTP buffer for geneweb response (default: " ^ string_of_int !(Wserver.max_http) ^ ").")
+#endif
 #ifdef UNIX
     ; ("-daemon", Arg.Set daemon, " Unix daemon mode.")
 #endif
@@ -1903,20 +1906,14 @@ let main () =
     Util.cnt_dir := Secure.base_dir ();
   Wserver.stop_server :=
     List.fold_left Filename.concat !(Util.cnt_dir) ["cnt"; "STOP_SERVER"];
-  let (query, cgi) =
-    try Sys.getenv "QUERY_STRING", true with Not_found -> "", !Wserver.cgi
-  in
+  let cgi = try Sys.getenv "GATEWAY_INTERFACE" <> "" with Not_found -> !Wserver.cgi in
+  let query = try Sys.getenv "QUERY_STRING" with Not_found -> "" in
   if cgi then
     begin
-      let is_post =
-        try Sys.getenv "REQUEST_METHOD" = "POST" with Not_found -> false
-      in
+      let is_post = try Sys.getenv "REQUEST_METHOD" = "POST" with Not_found -> false in
       let query =
         if is_post then
-          let len =
-            try int_of_string (Sys.getenv "CONTENT_LENGTH") with
-              Not_found -> -1
-          in
+          let len = try int_of_string (Sys.getenv "CONTENT_LENGTH") with Not_found -> -1 in
           set_binary_mode_in stdin true; read_input len
         else query
       in
@@ -1924,9 +1921,7 @@ let main () =
         try Sys.getenv "REMOTE_HOST" with
           Not_found -> try Sys.getenv "REMOTE_ADDR" with Not_found -> ""
       in
-      let script =
-        try Sys.getenv "SCRIPT_NAME" with Not_found -> Sys.argv.(0)
-      in
+      let script = try Sys.getenv "SCRIPT_NAME" with Not_found -> Sys.argv.(0) in
       geneweb_cgi addr (Filename.basename script) query
     end
   else geneweb_server ()
