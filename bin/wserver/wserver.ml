@@ -589,6 +589,7 @@ let wserver_basic syslog tmout max_clients g s addr_server =
               wserver_sock := conn.fd;
               wserver_addr :=(string_of_sockaddr conn.addr);
               begin try 
+                Unix.sleepf 0.01;
                 treat_connection tmout g conn.addr fd;
                 flush_contents ();
               with 
