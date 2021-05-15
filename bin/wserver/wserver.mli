@@ -31,10 +31,16 @@ val f
   -> unit
 
 val print_contents : string -> unit
-(* To be called to print page contents. *)
+    (* To be called to print page contents. *)
+
+val print_filename : string -> string -> bool -> bool
+    (* To be called to print filename. *)
 
 val header : string -> unit
     (* To print an http header line *)
+
+val flush_contents : unit -> unit
+    (* To flush content to output *)
 
 val http : Def.httpStatus -> unit
     (* [Output.status conf answer] sends the http header where [answer]
@@ -51,10 +57,7 @@ val log_exn : exn -> string -> string -> string -> string -> string
 val print_internal_error : exn -> string -> string -> string -> unit
 
 type http_method
-val get_request_and_content : char Stream.t -> http_method * string * string list * string
-
-val wsocket : unit -> Unix.file_descr
-val woc : unit -> out_channel
+val get_request_and_content : char Stream.t -> http_method * string * string * string list * string
 
 val stop_server : string ref
     (* Name of the file whose presence tells the server to stop (at least
@@ -62,6 +65,7 @@ val stop_server : string ref
        that this file exits. Default "STOP_SERVER". Can have relative
        or absolute path. *)
 val cgi : bool ref
+val proc : int ref
 val max_http : int ref
 
 (* Example:

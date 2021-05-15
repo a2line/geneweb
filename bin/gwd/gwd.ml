@@ -21,6 +21,7 @@ let output_conf =
   { status = out_httpStatus
   ; header = out_httpHeader
   ; body = Wserver.print_contents
+  ; file = Wserver.print_filename
   ; flush = ignore
   }
 
@@ -350,7 +351,7 @@ let print_refresh conf bname delay =
                   <body>\n\
                   <a href=\"%s\">%s</a>\n\
                   </body>"
-    delay url url url;
+               delay url url url;
   Output.flush conf
 
 let nonce_private_key =
@@ -1468,45 +1469,25 @@ let content_type fname =
   let ext = String.lowercase_ascii @@ Filename.extension fname in 
     (* for  Internet media type refer to https://www.iana.org/assignments/media-types/media-types.xhtml *)
     match ext with
-    | ".css" ->  "text/css; charset=UTF-8"
-    | ".eot" -> "application/vnd.ms-fontobject"
-    | ".ico" -> "image/x-icon"
-    | ".js" -> "application/javascript; charset=UTF-8"
+    | ".css" ->  "text/css; charset=UTF-8", false
+    | ".eot" -> "application/vnd.ms-fontobject", false
+    | ".ico" -> "image/x-icon", false
+    | ".js" -> "application/javascript; charset=UTF-8", false
     | ".jpeg"
     | ".pjpeg"
-    | ".jpg" -> "image/jpeg"
-    | ".gif" -> "image/gif"
+    | ".jpg" -> "image/jpeg", true
+    | ".gif" -> "image/gif", true
     | ".html"
-    | ".htm" -> "text/html; charset=UTF-8"
-    | ".map" -> "application/json"
-    | ".otf" -> "font/otf"
-    | ".png" -> "image/png"
-    | ".pdf" -> "application/pdf"
-    | ".svg" -> "image/svg+xml"
-    | ".ttf" -> "font/ttf"
-    | ".woff" -> "font/woff"
-    | ".woff2" -> "font/woff2"
-    | _ -> ""
-
-let print_misc_file conf fname fct =
-  let ic = Secure.open_in_bin fname in
-  let buf = Bytes.create 1024 in
-  let len = in_channel_length ic in
-  let rec loop len =
-    if len = 0 then ()
-    else
-      let olen = min (Bytes.length buf) len in
-      really_input ic buf 0 olen;
-      Output.print_string conf (Bytes.sub_string buf 0 olen);
-      loop (len - olen)
-  in
-  Output.status conf Def.OK;
-  Output.header conf "Content-Type: %s" fct;
-  Output.header conf "Content-Length: %d" len;
-  Output.header conf "Content-Disposition: inline; filename=%s" (Filename.basename fname);
-  Output.header conf "Cache-Control: private, max-age=%d" (60 * 60 * 24 * 365);
-  loop len;
-  close_in ic
+    | ".htm" -> "text/html; charset=UTF-8", true
+    | ".map" -> "application/json", false
+    | ".otf" -> "font/otf", false
+    | ".png" -> "image/png", true
+    | ".pdf" -> "application/pdf", true
+    | ".svg" -> "image/svg+xml", false
+    | ".ttf" -> "font/ttf", false
+    | ".woff" -> "font/woff", false
+    | ".woff2" -> "font/woff2", false
+    | _ -> "", true
 
 let find_misc_file fname =
   if Sys.file_exists fname
@@ -1529,14 +1510,14 @@ let find_misc_file fname =
     | _ -> (search "etc" fname)
 
 let misc_request conf fname =
-  let fct = content_type fname in 
-  let (pname, valid) = if fct = "" then (base_path ["etc"] fname, false) else find_misc_file fname in
+  let (ctype, priv) = content_type fname in 
+  let (pname, valid) = if ctype = "" then (base_path ["etc"] fname, false) else find_misc_file fname in
     if not valid then begin 
       GwdLog.syslog `LOG_WARNING (Printf.sprintf "File %s not found : %s" fname pname);
       Printf.eprintf "- File %s not found\n%!" fname;
       Hutil.error_404 conf fname
     end else
-      print_misc_file conf pname fct
+      if not (Output.print_file conf pname ctype priv) then Hutil.error_404 conf fname
 
 let strip_quotes s =
   let i0 = if String.length s > 0 && s.[0] = '"' then 1 else 0 in
@@ -1717,7 +1698,9 @@ let geneweb_cgi addr script_name contents =
   let request = add "Accept-Language" "HTTP_ACCEPT_LANGUAGE" request in
   let request = add "Referer" "HTTP_REFERER" request in
   let request = add "User-Agent" "HTTP_USER_AGENT" request in
-  connection (Unix.ADDR_UNIX addr, request) script_name contents
+  let request = add "Authorization" "HTTP_AUTHORIZATION" request in
+  connection (Unix.ADDR_UNIX addr, request) script_name contents;
+  Wserver.flush_contents ()
 
 let read_input len =
   if len >= 0 then really_input_string stdin len
@@ -1848,8 +1831,9 @@ let main () =
     ; ("-unsafe_plugins", arg_plugins ~check:false, "<DIR> DO NOT USE UNLESS YOU TRUST THE ORIGIN OF EVERY PLUGIN IN <DIR>.")
     ; ("-max_clients", Arg.Int (fun x -> max_clients := Some x), "<NUM> Max number of clients treated at the same time (default: no limit) (not cgi).")
     ; ("-conn_tmout", Arg.Int (fun x -> conn_timeout := x), "<SEC> Connection timeout (default " ^ string_of_int !conn_timeout ^ "s; 0 means no limit)." )
-#ifdef WINDOWS
-    ; ("-buf_size", Arg.Int (fun x -> Wserver.max_http := x), "<NUM> Size (oct.) of HTTP buffer for geneweb response (default: " ^ string_of_int !(Wserver.max_http) ^ ").")
+#ifdef DEBUG
+    ; ("-buf_size", Arg.Int (fun sz -> Wserver.max_http := max 1400 (min sz 65536 )), "<NUM> Size (1400..65536 oct.) of buffer for geneweb response (default: " ^ string_of_int !(Wserver.max_http) ^ ").")
+    ; ("-proc", Arg.Int (fun x -> Wserver.proc := x), "<NUM> 0 : do not launch process, 1 : launch one process per request (defaut)" )
 #endif
 #ifdef UNIX
     ; ("-daemon", Arg.Set daemon, " Unix daemon mode.")
@@ -1923,7 +1907,14 @@ let main () =
           Not_found -> try Sys.getenv "REMOTE_ADDR" with Not_found -> ""
       in
       let script = try Sys.getenv "SCRIPT_NAME" with Not_found -> Sys.argv.(0) in
-      geneweb_cgi addr (Filename.basename script) query
+      (* force  HTTP relay mode or CGI protocol *)
+      Wserver.cgi:= (try Sys.getenv "GATEWAY_INTERFACE" with Not_found -> "") <> "RELAY/HTTP";
+      if !Wserver.cgi 
+        then geneweb_cgi addr (Filename.basename script) query
+        else begin
+          let path = try Sys.getenv "PATH_INFO" with Not_found -> "" in
+          geneweb_cgi addr path query
+        end
     end
   else geneweb_server ()
 
