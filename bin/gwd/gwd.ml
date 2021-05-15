@@ -1813,9 +1813,8 @@ let main () =
     ; ("-no_host_address", Arg.Set no_host_address, " Force no reverse host by address.")
     ; ("-digest", Arg.Set use_auth_digest_scheme, " Use Digest authorization scheme (more secure on passwords)")
     ; ("-add_lexicon", Arg.String (Mutil.list_ref_append lexicon_list), "<FILE> Add file as lexicon.")
-    ; ("-log", Arg.String (fun x -> GwdLog.oc := Some (match x with "2" | "stderr" -> stderr | _ -> open_out x)), 
-                      "<FILE> Log traces to this file (default is no log)\n" ^ 
-                      {|                         - use "2" or "stderr" to redirect to standard error.|})
+    ; ("-log", Arg.String (fun x -> GwdLog.open_log x), "<FILE> Log traces to this file (default is no log)\n" ^ 
+                              {|                         - use "2" or "stderr" to redirect to standard error.|})
     ; ("-log_level", Arg.Set_int GwdLog.verbosity, {|<N> Send messages with severity <= <N> to syslog (default: |} ^ string_of_int !GwdLog.verbosity ^ {|).|})
     ; ("-robot_xcl", Arg.String robot_exclude_arg, "<CNT>,<SEC> Exclude connections when more than <CNT> requests in <SEC> seconds.")
     ; ("-min_disp_req", Arg.Int (fun x -> Robot.min_disp_req := x), " Minimum number of requests in robot trace (default: " ^ string_of_int !(Robot.min_disp_req) ^ ").")
@@ -1860,7 +1859,6 @@ let main () =
   let speclist = List.sort compare speclist in
   let speclist = Arg.align ~limit:22 speclist in
   let anonfun s = raise (Arg.Bad ("don't know what to do with " ^ s)) in
-#ifdef UNIX
   default_lang := begin
     let s = try Sys.getenv "LANG" with Not_found -> "" in
     if List.mem s Version.available_languages then s
@@ -1870,8 +1868,7 @@ let main () =
         let s = String.sub s 0 2 in
         if List.mem s Version.available_languages then s else "en"
       else "en"
-  end ;
-#endif
+  end;
   arg_parse_in_file (chop_extension Sys.argv.(0) ^ ".arg") speclist anonfun usage;
   Arg.parse speclist anonfun usage;
   List.iter register_plugin !plugins;

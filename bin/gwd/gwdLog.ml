@@ -4,6 +4,16 @@ let verbosity = ref 5 (* default is Emergency to Notice level*)
 
 let oc : out_channel option ref = ref None
 
+let open_log fname =
+  let gtw_mode = try let _ = Sys.getenv "GATEWAY_INTERFACE" in true with Not_found -> false in
+  match fname with 
+  | "2" | "stderr" -> oc:= Some stderr 
+  | _ -> 
+    oc := 
+      Some (
+        if gtw_mode then open_out_gen [Open_wronly; Open_creat; Open_append] 0o644 fname
+        else open_out_gen [Open_wronly; Open_creat; Open_trunc] 0o644 fname )
+
 let log fn =
   match !oc with
   | Some oc -> fn oc; flush oc
@@ -60,10 +70,10 @@ let syslog level msg =
   if !verbosity >= severityLevel then
     let ident = Filename.basename @@ Sys.executable_name in
     let tag = (if String.length ident > 32 then String.sub ident 0 32 else ident) in
-    let logfn =  Filename.concat !(Util.cnt_dir) "syslog.txt" in
+    let logfn = Filename.concat !(Util.cnt_dir) "syslog.txt" in
     let log fname flag = 
       try 
-        let oc = open_out_gen (flag::[Open_wronly; Open_creat]) 0o777 fname in
+        let oc = open_out_gen (flag::[Open_wronly; Open_creat]) 0o644 fname in
         oc, (out_channel_length oc)
       with e -> 
       if not !syslog_block then
