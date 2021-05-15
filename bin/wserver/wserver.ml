@@ -422,23 +422,106 @@ let print_internal_error e addr path query =
                   fname
                 ) 
 
+                let proceed_connection syslog tmout callback addr fd_conn =
+  let addr_string = match addr with
+      Unix.ADDR_UNIX a -> a
+    | Unix.ADDR_INET (a, _) -> Unix.string_of_inet_addr a
+  in  
+  let (meth, path, query, request, contents) =
+  let strm = Stream.of_channel (Unix.in_channel_of_descr fd_conn) in
+    get_request_and_content strm
+  in
+  let query = if meth = Http_post then contents else query
+  in
+  if meth <> No_method then begin
+    if meth = Http_post || (Filename.extension path) <> "" || (String.index_opt path '/') <> None then begin
+      callback (addr, request) path query
+    end else begin
+      let env = Array.append (Unix.environment ())
+                 [| "GATEWAY_INTERFACE=RELAY/HTTP" 
+                  ; "REMOTE_HOST="
+                  ; "REMOTE_ADDR=" ^ addr_string
+                  ; "REQUEST_METHOD=GET"
+                  ; "SCRIPT_NAME=" ^ Sys.argv.(0)
+                  ; "PATH_INFO=" ^ path
+                  ; "QUERY_STRING=" ^ query
+                  ; "HTTP_COOKIE=" ^ (Mutil.extract_param "content-length: " '\n' request)
+                  ; "CONTENT_TYPE=" ^ (Mutil.extract_param "content-type: " '\n' request)
+                  ; "HTTP_ACCEPT_LANGUAGE=" ^ (Mutil.extract_param "accept_language: " '\n' request)
+                  ; "HTTP_REFERER=" ^ (Mutil.extract_param "referer: " '\n' request)
+                  ; "HTTP_USER_AGENT=" ^ (Mutil.extract_param "user-agent: " '\n' request)
+                  ; "HTTP_AUTHORIZATION=" ^ (Mutil.extract_param "authorization: " '\n' request)
+                  |]
+      in
+      let fd_out = Unix.openfile out_fname [Unix.O_WRONLY; O_CREAT; O_TRUNC] 0o640  in
+      let pid = Unix.create_process_env Sys.argv.(0) Sys.argv env  Unix.stdin fd_out Unix.stderr in
+      syslog `LOG_DEBUG (Printf.sprintf "%s Proceed request with pid %d '%s?%s'" (string_of_sockaddr addr) pid path query );
+      Unix.close fd_out;
+      ignore @@ Unix.waitpid [] pid;
+      if not (print_http_filename out_fname) then
+         failwith ("Gwd error sending response file : "  ^ out_fname)
+      else
+        Sys.remove out_fname
+    end
+  end
+
+let relay_get_request syslog addr request path query = 
+  let addr_string = match addr with
+    Unix.ADDR_UNIX a -> a
+  | Unix.ADDR_INET (a, _) -> Unix.string_of_inet_addr a
+  in  
+  let env = Array.append (Unix.environment ())
+  [| "GATEWAY_INTERFACE=RELAY/HTTP" 
+  ; "REMOTE_HOST="
+  ; "REMOTE_ADDR=" ^ addr_string
+  ; "REQUEST_METHOD=GET"
+  ; "SCRIPT_NAME=" ^ Sys.argv.(0)
+  ; "PATH_INFO=" ^ path
+  ; "QUERY_STRING=" ^ query
+  ; "HTTP_COOKIE=" ^ (Mutil.extract_param "content-length: " '\n' request)
+  ; "CONTENT_TYPE=" ^ (Mutil.extract_param "content-type: " '\n' request)
+  ; "HTTP_ACCEPT_LANGUAGE=" ^ (Mutil.extract_param "accept_language: " '\n' request)
+  ; "HTTP_REFERER=" ^ (Mutil.extract_param "referer: " '\n' request)
+  ; "HTTP_USER_AGENT=" ^ (Mutil.extract_param "user-agent: " '\n' request)
+  ; "HTTP_AUTHORIZATION=" ^ (Mutil.extract_param "authorization: " '\n' request)
+  |]
+  in
+  let fd_out = Unix.openfile out_fname [Unix.O_WRONLY; O_CREAT; O_TRUNC] 0o640  in
+  let pid = Unix.create_process_env Sys.argv.(0) Sys.argv env  Unix.stdin fd_out Unix.stderr in
+  syslog `LOG_DEBUG (Printf.sprintf "%s Proceed request with pid %d '%s?%s'" (string_of_sockaddr addr) pid path query );
+  Unix.close fd_out;
+  ignore @@ Unix.waitpid [] pid;
+  if not (print_http_filename out_fname) then
+    failwith ("Gwd error sending response file : "  ^ out_fname)
+  else
+    Sys.remove out_fname
+
 let treat_connection syslog tmout callback addr fd =
   let (meth, path, query, request, contents) =
     let strm = Stream.of_channel (Unix.in_channel_of_descr fd) in
     get_request_and_content strm
   in 
-  let query = 
-    if meth = Http_post then
-      if query = "" then contents else (query ^ "&" ^ contents) 
-    else query
-  in
   match meth with
-  | No_method ->  (* unlikely but possible if no data sent ; do nothing/ignore *)
+  | No_method -> (* unlikely but possible if no data sent ; do nothing/ignore *)
         syslog `LOG_DEBUG ( Printf.sprintf
                               "%s Ignore empty connection (no data read)" (string_of_sockaddr addr)
                           );
       ()
-  | Http_post     (* application/x-www-form-urlencoded *)
+  | Http_post -> (* application/x-www-form-urlencoded *)
+      begin 
+        syslog `LOG_DEBUG ( Printf.sprintf
+                              "%s Request : POST %s?%s" 
+                              (string_of_sockaddr addr) path query
+                          );
+        try 
+          callback (addr, request) path contents
+        with e -> 
+          let msg = match Unix.getsockopt_error fd with
+          | Some m -> Unix.error_message m
+          | None -> "No socket error"
+          in
+          print_internal_error e ((string_of_sockaddr addr) ^ " ---" ^ msg) path query
+      end
   | Http_get ->
       begin 
         syslog `LOG_DEBUG ( Printf.sprintf
@@ -446,7 +529,10 @@ let treat_connection syslog tmout callback addr fd =
                               (string_of_sockaddr addr) path query
                           );
         try 
-          callback (addr, request) path query
+          if !proc > 0 then
+            relay_get_request syslog addr request path query
+          else
+            callback (addr, request) path query
         with e -> 
           let msg = match Unix.getsockopt_error fd with
           | Some m -> Unix.error_message m
@@ -559,49 +645,6 @@ type conn_info = {
     start_time : float;
     mutable kind : conn_kind }
 
-let proceed_connection syslog tmout callback addr fd_conn =
-  let addr_string = match addr with
-      Unix.ADDR_UNIX a -> a
-    | Unix.ADDR_INET (a, _) -> Unix.string_of_inet_addr a
-  in  
-  let (meth, path, query, request, contents) =
-  let strm = Stream.of_channel (Unix.in_channel_of_descr fd_conn) in
-    get_request_and_content strm
-  in
-  let query = if meth = Http_post then contents else query
-  in
-  if meth <> No_method then begin
-    if meth = Http_post || (Filename.extension path) <> "" || (String.index_opt path '/') <> None then begin
-      callback (addr, request) path query
-    end else begin
-      let env = Array.append (Unix.environment ())
-                 [| "GATEWAY_INTERFACE=RELAY/HTTP" 
-                  ; "REMOTE_HOST="
-                  ; "REMOTE_ADDR=" ^ addr_string
-                  ; "REQUEST_METHOD=GET"
-                  ; "SCRIPT_NAME=" ^ Sys.argv.(0)
-                  ; "PATH_INFO=" ^ path
-                  ; "QUERY_STRING=" ^ query
-                  ; "HTTP_COOKIE=" ^ (Mutil.extract_param "content-length: " '\n' request)
-                  ; "CONTENT_TYPE=" ^ (Mutil.extract_param "content-type: " '\n' request)
-                  ; "HTTP_ACCEPT_LANGUAGE=" ^ (Mutil.extract_param "accept_language: " '\n' request)
-                  ; "HTTP_REFERER=" ^ (Mutil.extract_param "referer: " '\n' request)
-                  ; "HTTP_USER_AGENT=" ^ (Mutil.extract_param "user-agent: " '\n' request)
-                  ; "HTTP_AUTHORIZATION=" ^ (Mutil.extract_param "authorization: " '\n' request)
-                  |]
-      in
-      let fd_out = Unix.openfile out_fname [Unix.O_WRONLY; O_CREAT; O_TRUNC] 0o640  in
-      let pid = Unix.create_process_env Sys.argv.(0) Sys.argv env  Unix.stdin fd_out Unix.stderr in
-      syslog `LOG_DEBUG (Printf.sprintf "%s Proceed request with pid %d '%s?%s'" (string_of_sockaddr addr) pid path query );
-      Unix.close fd_out;
-      ignore @@ Unix.waitpid [] pid;
-      if not (print_http_filename out_fname) then
-         failwith ("Gwd error sending response file : "  ^ out_fname)
-      else
-        Sys.remove out_fname
-    end
-  end
-
 let wserver_basic syslog tmout max_clients g s addr_server =
   let server = {
     addr = addr_server;
@@ -704,10 +747,7 @@ let wserver_basic syslog tmout max_clients g s addr_server =
                                       ( (Unix.gettimeofday  ()) -. conn.start_time)
                       );
               begin try 
-                if !proc > 0 then 
-                  proceed_connection syslog tmout g conn.addr conn.fd
-                else
-                  treat_connection syslog tmout g conn.addr fd;
+                treat_connection syslog tmout g conn.addr fd;
                 flush_contents ();
               with 
               | Unix.Unix_error (Unix.ECONNRESET, "write", _) ->
