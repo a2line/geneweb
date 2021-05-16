@@ -82,7 +82,7 @@
   %(%let;yyy;%expr(xxx+4)%in;
    %let;zzz;%expr(xxx+1)%in; %)
   <table id="quickrel" class="table table-bordered text-center mb-0">
-    %foreach;cousin_level;
+    %foreach;cousin_level;cousin_level : %level;
       %if;(level>0 and level<xxx+4)
         <tr>
           %for;i;0;xxx;
@@ -180,7 +180,7 @@
       %end;
       %let;max;%count;%in;%)
       <div class="align-self-center col-1">[*autres cousins]</div>
-      %for;i;6;17;
+      %for;i;6;10;
         <div class="col-1">
           %apply;link_cousin%with;%i%and;%i%and;
             %apply;nth_cousins%with;%apply;nth%with;zero/[nth (cousin)]%and;%i%end;%end;

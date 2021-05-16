@@ -375,7 +375,7 @@ fr: Sélectionnez les modules en cliquant sur le bouton correspondant (max 15).
     </nav>
   %include;home
   </div>
-  %if;(evar.m="C" and not cancel_links)
+  %(%if;(evar.m="C" and not cancel_links)
     %include;cousins_tools
-  %end;
+  %end;%)
 %end;
