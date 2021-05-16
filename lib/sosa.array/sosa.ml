@@ -102,7 +102,7 @@ let sub x y =
   let l =
     let rec loop i r =
       if i >= Array.length x && i >= Array.length y then
-        if r = 0 then [] else invalid_arg "Sosa.sub"
+        if r = 0 then [] else invalid_arg ("Sosa.sub.loop " ^ (string_of_int i)  ^ " " ^ (string_of_int r))
       else
         let (d, r) =
           let xi = if i >= Array.length x then 0 else x.(i) in

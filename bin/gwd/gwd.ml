@@ -1407,6 +1407,7 @@ let conf_and_connection =
               (Printf.sprintf "%s slow query (%.3f)" (context conf contents) (t2 -. t1))
         with
         | Exit -> ()
+        | Unix.Unix_error (_, "write", _) as e -> raise e
         | e ->
           GwdLog.syslog `LOG_CRIT ((context conf contents) ^ " : " ^ (Printexc.to_string e));
           GwdLog.log @@ (fun oc ->
