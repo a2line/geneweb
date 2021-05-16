@@ -1829,8 +1829,10 @@ let main () =
     ; ("-unsafe_plugins", arg_plugins ~check:false, "<DIR> DO NOT USE UNLESS YOU TRUST THE ORIGIN OF EVERY PLUGIN IN <DIR>.")
     ; ("-max_clients", Arg.Int (fun x -> max_clients := Some x), "<NUM> Max number of clients treated at the same time (default: no limit) (not cgi).")
     ; ("-conn_tmout", Arg.Int (fun x -> conn_timeout := x), "<SEC> Connection timeout (default " ^ string_of_int !conn_timeout ^ "s; 0 means no limit)." )
-#ifdef WINDOWS
+#ifdef DEBUG
     ; ("-buf_size", Arg.Int (fun sz -> Wserver.max_http := max 1400 (min sz 65536 )), "<NUM> Size (1400..65536 oct.) of buffer for geneweb response (default: " ^ string_of_int !(Wserver.max_http) ^ ").")
+#endif
+#ifdef WINDOWS
     ; ("-proc", Arg.Int (fun x -> Wserver.proc := x), "<NUM> 0 : do not launch process, 1 : launch one process per request (defaut)" )
 #endif
 #ifdef UNIX

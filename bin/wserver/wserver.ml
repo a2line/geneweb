@@ -529,16 +529,16 @@ let treat_connection syslog tmout callback addr fd =
                               (string_of_sockaddr addr) path query
                           );
         try 
-          if !proc > 0 then
-            relay_get_request syslog addr request path query
-          else
+          if !proc = 0 || (Filename.extension path) <> "" || (String.index_opt path '/') <> None then 
             callback (addr, request) path query
+          else
+            relay_get_request syslog addr request path query
         with e -> 
-          let msg = match Unix.getsockopt_error fd with
+          let sock_error = match Unix.getsockopt_error fd with
           | Some m -> Unix.error_message m
           | None -> "No socket error"
           in
-          print_internal_error e ((string_of_sockaddr addr) ^ " ---" ^ msg) path query
+          print_internal_error e ((string_of_sockaddr addr) ^ ", " ^ sock_error) path query
       end
   | _ -> 
       http Def.Method_Not_Allowed;
@@ -596,7 +596,7 @@ let wait_available max_clients s =
       done
   | None -> ()
 
-let accept_connection tmout max_clients callback s =
+let accept_connection syslog tmout max_clients callback s =
   wait_available max_clients s;
   let (t, addr) = Unix.accept s in
   Unix.setsockopt t Unix.SO_KEEPALIVE true;
@@ -618,7 +618,7 @@ let accept_connection tmout max_clients callback s =
               exit 0
             end
         end;
-        treat_connection tmout callback addr t;
+        treat_connection syslog tmout callback addr t;
         flush_contents ();
         (try Unix.shutdown !wserver_sock Unix.SHUTDOWN_SEND with _ ->());
         skip_possible_remaining_chars !wserver_sock;
@@ -807,7 +807,7 @@ let f syslog addr_opt port tmout max_clients g =
   let _ = Unix.nice 1 in
   while true do
     check_stopping ();
-    try accept_connection tmout max_clients g s with
+    try accept_connection syslog tmout max_clients g s with
     | Unix.Unix_error (Unix.ECONNRESET, "accept", _) as e ->
       syslog `LOG_INFO (Printexc.to_string e)
     | Sys_error msg as e when msg = "Broken pipe" ->
