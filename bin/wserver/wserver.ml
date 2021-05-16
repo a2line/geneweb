@@ -96,10 +96,10 @@ let print_buffer s =
     let writed = 
       try 
         Unix.write_substring !wserver_sock (Buffer.contents http_buff) 0 (olen+n)
-      with e -> 
-        Printf.eprintf "%s Writing error %d-%d : %s\n%!" !wserver_addr olen n (Printexc.to_string e);
-        raise e
-    in
+      with 
+      | Unix.Unix_error (_, "write", _) as e -> raise e
+      | e -> failwith (Printf.sprintf "%s Writing error 0-%d : %s" !wserver_addr (olen+n) (Printexc.to_string e) )
+      in
     if writed <> (olen+n) then (* data lost *)
       Printf.eprintf "%s : %d/%d bytes writed, lost data\n%!" !wserver_addr writed (olen+n);
     Buffer.clear http_buff;
@@ -108,9 +108,9 @@ let print_buffer s =
     end else begin
       let writed = 
         try Unix.write_substring !wserver_sock s n (len-n)
-        with e -> 
-          Printf.eprintf "%s Writing error %d-%d : %s\n%!" !wserver_addr len n (Printexc.to_string e);
-          raise e
+        with
+        | Unix.Unix_error (_, "write", _) as e -> raise e
+        | e -> failwith (Printf.sprintf "%s Writing error %d-%d : %s" !wserver_addr n len (Printexc.to_string e) )
       in
       if writed <> (len-n) then (* data lost *)
         Printf.eprintf "%s : %d-%d bytes writed, lost data\n%!" !wserver_addr writed (len-n)
@@ -145,8 +145,9 @@ let flush_contents () =
   if olen > 0 then
     let writed = 
       try Unix.write_substring !wserver_sock (Buffer.contents http_buff) 0 olen
-      with e -> 
-        Printf.eprintf "%s Writing/flush error %d : %s\n%!" !wserver_addr olen (Printexc.to_string e); 0
+      with 
+      | Unix.Unix_error (_, "write", _) as e -> raise e
+      | e -> failwith (Printf.sprintf "%s Flush error %d : %s" !wserver_addr olen (Printexc.to_string e) )
     in 
     if writed <> olen then (* data lost *)
       Printf.eprintf "%s : %d/%d bytes writed, lost data (end)\n%!" !wserver_addr writed olen;
@@ -172,9 +173,9 @@ let print_filename fname ctype priv =
           really_input ic buf 0 olen;
           let writed = 
             try Unix.write !wserver_sock buf 0 olen
-            with e -> 
-              Printf.eprintf "%s Writing error %d/%d : %s\n%!" !wserver_addr olen flen (Printexc.to_string e);
-              raise e
+            with
+            | Unix.Unix_error (_, "write", _) as e -> raise e
+            | e -> failwith (Printf.sprintf "%s Writing file error %d/%d : %s\n%!" !wserver_addr olen flen (Printexc.to_string e))
           in
           if writed <> olen then (* data lost *)
             Printf.eprintf "%s : %d-%d bytes writed, lost data\n%!" !wserver_addr writed olen;
@@ -422,7 +423,7 @@ let print_internal_error e addr path query =
                   fname
                 ) 
 
-                let proceed_connection syslog tmout callback addr fd_conn =
+  let proceed_connection syslog tmout callback addr fd_conn =
   let addr_string = match addr with
       Unix.ADDR_UNIX a -> a
     | Unix.ADDR_INET (a, _) -> Unix.string_of_inet_addr a
@@ -469,13 +470,14 @@ let relay_get_request syslog addr request path query =
   let addr_string = match addr with
     Unix.ADDR_UNIX a -> a
   | Unix.ADDR_INET (a, _) -> Unix.string_of_inet_addr a
-  in  
+  in
+  let exec_script = Sys.argv.(0) in
   let env = Array.append (Unix.environment ())
   [| "GATEWAY_INTERFACE=RELAY/HTTP" 
   ; "REMOTE_HOST="
   ; "REMOTE_ADDR=" ^ addr_string
   ; "REQUEST_METHOD=GET"
-  ; "SCRIPT_NAME=" ^ Sys.argv.(0)
+  ; "SCRIPT_NAME=" ^ exec_script
   ; "PATH_INFO=" ^ path
   ; "QUERY_STRING=" ^ query
   ; "HTTP_COOKIE=" ^ (Mutil.extract_param "content-length: " '\n' request)
@@ -487,12 +489,13 @@ let relay_get_request syslog addr request path query =
   |]
   in
   let fd_out = Unix.openfile out_fname [Unix.O_WRONLY; O_CREAT; O_TRUNC] 0o640  in
-  let pid = Unix.create_process_env Sys.argv.(0) Sys.argv env  Unix.stdin fd_out Unix.stderr in
-  syslog `LOG_DEBUG (Printf.sprintf "%s Proceed request with pid %d '%s?%s'" (string_of_sockaddr addr) pid path query );
+  let pid = Unix.create_process_env exec_script Sys.argv env  Unix.stdin fd_out Unix.stderr in
+  syslog `LOG_DEBUG (Printf.sprintf "%s Proceed %s request with pid %d '%s?%s'" 
+      (Filename.basename exec_script) (string_of_sockaddr addr) pid path query );
   Unix.close fd_out;
   ignore @@ Unix.waitpid [] pid;
   if not (print_http_filename out_fname) then
-    failwith ("Gwd error sending response file : "  ^ out_fname)
+    failwith ("wserver error sending response file : "  ^ out_fname)
   else
     Sys.remove out_fname
 
@@ -501,7 +504,7 @@ let treat_connection syslog tmout callback addr fd =
     let strm = Stream.of_channel (Unix.in_channel_of_descr fd) in
     get_request_and_content strm
   in 
-  match meth with
+  begin match meth with
   | No_method -> (* unlikely but possible if no data sent ; do nothing/ignore *)
         syslog `LOG_DEBUG ( Printf.sprintf
                               "%s Ignore empty connection (no data read)" (string_of_sockaddr addr)
@@ -515,12 +518,15 @@ let treat_connection syslog tmout callback addr fd =
                           );
         try 
           callback (addr, request) path contents
-        with e -> 
+        with 
+        | Unix.Unix_error (_, "write", _) as e -> raise e
+        | e -> 
           let msg = match Unix.getsockopt_error fd with
           | Some m -> Unix.error_message m
           | None -> "No socket error"
           in
-          print_internal_error e ((string_of_sockaddr addr) ^ " ---" ^ msg) path query
+          print_internal_error e ((string_of_sockaddr addr) ^ " ---" ^ msg) path query;
+          syslog `LOG_DEBUG ( Printf.sprintf "%s - %s" (string_of_sockaddr addr) (Printexc.to_string e) )
       end
   | Http_get ->
       begin 
@@ -533,22 +539,28 @@ let treat_connection syslog tmout callback addr fd =
             callback (addr, request) path query
           else
             relay_get_request syslog addr request path query
-        with e -> 
+        with 
+        | Unix.Unix_error (_, "write", _) as e -> raise e
+        | e -> 
           let sock_error = match Unix.getsockopt_error fd with
           | Some m -> Unix.error_message m
           | None -> "No socket error"
           in
-          print_internal_error e ((string_of_sockaddr addr) ^ ", " ^ sock_error) path query
+          print_internal_error e ((string_of_sockaddr addr) ^ ", " ^ sock_error) path query;
+          syslog `LOG_DEBUG ( Printf.sprintf "%s - %s" (string_of_sockaddr addr) (Printexc.to_string e) )
       end
   | _ -> 
-      http Def.Method_Not_Allowed;
-      header "Content-type: text/html; charset=UTF-8";
-      header "Connection: close";
-      print_contents "<html>\n\
-                    <<head>title>Not allowed HTTP method</title></head>\n\
-                    <body>Not allowed HTTP method</body>\n\
-                    </html>\n";
-  ;
+      begin
+        syslog `LOG_DEBUG ( Printf.sprintf "%s - Method not allowed" (string_of_sockaddr addr) );
+        http Def.Method_Not_Allowed;
+        header "Content-type: text/html; charset=UTF-8";
+        header "Connection: close";
+        print_contents "<html>\n\
+                      <<head><title>Not allowed HTTP method</title></head>\n\
+                      <body>Not allowed HTTP method</body>\n\
+                      </html>\n"
+      end
+  end;
   if !printing_state = Status then 
     failwith ("Unexcepted HTTP printing state, connection from " ^ (string_of_sockaddr addr) ^ " without content sent :" );
   printing_state := Nothing
@@ -750,18 +762,21 @@ let wserver_basic syslog tmout max_clients g s addr_server =
                 treat_connection syslog tmout g conn.addr fd;
                 flush_contents ();
               with 
+              | Failure msg -> (* trace and ignore *)
+                  Printf.eprintf "Failure : %s\n%!" msg;
+                  syslog `LOG_DEBUG (Printf.sprintf "Ignore failure : %s" msg)
               | Unix.Unix_error (Unix.ECONNRESET, "write", _) ->
-                syslog `LOG_DEBUG (
-                  Printf.sprintf "%s reseted after %.6f sec." 
-                                  (string_of_sockaddr conn.addr)
-                                  ( (Unix.gettimeofday ()) -. conn.start_time)
-                  );
+                  syslog `LOG_DEBUG (
+                    Printf.sprintf "%s reseted after %.6f sec." 
+                                    (string_of_sockaddr conn.addr)
+                                    ( (Unix.gettimeofday ()) -. conn.start_time)
+                    ); printing_state := Nothing
               | Unix.Unix_error (Unix.ECONNABORTED, "write", _) ->
-                syslog `LOG_DEBUG (
-                  Printf.sprintf "%s closed by peer after %.6f sec." 
-                                  (string_of_sockaddr conn.addr)
-                                  ( (Unix.gettimeofday ()) -. conn.start_time)
-                  );
+                  syslog `LOG_DEBUG (
+                    Printf.sprintf "%s closed by peer after %.6f sec." 
+                                    (string_of_sockaddr conn.addr)
+                                    ( (Unix.gettimeofday ()) -. conn.start_time)
+                    ); printing_state := Nothing
               | e -> raise e
               end;
               shutdown_noerr conn;
