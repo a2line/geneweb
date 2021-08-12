@@ -330,7 +330,7 @@ function table_spouse_disabled () {
           </div>
           <div class="custom-control custom-checkbox">
             <input type="checkbox" class="custom-control-input" id="t_ns" name="ns">
-            <label class="custom-control-label" for="t_ns">[*display note and sources]</label>
+            <label class="custom-control-label" for="t_ns">[*see descendants notes/sources]</label>
           </div>
           <div class="custom-control custom-checkbox">
             <input type="checkbox" class="custom-control-input" id="t_gen" name="gen">

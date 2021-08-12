@@ -5153,7 +5153,7 @@ de: Generation der Nachkommen ...
 en: list by name
 es: descendientes en la generación...
 fi: Nimilista
-fr: descendants à la génération...
+fr: descendants à la génération
 it: discendenti fino alla generazione...
 nl: nakomelingen tot de ... generatie
 no: liste etter navn
@@ -13228,10 +13228,10 @@ tr: Resimleri görüntüle
     see descendants notes/sources
 co: fighjà e note è e fonte
 de: siehe Notizen/Quellen
-en: View notes/sources
+en: view notes and sources
 es: ver las notas/fuentes
 fi: Näytä merkinnät/lähteet
-fr: voir les notes & les sources
+fr: afficher notes et sources
 it: vedere le note/fonti
 nl: notities & bronnen bekijken
 no: Se på merknader/kilder
@@ -17047,3 +17047,7 @@ fr: filtrer par
     clear filters
 en: clear every filters
 fr: effacer tous les filtres
+
+    no line break in names
+en: no line break in names
+fr: afficher les noms sans saut de ligne
