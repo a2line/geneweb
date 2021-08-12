@@ -1,12 +1,12 @@
-<!-- $Id: js.txt, v7.00 13/04/2020 09:56:18 $ -->
+<!-- $Id: js.txt, v7.00 12/08/2021 06:50:50 $ -->
 %if;(evar.templ="")
   %if;(bvar.use_cdn="yes")
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"
-      integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+      integrity="sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"
       integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns" crossorigin="anonymous"></script>
   %else;
-    <script src="%static_path;js/jquery.min.js?version=3.5.1"></script>
+    <script src="%static_path;js/jquery.min.js?version=3.6.0"></script>
     <script src="%static_path;js/bootstrap.bundle.min.js?version=4.6.0"></script>
   %end;
   %if;(evar.m!="MOD_DATA")
