@@ -15,7 +15,7 @@
   %if(xx.index!=iii and xx.is_male)
     %foreach;xx.family;
       %if(family.index = xx.family.index)
-        ,"marriage_date":"%family.marriage_date.year;","marriage_place":"%marriage_place;"
+        ,"marriage_date":"%family.date_s;","marriage_place":"%marriage_place;"
       %end;
     %end;
   %end;

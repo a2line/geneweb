@@ -168,9 +168,9 @@
       </tr>
       <tr>
         <td colspan="3"></td>
-        <td colspan="3"><span>│</span></td>
-        <td colspan="7"><span class="small font-italic">%apply;display_date_marriage_parent("self")</span></td>
-        <td colspan="3"><span>│</span></td>
+        <td colspan="1"><span>│</span></td>
+        <td colspan="9"><span class="small font-italic">%apply;display_date_marriage_parent("self")</span></td>
+        <td colspan="1"><span>│</span></td>
         <td colspan="3"></td>
       </tr>
       <tr>
