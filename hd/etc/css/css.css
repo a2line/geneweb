@@ -11,12 +11,11 @@ p {
 #quickrel.table td{
 	padding: 0px;
 	vertical-align: middle;
-
-	height: 150px;
+	height: 105px;
 }
 
 #quickrel.table a{
-	height: 150px;
+  height: 105px;
 	width: 100%;
 }
 
