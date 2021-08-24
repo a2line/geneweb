@@ -13,6 +13,7 @@ endif
 # Variables for packagers.
 PREFIX=/usr
 DISTRIB_DIR=distribution
+DIST_DIR=../gw7
 BUILD_DIR=_build/default
 ODOC_DIR=$(BUILD_DIR)/_doc/_html
 
@@ -169,6 +170,25 @@ distrib: build
 			if [ -f $(BUILD_DIR)/plugins/$$P/META ] ; then \
 				cp $(BUILD_DIR)/plugins/$$P/META $(DISTRIB_DIR)/gw/plugins/$$P/; \
 			fi; \
+		fi; \
+	done
+
+dist: build
+	cp $(BUILD_DISTRIB_DIR)connex/connex.exe $(DIST_DIR)/gw/connex$(EXT);
+	cp $(BUILD_DISTRIB_DIR)consang/consang.exe $(DIST_DIR)/gw/consang$(EXT);
+#	cp $(BUILD_DISTRIB_DIR)ged2gwb/ged2gwb.exe $(DIST_DIR)/gw/ged2gwb$(EXT);
+#	cp $(BUILD_DISTRIB_DIR)gwb2ged/gwb2ged.exe $(DIST_DIR)/gw/gwb2ged$(EXT);
+	cp $(BUILD_DISTRIB_DIR)gwc/gwc.exe $(DIST_DIR)/gw/gwc$(EXT);
+	cp $(BUILD_DISTRIB_DIR)gwd/gwd.exe $(DIST_DIR)/gw/gwd$(EXT);
+#	cp $(BUILD_DISTRIB_DIR)gwdiff/gwdiff.exe $(DIST_DIR)/gw/gwdiff$(EXT);
+#	cp $(BUILD_DISTRIB_DIR)gwu/gwu.exe $(DIST_DIR)/gw/gwu$(EXT);
+#	cp $(BUILD_DISTRIB_DIR)fixbase/gwfixbase.exe $(DIST_DIR)/gw/gwfixbase$(EXT);
+#	taskkill /IM gwsetup.exe /F
+	cp $(BUILD_DISTRIB_DIR)setup/setup.exe $(DIST_DIR)/gw/gwsetup$(EXT);
+	cp $(BUILD_DISTRIB_DIR)update_nldb/update_nldb.exe $(DIST_DIR)/gw/update_nldb$(EXT);
+	for P in $(shell ls plugins); do \
+		if [ -f $(BUILD_DIR)/plugins/$$P/plugin_$$P.cmxs ] ; then \
+			cp $(BUILD_DIR)/plugins/$$P/plugin_$$P.cmxs $(DIST_DIR)/gw/plugins/$$P/; \
 		fi; \
 	done
 
