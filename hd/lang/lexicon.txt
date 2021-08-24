@@ -16158,6 +16158,12 @@ sl: strici in tete
 sv: farbröder-morbröder och fastrar-mostrar
 tr: amcalar ve teyzeler
 
+    cousin.2.1
+->: uncles and aunts
+
+    cousin.2.1 tt
+fr: frères et sœurs des parents
+
     undefined sex for %t
 af: geslag onbekend vir %t
 bg: не е определен полът на %t
