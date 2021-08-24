@@ -32,13 +32,14 @@
 %let;my_first_name_key;%first_name_key;%in;
 %let;my_surname_key;%surname_key;%in;
 %let;my_occ;%occ;%in
-%define;url(xxx,yyy)
+%define;url(xxx,yyy,zzz)
   <a href="%prefix;m=RL%nn;
     %if;("yyy"="asc")&p=%xxx.first_name_key;&n=%xxx.surname_key;%if;(xxx.occ!=0)&oc=%xxx.occ;%end;
     %elseif;("yyy"="desc")&p=%my_first_name_key;&n=%my_surname_key;%if;(occ!=0)&oc=%my_occ;%end;
+    %elseif;("yyy"="self")&p=%zzz.first_name_key;&n=%zzz.surname_key;%if;(occ!=0)&oc=%zzz.occ;%end;
     %end;%nn;
-    &p1=%my_first_name_key;&n1=%my_surname_key;%if;(occ!=0)&oc1=%my_occ;%end;&%if;("yyy"="asc" or "yyy"="desc")l%else;b%end;1=%expr(evar.v1)%nn;
-    &p2=%xxx.first_name_key;&n2=%xxx.surname_key;%if;(xxx.occ!=0)&oc2=%xxx.occ;%end;&%if;("yyy"="asc" or "yyy"="desc")l%else;b%end;2=%evar.v2;%nn;
+    &p1=%my_first_name_key;&n1=%my_surname_key;%if;(occ!=0)&oc1=%my_occ;%end;&%if;("yyy"="asc" or "yyy"="desc" or "yyy"="self")l%else;b%end;1=%expr(evar.v1)%nn;
+    &p2=%xxx.first_name_key;&n2=%xxx.surname_key;%if;(xxx.occ!=0)&oc2=%xxx.occ;%end;&%if;("yyy"="asc" or "yyy"="desc" or "yyy"="self")l%else;b%end;2=%evar.v2;%nn;
     %if;(evar.image="off")&image=off;%end;%nn;
     %if;(evar.spouse!="")&spouse=%evar.spouse;%end;%nn;
     %if;(evar.long!="")&long=%evar.long;%end;">%xxx;</a>
@@ -59,7 +60,7 @@
               %foreach;child;
                 %if;(child.index!=ind)
                   %incr_count;
-                  <li>%apply;url("child","")</li>
+                  <li>%apply;url("child","self","father")</li>
                 %end;
               %end;
             </ul>
@@ -71,7 +72,7 @@
             <ul>
               %foreach;child;
                 %incr_count;
-                <li>%apply;url("child","")</li>
+                <li>%apply;url("child","self", "father")</li>
               %end;
             </ul>
           </li>
@@ -87,7 +88,7 @@
             <ul>
               %foreach;child;
                 %incr_count;
-                <li>%apply;url("child","")</li>
+                <li>%apply;url("child","self", "mother")</li>
               %end;
             </ul>
         %end;
@@ -118,7 +119,7 @@
         %if;(level=evar.v2)
           %foreach;descendant; 
             %incr_count;
-            <li>%apply;url("descendant","desc")</li>
+            <li>%apply;url("descendant","desc", "")</li>
           %end;
         %end;
       %end;
@@ -139,7 +140,7 @@
       %if;(level=evar.v1+1)
         %foreach;ancestor;
           %incr_count;
-          <li>%apply;url("ancestor","asc")</li>
+          <li>%apply;url("ancestor","asc", "")</li>
         %end;
       %end;
     %end;
