@@ -11,12 +11,18 @@ p {
 #quickrel.table td{
 	padding: 0px;
 	vertical-align: middle;
-	height: 105px;
+	height: 140px;
 }
 
 #quickrel.table a{
-  height: 105px;
-	width: 100%;
+	height:120px;
+}
+	
+#quickrel.table a.tooltip-inner {
+   white-space: nowrap;
+   overflow: auto;
+   width: auto;
+   max-width: 350px;
 }
 
 /*! Small webfont with 50 monospaced glyphs for descending tree view	p {

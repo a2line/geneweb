@@ -3989,6 +3989,9 @@ sv: barn/barn
 tr: çocuk/çocuklar
 zh:  子女
 
+    cousin.0.1
+->: child/children
+
     children's names changed
 af: kinders se name is verander
 bg: името на детето е променено
@@ -6999,7 +7002,7 @@ co: caccari
 cs: prarodiče
 da: bedsteforældre
 de: Großeltern
-en: grand-parents
+en: grandparents
 eo: geavoj
 es: abuelos
 et: vanavanemad
@@ -7021,6 +7024,12 @@ sk: prarodičia
 sl: stari starši
 sv: farföräldrar/morföräldrar
 tr: büyük ebeveynler
+
+    cousin.2.0
+->: grand-parents
+
+    cousin.2.0 tt
+fr: aïeuls
 
     great-grand-parents
 af: oorgrootouers
@@ -7054,11 +7063,49 @@ sl: prastari starši
 sv: gammel-farföräldrar/gammel-morföräldrar
 tr: büyük-büyük-ebeveynler
 
+    cousin.3.0
+->: great-grand-parents
+
+    cousin.3.0 tt
+fr: bisaïeuls
+
     great-great-grandparents
 de: Ururgroßelternteil
 en: great-great-grandparents
 eo: prapraavo
 fr: arrière-arrière-grands-parents
+
+    cousin.4.0
+->: great-great-grandparents
+
+    cousin.4.0 tt
+fr: trisaïeuls
+
+    cousin.5.0
+en: great-great-great-grandparents
+fr: arrière-arrière-arrière-grands-parents
+
+    cousin.5.0 tt
+fr: quadrisaïeuls
+
+    cousin.6.0
+en: great-great-great-great-grandparents
+fr: arrière-arrière-arrière-arrière-grands-parents
+
+    cousin.6.0 tt
+fr: quinquisaieul
+
+    cousin.7.0 tt
+fr: saxisaieul
+    
+    cousin.8.0 tt
+fr: septisaieul
+        
+    cousin.9.0 tt
+fr: octosaieul 
+            
+    cousin.10.0 tt
+fr: nonosaieul
 
     gregorian/julian/french/hebrew
 af: gregoriaans/juliaans/frans/hebreeus
@@ -11795,6 +11842,13 @@ sv: föräldrar
 tr: ebeveynler
 zh:  父母
 
+    cousin.1.0
+->: parents
+
+    cousin.1.0 tt
+en: father and mother
+fr: père et mère
+
     parrish registrar/parrish registrar/parrish registrar
 de: religiöser Amtsträger/religiöser Amtsträger/religiöser Amtsträger
 en: parish registrar/parish registrar/parish registrar
@@ -13769,6 +13823,12 @@ sl: bratje in sestre
 sv: syskon
 tr: kardeşler
 
+    cousin.1.1
+->: siblings
+
+    cousin.1.1 tt
+fr: siblings<br>adelphes<hr>germains 50 %,<br>consanguins ou utérins 25 %
+
     siblings of the grandparents
 co: arcizii è arcizie
 de: Großonkel und Großtanten
@@ -15091,9 +15151,21 @@ sl: vnuki
 sv: barnbarnen
 tr: torunlar
 
-    grandchild/grandchildren
+    cousin.0.2
 en: grandchild/grandchildren
 fr: petit-enfant/petits-enfants
+
+    cousin.0.2 tt
+en: children of one’s son or daughters
+fr: enfants de son fils ou de sa fille
+
+    cousin.0.3
+en: greant-grandchild/great-grandchildren
+fr: arrière-petit-enfant/arrière-petits-enfants
+
+    cousin.0.3 tt
+en: children of one's grandson or granddaughter
+fr: enfants de son petit-fils ou de sa petite-fille
 
     the grandparents
 af: die grootouers
