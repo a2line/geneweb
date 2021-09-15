@@ -2,7 +2,7 @@
 <html lang="%lang;">
 <head>
   <!-- $Id: cousmenu.txt,v 7.0 11/09/2021 17:26:39 ddr a2 Exp $ -->
-  <!-- Copyright (c) 1998-2021 INRIA -->
+  <!-- Copyright (c) 1998-2022 INRIA -->
   <title>%nn;
     %apply;a_of_b_gr_eq_lev%with;
       [*cousins (general term)]%nn;
@@ -37,7 +37,7 @@
     %(%if;(alias != "") <em>(%alias;)</em>%end;%)
     %sp;[and] [close family]
   </h1>
-  <div class="ml-auto py-0 btn-group%if;(evar.v!="" and evar.v>4) mr-4%end;" role="group" aria-label="generation picker">
+  <div class="ml-auto py-0 btn-group%if;(evar.v!="" and evar.v>3) mr-4%end;" role="group" aria-label="gen. pick">
     %for;i;0;10%apply;picklvl(i)%end;
   </div>
 </div>
@@ -63,10 +63,10 @@
     %end;
   %end;
 %end;
-%define;link(vvv,ttt,ddd)
+%define;link(vvv,lll,ttt,ddd)
  %if("ddd"="disabled" and vvv!=0)
  %else;
-   <td%if;(vvv>0) colspan="%expr(vvv+1)"%end; class="table-%if;(vvv=0)info%elseif;(vvv %2 = 1)primary%else;danger%end;" >
+   <td%if;(vvv>0) colspan="%expr(vvv+1)"%end; %if;(vvv=0)style="width:%expr(100/lll)%%"%end; class="table-%if;(vvv=0)info%elseif;(vvv %2 = 1)primary%else;danger%end;" >
    <div class="%if;(vvv>=0)border-right %(border-bottom %)border-%if;(i=0)success%elseif;(vvv%2=1)primary%else;danger%end;%end;">
    <span class="font-weight-bold"><sup>vvv</sup>/<sub>0</sub></span>
      <a role="button" href="%prefix_base_password;&%access;&m=C&v1=vvv&v2=www" 
@@ -87,9 +87,34 @@
         %end;
       %end;
     %end;
-  
-  %apply;link%with;vvv%and;<span class="badge badge-xl badge-%if;(vvv %2 = 1)primary%else;danger%end;"> %count;</span><br>ttt%and;%if;(count=0)disabled%end;%end;
+  %apply;link%with;vvv%and;%and;<span class="badge badge-xl badge-%if;(vvv %2 = 1)primary%else;danger%end;"> %count;</span><br>ttt%and;%if;(count=0)disabled%end;%end;
 %end;
+
+%( Calcul de la hauteur maximale du tableau descendant, limité en dur à deux fois max la hauteur montante evar.v %)
+%let;maxv;%if;(evar.v="")4%else;%expr(evar.v+1)%end;%in;
+%let;maxw;%if;(evar.v=0)%expr(static_max_desc_level+1)%else;%expr(2*maxv)%end;%in;
+%define;cous(vvv,www)
+  %cousins.vvv.www;
+%end;
+%define;row_counts(xxx)
+  %for;i;0;maxv;
+    %apply;cous%with;%expr(i)%and;%expr(i+xxx)%end;
+  %end;
+%end;
+%reset_count;
+%let;minw;%if;has_children;2%else;1%end;%in;
+%for;i;minw;maxw;
+  %let;row_xxx;%apply;row_counts(i)%in;
+  %let;zero;%for;j;0;maxv;0%end;%in;
+  %if;(row_xxx=zero)%incr_count;%end;
+%end;
+%let;maxdesc;%expr(maxw-count)%in;
+count : %count;
+
+maxw : %maxw;
+
+maxdesc : %maxdesc;
+
 %define;link_cousin(vvv,www,ttt,sss)
   %let;cousin_vvv_www;%if;("v7" in bvar.plugins)%cousins.vvv.www;%end;%in;
   <a role="button" href="%prefix_base_password;%access;&m=C&v1=vvv&v2=www" data-toggle="tooltip" data-html="true" title="sss" class="btn btn-light %if;(cousin_vvv_www!="" and cousin_vvv_www=0) disabled%end; w-100">
@@ -100,13 +125,13 @@
       %else;%cousin_vvv_www;
       %end;</span></br>
     %end;
-    ttt</a><div class="align-end w-100">%(⁂%)%if;(vvv=0)%expr((100/.(2^(vvv+www))))%else;%expr((100/.(2^(vvv+www-1))))%end; %%</div>
+    ttt</a><div>%if;(vvv=0)%expr((100/.(2^(vvv+www))))%else;%expr((100/.(2^(vvv+www-1))))%end; %%</div>
 %end;
-%( table of cousins.i.level-xxx+i  %)
+%( table of cousins.i.level-xxx+i, maxdesc calculé auparavant %)
 %define;table(xxx)
   <table id="quickrel" class="table table-bordered table-responsive-sm text-center mb-0">
     %foreach;cousin_level;
-      %if;(level>0 and level<xxx+4)
+      %if;(level>0 and level<xxx+maxdesc)
         <tr>
           %for;i;0;xxx;
             %if;(i!=0 and level+i=xxx)
@@ -117,8 +142,8 @@
               %end;%)
             %else;
                %if;(i=0 and level=xxx)
-                 %apply;link%with;0%nn;
-                 %and;<b>%if;is_male;[him/her]0%elseif;is_female;[him/her]1%end;</b>%nn;
+                 %apply;link%with;0%and;level%and;
+                 <b>%if;is_male;[him/her]0%elseif;is_female;[him/her]1%end;</b>%nn;
                  %and;disabled%end;
                %else;
                  <td %if;(level=xxx)style="width:%expr(100/xxx)%%"%end; class="table-%if;(i=0)info%elseif;(i %2 = 1)primary%else;danger%end;">
@@ -128,8 +153,6 @@
                        %if;(i=5)arrière-arrière-grands-oncles/tantes
                        %elseif;(i=4)[siblings of the great-grandparents]
                        %elseif;(i=3)[siblings of the grandparents]
-                       %elseif;(i=2)%apply;cousin_lex(2,1)
-                       %elseif;(i=0)[child/children]1
                        %else;%apply;cousin_lex(i,1)
                        %end;
                      %elseif;(level-xxx+i=2)
@@ -138,7 +161,7 @@
                        %elseif;(i=3)oncles/tantes<br>à la mode de Bourgogne/Bretagne
                        %elseif;(i=2)[a cousin]2 germains<br>(ou non)
                        %elseif;(i=1)[a nephew/a niece]4
-                       %else;%apply;cousin_lex(i,level-xxx+i)
+                       %else;%apply;cousin_lex(i,2)
                        %end;
                      %elseif;(level-xxx+i=3)
                        %if;(i=5)cousins issus de germain d’un grand-parent<hr><i>arrière-grands-cousins au 2<sup>e</sup> degré</i>
@@ -146,8 +169,7 @@
                        %elseif;(i=3)[2nd cousins]<hr>cousins remués de germain (vieilli)<hr><i>cousins au 2<sup>e</sup> degré</i>
                        %elseif;(i=2)petits-cousins*<hr>cousins issus de germains des enfants**
                        %elseif;(i=1)[a great-nephew/a great-niece]4
-                       %elseif;(i=0)arrière-petits-enfants
-                       %else;%apply;cousin_lex(i,level-xxx+i)
+                       %else;%apply;cousin_lex(i,3)
                        %end;
                      %elseif;(level-xxx+i=4)
                        %if;(i=5)cousin issus d’issus de germain d’un parent<hr><i>grands-cousins 3<sup>e</sup></i>
@@ -155,8 +177,7 @@
                        %elseif;(i=3)petits-cousins issus de germain*<hr>cousins issus d’issus de germains des enfants**<hr><i>petits-cousins 2<sup>e</sup></i>
                        %elseif;(i=2)arrière-petits-cousins
                        %elseif;(i=1)arrière-petits-neveux/nièces
-                       %elseif;(i=0)arrière-arrière-petits-enfants
-                       %else;%apply;cousin_lex(i,level-xxx+i)
+                       %else;%apply;cousin_lex(i,4)
                        %end;
                      %elseif;(level-xxx+i=5)
                        %if;(i=5)cousins issus d’issus d’issus de germains<hr><b>arrière-petits-cousins</b><hr><i>cousins au 4<sup>e</sup> degré</i>
@@ -194,7 +215,7 @@
                        %elseif;(i=3)%apply;a_of_b%with;[cousins]3%and;[the father/the mother/a parent]2%end;<br><s>petits-oncles</s> (désuet)<br><i>grands-cousins 1<sup>er</sup></i>
                        %elseif;(i=2)cousins au 1<sup>er</sup> degré
                        %elseif;(i=1)cousin·e·s des enfants
-                       %elseif;(i=0)
+                       %else;%apply;cousin_lex_tt(i,2)
                        %end;
                      %else;
                        %apply;cousin_lex_tt(i,level-xxx+i)
