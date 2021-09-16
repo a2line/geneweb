@@ -13,10 +13,6 @@ p {
 	vertical-align: middle;
 	height: 140px;
 }
-
-#quickrel.table a{
-	height:120px;
-}
 	
 #quickrel.table a.tooltip-inner {
    white-space: nowrap;
