@@ -14,11 +14,9 @@ p {
 	height: 140px;
 }
 	
-#quickrel.table a.tooltip-inner {
+.tooltip-inner{
    white-space: nowrap;
-   overflow: auto;
-   width: auto;
-   max-width: 350px;
+   max-width: 450px;
 }
 
 /*! Small webfont with 50 monospaced glyphs for descending tree view	p {
