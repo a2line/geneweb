@@ -262,7 +262,7 @@
       %if;(has_children)%nn;
         , [having as children]0%if;(nb_children>1) %apply;in_full%with;%nb_children;%and;0%end; [child/children]1%end;[:]
         %foreach;child;
-          <ul>%apply;li_SD("child")%nn;
+          <ul>%apply;li_SDC("child")%nn;
             %if;(bvar.always_surname="yes")
               %apply;short_display_person("child")
             %else;
@@ -298,14 +298,13 @@
           %if;(spouse.has_parents)
             <div class="d-inline-flex mt-1 align-self-center">
              <div class="mx-1 text-center align-self-center">
-                  %apply;a_of_b%with;%if;spouse.is_male;[son/daughter/child]0%nn;
-                    %elseif;spouse.is_female;[son/daughter/child]1%nn;%end;
-                  %and;%end;%(<div class="invisible"><br>&#8203;</div>%)
+               %apply;a_of_b%with;%if;spouse.is_male;[son/daughter/child]0%nn;
+                 %elseif;spouse.is_female;[son/daughter/child]1%nn;%end;%and;%end;
               </div>
               <div class="align-self-center mr-1">/<br><br><br>\</div>
               <div class="flex-wrap">
                 %foreach;spouse.parent;
-                  %(%if;(father!="" and parent.is_female)<div class="ml-2 mr-1 align-self-center text-center">[and]<div class="invisible"><br>&#8203;</div></div>%end;%)
+                  
                   <div class="d-inline-flex col %if;(parent.is_male)mb-1%end; px-1">
                     %if;parent.has_image;
                       %if;(not cancel_links)
@@ -360,7 +359,7 @@
                   <span class="small_image noimage align-self-center rounded display-3 text-center text-muted ml-2 pb-2">&nbsp;</span>
                 %end;
                 <div class="ml-2 align-self-center">
-                  %if;(count2=0)<ul>%apply;li_SD("child")%end;%nn;
+                  %if;(count2=0)<ul>%apply;li_SDC("child")%end;%nn;
                   %apply;short_display_person_noname%with;child%and;br%and;age%and;%count1;%and;%end;%nn;
                   %if;(count2=0)</li></ul>%end;
                 </div>
