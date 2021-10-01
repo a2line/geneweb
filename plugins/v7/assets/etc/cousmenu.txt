@@ -26,7 +26,9 @@
 %include;perso_utils
 %include;menubar
 %define;picklvl(vvv)
-  <a role="button" class="btn btn-primary btn-sm my-3 %if;((evar.v="" and vvv=3) or (evar.v!="" and evar.v=vvv)) disabled%end; align-self-center" href="%prefix_base_password;%foreach;env_binding;%if;(env.val!="" and env.key!="v")&%env.key=%env.val;%end;%end;%if;(vvv!=3)&v=%expr(vvv)%end;" title="[*maximum degre of ascendant parentship]">vvv</a>
+  <a role="button" class="btn btn-primary btn-sm%if;((evar.v="" and vvv=3) or (evar.v!="" and evar.v=vvv)) disabled%end; align-self-center" 
+  href="%prefix_base_password;%foreach;env_binding;%if;(env.val!="" and env.key!="v")&%env.key=%env.val;%end;%end;%if;(vvv!=3)&v=%expr(vvv)%end;" 
+  title="[*maximum degre of ascendant parentship]">vvv</a>
 %end;
 <div class="d-flex justify-content-between">
   <h1>%nn;
@@ -70,7 +72,8 @@
   %end;
 %end;
 %define;link(vvv,lll,ttt,ddd)
- %let;width;%expr((100/(evar.v+1))*vvv)%in;
+ %let;evarv;%if;(evar.v="")3%else;%evar.v;%end;%in;
+ %let;width;%expr((100/(evarv+1))*vvv)%in;
  %if("ddd"="disabled" and vvv!=0)
  %else;
    <td%if;(vvv>0) colspan="%expr(vvv+1)"%end; %if;(vvv=0)style="width:%expr(100/lll)%%"%end; class="table-%if;(vvv=0)info%elseif;(vvv %2 = 1)primary%else;danger%end;" >
@@ -80,7 +83,7 @@
         class="btn btn-light ddd w-100"%if;(vvv<5) style="height:120px;"%end;
          data-toggle="tooltip" data-html="true" title="%apply;cousin_lex_tt(vvv,0)">
          %if;(vvv=0)<span class="badge badge-success">1</span><br>%end;ttt%nn;
-         %if;(vvv<10)<div class="d-flex justify-content-center"><div class="mt-1 small text-muted col-11">%apply;list_ancestor(vvv)</div></div></a>%end;
+         %if;(vvv<10)<div class="d-flex justify-content-center"><div class="mt-1 mx-3 small text-muted">%apply;list_ancestor(vvv)</div></div></a>%end;
       <div>%expr(100/.(2^vvv)) %%</div>
       </div>
     </td>
@@ -101,6 +104,7 @@
 %let;maxv;%if;(evar.v="")4%else;%expr(evar.v+1)%end;%in;
 %let;maxw;%if;(evar.v=0 or (2*maxv<static_max_desc_level+1 and static_max_desc_level<10))%expr(static_max_desc_level+2)%else;%expr(2*maxv)%end;%in;
 %let;minw;%if;has_children;2%else;1%end;%in;
+%let;zero;%for;i;0;maxv;0%end;%in;
 %define;cous(vvv,www)
   %cousins.vvv.www;
 %end;
@@ -111,10 +115,14 @@
 %end;
 %reset_count;
 %for;i;minw;maxw;
-  %let;row_xxx;%apply;row_counts(i)%in;
-  %if;(row_xxx<=0)%incr_count;%end;
+  %let;row;%apply;row_counts(i)%in;
+  %if;(row=zero)%incr_count;%end;
 %end;
 %let;maxdesc;%expr(maxw-count)%in;
+%(COUNT : %count;|
+ROW : %maxw;|
+ZERO : %zero;|
+MAXDESC : %maxdesc;%)
 %define;link_cousin(vvv,www,ttt,sss)
   %let;cousin_vvv_www;%if;("v7" in bvar.plugins)%cousins.vvv.www;%end;%in;
   <a role="button" href="%prefix_base_password;%access;&m=C&v1=vvv&v2=www" data-toggle="tooltip" data-html="true" title="sss" class="btn btn-light %if;(cousin_vvv_www!="" and cousin_vvv_www=0) disabled%end; w-100" %if;(www-vvv<=10) style="height:120px;"%end;>
@@ -129,38 +137,36 @@
 %end;
 %( table of cousins.i.j-xxx+i, maxdesc calculé auparavant %)
 %define;table(xxx)
+  %let;max;%expr(maxdesc+xxx)%in;
   <table id="quickrel" class="table table-bordered table-responsive-sm text-center mb-0">
-    %for;j;0;15;
-      %if;(j>0 and j<xxx+maxdesc)
-        <tr>
-          %for;i;0;xxx;
-            %if;(i!=0 and j+i=xxx)
-              %apply;one_ancestor%with;%i%and;%apply;cousin_lex(i,0)%end;
-            %elseif;(j+i<xxx)
-              %(%if;(i!=0)
-                <td class="border-0"></td>
-              %end;%)
-            %else;
-               %if;(i=0 and j=xxx)
-                 %apply;link%with;0%and;j%and;
-                 <b>%if;is_male;[him/her]0%elseif;is_female;[him/her]1%end;</b>%nn;
-                 %and;disabled%end;
-               %else;
-                 <td %if;(j=xxx)style="width:%expr(100/xxx)%%"%end; class="table-%if;(i=0)info%elseif;(i %2 = 1)primary%else;danger%end;">
-                   <div class="%if;(i>=0)border-right %(border-bottom %)border-%if;(i=0)success%elseif;(i%2=1)primary%else;danger%end;%end; d-flex flex-column justify-content-between">
-                     <span class="font-weight-bold"><sup>%i;</sup>/<sub>%expr(j-xxx+i)</sub></span>
-%( TODO : traiter le cas neveux4 et petit-neveux4 %)
-                     %apply;link_cousin%with;%i;%and;%expr(j-xxx+i)
-                       %and;%apply;cousin_lex(i,j-xxx+i)
-                       %and;%apply;cousin_lex_tt(i,j-xxx+i)
-                     %end;
-                   </div>
-                 </td>
-               %end;
-            %end;
+    %for;j;0;max;
+      <tr>
+        %for;i;0;xxx;
+          %if;(i!=0 and j+i=xxx)
+            %apply;one_ancestor%with;%i%and;%apply;cousin_lex(i,0)%end;
+          %elseif;(j+i<xxx)
+            %(%if;(i!=0)
+              <td class="border-0"></td>
+            %end;%)
+          %else;
+             %if;(i=0 and j=xxx)
+               %apply;link%with;0%and;j%and;
+               <b>%if;is_male;[him/her]0%elseif;is_female;[him/her]1%end;</b>%nn;
+               %and;disabled%end;
+             %else;
+               <td %if;(j=xxx)style="width:%expr(100/xxx)%%"%end; class="table-%if;(i=0)info%elseif;(i %2 = 1)primary%else;danger%end;">
+                 <div class="%if;(i>=0)border-right %(border-bottom %)border-%if;(i=0)success%elseif;(i%2=1)primary%else;danger%end;%end; d-flex flex-column justify-content-between">
+                   <span class="font-weight-bold"><sup>%i;</sup>/<sub>%expr(j-xxx+i)</sub></span>
+                   %apply;link_cousin%with;%i;%and;%expr(j-xxx+i)
+                     %and;%apply;cousin_lex(i,j-xxx+i)
+                     %and;%apply;cousin_lex_tt(i,j-xxx+i)
+                   %end;
+                 </div>
+               </td>
+             %end;
           %end;
-        </tr>
-      %end;
+        %end;
+      </tr>
     %end;
     <tr>
       <td colspan="%xxx;">Descendants of only one ancestor are included in counts (half-siblings/half-cousins&hellip;)<br>%% moyen de gène en commun en fonction du lien de parenté<br>Shared DNA %% is divided by two for “half-relations”: full siblings 50 %% > half-siblings 25 %%</td>

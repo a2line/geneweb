@@ -1172,25 +1172,28 @@ fr: petits-cousins au 1<sup>er</sup> degré<br>neveux et nièces à la mode de B
 fr: arrière-petit-cousin/arrière-petits-cousins
 
     cousin.2.4 tt
-fr: …au 1<sup>er</sup> degré<hr>fils d’un petit-cousin ou d’une petite cousine
+fr: arrière-petits-cousins au 1<sup>er</sup> degré<hr>fils d’un petit-cousin ou d’une petite cousine
 
     cousin.2.5
 fr: arrière-arrière-petit-cousin/arrière-arrière-petits-cousins
 
     cousin.2.5 tt
-fr: 2 × arrière-petits-cousins au 1<sup>er</sup> degré
+fr: deux fois arrière-petits-cousins au 1<sup>er</sup> degré
 
     cousin.2.6
 fr: arrière-arrière-arrière-petit-cousin/arrière-arrière-arrière-petits-cousins
 
     cousin.2.6 tt
-fr: 3 × arrière-petits-cousins au 1<sup>er</sup> degré
+fr: trois fois arrière-petits-cousins au 1<sup>er</sup> degré
 
     cousin.2.7
 fr: arrière-arrière-arrière-arrière-petit-cousin/arrière-arrière-arrière-arrière-petits-cousins
 
     cousin.2.7 tt
-fr: 4 × arrière-petits-cousins au 1<sup>er</sup> degré
+fr: quatre fois arrière-petits-cousins au 1<sup>er</sup> degré
+
+
+
 
     a descendant
 af: 'n afstammeling
@@ -1393,13 +1396,26 @@ fr: arrière-neveux et arrière-nièces (soutenu)<br>enfant d’un neveu ou d’
 
     cousin.1.4
 en: great-grandnephew/great-grandnephews
-fr: arrière-petit-neveu et arrière-petite-nièce/arrière-petits-neveux et arrière-petites-nièces
+fr: arrière-petit-neveu/arrière-petits-neveux
 
     cousin.1.4 tt
 fr: enfant d’un petit-neveu ou d’une petit-nièce
 
     cousin.1.5
-fr: arrière-arrière-petit-neveu et arrière-arrière-petite-nièce/arrière-arrière-petits-neveux et arrière-arrière-petites-nièces
+en: great-great-grandnephew/great-great-grandnephews
+fr: arrière-arrière-petit-neveu/arrière-arrière-petits-neveux
+
+    cousin.1.6
+fr: trois fois arrière-petits-neveux
+
+    cousin.1.7
+fr: quatre fois arrière-petits-neveux
+
+    cousin.1.8
+fr: cinq fois arrière-petits-neveux
+
+    cousin.1.9
+fr: six fois arrière-petits-neveux
 
     a great-uncle/a great-aunt
 af: 'n grootoom/'n groottante
@@ -15385,6 +15401,32 @@ fr: arrière-arrière-petit-enfant/arrière-arrière-petits-enfants
     cousin.0.4 tt
 en: children of one’s great-grandson or great-granddaughter
 fr: enfants de son arrière-petit-fils ou de son arrière-petite-fille
+
+    cousin.0.5
+en: third great-grandchild/third great-grandchildren
+fr: trois fois arrière-petit-enfant/trois fois arrière-petits-enfants
+
+    cousin.0.5 tt
+en: three times great-grandchildren
+
+    cousin.0.6
+en: fourth great-grandchild/fourth great-grandchildren
+fr: quatre fois arrière-petit-enfant/quatre fois arrière-petits-enfants
+
+    cousin.0.6 tt
+en: four times great-grandchildren
+
+    cousin.0.7
+en: fifth great-grandchild/fifth great-grandchildren
+fr: cinq fois arrière-petit-enfant/cinq fois arrière-petits-enfants
+
+    cousin.0.8
+en: sixth great-grandchild/sixth great-grandchildren
+fr: six fois arrière-petit-enfant/six fois arrière-petits-enfants
+
+    cousin.0.9
+en: seventh great-grandchild/seventh great-grandchildren
+fr: sept fois arrière-petit-enfant/sept fois arrière-petits-enfants
 
     the grandparents
 af: die grootouers
