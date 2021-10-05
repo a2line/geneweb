@@ -1162,7 +1162,7 @@ fr: cousins
 fr: cousins au 1<sup>er</sup> degré<br>cousins germains ou non
 
     cousin.2.3
-en: 1st cousin once removed
+en: 1st cousins once removed
 fr: petit-cousin/petits-cousins
 
     cousin.2.3 tt
@@ -1178,19 +1178,19 @@ fr: arrière-petits-cousins au 1<sup>er</sup> degré<hr>fils d’un petit-cousin
 fr: arrière-arrière-petit-cousin/arrière-arrière-petits-cousins
 
     cousin.2.5 tt
-fr: deux fois arrière-petits-cousins au 1<sup>er</sup> degré
+fr: deux-fois-arrière-petits-cousins au 1<sup>er</sup> degré
 
     cousin.2.6
-fr: arrière-arrière-arrière-petit-cousin/arrière-arrière-arrière-petits-cousins
+fr: trois-fois-arrière-petit-cousin/trois-fois-arrière-petits-cousins
 
     cousin.2.6 tt
-fr: trois fois arrière-petits-cousins au 1<sup>er</sup> degré
+fr: trois-fois-arrière-petits-cousins au 1<sup>er</sup> degré
 
     cousin.2.7
-fr: arrière-arrière-arrière-arrière-petit-cousin/arrière-arrière-arrière-arrière-petits-cousins
+fr: quatre-fois-arrière-petit-cousin/quatre-fois-arrière-petits-cousins
 
     cousin.2.7 tt
-fr: quatre fois arrière-petits-cousins au 1<sup>er</sup> degré
+fr: quatre-fois-arrière-petits-cousins au 1<sup>er</sup> degré
 
 
 
@@ -1388,8 +1388,8 @@ sv: en gammel-nevö/en gammel-niece
 tr: bir büyük yeğen/bir büyük yeğen/büyük yeğen/büyük yeğen/büyük yeğenler ve büyük yeğenler
 
     cousin.1.3
-en: grandnephew and grandniece/grandnephews and grandnieces
-fr: petit-neveu et petite-nièce/petits-neveux et petites-nièces
+en: grandnephews
+fr: petits-neveux
 
     cousin.1.3 tt
 fr: arrière-neveux et arrière-nièces (soutenu)<br>enfant d’un neveu ou d’une nièce
@@ -1406,16 +1406,16 @@ en: great-great-grandnephew/great-great-grandnephews
 fr: arrière-arrière-petit-neveu/arrière-arrière-petits-neveux
 
     cousin.1.6
-fr: trois fois arrière-petits-neveux
+fr: trois-fois-arrière-petits-neveux
 
     cousin.1.7
-fr: quatre fois arrière-petits-neveux
+fr: quatre-fois-arrière-petits-neveux
 
     cousin.1.8
-fr: cinq fois arrière-petits-neveux
+fr: cinq-fois-arrière-petits-neveux
 
     cousin.1.9
-fr: six fois arrière-petits-neveux
+fr: six-fois-arrière-petits-neveux
 
     a great-uncle/a great-aunt
 af: 'n grootoom/'n groottante
@@ -1532,6 +1532,7 @@ sv: en nevö/en niece/nevöer/niecer/nevöer och niecer
 tr: bir yeğen/bir yeğen/yeğenler/yeğenler/yeğenler ve yeğenler
 
     cousin.1.2
+en: nephew and nieces
 fr: neveux et nièces
 
     cousin.1.2 tt
@@ -7171,13 +7172,14 @@ fr: quadrisaïeuls (quadrisaïeux)<br>quartaïeuls
 
     cousin.6.0
 en: great-great-great-great-grandparents
-fr: quatre fois-arrière-grands-parents
+fr: quatre-fois-arrière-grands-parents
 
     cousin.6.0 tt
 fr: quintaïeuls<br>quinquisaïeuls
 
     cousin.7.0
-fr: cinq fois arrière-grands-parents
+fr: cinq-fois-arrière-grands-parents
+
     cousin.7.0 tt
 fr: sextaïeuls<br>saxisaïeuls
     
@@ -13561,7 +13563,7 @@ de: auf die Person klicken, zu der Sie das Verwandtschaftsverhältnis berechnen 
 en: click an individual below to calculate the family link.
 es: pulse en la persona con la que quiere realizar un cálculo de parentesco.
 fi: napsauta henkilöä, jonka sukulaisuusasteen haluat laskea.
-fr: cliquez sur la personne avec laquelle vous souhaitez réaliser un calcul de parenté.
+fr: sélectionnez un proche pour obtenir le lien de parenté.
 it: clicca sulla persona per la quale vuoi fare un calcolo di parentela.
 nl: op de persoon klikken van waaruit u een verwantschapsberekening wenst.
 no: klikk på personen som du vil beregne slektskapsgraden til.
@@ -13915,8 +13917,8 @@ fr: siblings ou adelphes<hr>germains 50 %,<br>consanguins ou utérins 25 %
     siblings of the grandparents
 co: arcizii è arcizie
 de: Großonkel und Großtanten
-en: granduncles and grandaunts
-fr: grands-oncles et grandes-tantes
+en: granduncles
+fr: grands-oncles
 it: prozii e prozie
 pt: tios-avôs e tias-avós
 sv: syskon till far- och morföräldrar
@@ -13956,12 +13958,12 @@ fr: arrière-petits-cousins au 2<sup>e</sup> degré
 fr: arrière-arrière-petits-cousins 2<sup>e</sup>
 
     cousin.3.6 tt
-fr: deux fois arrière-petits-cousins au 2<sup>e</sup> degré
+fr: deux-fois-arrière-petits-cousins au deuxième degré
 
     siblings of the great-grandparents
 co: fratelli è surelle di l’arcicaccari
 de: Geschwister der Urgroßeltern
-en: great-granduncles and great-grandaunts
+en: great-granduncles
 fr: arrières-grands-oncles
 pt: tios-bisavôs e tias-bisavós
 sv: syskon till föräldrar tre generationer bakåt
@@ -14007,7 +14009,7 @@ fr: arrière-petits-cousins au 3<sup>e</sup> degré
 fr: arrière-arrière-petits-cousins 3<sup>e</sup>
 
     cousin.4.7 tt
-fr: deux fois arrière-petits-cousins au 3<sup>e</sup> degré
+fr: deux-fois-arrière-petits-cousins au troisième degré
 
     cousin.5.1
 fr: arrière-arrière-grands-oncles
@@ -14055,22 +14057,22 @@ fr: arrière-petits-cousins au quatrième degré
 fr: arrière-arrière-petits-cousins 4<sup>e</sup>
 
     cousin.5.8 tt
-fr: deux fois arrière-petits-cousins au quatrième degrés
+fr: deux-fois-arrière-petits-cousins au quatrième degrés
 
     cousin.6.1
-fr: arrière-arrière-arrière-grands-oncles
+fr: trois-fois-arrière-grands-oncles
 
     cousin.6.1 tt
-fr: frères et sœurs des quadrisaïeuls<hr>trois fois arrière-grands-oncles
+fr: frères et sœurs des quadrisaïeuls<hr>trois-fois-arrière-grands-oncles
 
     cousin.7.1
-fr: quatre fois arrière-grands-oncles
+fr: quatre-fois-arrière-grands-oncles
 
     cousin.7.1 tt
 fr: frères et sœurs des quinquisaïeuls
 
     cousin.8.1
-fr: cinq fois arrière-grands-oncles
+fr: cinq-fois-arrière-grands-oncles
 
     cousin.8.1 tt
 fr: frères et sœurs des quinquisaïeuls
@@ -15404,29 +15406,29 @@ fr: enfants de son arrière-petit-fils ou de son arrière-petite-fille
 
     cousin.0.5
 en: third great-grandchild/third great-grandchildren
-fr: trois fois arrière-petit-enfant/trois fois arrière-petits-enfants
+fr: trois-fois-arrière-petit-enfant/trois-fois-arrière-petits-enfants
 
     cousin.0.5 tt
 en: three times great-grandchildren
 
     cousin.0.6
 en: fourth great-grandchild/fourth great-grandchildren
-fr: quatre fois arrière-petit-enfant/quatre fois arrière-petits-enfants
+fr: quatre-fois-arrière-petit-enfant/quatre-fois-arrière-petits-enfants
 
     cousin.0.6 tt
 en: four times great-grandchildren
 
     cousin.0.7
 en: fifth great-grandchild/fifth great-grandchildren
-fr: cinq fois arrière-petit-enfant/cinq fois arrière-petits-enfants
+fr: cinq-fois-arrière-petit-enfant/cinq-fois-arrière-petits-enfants
 
     cousin.0.8
 en: sixth great-grandchild/sixth great-grandchildren
-fr: six fois arrière-petit-enfant/six fois arrière-petits-enfants
+fr: six-fois-arrière-petit-enfant/six-fois-arrière-petits-enfants
 
     cousin.0.9
 en: seventh great-grandchild/seventh great-grandchildren
-fr: sept fois arrière-petit-enfant/sept fois arrière-petits-enfants
+fr: sept-fois-arrière-petit-enfant/sept-fois-arrière-petits-enfants
 
     the grandparents
 af: die grootouers

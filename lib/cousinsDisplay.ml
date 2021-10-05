@@ -10,11 +10,7 @@ let default_max_cnt = Cousins.default_max_cnt
 
 let brother_label conf x =
   match x with
-    1 -> transl conf "siblings"
-  | 2 -> transl conf "cousins"
-  | 3 -> transl conf "2nd cousins"
-  | 4 -> transl conf "3rd cousins"
-  | n ->
+    n ->
     Printf.sprintf (ftransl conf "%s cousins")
       (transl_nth conf "nth (cousin)" (n - 1))
 
@@ -226,36 +222,20 @@ let print_cousins conf base p lev1 lev2 =
         (if h then gen_person_text_no_html raw_access conf base p else txt)
         txt
     in
-    if lev1 = lev2 then
+    if lev1 = lev2 && lev1 > 9 then
       let s = txt_fun (brother_label conf lev1) in
       Output.print_string conf (Utf8.capitalize_fst (Util.translate_eval s))
-    else if lev1 = 2 && lev2 = 1 then
-      let s = txt_fun (transl_nth conf "an uncle/an aunt" 4) in
-      Output.print_string conf (Utf8.capitalize_fst (Util.translate_eval s))
-    else if lev1 = 3 && lev2 = 1 then
-      let s = txt_fun (transl_nth conf "a great-uncle/a great-aunt" 4) in
-      Output.print_string conf (Utf8.capitalize_fst (Util.translate_eval s))
-    else if lev1 = 1 && lev2 = 2 then
-      let s = txt_fun (transl_nth conf "a nephew/a niece" 4) in
-      Output.print_string conf (Utf8.capitalize_fst (Util.translate_eval s))
-    else if lev1 = 1 && lev2 = 3 then
-      let s = txt_fun (transl_nth conf "a great-nephew/a great-niece" 4) in
-      Output.print_string conf (Utf8.capitalize_fst (Util.translate_eval s))
     else
-      Output.printf conf "%s %d / %s %d" (Utf8.capitalize_fst (transl conf "ancestors")) lev1
-        (transl conf "descendants") lev2
+      Output.printf conf "%d / %d" lev1 lev2
   in
   let max_cnt =
     try int_of_string (List.assoc "max_cousins" conf.base_env) with
       Not_found | Failure _ -> default_max_cnt
   in
   Perso.interp_notempl_with_menu title "perso_header" conf base p;
-  Output.print_string conf "<div>\n";
-  (*include_templ conf "cousins_tools";*)
   Output.print_string conf "<h3>\n";
   title false;
   Output.print_string conf "</h3>\n";
-  Output.print_string conf "</div>\n";
   cnt := 0;
   (* Construction de la table des sosa de la base *)
   let () = Perso.build_sosa_ht conf base in
