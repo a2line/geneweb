@@ -56,22 +56,23 @@
   %if;([cousin.vvv.www tt]!="[cousin.vvv.www tt]")[cousin.vvv.www tt]1%else;%end;
 %end;
 %define;list_ancestor(vvv)
+  %reset_count;%reset_count2;
   %foreach;ancestor_level;
     %if;(level=vvv+1)
       %foreach;ancestor;
+        %incr_count;
         %if;(is_first)<span class="text-nowrap">%nn;
         %else;
-          %if;(ancestor.is_male)</span> <span class="text-nowrap">%end;
+          %if;(count%2=1)%if;(ancestor="? ?")%incr_count2;%else;</span> <span class="text-nowrap">%end;%end;
         %end;
-        %if;(ancestor.is_female and not is_first) & %end;%ancestor;%nn;
-        %if;(not is_last)%if;(ancestor.is_female) · %end;
-          %else;</span>
-        %end;
+        %if;(count%2=0 and ancestor!="? ?" and count2!=1) & %end;
+        %if;(ancestor!="? ?")%ancestor;%end;
+        %if;(count%2=0)%reset_count2;%if;(not is_last) • %else;</span>%end;%end;
       %end;
     %end;
   %end;
 %end;
-%define;link(vvv,lll,ttt,ddd)
+%define;link(vvv,lll,ttt,ddd,ccc)
  %let;evarv;%if;(evar.v="")3%else;%evar.v;%end;%in;
  %let;width;%expr((100/(evarv+1))*vvv)%in;
  %if("ddd"="disabled" and vvv!=0)
@@ -90,15 +91,16 @@
   %end;
 %end;
 %define;one_ancestor(vvv,ttt)
-  %reset_count;
+  %reset_count;%reset_count1;
     %foreach;ancestor_level;
       %if;(level=vvv+1)
         %foreach;ancestor;
           %incr_count;
+          %if;(ancestor="? ?")%incr_count1;%end;
         %end;
       %end;
     %end;
-  %apply;link%with;vvv%and;%and;<span class="badge badge-xl badge-%if;(vvv %2 = 1)primary%else;danger%end;"> %count;</span><br>ttt%and;%if;(count=0)disabled%end;%end;
+  %apply;link%with;vvv%and;%and;<span class="badge badge-xl badge-%if;(vvv %2 = 1)primary%else;danger%end;"> %expr(count-count1)</span><br>ttt%and;%if;(count=0)disabled%end;%and;%end;
 %end;
 %( Calcul de la hauteur maximale du tableau descendant, limité en dur à deux fois max la hauteur montante evar.v %)
 %let;maxv;%if;(evar.v="")4%else;%expr(evar.v+1)%end;%in;
@@ -152,7 +154,7 @@ MAXDESC : %maxdesc;%)
              %if;(i=0 and j=xxx)
                %apply;link%with;0%and;j%and;
                <b>%if;is_male;[him/her]0%elseif;is_female;[him/her]1%end;</b>%nn;
-               %and;disabled%end;
+               %and;disabled%and;%end;
              %else;
                <td %if;(j=xxx)style="width:%expr(100/xxx)%%"%end; class="table-%if;(i=0)info%elseif;(i %2 = 1)primary%else;danger%end;">
                  <div class="%if;(i>=0)border-right %(border-bottom %)border-%if;(i=0)success%elseif;(i%2=1)primary%else;danger%end;%end; d-flex flex-column justify-content-between">

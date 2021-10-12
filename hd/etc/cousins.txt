@@ -27,39 +27,46 @@
 %let;my_first_name_key;%first_name_key;%in;
 %let;my_surname_key;%surname_key;%in;
 %let;my_occ;%occ;%in
-%define;url(xxx,yyy,zzz)
+%define;url(xxx,yyy)
   <a href="%prefix;m=RL%nn;
-    %if;("yyy"="asc")&p=%xxx.first_name_key;&n=%xxx.surname_key;%if;(xxx.occ!=0)&oc=%xxx.occ;%end;
-    %elseif;("yyy"="desc")&p=%my_first_name_key;&n=%my_surname_key;%if;(occ!=0)&oc=%my_occ;%end;
-    %elseif;("yyy"="self")&p=%zzz.first_name_key;&n=%zzz.surname_key;%if;(occ!=0)&oc=%zzz.occ;%end;
+    %if;("xxx"="ancestor")&p=%xxx.first_name_key;&n=%xxx.surname_key;%if;(xxx.occ!=0)&oc=%xxx.occ;%end;
+    %elseif;("xxx"="descendant")&p=%my_first_name_key;&n=%my_surname_key;%if;(occ!=0)&oc=%my_occ;%end;
+    %elseif;("xxx"="child")&p=%yyy.first_name_key;&n=%yyy.surname_key;%if;(occ!=0)&oc=%yyy.occ;%end;
     %end;%nn;
-    &p1=%my_first_name_key;&n1=%my_surname_key;%if;(occ!=0)&oc1=%my_occ;%end;&%if;("yyy"="asc" or "yyy"="desc" or "yyy"="self")l%else;b%end;1=%expr(evar.v1)%nn;
-    &p2=%xxx.first_name_key;&n2=%xxx.surname_key;%if;(xxx.occ!=0)&oc2=%xxx.occ;%end;&%if;("yyy"="asc" or "yyy"="desc" or "yyy"="self")l%else;b%end;2=%evar.v2;%nn;
+    &p1=%my_first_name_key;&n1=%my_surname_key;%if;(occ!=0)&oc1=%my_occ;%end;&%if;("xxx"="ancestor" or "xxx"="descendant" or "xxx"="child")l%else;b%end;1=%evar.v1;%nn;
+    &p2=%xxx.first_name_key;&n2=%xxx.surname_key;%if;(xxx.occ!=0)&oc2=%xxx.occ;%end;&%if;("xxx"="ancestor" or "xxx"="descendant" or "xxx"="child")l%else;b%end;2=%evar.v2;%nn;
     %if;(evar.image="off")&image=off;%end;%nn;
     %if;(evar.spouse!="")&spouse=%evar.spouse;%end;%nn;
-    %if;(evar.long!="")&long=%evar.long;%end;">%xxx;</a>
+    %if;(evar.long!="")&long=%evar.long;%end;">%xxx; %xxx.dates;</a>
+    %if;(evar.spouse="on" and "xxx"!="ancestor")%foreach;family;%if;(xxx.spouse!="? ?") & %xxx.spouse; %xxx.spouse.dates;%end;%end;%end;
 %end;
-
 %define;cousin_lex(vvv,www)
   [*cousin.vvv.www]1
 %end;
-<h3>%apply;a_of_b%with;%apply;cousin_lex(evar.v1,evar.v2)%and;%self;%end;</h3>
+%empty_sorted_list;
+%define;add_to_sorted_list(xxx,ccc)
+  %apply;add_in_sorted_list%with;&i%expr(ccc+1)=%xxx.index;%end;
+%end;
+<h3>%if;(evar.v1=0 and evar.v2=0)%if;(sex=0)[*him/her]0%else;[*him/her]1%end;
+   %else;<h3>%apply;a_of_b%with;%apply;cousin_lex(evar.v1,evar.v2)%and;%self;%end;%end;</h3>
+%( siblings and half-siblings %)
 %if;(evar.v1=1 and evar.v2=1)
   %if;(has_parents)
-    %let;ind;%self.index;%in;
+    %let;my_index;%self.index;%in;
     %let;my_father;%self.father;%in;
     %let;my_mother;%self.mother;%in;
     %if;father.has_children;
     <ul>
       %foreach;father.family;
         %if;(has_children and father.spouse = my_mother)
-          <li>%apply;on_side%with;%father;%end; [and] %father.spouse;</li>
+          <li>%apply;on_side%with;%father;%end; [and] %father.spouse;[:]</li>
             <ul>
               %reset_count;
               %foreach;child;
-                %if;(child.index!=ind)
+                %if;(child.index!=my_index)
                   %incr_count;
-                  <li>%apply;url("child","self","father")</li>
+                  <li>%apply;url("child","father")</li>
+                  %apply;add_to_sorted_list("child",count)
                 %end;
               %end;
             </ul>
@@ -67,11 +74,12 @@
       %end;
       %foreach;father.family;
         %if;(has_children and father.spouse != my_mother)
-          <li>%apply;on_side%with;%father;%end; [and] %father.spouse;</li>
+          <li>%apply;on_side%with;%father;%end; [and] %father.spouse;[:]</li>
             <ul>
               %foreach;child;
                 %incr_count;
-                <li>%apply;url("child","self", "father")</li>
+                <li>%apply;url("child","father")</li>
+                %apply;add_to_sorted_list("child",count)
               %end;
             </ul>
           </li>
@@ -83,11 +91,12 @@
     <ul>
       %foreach;mother.family;
         %if;(has_children and mother.spouse != my_father)
-          <li>%apply;on_side%with;%mother;%end; [and] %mother.spouse;</li>
+          <li>%apply;on_side%with;%mother;%end; [and] %mother.spouse;[:]</li>
             <ul>
               %foreach;child;
                 %incr_count;
-                <li>%apply;url("child","self", "mother")</li>
+                <li>%apply;url("child","mother")</li>
+                %apply;add_to_sorted_list("child",count)
               %end;
             </ul>
         %end;
@@ -103,34 +112,45 @@
               %if;(evar.spouse!="")&spouse=%evar.spouse;%end;%nn;
               %if;(evar.long!="")&long=%evar.long;%end;">%self;</a>
   %else;
-    <ul>
-      %reset_count;
-      %foreach;descendant_level;
-        %if;(level=evar.v2)
-          %foreach;descendant; 
-            %incr_count;
-            <li>%apply;url("descendant","desc", "")</li>
-          %end;
-        %end;
-      %end;
-    </ul>
-  %end;
-%elseif;(evar.v2=0)
-  <ul>
     %reset_count;
-    %foreach;ancestor_level;
-      %if;(level=evar.v1+1)
-        %foreach;ancestor;
+    <ul>
+    %foreach;descendant_level;
+      %if;(level=evar.v2)
+        %foreach;descendant;
           %incr_count;
-          <li>%apply;url("ancestor","asc", "")</li>
+          <li>%apply;url("descendant","")</li>
+          %apply;add_to_sorted_list("descendant",count)
         %end;
       %end;
     %end;
+    </ul>
+  %end;
+%elseif;(evar.v2=0)
+  %reset_count;%reset_count1;%reset_count2;
+  <ul>
+  %foreach;ancestor_level;
+    %if;(level=evar.v1+1)
+      %foreach;ancestor;
+        %incr_count;
+        %if;(count%2=1)<li>%if;(ancestor="? ?")%incr_count1;%end;%end;
+        %if;(count%2=0 and ancestor!="? ?" and count1!=1) & %end;
+        %if;(ancestor!="? ?")%apply;url("ancestor","")%end;
+        %if;(count%2=0)</li>%reset_count1;%end;
+        %apply;add_to_sorted_list("ancestor",count)
+        %if;(ancestor="? ?")%incr_count2;%end;
+      %end;
+    %end;
+  %end;
   </ul>
 %else;
  That should not happen!
 %end;
-<div class="my-3">Total[:] %count; %if;(count=0 or count=1)[person/persons]0%else;[person/persons]1%end;.</div>
+
+<a id="RLM" href="%prefix;m=RLM&spouse=on&i1=%index;%foreach;sorted_list_item;%item.1;%end;"><span class="d-inline-block fa-flip-vertical"><i class="fa fa-project-diagram fa-rotate-270 mr-1"></i></span> Graphe RLM</a>
+%if;(evar.v2=0 or evar.v2="")<a id="asc" class="ml-3" href="%prefix;m=A&t=T&%access;&spouse=on&v=%evar.v1;"><i class="fa fa-sitemap fa-rotate-180 fa-fw mr-1"></i>Graphe ASC.</a>%end;
+%if;(evar.v1=0 and evar.v2>0)<a id="desc" class="ml-3" href="%prefix;m=D&t=T&%access;&spouse=on&v=%evar.v2;"><i class="fa fa-sitemap fa-fw mr-1"></i>Graphe DESC.</a>%end;
+
+<div class="my-3">Total[:] %if;(evar.v2=0)%expr(count-count2)%else;%count;%end; %if;(count=0 or count=1)[person/persons]0%else;[person/persons]1%end;.</div>
 %include;trl
 %include;copyr
 </div>

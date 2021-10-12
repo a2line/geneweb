@@ -7168,7 +7168,7 @@ en: great-great-great-grandparents
 fr: arrière-arrière-arrière-grands-parents
 
     cousin.5.0 tt
-fr: quadrisaïeuls (quadrisaïeux)<br>quartaïeuls
+fr: trois-fois-arrière-grands-parents<br>quadrisaïeuls (quadrisaïeux)<br>quartaïeuls
 
     cousin.6.0
 en: great-great-great-great-grandparents
@@ -14057,7 +14057,7 @@ fr: arrière-petits-cousins au quatrième degré
 fr: arrière-arrière-petits-cousins 4<sup>e</sup>
 
     cousin.5.8 tt
-fr: deux-fois-arrière-petits-cousins au quatrième degrés
+fr: deux-fois-arrière-petits-cousins au quatrième degré
 
     cousin.6.1
 fr: trois-fois-arrière-grands-oncles
@@ -14075,7 +14075,7 @@ fr: frères et sœurs des quinquisaïeuls
 fr: cinq-fois-arrière-grands-oncles
 
     cousin.8.1 tt
-fr: frères et sœurs des quinquisaïeuls
+fr: frères et sœurs des sixisaïeuls
 
     since the last click
 bg: от последното щракване

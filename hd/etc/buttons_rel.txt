@@ -46,8 +46,8 @@
         %if;(evar.v!="")&v=%evar.v;%end;%nn;
         %if;(evar.long!="on")&long=on%end;"
         title="%if;(evar.long!="on")[*visualize/show/hide/summary]1%else;
-            [*visualize/show/hide/summary]2%end; [long display]">
-       <i class="fa fa-chevron-%if;(evar.long="on")up%else;down%end; fa-fw p-0"></i>
+            [*visualize/show/hide/summary]2%end; [long display]">%nn;
+       <i class="fa fa-chevron-%if;(evar.long="on")up%else;down%end; fa-fw"></i>
       </a>
     %end;
     %if;((evar.em="R" and evar.long="on") or evar.m="RL")
@@ -93,7 +93,7 @@
         %if;(evar.v!="")&v=%evar.v;%end;%nn;
         %if;(evar.image!="off")&image=off%end;"
         title="%if;(evar.image!="off")[*visualize/show/hide/summary]2%else;
-            [*visualize/show/hide/summary]1%end; [image/images]0">
+            [*visualize/show/hide/summary]1%end; [image/images]0">%nn;
         <i class="fa fa-images p-0 ml-1%if;(evar.image!="off") text-muted%end;"></i>
       </a>
       <a href="%prefix_base_password;%nn;
@@ -138,9 +138,8 @@
         %if;(evar.v!="")&v=%evar.v;%end;%nn;
         %if;(evar.spouse!="on")&spouse=on%end;"
         title="%if;(evar.spouse!="on")[*visualize/show/hide/summary]1%else;
-            [*visualize/show/hide/summary]2%end; [spouse/spouses]0">
-        <i class="fa fa-user male p-0 ml-2"></i>%if;(evar.spouse!="on")<i class="fa fa-user female p-0"></i>%end;
-      </a>
+          [*visualize/show/hide/summary]2%end; [spouse/spouses]0">%nn;
+          <i class="fa fa-user%if;(evar.spouse!="on")-friends%end; fa-fw ml-2"></i></a>
       <a href="%url&cgl=on" target="_blank"><i class="fa fa-unlink fa-fw ml-2" title="[*cancel GeneWeb links]"></i></a>
     %end;
   </div>
