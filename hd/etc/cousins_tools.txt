@@ -23,7 +23,8 @@
      <a role="button" href="?%foreach;env_binding;%if;(env.key!="v1" and env.key!="v2" and env.key!="")&%env.key;=%env.val;%end;%end;">
        [*select] [close family]
      </a>
-    <div class="align-items-center ml-2">| [*degree of kinship]</div>
+    <div class="align-items-center ml-2">| [*degree of kinship] 
+      %if;(evar.v1!="" and evar.v2!="")%expr(evar.v1+evar.v2)%end; </div>
     <div class="d-inline-flex flex-column ml-2">
       <div class="form-inline">
         <span>[ancestors]</span><i class="fas fa-level-up-alt ml-3 mb-2"></i>

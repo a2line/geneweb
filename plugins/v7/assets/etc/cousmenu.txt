@@ -1,21 +1,17 @@
 <!DOCTYPE html>
 <html lang="%lang;">
 <head>
-  <!-- $Id: cousmenu.txt,v 7.0 20/09/2021 21:28:24 ddr a2 Exp $ -->
+  <!-- $Id: cousmenu.txt, v7.1 16/10/2021 20:09:41 ddr a2 Exp $ -->
   <!-- Copyright (c) 1998-2022 INRIA -->
   <title>%nn;
-    %apply;a_of_b_gr_eq_lev%with;
-      [*cousins (general term)]%nn;
-    %and;
+   [*relationship link between]%sp;
       %if;(public_name != "")%public_name;%else;%first_name;%end;
       %if;(qualifier != "") %qualifier;%end;
       %sp;%surname;
-    %end;
   </title>
   <meta name="robots" content="none">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <link rel="shortcut icon" href="%image_prefix;/favicon_gwd.png">
   %include;favicon
   %include;css
   %include;hed
@@ -45,9 +41,6 @@
     %for;i;min;max;%apply;picklvl(i)%end;
   </div>
 </div>
-%define;nth_cousins(xx)
-  [*%s cousins:::xx]%nn;
-%end;
 %define;cousin_lex(vvv,www)
   [cousin.vvv.www]1
 %end;
@@ -56,6 +49,7 @@
   %if;([cousin.vvv.www tt]!="[cousin.vvv.www tt]")[cousin.vvv.www tt]1%else;%end;
 %end;
 %define;list_ancestor(vvv)
+  %(todo: remove implexes%)
   %reset_count;%reset_count2;
   %foreach;ancestor_level;
     %if;(level=vvv+1)
@@ -171,7 +165,7 @@ MAXDESC : %maxdesc;%)
       </tr>
     %end;
     <tr>
-      <td colspan="%xxx;">Descendants of only one ancestor are included in counts (half-siblings/half-cousins&hellip;)<br>%% moyen de gène en commun en fonction du lien de parenté<br>Shared DNA %% is divided by two for “half-relations”: full siblings 50 %% > half-siblings 25 %%</td>
+      <td colspan="%xxx;">[coefficient of relationship]<br>[half DNA]<br>[one ancestor counted]</td>
     </tr>
   </table>
 %end;
