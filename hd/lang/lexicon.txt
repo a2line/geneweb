@@ -7108,7 +7108,7 @@ tr: büyük ebeveynler
 ->: grand-parents
 
     cousin.2.0 tt
-fr: aïeuls (aïeux)
+fr: aïeul·e·s<br>parents des parents<br>grands-pères et grands-mères
 
     great-grand-parents
 af: oorgrootouers
@@ -7146,7 +7146,7 @@ tr: büyük-büyük-ebeveynler
 ->: great-grand-parents
 
     cousin.3.0 tt
-fr: bisaïeuls (bisaïeux)
+fr: bisaïeul·e·s
 
     great-great-grandparents
 de: Ururgroßelternteil
@@ -7159,7 +7159,7 @@ fr: arrière-arrière-grands-parents
 
     cousin.4.0 tt
 en: 2nd-great-grand-parents
-fr: trisaïeuls (trisaïeux)
+fr: tri(s)aïeul·e·s<br>aïeul·e·s des aïeul·e·s
 
     cousin.5.0
 en: great-great-great-grandparents
@@ -7167,42 +7167,42 @@ fr: arrière-arrière-arrière-grands-parents
 
     cousin.5.0 tt
 en: 3rd-great-grandparents
-fr: trois-fois-arrière-grands-parents<br>quadrisaïeuls (quadrisaïeux)<br>quartaïeuls
+fr: trois-fois-arrière-grands-parents<br>3×-arrière-grands-parents<br>quadri(s)aïeul·e·s<br>quartaïeul·e·s
 
     cousin.6.0
 en: 4th-great-grandparents
 fr: quatre-fois-arrière-grands-parents
 
     cousin.6.0 tt
-fr: quintaïeuls<br>quinquisaïeuls
+fr: 4×-arrière-grands-parents<br>quint(is)aïeuls<br>quinquisaïeuls
 
     cousin.7.0
 en: 5th-great-grandparents
 fr: cinq-fois-arrière-grands-parents
 
     cousin.7.0 tt
-fr: sextaïeuls<br>saxisaïeuls
+fr: 5×-arrière-grands-parents<br>sext(is)aïeuls
 
     cousin.8.0
 en: 6th-great-grandparents
 fr: six-fois-arrière-grands-parents
 
     cousin.8.0 tt
-fr: septaïeuls (septaïeux)<br>septisaïeuls
+fr: sept(is)aïeuls
 
     cousin.9.0
 en: 7th-great-grandparents
 fr: sept-fois-arrière-grands-parents
 
     cousin.9.0 tt
-fr: octaïeuls<br>octosaïeuls
+fr: octaïeuls
 
     cousin.10.0
 en: 8th-great-grandparents
 fr: huit-fois-arrière-grands-parents
 
     cousin.10.0 tt
-fr: nonaïeul<br>nonosaïeuls
+fr: nonaïeuls
 
     gregorian/julian/french/hebrew
 af: gregoriaans/juliaans/frans/hebreeus
@@ -13924,7 +13924,7 @@ tr: kardeşler
 ->: siblings
 
     cousin.1.1 tt
-fr: siblings ou adelphes<hr>germains 50 %,<br>consanguins ou utérins 25 %
+fr: adelphe·s<br>sibling·s<br>cousins germains 50 %,<br>consanguins ou utérins 25 %
 
     siblings of the grandparents
 co: arcizii è arcizie
@@ -14422,7 +14422,7 @@ fr: Le <a href="https://en.wikipedia.org/wiki/Coefficient_of_relationship">coeff
 
     half DNA
 en: This coefficient is divided by two for “half-relations”: for eg., full siblings 50 % > half-siblings 25 %.
-fr: Ce coefficient est divisé par deux pour les « demi-relations » : par ex., fratrie 50 % > demi-fratrie 25 %.
+fr: Ce coefficient est divisé par deux pour les « demi-relations » : par ex., fratrie 50 % > demi-fratrie 25 %.
 
     one ancestor counted
 en: Descendants of only one ancestor are included in counts (half-siblings/half-cousins, etc.).
