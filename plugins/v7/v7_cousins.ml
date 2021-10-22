@@ -81,89 +81,89 @@ let give_access conf base ia_asex p1 b1 p2 b2 print_sosa =
   end
   else print_nospouse ()
 
-let rec print_descend_upto conf base cnt cnt_sp max_cnt ini_p ini_br lev children print print_sosa=
+let rec print_descend_upto conf base cnt cnt_sp iplist max_cnt ini_p ini_br lev children print print_sosa=
   if lev > 0 && cnt < max_cnt then
     begin
       if print then Output.print_string conf "<ul>\n";
-      let (cnt, cnt_sp) =
-	List.fold_left
-	  (fun (cnt, cnt_sp) (ip, ia_asex, rev_br) ->
-	     let p = pget conf base ip in
-	     (* détecter l'époux de p, parent des enfants qui seront listés *)
-	     let get_spouse base iper ifam =
-	       let f = foi base ifam in
-	       if iper = get_father f then poi base (get_mother f)
-	       else poi base (get_father f)
-	     in
-	     (* if more than one spouse, this will be split on multiple lines *)
-	     (* we ignore the case where two spouses, but only one with descendants! *)
-	     let with_sp =
-	       if (Array.length (get_family p)) = 1 && print then
-		 let sp = get_spouse base ip (get_family p).(0) in
-		 Printf.sprintf " %s %s" (Util.transl conf "with") (person_title_text conf base sp)
-	       else ""
-	     in
-	     let br = List.rev ((ip, get_sex p) :: rev_br) in
-	     let is_valid_rel = Cousins.br_inter_is_empty ini_br br in
-	     if is_valid_rel && cnt < max_cnt && Cousins.has_desc_lev conf base lev p
-	     then
-	       begin
-		 if lev <= 2 && print then
-		   begin
-		     Output.print_string conf "<li>";
-		     if lev = 1 then
-		       begin
-			 give_access conf base ia_asex ini_p ini_br p br print_sosa;
-		       end
-		     else
-		       let s =
-			 let s = person_title_text conf base p in
-			 transl_a_of_gr_eq_gen_lev conf
-			   (transl_nth conf "child/children" 1)
-			   s s
-		       in
-		       Output.printf conf "%s%s%s%s\n" (Utf8.capitalize_fst (Util.translate_eval s)) with_sp
-			 (Util.transl conf ":") (if with_sp = "" then "<br>" else "")
-		   end;
-		 (* the function children_of returns *all* the children of ip *)
-		 let (cnt, cnt_sp) =
-		   List.fold_left
-		     (fun (cnt, cnt_sp) ifam ->
-			let children =
-			  List.map
-			    (fun ip ->
-			       (ip, ia_asex, (get_iper p, get_sex p) :: rev_br))
-			    (Cousins.children_of_fam base ifam)
-			in
-			let sp = get_spouse base ip ifam in
-			if (Array.length (get_family p)) > 1 && lev >= 2 && print &&
-			   ((List.length children) > 0) && (Cousins.has_desc_lev conf base lev sp)
-			then
-			  Output.printf conf "%s %s%s\n" (Util.transl conf "with")
-			    (person_title_text conf base sp) (Util.transl conf ":") ;
-			print_descend_upto conf base cnt cnt_sp max_cnt ini_p ini_br (lev - 1)
-			  children print print_sosa;
-		     )
-		     (cnt, cnt_sp) (Array.to_list (get_family p))
-		 in
-		 if lev <= 2 && print then Output.print_string conf "</li>\n";
-		 if lev = 1 then
-		   let nb_sp = Array.length (get_family p) in
-		   (cnt + 1, cnt_sp + nb_sp)
-		 else (cnt, cnt_sp)
-	       end
-	     else
-	       (cnt, cnt_sp)
-	  )
-	  (cnt, cnt_sp) children
+      let (cnt, cnt_sp, iplist) =
+        List.fold_left
+          (fun (cnt, cnt_sp, iplist) (ip, ia_asex, rev_br) ->
+            let p = pget conf base ip in
+            (* détecter l'époux de p, parent des enfants qui seront listés *)
+            let get_spouse base iper ifam =
+              let f = foi base ifam in
+              if iper = get_father f then poi base (get_mother f)
+              else poi base (get_father f)
+            in
+            (* if more than one spouse, this will be split on multiple lines *)
+            (* we ignore the case where two spouses, but only one with descendants! *)
+            let with_sp =
+              if (Array.length (get_family p)) = 1 && print then
+                let sp = get_spouse base ip (get_family p).(0) in
+                Printf.sprintf " %s %s" (Util.transl conf "with") (person_title_text conf base sp)
+              else ""
+            in
+            let br = List.rev ((ip, get_sex p) :: rev_br) in
+            let is_valid_rel = Cousins.br_inter_is_empty ini_br br in
+            if is_valid_rel && cnt < max_cnt && Cousins.has_desc_lev conf base lev p
+            then
+              begin
+                if lev <= 2 && print then
+                  begin
+                    Output.print_string conf "<li>";
+                    if lev = 1 then
+                      begin
+                        give_access conf base ia_asex ini_p ini_br p br print_sosa;
+                      end
+                    else
+                      let s =
+                        let s = person_title_text conf base p in
+                        transl_a_of_gr_eq_gen_lev conf
+                          (transl_nth conf "child/children" 1)
+                        s s
+                      in
+                      Output.printf conf "%s%s%s%s\n" (Utf8.capitalize_fst (Util.translate_eval s)) with_sp
+                        (Util.transl conf ":") (if with_sp = "" then "<br>" else "")
+                  end;
+                  (* the function children_of returns *all* the children of ip *)
+                  let (cnt, cnt_sp, iplist) =
+                    List.fold_left
+                      (fun (cnt, cnt_sp, iplist) ifam ->
+                        let children =
+                          List.map
+                            (fun ip ->
+                               (ip, ia_asex, (get_iper p, get_sex p) :: rev_br))
+                            (Cousins.children_of_fam base ifam)
+                        in
+                        let sp = get_spouse base ip ifam in
+                        if (Array.length (get_family p)) > 1 && lev >= 2 && print &&
+                           ((List.length children) > 0) && (Cousins.has_desc_lev conf base lev sp)
+                        then
+                          Output.printf conf "%s %s%s\n" (Util.transl conf "with")
+                            (person_title_text conf base sp) (Util.transl conf ":") ;
+                          print_descend_upto conf base cnt cnt_sp iplist max_cnt ini_p ini_br (lev - 1)
+                            children print print_sosa;
+                      )
+                      (cnt, cnt_sp, iplist) (Array.to_list (get_family p))
+                  in
+                  if lev <= 2 && print then Output.print_string conf "</li>\n";
+                  if lev = 1 then
+                    let nb_sp = Array.length (get_family p) in
+                    (cnt + 1, cnt_sp + nb_sp, ip :: iplist)
+                  else (cnt, cnt_sp, iplist)
+              end
+            else
+              (cnt, cnt_sp, iplist)
+          )
+          (cnt, cnt_sp, iplist) children
       in
       if print then Output.print_string conf "</ul>\n";
-      (cnt, cnt_sp)
+      (cnt, cnt_sp, iplist)
     end
   else
-    (cnt, cnt_sp)
+    (cnt, cnt_sp, iplist)
 
-let print_cousins_side_of conf base cnt cnt_sp max_cnt a ini_p ini_br lev1 lev2 print print_sosa =
+let print_cousins_side_of conf base cnt cnt_sp iplist max_cnt a ini_p ini_br lev1 lev2 print print_sosa =
   let sib = Cousins.siblings conf base (get_iper a) in
   if List.exists (Cousins.sibling_has_desc_lev conf base lev2) sib then
     begin
@@ -178,14 +178,14 @@ let print_cousins_side_of conf base cnt cnt_sp max_cnt a ini_p ini_br lev1 lev2 
             (Util.transl conf ":")
         end;
       let sib = List.map (fun (ip, ia_asex) -> ip, ia_asex, []) sib in
-      let (cnt, cnt_sp) =
-	print_descend_upto conf base cnt cnt_sp max_cnt ini_p ini_br
-	  lev2 sib print print_sosa
+      let (cnt, cnt_sp, iplist) =
+          print_descend_upto conf base cnt cnt_sp iplist max_cnt ini_p ini_br
+            lev2 sib print print_sosa
       in
       if lev1 > 1 && print then Output.print_string conf "</li>\n";
-      (true, cnt, cnt_sp)
+      (true, cnt, cnt_sp, iplist)
     end
-  else (false, cnt, cnt_sp)
+  else (false, cnt, cnt_sp, iplist)
 
 let print_cousins_lev conf base max_cnt p lev1 lev2 print print_sosa =
   let first_sosa =
@@ -202,28 +202,28 @@ let print_cousins_lev conf base max_cnt p lev1 lev2 print print_sosa =
       Output.print_string conf "</div>\n";
       if lev1 > 1 then Output.printf conf "<ul>\n";
     end;
-  let (some, cnt, cnt_sp) =
-    let rec loop sosa (some, cnt, cnt_sp) =
+  let (some, cnt, cnt_sp, iplist) =
+    let rec loop sosa (some, cnt, cnt_sp, iplist) =
       if cnt < max_cnt && Sosa.gt last_sosa sosa then
-        let (some, cnt, cnt_sp) =
+        let (some, cnt, cnt_sp, iplist) =
           match Util.old_branch_of_sosa conf base (get_iper p) sosa with
             Some ((ia, _) :: _ as br) ->
-            let (some1, cnt, cnt_sp) =
-	      print_cousins_side_of conf base cnt cnt_sp max_cnt (pget conf base ia) p br
-		lev1 lev2 print print_sosa
+            let (some1, cnt, cnt_sp, iplist) =
+              print_cousins_side_of conf base cnt cnt_sp iplist max_cnt (pget conf base ia) p br
+              lev1 lev2 print print_sosa
             in
-            (some || some1, cnt, cnt_sp)
-          | _ -> (some, cnt, cnt_sp)
+            (some || some1, cnt, cnt_sp, iplist)
+          | _ -> (some, cnt, cnt_sp, iplist)
         in
-        loop (Sosa.inc sosa 1) (some, cnt, cnt_sp)
-      else (some, cnt, cnt_sp)
+        loop (Sosa.inc sosa 1) (some, cnt, cnt_sp, iplist)
+      else (some, cnt, cnt_sp, iplist)
     in
-    loop first_sosa (false, 0, 0)
+    loop first_sosa (false, 0, 0, [])
   in
   if some || not print then ()
   else Output.printf conf "%s.\n" (Utf8.capitalize_fst (transl conf "no match"));
   if lev1 > 1 && print then Output.print_string conf "</ul>\n";
-  (cnt, cnt_sp)
+  (cnt, cnt_sp, iplist)
 
 let default_max_cousin_lev = 5
 let default_max_cnt = Cousins.default_max_cnt
@@ -238,12 +238,22 @@ let brother_label conf x =
     Printf.sprintf (ftransl conf "%s cousins")
       (transl_nth conf "nth (cousin)" (n - 1))
 
-let cnt = ref 0
-let cnt_sp = ref 0
-
 let include_templ conf name =
   Util.include_template conf [] name
     (fun () -> Output.printf conf "Failed to open: %s.txt" name)
+
+let print_rlm conf base iplist ip0  =
+  Output.print_string conf ("<p>\n<a href=\"" ^ commd conf ^ "m=RLM&" ^
+    (let rec loop i s ipl =
+    match ipl with
+    | [] -> s
+    | ip :: ipl -> 
+      loop (i+1) (s ^ "i" ^ (string_of_int (2*i + 1)) ^ "=" ^ (string_of_iper ip) ^ "&" ^
+      "i" ^ (string_of_int (2*i + 2)) ^ "=" ^ (string_of_iper ip0) ^ "&") ipl
+    in loop 0 "" iplist) ^ "\">\
+    <span class=\"d-inline-block fa-flip-vertical\">\
+    <i class=\"fa fa-project-diagram fa-rotate-270 mr-1\"></i>\
+    </span> Graphe RLM</a>\n</p>\n")
 
 (* HTML main *)
 
@@ -287,24 +297,22 @@ let print_cousins conf base p lev1 lev2 =
   Output.print_string conf "</div>\n";
   (* Construction de la table des sosa de la base *)
   let () = V7_sosa.build_sosa_ht conf base in
-  let (cnt, cnt_sp) =
+  let (cnt, cnt_sp, iplist) =
     print_cousins_lev conf base max_cnt p lev1 lev2 true V7_sosa.print_sosa
   in
   Output.print_string conf "<div>\n";
   Output.print_string conf "<p>\n";
-  let (cnt2, cnt2_sp) =
-    print_cousins_lev conf base max_cnt p lev1 lev2 false V7_sosa.print_sosa
-  in
   if cnt >= max_cnt then Output.print_string conf "etc...\n"
   else if cnt > 1 then
     Output.printf conf "%s%s %d (%d) %s " (Utf8.capitalize_fst (transl conf "total"))
-      (Util.transl conf ":") cnt cnt2
+      (Util.transl conf ":") cnt (List.length iplist)
       (Util.translate_eval ("@(c)" ^ transl_nth conf "person/persons" 1));
   if p_getenv conf.env "spouse" = Some "on" then
-    Output.printf conf " %s %d (%d) %s.\n" (transl conf "and") cnt_sp cnt2_sp
+    Output.printf conf " %s %d %s.\n" (transl conf "and") cnt_sp
       (Util.translate_eval ("@(c)" ^ transl_nth conf "spouse/spouses" 1))
   else Output.printf conf ".\n" ;
   Output.print_string conf "</p>\n";
+  print_rlm conf base iplist (get_iper p);
   Output.print_string conf "</div>\n";
   Hutil.trailer conf
 
