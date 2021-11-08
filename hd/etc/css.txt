@@ -9,12 +9,12 @@ li.female { list-style-type: circle; list-style-image: url('%image_prefix;/femal
 </style>
 %if;(evar.templ="")
   %if;(bvar.use_cdn="yes")
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
-      integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css"
+      integrity="sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"
       integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous">
   %else;
-    <link rel="stylesheet" href="%static_path;css/bootstrap.min.css?version=4.6.0">
+    <link rel="stylesheet" href="%static_path;css/bootstrap.min.css?version=4.6.1">
     <link rel="stylesheet" href="%static_path;css/all.min.css?version=5.15.4">
   %end;
 %end;
