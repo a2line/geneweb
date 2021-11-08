@@ -188,7 +188,12 @@
 %define;date_popup(xxx,yyy)
   %let;symb;%if;("yyy"="birth")°%elseif;("yyy"="death" and xxx.is_dead)†%end;%in;
   %if;(evar.yyy="on" and famx=1)
-    <td class="align-middle text-right table_big_cell"%rowspan;>
+    <td class="align-middle text-right%if;not cancel_links; table_big_cell%end;
+      %if;(evar.hl="on")
+        %if;((not xxx.has_yyy_date or xxx.yyy_date.month="" or xxx.yyy_date.day="" or xxx.yyy_date.prec!="") 
+            and ("yyy"="birth" or (xxx.is_dead and "yyy"="death"))) table-warning
+        %elseif;(not xxx.is_dead and "yyy"="death") table-active%end;
+      %end;"%rowspan;>
       %if;(wizard and not cancel_links)
         <a class="d-block table_big_anchor" href="%prefix;m=MOD_IND;i=%xxx.index;#yyy"%sp;
           title="%if;(xxx.has_yyy_date)[*update::yyy]%else;[*add::yyy]%end;&#010;
@@ -196,7 +201,7 @@
         %if;(xxx.has_yyy_date)%xxx.slash_yyy_date;%else;%symb;%end;%nn;
         </a>
       %else;
-        %if;xxx.has_yyy_date;%xxx.slash_yyy_date;%else;%symb;%end;
+        %if;xxx.has_yyy_date;%xxx.slash_yyy_date;%elseif;(not cancel_links)%symb;%end;
       %end;
     </td>
   %end;
@@ -211,18 +216,22 @@
           %elseif;(not xxx.has_yyy_note and xxx.has_yyy_source) source%nn;
           %elseif;(xxx.has_yyy_note and xxx.has_yyy_source) notesource%nn;
           %end;
+        %end;
+        %if;(evar.hl="on")
+          %if;(not xxx.has_yyy_place and ("yyy"="birth" or (xxx.is_dead and "yyy"="death"))) table-warning
+          %elseif;(not xxx.is_dead and "yyy"="death") table-active%end;
         %end;"%sp;
         %if;(evar.ns="on" and (xxx.has_yyy_source or xxx.has_yyy_note)) tabindex="0"
           data-trigger="focus" data-toggle="popover" data-placement="bottom" data-html="true"
           data-content='%if;xxx.has_yyy_note;%apply;capitalize(xxx.yyy_note)%end;
                         %if;xxx.has_yyy_source;%if;xxx.has_yyy_note;<hr>%end;%apply;capitalize(xxx.yyy_source)%end;'
           title="%if;(xxx.has_yyy_note or xxx.has_yyy_source)
-                     %apply;a_of_b%with;
-                       %if;(xxx.has_yyy_note and not xxx.has_yyy_source)[*note/notes]1%nn;
-                       %elseif;(not xxx.has_yyy_note and xxx.has_yyy_source)[*source/sources]1%nn;
-                       %elseif;(xxx.has_yyy_note and xxx.has_yyy_source)[*note/notes]1 [and] [source/sources]1%nn;
-                       %end;
-                     %and;[yyy]%end;
+                   %apply;a_of_b%with;
+                     %if;(xxx.has_yyy_note and not xxx.has_yyy_source)[*note/notes]1%nn;
+                     %elseif;(not xxx.has_yyy_note and xxx.has_yyy_source)[*source/sources]1%nn;
+                     %elseif;(xxx.has_yyy_note and xxx.has_yyy_source)[*note/notes]1 [and] [source/sources]1%nn;
+                     %end;
+                   %and;[yyy]%end;
                  %end;"%nn;
         %end;>%nn;
       %if;xxx.has_yyy_place;%xxx.yyy_place;%end;
@@ -232,9 +241,9 @@
 
 %(
 si t=H on active rowspan pour les données de l’individu et du couple
-si t=I on affiche pas les données
+si t=I on n’affiche pas les données
 xxx est la personne concernée (self)
-zzz est lui même si yyy="desc", ou son conjoint si yyy="spous"
+zzz est lui même si yyy="desc" ou son conjoint si yyy="spous"
 %)
 
 %define;table_row(xxx, prefx, fff, fam_cnt, ch_cnt, ch_count, yyy, zzz, ddd, nb_ch_desc, implx)
@@ -250,7 +259,7 @@ zzz est lui même si yyy="desc", ou son conjoint si yyy="spous"
 %( numéro d'Aboville %)
   %if;(evar.num="on" and famx=1)
     %if;("yyy"="desc")
-      <td id="%labl0" class="text-center align-middle table_big_cell%if;(implx!=0 and not cancel_links) implex%end;"%rowspan;>
+      <td id="%labl0" class="text-center align-middle%if;not cancel_links; table_big_cell%end;%if;(implx!=0 and not cancel_links) implex%end;"%rowspan;>
         %if;(labl!=1 and not cancel_links)
           <a class="table_big_anchor" title="[*navigation] [with] %xxx"%sp;
             href="%prefix_base_password;%access;;%nn;
@@ -264,7 +273,7 @@ zzz est lui même si yyy="desc", ou son conjoint si yyy="spous"
         %if;("ch_cnt"="1" and not cancel_links)</a>%end;
       </td>
     %elseif;(evar.t="I")
-      <td class="text-center align-middle table_big_cell%if;(implx!=0) implex%end;">
+      <td class="text-center align-middle%if;not cancel_links; table_big_cell%end;%if;(implx!=0) implex%end;">
       %if;(not cancel_links)
         <a class="table_big_anchor" title="[*navigation] [with] %xxx"%sp;
           href="%prefix_base_password;%spouse.access;;%nn;
@@ -288,7 +297,8 @@ zzz est lui même si yyy="desc", ou son conjoint si yyy="spous"
           %elseif;(not has_notes and has_psources) source%nn;
           %elseif;(has_notes and has_psources) notesource%nn;
           %end;
-        %end;"%nn;
+        %end;%if;(evar.hl="on" and ("?" is_substr xxx or xxx.first_name="N." or xxx.first_name="Nn"
+              or xxx.first_name="Xx" or xxx.first_name="Yy" or xxx.first_name="Xy")) table-warning%end;"%nn;
         %rowspan;%nn;
         %if;(evar.ns="on" and (has_notes or has_psources)) tabindex="0"%sp;
           data-trigger="focus" data-toggle="popover" data-placement="right" data-html="true"%sp;
@@ -305,7 +315,7 @@ zzz est lui même si yyy="desc", ou son conjoint si yyy="spous"
         <div class="d-flex justify-content-between">
           <div class="align-self-center mr-2">
             %apply;image_MF("xxx")
-            %apply;link%with;%xxx.access;%and;%xxx;%and;%xxx.index;%end;
+            %apply;link%with;%xxx.access;%and;%if;(evar.fn="on")%xxx.first_name; %xxx.surname;%else;%xxx;%end;%and;%xxx.index;%end;
             %if;(evar.title="on" and xxx.title!=""), %xxx.title;%end;
           </div>
           %if;(evar.image!="off" and xxx.has_image)
@@ -321,7 +331,8 @@ zzz est lui même si yyy="desc", ou son conjoint si yyy="spous"
           %elseif;(not xxx.has_notes and xxx.has_psources) sourcespouse%nn;
           %elseif;(xxx.has_notes and xxx.has_psources) notesourcespouse%nn;
           %end;
-        %end;"%nn;
+        %end;%if;(evar.hl="on" and ("?" is_substr xxx or xxx.first_name="N." or xxx.first_name="Nn"
+              or xxx.first_name="Xx" or xxx.first_name="Yy" or xxx.first_name="Xy")) table-warning%end;"%nn;
         %if;(evar.ns="on" and (xxx.has_notes or xxx.has_psources)) tabindex="0"%sp;
           data-trigger="focus" data-toggle="popover" data-placement="right" data-html="true"%sp;
           data-content='%if;(xxx.has_notes)%xxx.notes;%end;
@@ -342,7 +353,7 @@ zzz est lui même si yyy="desc", ou son conjoint si yyy="spous"
           %end;
           <div class="align-self-center px-1">
             %apply;image_MF("xxx")
-            %apply;link%with;%xxx.access;%and;%xxx;%and;%xxx.index;%end;
+            %apply;link%with;%xxx.access;%and;%if;(evar.fn="on")%xxx.first_name; %xxx.surname;%else;%xxx;%end;%and;%xxx.index;%end;
             %if;(evar.title="on" and xxx.title!=""), %xxx.title;%end;
           </div>
         </div>
@@ -370,7 +381,8 @@ zzz est lui même si yyy="desc", ou son conjoint si yyy="spous"
               %elseif;(not spouse.has_notes and spouse.has_psources) source%nn;
               %elseif;(spouse.has_notes and spouse.has_psources) notesource%nn;
               %end;
-          %end;"%nn;
+          %end;
+          "%nn;
           %if;(evar.ns="on" and (spouse.has_notes or spouse.has_psources)) tabindex="0"%sp;
             data-trigger="focus" data-toggle="popover" data-placement="bottom" data-html="true"%sp;
             data-content='%if;(spouse.has_notes)%spouse.notes;%end;
@@ -384,7 +396,7 @@ zzz est lui même si yyy="desc", ou son conjoint si yyy="spous"
             %apply;add_in_sorted_list(spouse.index)
             %if;(zzz.nb_families>1)<span class="mr-1">%apply;letter(family_cnt)</span>%end;
             %apply;image_MF("spouse")
-            %apply;link%with;%spouse.access;%and;%spouse;%and;%spouse.index;%end;
+            %apply;link%with;%spouse.access;%and;%if;(evar.fn="on")%spouse.first_name; %spouse.surname;%else;%spouse;%end;%and;%spouse.index;%end;
           </td>
         %end;
       %end;
@@ -393,14 +405,15 @@ zzz est lui même si yyy="desc", ou son conjoint si yyy="spous"
 %( Date de mariage %)
   %if;(evar.marr_date="on")
     %if;(xxx.nb_families=0)
-      <td></td>
+      <td%if;(evar.hl="on") class="table-active"%end;></td>
     %else;
-      %let;rowspan; rowspan="%if;(evar.t="I" and zzz.nb_families=1)2%else;1%end;"%in;
       %foreach;xxx.family;
         %if;((nb_families=1 and "yyy"="desc") or (nb_families>1 and
             ((xxx.spouse=zzz and (ddd=family.index)) or
              (xxx=zzz and family_cnt=fam_cnt and evar.t="H"))))
-          <td class="align-middle text-right table_big_cell"%rowspan;>
+          <td class="align-middle text-right%if;not cancel_links; table_big_cell%end;
+            %if;(evar.hl="on" and (slash_marriage_date="" or marriage_date.prec!="" or marriage_date.day="" or marriage_date.month="")) table-warning%end;"
+            rowspan="%if;(evar.t="I" and zzz.nb_families=1)2%else;1%end;">
             %if;(wizard and not cancel_links)
               <a class="d-block table_big_anchor" href="%prefix;m=MOD_FAM;i=%family.index;;ip=%index;"%sp;
                 title="%if;(slash_marriage_date="")[*add::marriage/marriages]0%else;
@@ -420,29 +433,29 @@ zzz est lui même si yyy="desc", ou son conjoint si yyy="spous"
         %end;
       %end;
       %if;(evar.t="I" and nb_families>1 and "yyy"="desc")
-        <td></td>
+        <td%if;(evar.hl="on") class="table-active"%end; title="[*edit family on spouse]"></td>
       %end;
     %end;
   %end;
 %( Lieu de mariage %)
   %if;(evar.marr_place="on")
     %if;(xxx.nb_families=0)
-      <td></td>
+      <td%if;(evar.hl="on") class="table-active"%end;></td>
     %else;
-      %let;rowspan; rowspan="%if;(evar.t="I" and zzz.nb_families=1)2%else;1%end;"%in;
       %foreach;xxx.family;
         %if;((nb_families=1 and "yyy"="desc") or
              (nb_families>1 and
               ((xxx.spouse=zzz and ddd=family.index) or
                 (xxx=zzz and family_cnt=fam_cnt and evar.t="H"))))
-          <td class='align-middle%nn;
+          <td class="align-middle%nn;
             %if;(evar.ns="on")
               %if;(has_marriage_note and not has_marriage_source) note%nn;
               %elseif;(not has_marriage_note and has_marriage_source) source%nn;
               %elseif;(has_marriage_note and has_marriage_source) notesource%nn;
               %end;
-            %end;'%nn;
-            %rowspan;%nn;
+            %end;
+            %if;(evar.hl="on" and marriage_place="") table-warning%end;"
+            rowspan="%if;(evar.t="I" and zzz.nb_families=1)2%else;1%end;"%nn;
             %if;(evar.ns="on" and (has_marriage_note or has_marriage_source)) tabindex="0"
               data-trigger="focus" data-toggle="popover" data-placement="bottom" data-html="true"%sp;
               data-content='%if;(has_marriage_note)%marriage_note;%end;
@@ -462,7 +475,7 @@ zzz est lui même si yyy="desc", ou son conjoint si yyy="spous"
         %end;
       %end;
       %if;(evar.t="I" and nb_families>1 and "yyy"="desc")
-        <td></td>
+        <td%if;(evar.hl="on") class="table-active"%end;></td>
       %end;
     %end;
   %end;
@@ -505,26 +518,25 @@ zzz est lui même si yyy="desc", ou son conjoint si yyy="spous"
 %( Nombre d'enfants %)
   %if;(evar.child="on")
     %if;(xxx.nb_families=0)
-      <td></td>
+      <td%if;(evar.hl="on") class="table-active"%end;></td>
     %else;
-      %let;rowspan; rowspan="%if;(evar.t="I" and zzz.nb_families=1)2%else;1%end;"%in;
       %foreach;xxx.family;
         %if;((nb_families=1 and "yyy"="desc") or (nb_families>1 and
             ((xxx.spouse=zzz and (ddd=family.index)) or
              (xxx=zzz and family_cnt=fam_cnt and evar.t="H"))))
-          <td class="align-middle text-center %if;(evar.nowrap="on")text-nowrap%end; px-1%nn;
+          <td class="align-middle text-center%if;(evar.nowrap="on") text-nowrap%end; px-1
             %if;(evar.ns="on")
               %if;(has_fnotes and not has_fsources) note%nn;
               %elseif;(not has_fnotes and has_fsources) source%nn;
               %elseif;(has_fnotes and has_fsources) notesource%nn;
               %end;
-            %end;"%nn;
-            %rowspan;%nn;
+            %end;"
+            rowspan="%if;(evar.t="I" and zzz.nb_families=1)2%else;1%end;"%nn;
             %if;(evar.ns="on" and (has_fnotes or has_fsources)) tabindex="0"
               data-trigger="focus" data-toggle="popover" data-placement="bottom" data-html="true"%sp;
               data-content='%if;(has_fnotes)%fnotes;%end;
                             %if;(has_fnotes and has_fsources)<hr>%end;
-                            %if;(has_fsources)%apply;capitalize(fsources)%end;'%sp;
+                            %if;(has_fsources)%apply;capitalize(fsources)%end;'
               title="%if;(has_fnotes or has_fsources)
                       %if;(has_fnotes and not has_fsources)[*note/notes]1%nn;
                       %elseif;(not has_fnotes and has_fsources)[*source/sources]1%nn;
@@ -577,9 +589,9 @@ zzz est lui même si yyy="desc", ou son conjoint si yyy="spous"
   %incr_count;
   %( Les enfants d'une personne sont numérotés de 1 à n indépendamment du nombre de mariages %)
   %let;prfx;%if;("prefx"="-1")%else;prefx%end;%in;
-  %if;(evar.t="A")
+  %if;(evar.t="A") %( d’Aboville %)
     <br>%prfx; %apply;image_MF("xxx")
-        %apply;link%with;%xxx.access;%and;%xxx.first_name; %xxx.surname;%nn;%and;%xxx.index;%end;%nn;
+       %apply;link%with;%xxx.access;%and;%xxx.first_name; %xxx.surname;%nn;%and;%xxx.index;%end;%nn;
         %xxx.title;%nn;
     %if;(has_families)
       %foreach;family;
