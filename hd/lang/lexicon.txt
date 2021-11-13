@@ -17748,10 +17748,18 @@ fr: afficher les noms sans saut de ligne
 en: show the first names instead of public name
 fr: afficher les prénoms à la place du nom public
 
-    highlight missing data
-en: highlight missing and incomplete data
-fr: surligner les données manquantes ou incomplètes
+    highlight incomplete data
+en: highlight incomplete data
+fr: surligner les données incomplètes
 
     edit family on spouse
 en: edit the families by clicking on the date of marriage of the row of one spouses
 fr: modifier les familles en cliquant sur la date de mariage sur la ligne d’un conjoint
+
+    colored corner
+en: a colored corner shows the existence of notes (blue), sources (yellow) or both (green).
+fr: un coin coloré indique l’existance de notes (bleu), sources (jaune) ou des deux (vert).
+
+    modify the size of images to
+en: modify the size of images to
+fr: modifier la taille des images à

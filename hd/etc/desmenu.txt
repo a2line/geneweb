@@ -258,8 +258,8 @@ function table_spouse_disabled () {
             </div>
           </div>
           <div class="custom-control custom-checkbox custom-control-inline">
-              <input type="checkbox" class="custom-control-input" id="t_fn" name="fn">
-              <label class="custom-control-label" for="t_fn">[*show first names]1</label>
+            <input type="checkbox" class="custom-control-input" id="t_fn" name="fn">
+            <label class="custom-control-label" for="t_fn">[*show first names]1</label>
           </div>
           <div>
             <div class="custom-control custom-checkbox custom-control-inline">
@@ -341,7 +341,7 @@ function table_spouse_disabled () {
           </div>
           <div class="custom-control custom-checkbox">
             <input type="checkbox" class="custom-control-input" id="t_hl" name="hl">
-            <label class="custom-control-label" for="t_hl">[*highlight missing data]</label>
+            <label class="custom-control-label" for="t_hl">[*highlight incomplete data]</label>
           </div>
         </div>
       </div>
