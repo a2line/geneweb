@@ -15757,10 +15757,11 @@ fr: enfants de son arrière-petit-fils ou de son arrière-petite-fille
 
     cousin.0.5
 en: third great-grandchild/third great-grandchildren
-fr: trois-fois-arrière-petit-enfant/trois-fois-arrière-petits-enfants
+fr: arrière-arrière-arrière-petit-enfant/arrière-arrière-arrière-petits-enfants
 
     cousin.0.5 tt
 en: three times great-grandchildren
+fr: trois-fois-arrière-petits-enfants
 
     cousin.0.6
 en: fourth great-grandchild/fourth great-grandchildren
@@ -17757,8 +17758,8 @@ en: edit the families by clicking on the date of marriage of the row of one spou
 fr: modifier les familles en cliquant sur la date de mariage sur la ligne d’un conjoint
 
     colored corner
-en: a colored corner shows the existence of notes (blue), sources (yellow) or both (green).
-fr: un coin coloré indique l’existance de notes (bleu), sources (jaune) ou des deux (vert).
+en: a colored corner shows the existence of notes (blue), sources (yellow) or both (green) for an event. The data are then displayable in a pop-up by clicking on the background of cells.
+fr: un coin coloré indique l’existence de notes (bleu), sources (jaune) ou des deux (vert) pour un événement. Ces données sont ensuite affichables dans une fenêtre surgissante en cliquant sur le fond des cases.
 
     modify the size of images to
 en: modify the size of images to

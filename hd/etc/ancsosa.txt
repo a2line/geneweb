@@ -33,9 +33,9 @@
 %end;
 %define;gen(xx)
   %if;(evar.xx = 1)[*specify::generation/generations]0%nn;
-  %elseif;(evar.xx = 2)[the parents]%nn;
-  %elseif;(evar.xx = 3)[the grandparents]%nn;
-  %elseif;(evar.xx = 4)[the great-grandparents]%nn;
+  %elseif;(evar.xx = 2)[parents]%nn;
+  %elseif;(evar.xx = 3)[grand-parents]%nn;
+  %elseif;(evar.xx = 4)[great-grand-parents]%nn;
   %else;
     %apply;thegen%with;
       %apply;nth([nth (generation)], evar.xx)
@@ -60,7 +60,7 @@
       %end;
       %if;(evar.cgl="on" and evar.t!="N")
         %let;nb_gen;%apply;min(evar.v, max_anc_level)%in;
-        %apply;togen(nb_gen).
+        %sp;%apply;togen(nb_gen).
       %end;
     %end;
   </title>
@@ -1520,7 +1520,8 @@
       %end;
     %end;
   %end;
-  <tr><td colspan="7">[*total] : %count; [[person/persons]1@(c)]</td></tr>
+  <tr><td colspan="7">[*total] : %count;%if;(evar.only="on")/%expr(2^(l_v-1)-1)
+                         %else;/%expr(2^(l_v)-2)%end; [[person/persons]1@(c)]</td></tr>
 %end;
 
 %( Précision des dates intégrée à l’année en utilisant la syntaxe pour leur saisie dans les formulaires
@@ -1582,7 +1583,7 @@ TODO: obtenir les secondes valeurs valeurs jj/mm/aaaa pour les cas « ou | » 
   %end;
   %if;(evar.t = "D") [up to] %pvar.1;
   %else;
-     %if;(cancel_links) %apply;togena(evar.v)%end;
+     %if;(cancel_links and evar.v > 4) %apply;togena(evar.v)%end;
   %end;
 </h1>
 %end;
@@ -2060,14 +2061,12 @@ TODO: obtenir les secondes valeurs valeurs jj/mm/aaaa pour les cas « ou | » 
       %let;nb_col;%count;%in;
       %reset_count;
       %foreach;ancestor_level(l_v)
-        %if;(evar.only!="on" or (evar.only="on" and level=evar.v))
-          %if;(evar.gen="on" and level!=1)
-            <tr>
-              <th class="text-left" scope="row" colspan="%nb_col;">
-                <span class="ml-1">[*generation/generations]0 %level;</span>
-              </th>
-            </tr>
-          %end;
+        %if;(evar.only!="on" and evar.gen="on" and level!=1)
+          <tr>
+            <th class="text-left" scope="row" colspan="%nb_col;">
+              <span class="ml-1">[*generation/generations]0 %level;</span>
+            </th>
+          </tr>
         %end;
         %foreach;ancestor;
           %if;(level>0 and (evar.only!="on" or level=l_v))
@@ -2089,7 +2088,7 @@ TODO: obtenir les secondes valeurs valeurs jj/mm/aaaa pour les cas « ou | » 
     <div class="mt-2">
       %( CSV header %)
       [Sosa]%nn;
-      ;[first name/first names]0%nn;
+      ;[first name/first names]1%nn;
       ;[surname/surnames]0%nn;
       ;occ%nn;
       ;[title/titles]0%nn;

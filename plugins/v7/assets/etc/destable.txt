@@ -44,20 +44,20 @@
     %if;wizard;
       <a href="%prefix;m=MOD_IND;i=%xxx.index;"%sp;
         title="[*modify::] %xxx.first_name; %xxx.surname;%if;(xxx.occ!="0") (%xxx.occ;)%end;"><i%sp;
-    %elseif;friend;
+    %else;
       <i%sp;
     %end;
   %end;
   %if;xxx.is_male;
-    %if;cancel_links;♂%sp;%elseif;(friend or wizard)class="fa fa-mars male%end;%nn;
+    %if;cancel_links;♂%sp;%else;class="fa fa-mars male%end;%nn;
   %elseif;xxx.is_female;
-    %if;cancel_links;♀%sp;%elseif;(friend or wizard)class="fa fa-venus female%end;%nn;
+    %if;cancel_links;♀%sp;%else;class="fa fa-venus female%end;%nn;
   %else;
-    %if;cancel_links;⚲%sp;%elseif;(friend or wizard)class="fa fa-neuter neuter%end;%nn;
+    %if;cancel_links;⚲%sp;%else;class="fa fa-neuter neuter%end;%nn;
   %end;%nn;
   %if;not cancel_links; mr-1">%nn;
     %if;wizard;</i></a>%nn;
-    %elseif;friend;</i>%end;
+    %else;</i>%end;
   %end;
 %end;
 
@@ -371,7 +371,7 @@ zzz est lui même si yyy="desc" ou son conjoint si yyy="spous"
 %( En mode H, conjoints %)
   %if;(evar.marr="on" and evar.t="H")
     %if;(xxx.nb_families=0)
-      <td></td>
+      <td%if;(evar.hl="on") class="table-active"%end;></td>
     %else;
       %foreach;xxx.family;
         %if;(family_cnt=fam_cnt)
@@ -382,7 +382,7 @@ zzz est lui même si yyy="desc" ou son conjoint si yyy="spous"
               %elseif;(spouse.has_notes and spouse.has_psources) notesource%nn;
               %end;
           %end;
-          "%nn;
+          %if;(evar.hl="on" and ("?" is_substr spouse or spouse.first_name="N." or  spouse.first_name="Nn" or spouse.first_name="Xx" or spouse.first_name="Yy" or spouse.first_name="Xy")) table-warning%end;"%nn;
           %if;(evar.ns="on" and (spouse.has_notes or spouse.has_psources)) tabindex="0"%sp;
             data-trigger="focus" data-toggle="popover" data-placement="bottom" data-html="true"%sp;
             data-content='%if;(spouse.has_notes)%spouse.notes;%end;
@@ -752,7 +752,7 @@ zzz est lui même si yyy="desc" ou son conjoint si yyy="spous"
 %end;
 
 %( Parcours de l'arbre, horizontal, niveau par niveau descendant %)
-%( A chaque niveau, prefx et faml (lettre) définissent le préfixe d'Aboville %)
+%( À chaque niveau, prefx et faml (lettre) définissent le préfixe d'Aboville %)
 %define;one_level(xxx, lv, max_l, prefx, faml, ch_cnt)
   %let;npref;%if;("prefx"!="")prefxfaml.%end;ch_cnt%nn;%in;
   %if;(lv<max_l)
@@ -768,16 +768,41 @@ zzz est lui même si yyy="desc" ou son conjoint si yyy="spous"
     %apply;families_of_one_p("self", npref)
   %end;
 %end;
-
-%define;desc_count(xxx)
+%define;desc_count(vvv,ooo,nnn,ttt,ccc)%( lev,only=1,name=1,total=1,count2 %)
+  %reset_count1;%reset_count2;
   %foreach;descendant_level;
-    %if;(level=xxx)%number_of_descendants;%end;
+    %if;(level=vvv)
+      %if;(ooo=0)
+        %if;(number_of_descendants=1)%incr_count1;%if;(ttt!=1)1%end;
+        %else;%number_of_descendants;%nn;
+        %end;
+        %if;(number_of_descendants=ccc)incr_count2;%end;
+      %else;
+        %if;(number_of_descendants_at_level=1)%incr_count1;%if;(ttt!=1)1%end;
+        %else;%number_of_descendants_at_level;%nn;
+        %end;
+        %if;(number_of_descendants_at_level=ccc)%incr_count2;%end;
+      %end;
+    %end;
   %end;
-%end;
-
-%define;desc_count_l(xxx)
-  %foreach;descendant_level;
-    %if;(level=xxx)%number_of_descendants_at_level;%end;
+  %if;(nnn=1)%(show names%)
+    %if;(count1=1)
+      %if;(ttt=1)[a descendant]0%(to remove if [descendant/descendants] is added to lexicon%)
+      %else;
+        %if;(vvv<10) [cousin.0.vvv]0%else; [person/persons]0%end;
+      %end;
+    %else;
+      %if;(ttt=1) [descendants]%nn;
+      %else;
+        %if;(vvv<10) [cousin.0.vvv]1%else; [person/persons]1%end;
+      %end;
+    %end;
+    %if;(ttt=1 and count2!=1)
+      %if;(ooo=1) (ccc [person/persons]1 [with] [spouse/spouses]1)%nn;
+      %else;
+        %if;(evar.marr="on" or evar.t="I") (ccc [person/persons]1 [with root, spouses and unknowns])%end;
+      %end;
+    %end;
   %end;
 %end;
 
@@ -787,11 +812,10 @@ zzz est lui même si yyy="desc" ou son conjoint si yyy="spous"
   %end;
   %define;desc_cousin_count_l(xxx)
     %foreach;descendant_level;
-      %if;(level=xxx)%apply;cousins_l%with;xxx%end;%end;
+      %if;(level=xxx)%apply;cousins_l(xxx)%end;
     %end;
   %end;
 %end;
-
 %( Main %)
 <table class="table table-hover table-sm descends_table mt-1">
   %if;(evar.t="A")
@@ -812,9 +836,7 @@ zzz est lui même si yyy="desc" ou son conjoint si yyy="spous"
         %if;(evar.gen="on" and lev<max_desc_level)
           <tr>
             <th class="text-left" scope="row" colspan="%nb_col;">
-              <span class="ml-1">[*generation/generations]0 %expr(lev+1)</span>
-              <span class="float-right mr-1" title="[*nb individuals] [descendants at the generation] %expr(lev+1)%nn;
-              %if;("v7" in bvar.plugins)&#10;&#10;Debug count using cousin.l.v function: %apply;desc_cousin_count_l%with;%expr(lev+1)%end; desc. (should be identical)%end;">%apply;desc_count_l(lev+1)</span>%nn;  
+              <span class="ml-1"%if;("v7" in bvar.plugins) title="Debug count using cousin.l.v function: %apply;desc_cousin_count_l%with;%expr(lev+1)%end; desc. (should be identical)"%end;>[*generation/generations]0 %expr(lev+1) :             %apply;desc_count(lev+1,1,1,0,0)</span>
             </th>
           </tr>
         %end;
@@ -835,9 +857,15 @@ zzz est lui même si yyy="desc" ou son conjoint si yyy="spous"
   %incr_count;
 %end;
 
-<p>[*total][:] %if;(evar.only="on")%apply;desc_count_l%with;%evar.v;%end; [descendants] (%count; [person/persons]1 [with] [spouse/spouses]1)
-               %else;%apply;desc_count(max_desc_level) [descendants] %if;(evar.marr="on" or evar.t="I")(%count; [person/persons]1 [with root, spouses and unknowns])%end;
-               %end;.</p>
+<div>[*total][:]
+  %if;(evar.v<=static_max_desc_level)
+    %if;(evar.only="on")
+      %apply;desc_count(evar.v,1,1,1,count)
+    %else;
+      %apply;desc_count(max_desc_level,0,1,1,count)
+    %end;
+  %else;0 [person/persons]0%end;.
+</div>
 
 %include;trl
 %include;copyr

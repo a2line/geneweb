@@ -45,8 +45,8 @@ function table_options () {
     $('input[type=checkbox][id=t_num_table]').prop('checked', true);
     $('input[type=checkbox][id=t_birth_date]').prop('checked', true);
     $('input[type=checkbox][id=t_birth_place]').prop('checked', true);
-    $('input[type=checkbox][id=t_spouse]').prop('disabled',false);
-    $('input[type=checkbox][id=t_spouse]').prop('checked', true);
+    $('input[type=checkbox][id=t_marr]').prop('disabled',false);
+    $('input[type=checkbox][id=t_marr]').prop('checked', true);
     $('input[type=checkbox][id=t_marr_place]').prop('checked', true);
     $('input[type=checkbox][id=t_marr_date]').prop('checked', true);
     $('input[type=checkbox][id=t_child]').prop('checked', true);
@@ -57,8 +57,9 @@ function table_options () {
   }
 }
 function table_spouse_disabled () {
-  $('input[type=checkbox][id=t_spouse]').prop('disabled',true);
-  $('input[type=checkbox][id=t_spouse]').prop('checked', true);
+  $('input[type=checkbox][id=t_marr]').prop('disabled', true);
+  $('input[id=t_marr2]').prop('disabled', false);
+  $('input[type=checkbox][id=t_marr]').prop('checked', true);
 }
 --></script>
 <h1 class="text-center my-3">%nn;
@@ -263,8 +264,9 @@ function table_spouse_disabled () {
           </div>
           <div>
             <div class="custom-control custom-checkbox custom-control-inline">
-              <input type="checkbox" class="custom-control-input" id="t_spouse" name="spouse">
-              <label class="custom-control-label" for="t_spouse">[*spouse/spouses]1</label>
+              <input type="checkbox" class="custom-control-input" id="t_marr" name="marr">
+              <input name="marr" type="hidden" id="t_marr2" value="on" disabled/>
+              <label class="custom-control-label" for="t_marr">[*spouse/spouses]1</label>
             </div>
             <div class="custom-control custom-checkbox custom-control-inline">
               <input type="checkbox" class="custom-control-input" id="t_child" name="child">
