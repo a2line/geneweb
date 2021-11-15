@@ -30,7 +30,7 @@
   %include;buttons
 %end;
 %let;lvL;
-  %if;(bvar.max_anc_leevel = "")%apply;min(evar.v, max_anc_level, 7)
+  %if;(bvar.max_anc_level = "")%apply;min(evar.v, max_anc_level, 7)
   %else;%apply;min(evar.v, max_anc_level, bvar.max_anc_level)%end;
 %in;
 <h3>%nn;
