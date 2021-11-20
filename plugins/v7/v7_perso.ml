@@ -1807,6 +1807,18 @@ and eval_simple_str_var conf base env (_, p_auth) =
               else ""
           | _ -> raise Not_found
       end
+  | "marriage_place_raw" ->
+      begin match get_env "fam" env with
+        Vfam (_, fam, _, m_auth) when mode_local env ->
+          if m_auth then sou base (get_marriage_place fam)
+          else ""
+      | _ ->
+          match get_env "fam_link" env with
+            Vfam (_, fam, _, m_auth) ->
+              if m_auth then sou base (get_marriage_place fam)
+              else ""
+          | _ -> raise Not_found
+      end
   | "marriage_note" ->
       begin match get_env "fam" env with
         Vfam (_, fam, _, m_auth) ->
@@ -3418,6 +3430,9 @@ and eval_str_person_field conf base env (p, p_auth as ep) =
   | "birth_place" ->
       if p_auth then Util.string_of_place conf (sou base (get_birth_place p))
       else ""
+  | "birth_place_raw" ->
+      if p_auth then sou base (get_birth_place p)
+      else ""
   | "birth_note" ->
       let env = ['i', (fun () -> Util.default_image_name base p)] in
       get_note_source conf base env p_auth conf.no_note
@@ -3430,6 +3445,9 @@ and eval_str_person_field conf base env (p, p_auth as ep) =
       if p_auth then
         Util.string_of_place conf (sou base (get_baptism_place p))
       else ""
+  | "baptism_place_raw" ->
+      if p_auth then sou base (get_baptism_place p)
+      else ""
   | "baptism_note" ->
       let env = ['i', (fun () -> Util.default_image_name base p)] in
       get_note_source conf base env p_auth conf.no_note
@@ -3440,6 +3458,9 @@ and eval_str_person_field conf base env (p, p_auth as ep) =
         (sou base (get_baptism_src p))
   | "burial_place" ->
       if p_auth then Util.string_of_place conf (sou base (get_burial_place p))
+      else ""
+  | "burial_place_raw" ->
+      if p_auth then sou base (get_burial_place p)
       else ""
   | "burial_note" ->
       let env = ['i', (fun () -> Util.default_image_name base p)] in
@@ -3469,6 +3490,9 @@ and eval_str_person_field conf base env (p, p_auth as ep) =
   | "cremation_place" ->
       if p_auth then Util.string_of_place conf (sou base (get_burial_place p))
       else ""
+  | "cremation_place_raw" ->
+      if p_auth then sou base (get_burial_place p)
+      else ""
   | "dates" -> if p_auth then DateDisplay.short_dates_text conf base p else ""
   | "death_age" ->
       if p_auth then
@@ -3486,6 +3510,9 @@ and eval_str_person_field conf base env (p, p_auth as ep) =
       else ""
   | "death_place" ->
       if p_auth then Util.string_of_place conf (sou base (get_death_place p))
+      else ""
+  | "death_place_raw" ->
+      if p_auth then sou base (get_death_place p)
       else ""
   | "death_note" ->
       let env = ['i', (fun () -> Util.default_image_name base p)] in
