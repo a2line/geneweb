@@ -34,7 +34,7 @@
 %let;birth_symbol;%if;(bvar.birth_symbol != "")%bvar.birth_symbol;%else;&deg;%end;%in;
 %let;death_symbol;%if;(bvar.death_symbol != "")%bvar.death_symbol;%else;&dagger;%end;%in;
 %let;l_v0;%if;(evar.v > max_desc_level)%max_desc_level;%else;%evar.v;%end;%in;
-%let;l_v;5%if;(bvar.max_desc_level = "" or bvar.max_desc_level > l_v0)%l_v0;%else;%bvar.max_desc_level;%end;%in;
+%let;l_v;%if;(bvar.max_desc_level = "" or bvar.max_desc_level > l_v0)%l_v0;%else;%bvar.max_desc_level;%end;%in;
 %define;desc1(z1,z2,z3,z4,curlev,maxlev,sp_index)
   %let;l1;%if;(z3z4 = "00" or z3z4 = "01")  ┊%else;   %end;%in;
   %let;l2;
@@ -124,17 +124,17 @@
       %if;(curlev < maxlev)
         %reset_count;
         %foreach;sorted_listb_item;
-          %if;(item.1=ifam)%incr_count;%end;
+          %if;("item.1"="ifam")%incr_count;%end;
         %end;
         %reset_count1;
         %foreach;sorted_listc_item;
-          %if;(item.1=index)%incr_count1;%end;
+          %if;("item.1"="index")%incr_count1;%end;
         %end;
         %if;has_children;
           %foreach;child;
             %reset_count2;
             %foreach;sorted_listc_item;
-              %if;(item.1=child.index)%incr_count2;%end;
+              %if;("item.1"="child.index")%incr_count2;%end;
             %end;
             %if;(count=0 or count1=0 or count2=0 or evar.implx="")
               %let;zl4;%if;(child_cnt = nb_children)1%else;0%end;%in;
@@ -167,7 +167,7 @@
       <span class="tt">z1%l2;%l23;%l231;%l24;%nn;
         %reset_count;
         %foreach;sorted_listc_item;
-          %if;(item.1=index)%incr_count;%end;
+          %if;("item.1"="index")%incr_count;%end;
         %end;
         %if;(count>0)
           %l231;%nn;
@@ -212,7 +212,7 @@
     %( case: first occurence at generation n is married to generation n-1 spouse and has children %)
     %( these children will not appear even though asking for desc up to generation n %)
     %if;(not cancel_links)
-      <a role="button" onclick="implexdesc('%index;')" title="[*implex/implexes]0, "><i class="fa fa-random fa-fw ml-1" aria-hidden="true"></i>%nn;
+      <a role="button" onclick="implexdesc('%index;')" title="[*implex/implexes]0"><i class="fa fa-random fa-fw ml-1" aria-hidden="true"></i>%nn;
         <span class="sr-only"> (==)</span></a>
     %else;
       <i class="fa fa-random fa-fw ml-1" aria-hidden="true"></i>%nn;
@@ -244,7 +244,6 @@
                 %elseif;(level=3)[*grand-parents]
                 %elseif;(level=4)[*great-grand-parents]
                 %elseif;(level=5)[*great-great-grandparents]
-                %else;[*generation/generations]0 %level;
                 %end;%nn;
               </div>
               %reset_count;
