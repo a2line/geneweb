@@ -2,7 +2,7 @@
 <!-- Copyright (c) 1998-2018 INRIA -->
 %( Boutons de configurations et d'options %)
 %if;(evar.cgl!="on")
-  <div class="btn-toolbar my-1" role="toolbar" arial-label="config buttons toolbar">
+  <div class="btn-toolbar mt-1 mb-3" role="toolbar" arial-label="config buttons toolbar">
     %if;(evar.em="R")
       <a href="%prefix_base_password;%nn;
         %if;(evar.select!="")&select=%evar.select;%end;%nn;
