@@ -120,15 +120,8 @@ ROW : %maxw;|
 ZERO : %zero;|
 MAXDESC : %maxdesc;%)
 %define;link_cousin(vvv,www,ttt,sss)
-  %let;cousin_vvv_www;%if;("v7" in bvar.plugins)%cousins.vvv.www;%end;%in;
   <a role="button" href="%prefix_base_password;%access;&m=C&v1=vvv&v2=www" data-toggle="tooltip" data-html="true" title="sss" class="btn btn-light %if;(cousin_vvv_www!="" and cousin_vvv_www=0) disabled%end; w-100" %if;(www-vvv<=10) style="height:120px;"%end;>
-    %if;("v7" in bvar.plugins)
-      <span class="badge badge-%if;(vvv=0)info%elseif;(vvv%2=1)primary%else;danger%end;">
-      %if;(cousin_vvv_www>bvar.max_cousins)
-        <span class="text-danger" title="max %bvar.max_cousins;">≥%bvar.max_cousins;</span>
-      %else;%cousin_vvv_www;
-      %end;</span></br>
-    %end;
+    <span class="badge badge-%if;(vvv=0)info%elseif;(vvv%2=1)primary%else;danger%end;">%if;plugin.v7;%cousins.vvv.www;%end;</span><br>
     ttt</a><div>%if;(vvv=0)%expr((100/.(2^(vvv+www))))%else;%expr((100/.(2^(vvv+www-1))))%end; %%</div>
 %end;
 %( table of cousins.i.j-xxx+i, maxdesc calculé auparavant %)

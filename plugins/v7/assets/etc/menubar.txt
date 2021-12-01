@@ -330,7 +330,7 @@ fr: Sélectionnez les modules en cliquant sur le bouton correspondant (max 15).
                 <a class="dropdown-item" href="%prefix;%access;;m=A;t=T;t1=CT;hi=H;v=5;scale=100;fs=17;sosa=on;" title="[*compact tree] [with] %self;"><span class="fa fa-th fa-fw mr-2"></span>[*compact tree]</a>
                 <a class="dropdown-item" href="%prefix;%access;;m=A;t=T;t1=h7;wide=on;" title="[Arbre 7 gen]"><span class="fa fa-border-none fa-fw mr-2"></span>7 [generation/generations]1</a>
                 <a class="dropdown-item" href="%prefix;%access;;m=A;t=T;t1=m;" title="[Arbre 9 gen]"><span class="fa fa-chess-board fa-fw mr-2"></span>9 [generation/generations]1</a>
-                %if;("v7" in bvar.plugins)
+                %if;plugin.v7;
                   <div class="dropdown-divider"></div>
                     <a class="dropdown-item" href="%prefix;%access;;m=A;t=FC;v=5;"><span class="fa fa-chart-pie fa-fw mr-2"></span>[*v7 fanchart]</a>
                   </div>
