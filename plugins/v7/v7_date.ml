@@ -9,9 +9,9 @@ let short_family_dates_text conf _base fam =
     | Some d ->
       begin match d with
         | Dgreg (dmy, _) -> Some (DateDisplay.prec_year_text conf dmy)
-        | _ -> Some " "
+        | _ -> Some ""
       end
-    | _ -> Some " "
+    | _ -> Some ""
   in
   let sep_dates =
     match List.find_opt (fun e ->
@@ -24,9 +24,9 @@ let short_family_dates_text conf _base fam =
         | Some d ->
           begin match d with
             | Dgreg (dmy, _) -> Some (DateDisplay.prec_year_text conf dmy)
-            | _ -> Some " "
+            | _ -> Some ""
           end
-        | _ -> Some " "
+        | _ -> Some ""
       end
     | _ -> None
   in
