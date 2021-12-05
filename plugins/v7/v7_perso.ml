@@ -5003,18 +5003,12 @@ let gen_interp_templ ?(no_headers = false) menu title templ_fname conf base p =
       | Some p -> Some (V7_sosa.init_sosa_t conf base p)
       | _ -> None
     in
-    let desc_level_table_l =
-      let dlt () = make_desc_level_table conf base emal p in Lazy.from_fun dlt
-    in
     let desc_level_table_m =
       let dlt () = make_desc_level_table conf base 120 p in
       Lazy.from_fun dlt
     in
     let desc_level_table_l_save =
       let dlt () = make_desc_level_table conf base emal p in Lazy.from_fun dlt
-    in
-    let mal () =
-      Vint (max_ancestor_level conf base (get_iper p) emal + 1)
     in
     (* Static max ancestor level *)
     let smal () =
@@ -5030,7 +5024,7 @@ let gen_interp_templ ?(no_headers = false) menu title templ_fname conf base p =
     let mcl () = Vint (max_cousin_level conf base p) in
     (* Récupère le nombre maximal de niveaux de descendance en prenant en compte les liens inter-arbres (limité à 10 générations car problématique en terme de perf). *)
     let mdl () =
-      Vint (max_descendant_level base desc_level_table_l)
+      Vint (max_descendant_level base desc_level_table_m)
     in
     (* Static max descendant level *)
     let smdl () =
@@ -5055,13 +5049,13 @@ let gen_interp_templ ?(no_headers = false) menu title templ_fname conf base p =
      ("sosa",  Vsosa (ref []));
      ("sosa_ref", Vsosa_ref sosa_ref_l);
      ("t_sosa", Vt_sosa t_sosa);
-     ("max_anc_level", Vlazy (Lazy.from_fun mal));
+     ("max_anc_level", Vlazy (Lazy.from_fun smal));
      ("static_max_anc_level", Vlazy (Lazy.from_fun smal));
      ("sosa_ref_max_anc_level", Vlazy (Lazy.from_fun srmal));
      ("max_cous_level", Vlazy (Lazy.from_fun mcl));
      ("max_desc_level", Vlazy (Lazy.from_fun mdl));
      ("static_max_desc_level", Vlazy (Lazy.from_fun smdl));
-     ("desc_level_table", Vdesclevtab desc_level_table_l);
+     ("desc_level_table", Vdesclevtab desc_level_table_m);
      ("desc_level_table_save", Vdesclevtab desc_level_table_l_save);
      ("nldb", Vlazy (Lazy.from_fun nldb));
      ("all_gp", Vlazy (Lazy.from_fun all_gp))]
