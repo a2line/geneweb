@@ -577,7 +577,7 @@
   %foreach;xx.mother.family;
     %if;(spouse.access=xx.father.access)
       %if;(marriage_date.year!="")
-        %if;(wizard and not cancel_links)<a href="%prefix&m=MOD_FAM&i=%family.index;&ip=%index;" title="[modify::family/families]0">%end;<span class="text-nowrap">%if;("v7" in bvar.plugins)%family.date_s;%else;%marriage.date_s;%end;</span>%if;(wizard and not cancel_links)</a>%end;
+        %if;(wizard and not cancel_links)<a href="%prefix&m=MOD_FAM&i=%family.index;&ip=%index;" title="[modify::family/families]0">%end;<span class="text-nowrap">%if;plugin.v7;%family.date_s;%else;%marriage.date_s;%end;</span>%if;(wizard and not cancel_links)</a>%end;
       %else;&nbsp;%end;
     %end;
   %end;
