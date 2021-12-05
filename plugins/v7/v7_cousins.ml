@@ -259,30 +259,17 @@ let print_rlm conf base iplist ip0  =
 
 let print_cousins conf base p lev1 lev2 =
   let title h =
-    let txt_fun a =
-      let txt = gen_person_text raw_access conf base p in
-      transl_a_of_gr_eq_gen_lev conf a
-        (if h then gen_person_text_no_html raw_access conf base p else txt)
-        txt
+    let cousins_l1_l2 =
+      "cousin." ^ (string_of_int lev1) ^ "." ^ (string_of_int lev2)
     in
-    if lev1 = lev2 then
-      let s = txt_fun (brother_label conf lev1) in
-      Output.print_string conf (Utf8.capitalize_fst (Util.translate_eval s))
-    else if lev1 = 2 && lev2 = 1 then
-      let s = txt_fun (transl_nth conf "an uncle/an aunt" 4) in
-      Output.print_string conf (Utf8.capitalize_fst (Util.translate_eval s))
-    else if lev1 = 3 && lev2 = 1 then
-      let s = txt_fun (transl_nth conf "a great-uncle/a great-aunt" 4) in
-      Output.print_string conf (Utf8.capitalize_fst (Util.translate_eval s))
-    else if lev1 = 1 && lev2 = 2 then
-      let s = txt_fun (transl_nth conf "a nephew/a niece" 4) in
-      Output.print_string conf (Utf8.capitalize_fst (Util.translate_eval s))
-    else if lev1 = 1 && lev2 = 3 then
-      let s = txt_fun (transl_nth conf "a great-nephew/a great-niece" 4) in
-      Output.print_string conf (Utf8.capitalize_fst (Util.translate_eval s))
-    else
-      Output.printf conf "%s %d / %s %d" (Utf8.capitalize_fst (transl conf "ancestors")) lev1
+    let s = person_text conf base p in
+    let trsl = transl_nth conf cousins_l1_l2 1 in
+    let trnsl = transl_a_of_b conf trsl s s in
+    match String.index_opt trnsl '[' with
+    | Some i -> Output.printf conf "%s %d / %s %d"
+        (Utf8.capitalize_fst (transl conf "ancestors")) lev1
         (Utf8.capitalize_fst (transl conf "descendants")) lev2
+    | None -> Output.printf conf "%s" (Utf8.capitalize_fst trnsl)
   in
   let max_cnt =
     try int_of_string (List.assoc "max_cousins" conf.base_env) with
