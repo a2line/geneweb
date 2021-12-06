@@ -82,6 +82,7 @@ let give_access conf base ia_asex p1 b1 p2 b2 print_sosa =
   else print_nospouse ()
 
 let rec print_descend_upto conf base cnt cnt_sp iplist max_cnt ini_p ini_br lev children print print_sosa=
+  let show_path = p_getenv conf.env "path" = Some "on" in
   if lev > 0 && cnt < max_cnt then
     begin
       if print then Output.print_string conf "<ul>\n";
@@ -98,9 +99,10 @@ let rec print_descend_upto conf base cnt cnt_sp iplist max_cnt ini_p ini_br lev 
             (* if more than one spouse, this will be split on multiple lines *)
             (* we ignore the case where two spouses, but only one with descendants! *)
             let with_sp =
-              if (Array.length (get_family p)) = 1 && print then
+              if (Array.length (get_family p)) >= 1 && print then
                 let sp = get_spouse base ip (get_family p).(0) in
-                Printf.sprintf " %s %s" (Util.transl conf "with") (person_title_text conf base sp)
+                Printf.sprintf " %s %s"
+                (Util.transl conf "with") (person_title_text conf base sp)
               else ""
             in
             let br = List.rev ((ip, get_sex p) :: rev_br) in
@@ -114,6 +116,7 @@ let rec print_descend_upto conf base cnt cnt_sp iplist max_cnt ini_p ini_br lev 
                     if lev = 1 then
                       begin
                         give_access conf base ia_asex ini_p ini_br p br print_sosa;
+                        Output.printf conf (if List.mem ip iplist then " **" else "");
                       end
                     else
                       let s =
@@ -122,8 +125,9 @@ let rec print_descend_upto conf base cnt cnt_sp iplist max_cnt ini_p ini_br lev 
                           (transl_nth conf "child/children" 1)
                         s s
                       in
-                      Output.printf conf "%s%s%s%s\n" (Utf8.capitalize_fst (Util.translate_eval s)) with_sp
-                        (Util.transl conf ":") (if with_sp = "" then "<br>" else "")
+                      if not show_path then
+                        Output.printf conf "%s%s%s%s\n" (Utf8.capitalize_fst (Util.translate_eval s)) with_sp
+                          (Util.transl conf ":") (if with_sp = "" then "<br>" else "")
                   end;
                   (* the function children_of returns *all* the children of ip *)
                   let (cnt, cnt_sp, iplist) =
@@ -137,19 +141,26 @@ let rec print_descend_upto conf base cnt cnt_sp iplist max_cnt ini_p ini_br lev 
                         in
                         let sp = get_spouse base ip ifam in
                         if (Array.length (get_family p)) > 1 && lev >= 2 && print &&
-                           ((List.length children) > 0) && (Cousins.has_desc_lev conf base lev sp)
+                           ((List.length children) > 0) &&
+                           (Cousins.has_desc_lev conf base lev sp) ||
+                           show_path
                         then
-                          Output.printf conf "%s %s%s\n" (Util.transl conf "with")
+                          Output.printf conf "%s %s %s%s\n"
+                            (person_title_text conf base p)
+                            (Util.transl conf "with")
                             (person_title_text conf base sp) (Util.transl conf ":") ;
-                          print_descend_upto conf base cnt cnt_sp iplist max_cnt ini_p ini_br (lev - 1)
-                            children print print_sosa;
+                        print_descend_upto conf base cnt cnt_sp iplist max_cnt ini_p ini_br (lev - 1)
+                          children print print_sosa;
                       )
                       (cnt, cnt_sp, iplist) (Array.to_list (get_family p))
                   in
                   if lev <= 2 && print then Output.print_string conf "</li>\n";
                   if lev = 1 then
                     let nb_sp = Array.length (get_family p) in
-                    (cnt + 1, cnt_sp + nb_sp, ip :: iplist)
+                    if List.mem ip iplist then
+                      (cnt, cnt_sp + nb_sp, iplist)
+                    else
+                      (cnt + 1, cnt_sp + nb_sp, ip :: iplist)
                   else (cnt, cnt_sp, iplist)
               end
             else
