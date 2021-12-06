@@ -50,18 +50,18 @@
 %end;
 %define;list_ancestor(vvv)
   %(todo: remove implexes%)
-  %reset_count;%reset_count2;
+  %reset_count1;%reset_count2;
   %foreach;ancestor_level;
     %if;(level=vvv+1)
       %foreach;ancestor;
-        %incr_count;
+        %incr_count1;
         %if;(is_first)<span class="text-nowrap">%nn;
         %else;
-          %if;(count%2=1)%if;(ancestor="? ?")%incr_count2;%else;</span> <span class="text-nowrap">%end;%end;
+          %if;(count1%2=1)%if;(ancestor="? ?")%incr_count2;%else;</span> <span class="text-nowrap">%end;%end;
         %end;
-        %if;(count%2=0 and ancestor!="? ?" and count2!=1) & %end;
+        %if;(count1%2=0 and ancestor!="? ?" and count2!=1) & %end;
         %if;(ancestor!="? ?")%ancestor;%end;
-        %if;(count%2=0)%reset_count2;%if;(not is_last) • %else;</span>%end;%end;
+        %if;(count1%2=0)%reset_count2;%if;(not is_last) • %else;</span>%end;%end;
       %end;
     %end;
   %end;
@@ -77,7 +77,7 @@
        <a role="button" href="%prefix_base_password;&%access;&m=C&v1=vvv&v2=0" 
         class="btn btn-light ddd w-100"%if;(vvv<5) style="height:120px;"%end;
          data-toggle="tooltip" data-html="true" title="%apply;cousin_lex_tt(vvv,0)">
-         %if;(vvv=0)<span class="badge badge-success">1</span><br>%end;ttt%nn;
+         %if;(vvv=0)<span class="badge badge-success">1</span>%incr_count;<br>%end;ttt%nn;
          %if;(vvv<10)<div class="d-flex justify-content-center"><div class="mt-1 mx-3 small text-muted">%apply;list_ancestor(vvv)</div></div></a>%end;
       <div>%expr(100/.(2^vvv)) %%</div>
       </div>
@@ -85,16 +85,16 @@
   %end;
 %end;
 %define;one_ancestor(vvv,ttt)
-  %reset_count;%reset_count1;
+  %reset_count1;%reset_count2;
     %foreach;ancestor_level;
       %if;(level=vvv+1)
         %foreach;ancestor;
-          %incr_count;
-          %if;(ancestor="? ?")%incr_count1;%end;
+          %incr_count2;
+          %if;(ancestor!="? ?")%incr_count;%else;%incr_count1;%end;
         %end;
       %end;
     %end;
-  %apply;link%with;vvv%and;%and;<span class="badge badge-xl badge-%if;(vvv %2 = 1)primary%else;danger%end;"> %expr(count-count1)</span><br>ttt%and;%if;(count=0)disabled%end;%and;%end;
+  %apply;link%with;vvv%and;%and;<span class="badge badge-xl badge-%if;(vvv %2 = 1)primary%else;danger%end;"> %expr(count2-count1)</span><br>ttt%and;%if;(count2=0)disabled%end;%and;%end;
 %end;
 %( Calcul de la hauteur maximale du tableau descendant, limité en dur à deux fois max la hauteur montante evar.v %)
 %let;maxv;%if;(evar.v="")4%else;%expr(evar.v+1)%end;%in;
@@ -109,20 +109,22 @@
     %apply;cous%with;%expr(i)%and;%expr(i+xxx)%end;
   %end;
 %end;
-%reset_count;
+%reset_count1;
 %for;i;minw;maxw;
   %let;row;%apply;row_counts(i)%in;
-  %if;(row=zero)%incr_count;%end;
+  %if;(row=zero)%incr_count1;%end;
 %end;
-%let;maxdesc;%expr(maxw-count)%in;
+%let;maxdesc;%expr(maxw-count1)%in;
 %(COUNT : %count;|
 ROW : %maxw;|
 ZERO : %zero;|
 MAXDESC : %maxdesc;%)
 %define;link_cousin(vvv,www,ttt,sss)
-  <a role="button" href="%prefix_base_password;%access;&m=C&v1=vvv&v2=www" data-toggle="tooltip" data-html="true" title="sss" class="btn btn-light %if;(cousin_vvv_www!="" and cousin_vvv_www=0) disabled%end; w-100" %if;(www-vvv<=10) style="height:120px;"%end;>
-    <span class="badge badge-%if;(vvv=0)info%elseif;(vvv%2=1)primary%else;danger%end;">%if;plugin.v7;%cousins.vvv.www;%end;</span><br>
+  %let;cousins_vvv_www;%if;plugin.v7;%cousins.vvv.www;%end;%in;
+  <a role="button" href="%prefix_base_password;%access;&m=C&v1=vvv&v2=www" data-toggle="tooltip" data-html="true" title="sss" class="btn btn-light %if;(cousins_vvv_www!="" and cousins_vvv_www=0) disabled%end; w-100" %if;(www-vvv<=10) style="height:120px;"%end;>
+    <span class="badge badge-%if;(vvv=0)info%elseif;(vvv%2=1)primary%else;danger%end;">%cousins_vvv_www;</span><br>
     ttt</a><div>%if;(vvv=0)%expr((100/.(2^(vvv+www))))%else;%expr((100/.(2^(vvv+www-1))))%end; %%</div>
+    %for;i;0;cousins_vvv_www;%incr_count;%end;
 %end;
 %( table of cousins.i.j-xxx+i, maxdesc calculé auparavant %)
 %define;table(xxx)
@@ -151,6 +153,7 @@ MAXDESC : %maxdesc;%)
                      %and;%apply;cousin_lex_tt(i,j-xxx+i)
                    %end;
                  </div>
+                 
                </td>
              %end;
           %end;
@@ -162,11 +165,14 @@ MAXDESC : %maxdesc;%)
     </tr>
   </table>
 %end;
+%reset_count;
 %if;(evar.v="")
   %apply;table(4)
 %elseif(evar.v>0 or evar.v<10)
   %apply;table(evar.v+1)
 %end;
+
+%if;plugin.v7;Total : %count; cousins !%end;
 %include;trl
 %include;copyr
 </div>
