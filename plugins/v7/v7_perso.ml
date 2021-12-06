@@ -408,20 +408,23 @@ let get_descendants_at_level base p lev2 =
 
 let count_cousins conf base p lev1 lev2 =
   match (lev1, lev2) with
-  | (0, 0) -> 1 (* self *)
+  | (0, 0) -> (1, 0, 0) (* self *)
   | (0, lev2) -> (* descendants *)
     let ifam_l = get_descendants_at_level base p lev2 in
-    List.fold_left (fun cnt ifam ->
-        cnt + Array.length (get_children (foi base ifam))) 0 ifam_l
+    let (cnt, cnt_sp) = List.fold_left (fun (cnt, cnt_sp) ifam ->
+        (cnt + Array.length (get_children (foi base ifam)),
+        cnt_sp + 1)) (0, 0) ifam_l
+    in
+    (cnt, cnt, cnt_sp)
   | (_, _) ->
     let max_cnt =
       try int_of_string (List.assoc "max_cousins" conf.base_env) with
         Not_found | Failure _ -> V7_cousins.default_max_cnt
     in
     let () = V7_sosa.build_sosa_ht conf base in
-    let (cnt, _cnt_sp, _iplist) =
+    let (cnt, cnt_t, cnt_sp, _iplist) =
       V7_cousins.print_cousins_lev conf base max_cnt p lev1 lev2 false V7_sosa.print_sosa
-    in cnt
+    in (cnt, cnt_t, cnt_sp)
 
 let max_cousin_level conf base p =
   let max_lev =
@@ -2618,10 +2621,21 @@ and eval_person_field_var conf base env (p, p_auth as ep) loc =
           end
       | _ -> VVstring ""
       end
+  | ["cousins"; l1; l2; "paths"] ->
+      let l1 = int_of_string l1 in
+      let l2 = int_of_string l2 in
+      let (_cnt, cnt_t, _cnt_sp) = count_cousins conf base p l1 l2 in
+      VVstring (string_of_int cnt_t)
+  | ["cousins"; l1; l2; "spouses"] ->
+      let l1 = int_of_string l1 in
+      let l2 = int_of_string l2 in
+      let (_cnt, _cnt_t, cnt_sp) = count_cousins conf base p l1 l2 in
+      VVstring (string_of_int cnt_sp)
   | ["cousins"; l1; l2] ->
       let l1 = int_of_string l1 in
       let l2 = int_of_string l2 in
-      VVstring (string_of_int (count_cousins conf base p l1 l2))
+      let (cnt, _cnt_t, _cnt_sp) = count_cousins conf base p l1 l2 in
+      VVstring (string_of_int cnt)
   | "cremated_date" :: sl ->
       begin match get_burial p with
         Cremated cod when p_auth ->

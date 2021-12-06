@@ -100,3 +100,7 @@ fr: tous les lieux
     v7 list too long
 en: list too long
 fr: liste trop longue
+
+    path/paths
+en: path/paths
+fr: chemin/chemins
