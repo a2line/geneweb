@@ -302,12 +302,15 @@ let print_cousins conf base p lev1 lev2 =
   Output.print_string conf "<p>\n";
   if cnt >= max_cnt then Output.print_string conf "etc...\n"
   else if cnt >= 1 then
-    Output.printf conf "%s%s %d %s (%d %s)" (Utf8.capitalize_fst (transl conf "total"))
+    let paths = if cnt = cnt_t then ""
+      else Printf.sprintf " (%d %s)"
+        cnt_t (Util.translate_eval ("@(c)" ^ transl_nth conf "person/persons"
+        (if cnt > 1 then 1 else 0)))
+    in
+    Output.printf conf "%s%s %d %s%s" (Utf8.capitalize_fst (transl conf "total"))
       (Util.transl conf ":")
       cnt (Util.translate_eval ("@(c)" ^ transl_nth conf "person/persons"
-        (if cnt > 1 then 1 else 0)))
-      cnt_t (Util.translate_eval ("@(c)" ^ transl_nth conf "path/paths"
-        (if cnt_t > 1 then 1 else 0)));
+        (if cnt > 1 then 1 else 0))) paths;
   if p_getenv conf.env "spouse" = Some "on" then
     Output.printf conf " %s %d %s.\n" (transl conf "and") cnt_sp
       (Util.translate_eval ("@(c)" ^ transl_nth conf "spouse/spouses" 1))

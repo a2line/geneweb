@@ -2621,21 +2621,14 @@ and eval_person_field_var conf base env (p, p_auth as ep) loc =
           end
       | _ -> VVstring ""
       end
-  | ["cousins"; l1; l2; "paths"] ->
-      let l1 = int_of_string l1 in
-      let l2 = int_of_string l2 in
-      let (_cnt, cnt_t, _cnt_sp) = count_cousins conf base p l1 l2 in
-      VVstring (string_of_int cnt_t)
-  | ["cousins"; l1; l2; "spouses"] ->
-      let l1 = int_of_string l1 in
-      let l2 = int_of_string l2 in
-      let (_cnt, _cnt_t, cnt_sp) = count_cousins conf base p l1 l2 in
-      VVstring (string_of_int cnt_sp)
   | ["cousins"; l1; l2] ->
       let l1 = int_of_string l1 in
       let l2 = int_of_string l2 in
-      let (cnt, _cnt_t, _cnt_sp) = count_cousins conf base p l1 l2 in
-      VVstring (string_of_int cnt)
+      let (cnt, cnt_t, _cnt_sp) = count_cousins conf base p l1 l2 in
+      if cnt = cnt_t then
+        VVstring (string_of_int cnt)
+      else
+        VVstring ((string_of_int cnt) ^ "+" ^ (string_of_int cnt_t))
   | "cremated_date" :: sl ->
       begin match get_burial p with
         Cremated cod when p_auth ->
