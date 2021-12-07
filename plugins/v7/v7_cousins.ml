@@ -80,14 +80,15 @@ let give_access conf base ia_asex p1 b1 p2 b2 print_sosa =
   end
   else print_nospouse ()
 
-let rec print_descend_upto conf base cnt cnt_t cnt_sp iplist max_cnt ini_p ini_br lev children print print_sosa=
+let rec print_descend_upto conf base cnt_t iplist splist max_cnt 
+  ini_p ini_br lev children print print_sosa =
   let show_path = p_getenv conf.env "path" = Some "on" in
-  if lev > 0 && cnt < max_cnt then
+  if lev > 0 && (List.length iplist) < max_cnt then
     begin
       if print then Output.print_string conf "<ul>\n";
-      let (cnt, cnt_t, cnt_sp, iplist) =
+      let (cnt_t, iplist, splist) =
         List.fold_left
-          (fun (cnt, cnt_t, cnt_sp, iplist) (ip, ia_asex, rev_br) ->
+          (fun (cnt_t, iplist, splist) (ip, ia_asex, rev_br) ->
             let p = pget conf base ip in
             (* détecter l'époux de p, parent des enfants qui seront listés *)
             let get_spouse base iper ifam =
@@ -106,7 +107,7 @@ let rec print_descend_upto conf base cnt cnt_t cnt_sp iplist max_cnt ini_p ini_b
             in
             let br = List.rev ((ip, get_sex p) :: rev_br) in
             let is_valid_rel = Cousins.br_inter_is_empty ini_br br in
-            if is_valid_rel && cnt < max_cnt && Cousins.has_desc_lev conf base lev p
+            if is_valid_rel && (List.length iplist) < max_cnt && Cousins.has_desc_lev conf base lev p
             then
               begin
                 if lev <= 2 && print then
@@ -129,9 +130,9 @@ let rec print_descend_upto conf base cnt cnt_t cnt_sp iplist max_cnt ini_p ini_b
                           (Util.transl conf ":") (if with_sp = "" then "<br>" else "")
                   end;
                   (* the function children_of returns *all* the children of ip *)
-                  let (cnt, cnt_t, cnt_sp, iplist) =
+                  let (cnt_t, iplist, splist) =
                     List.fold_left
-                      (fun (cnt, cnt_t, cnt_sp, iplist) ifam ->
+                      (fun (cnt_t, iplist, splist) ifam ->
                         let children =
                           List.map
                             (fun ip ->
@@ -148,32 +149,43 @@ let rec print_descend_upto conf base cnt cnt_t cnt_sp iplist max_cnt ini_p ini_b
                             (person_title_text conf base p)
                             (Util.transl conf "with")
                             (person_title_text conf base sp) (Util.transl conf ":") ;
-                        print_descend_upto conf base cnt cnt_t cnt_sp iplist max_cnt ini_p ini_br (lev - 1)
-                          children print print_sosa;
+                        print_descend_upto conf base cnt_t iplist splist max_cnt
+                          ini_p ini_br (lev - 1) children print print_sosa;
                       )
-                      (cnt, cnt_t, cnt_sp, iplist) (Array.to_list (get_family p))
+                      (cnt_t, iplist, splist) (Array.to_list (get_family p))
                   in
                   if lev <= 2 && print then Output.print_string conf "</li>\n";
                   if lev = 1 then
-                    let nb_sp = Array.length (get_family p) in
+                    let splist =
+                      let rec loop splist =
+                        function
+                        | [] -> splist
+                        | ifam :: list ->
+                            let sp = get_spouse base ip ifam in
+                            if List.mem sp splist then
+                              loop splist list
+                            else
+                              loop (sp :: splist) list
+                      in loop splist (Array.to_list (get_family p)) 
+                    in
                     if List.mem ip iplist then
-                      (cnt, cnt_t + 1, cnt_sp + nb_sp, iplist)
+                      (cnt_t + 1, iplist, splist)
                     else
-                      (cnt + 1, cnt_t + 1, cnt_sp + nb_sp, ip :: iplist)
-                  else (cnt, cnt_t, cnt_sp, iplist)
+                      (cnt_t + 1, ip :: iplist, splist)
+                  else (cnt_t, iplist, splist)
               end
             else
-              (cnt, cnt_t, cnt_sp, iplist)
+              (cnt_t, iplist, splist)
           )
-          (cnt, cnt_t, cnt_sp, iplist) children
+          (cnt_t, iplist, splist) children
       in
       if print then Output.print_string conf "</ul>\n";
-      (cnt, cnt_t, cnt_sp, iplist)
+      (cnt_t, iplist, splist)
     end
   else
-    (cnt, cnt_t, cnt_sp, iplist)
+    (cnt_t, iplist, splist)
 
-let print_cousins_side_of conf base cnt cnt_t cnt_sp iplist max_cnt a ini_p ini_br lev1 lev2 print print_sosa =
+let print_cousins_side_of conf base cnt_t iplist splist max_cnt a ini_p ini_br lev1 lev2 print print_sosa =
   let sib = Cousins.siblings conf base (get_iper a) in
   if List.exists (Cousins.sibling_has_desc_lev conf base lev2) sib then
     begin
@@ -188,14 +200,14 @@ let print_cousins_side_of conf base cnt cnt_t cnt_sp iplist max_cnt a ini_p ini_
             (Util.transl conf ":")
         end;
       let sib = List.map (fun (ip, ia_asex) -> ip, ia_asex, []) sib in
-      let (cnt, cnt_t, cnt_sp, iplist) =
-          print_descend_upto conf base cnt cnt_t cnt_sp iplist max_cnt ini_p ini_br
+      let (cnt_t, iplist, splist) =
+          print_descend_upto conf base cnt_t iplist splist max_cnt ini_p ini_br
             lev2 sib print print_sosa
       in
       if lev1 > 1 && print then Output.print_string conf "</li>\n";
-      (true, cnt, cnt_t, cnt_sp, iplist)
+      (true, cnt_t, iplist, splist)
     end
-  else (false, cnt, cnt_t, cnt_sp, iplist)
+  else (false, cnt_t, iplist, splist)
 
 let print_cousins_lev conf base max_cnt p lev1 lev2 print print_sosa =
   let first_sosa =
@@ -212,28 +224,28 @@ let print_cousins_lev conf base max_cnt p lev1 lev2 print print_sosa =
       Output.print_string conf "</div>\n";
       if lev1 > 1 then Output.printf conf "<ul>\n";
     end;
-  let (some, cnt, cnt_t, cnt_sp, iplist) =
-    let rec loop sosa (some, cnt, cnt_t, cnt_sp, iplist) =
-      if cnt < max_cnt && Sosa.gt last_sosa sosa then
-        let (some, cnt, cnt_t, cnt_sp, iplist) =
+  let (some, cnt_t, iplist, splist) =
+    let rec loop sosa (some, cnt_t, iplist, splist) =
+      if (List.length iplist) < max_cnt && Sosa.gt last_sosa sosa then
+        let (some, cnt_t, iplist, splist) =
           match Util.old_branch_of_sosa conf base (get_iper p) sosa with
             Some ((ia, _) :: _ as br) ->
-            let (some1, cnt, cnt_t, cnt_sp, iplist) =
-              print_cousins_side_of conf base cnt cnt_t cnt_sp iplist max_cnt (pget conf base ia) p br
-              lev1 lev2 print print_sosa
+            let (some1, cnt_t, iplist, splist) =
+              print_cousins_side_of conf base cnt_t iplist splist max_cnt
+                (pget conf base ia) p br lev1 lev2 print print_sosa
             in
-            (some || some1, cnt, cnt_t, cnt_sp, iplist)
-          | _ -> (some, cnt, cnt_t, cnt_sp, iplist)
+            (some || some1, cnt_t, iplist, splist)
+          | _ -> (some, cnt_t, iplist, splist)
         in
-        loop (Sosa.inc sosa 1) (some, cnt, cnt_t, cnt_sp, iplist)
-      else (some, cnt, cnt_t, cnt_sp, iplist)
+        loop (Sosa.inc sosa 1) (some, cnt_t, iplist, splist)
+      else (some, cnt_t, iplist, splist)
     in
-    loop first_sosa (false, 0, 0, 0, [])
+    loop first_sosa (false, 0, [], [])
   in
   if some || not print then ()
   else Output.printf conf "%s.\n" (Utf8.capitalize_fst (transl conf "no match"));
   if lev1 > 1 && print then Output.print_string conf "</ul>\n";
-  (cnt, cnt_t, cnt_sp, iplist)
+  (cnt_t, iplist, splist)
 
 let default_max_cousin_lev = 5
 let default_max_cnt = Cousins.default_max_cnt
@@ -289,11 +301,12 @@ let print_cousins conf base p lev1 lev2 =
   Output.print_string conf "</div>\n";
   (* Construction de la table des sosa de la base *)
   let () = V7_sosa.build_sosa_ht conf base in
-  let (cnt, cnt_t, cnt_sp, iplist) =
+  let (cnt_t, iplist, splist) =
     print_cousins_lev conf base max_cnt p lev1 lev2 true V7_sosa.print_sosa
   in
   Output.print_string conf "<div>\n";
   Output.print_string conf "<p>\n";
+  let cnt = (List.length iplist) in
   if cnt >= max_cnt then Output.print_string conf "etc...\n"
   else if cnt >= 1 then
     let paths = if cnt = cnt_t then ""
@@ -302,11 +315,11 @@ let print_cousins conf base p lev1 lev2 =
         (if cnt_t > 1 then 1 else 0)))
     in
     Output.printf conf "%s%s %d %s%s" (Utf8.capitalize_fst (transl conf "total"))
-      (Util.transl conf ":")
-      cnt (Util.translate_eval ("@(c)" ^ transl_nth conf "person/persons"
+      (Util.transl conf ":") (List.length iplist) 
+      (Util.translate_eval ("@(c)" ^ transl_nth conf "person/persons"
         (if cnt > 1 then 1 else 0))) paths;
   if p_getenv conf.env "spouse" = Some "on" then
-    Output.printf conf " %s %d %s.\n" (transl conf "and") cnt_sp
+    Output.printf conf " %s %d %s.\n" (transl conf "and") (List.length splist)
       (Util.translate_eval ("@(c)" ^ transl_nth conf "spouse/spouses" 1))
   else Output.printf conf ".\n" ;
   Output.print_string conf "</p>\n";

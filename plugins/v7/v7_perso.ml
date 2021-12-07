@@ -422,9 +422,9 @@ let count_cousins conf base p lev1 lev2 =
         Not_found | Failure _ -> V7_cousins.default_max_cnt
     in
     let () = V7_sosa.build_sosa_ht conf base in
-    let (cnt, cnt_t, cnt_sp, _iplist) =
+    let (cnt_t, iplist, splist) =
       V7_cousins.print_cousins_lev conf base max_cnt p lev1 lev2 false V7_sosa.print_sosa
-    in (cnt, cnt_t, cnt_sp)
+    in ((List.length iplist), cnt_t, (List.length iplist))
 
 let max_cousin_level conf base p =
   let max_lev =
