@@ -82,7 +82,7 @@ let give_access conf base ia_asex p1 b1 p2 b2 print_sosa =
 
 let rec print_descend_upto conf base cnt_t iplist splist max_cnt 
   ini_p ini_br lev children print print_sosa =
-  let show_path = p_getenv conf.env "path" = Some "on" in
+  let show_path = p_getenv conf.env "paths" = Some "on" in
   if lev > 0 && (List.length iplist) < max_cnt then
     begin
       if print then Output.print_string conf "<ul>\n";
@@ -140,14 +140,13 @@ let rec print_descend_upto conf base cnt_t iplist splist max_cnt
                             (Cousins.children_of_fam base ifam)
                         in
                         let sp = get_spouse base ip ifam in
-                        if (Array.length (get_family p)) > 1 && lev >= 2 && print &&
+                        if print && ((Array.length (get_family p)) > 1 && lev >= 2 &&
                            ((List.length children) > 0) &&
                            (Cousins.has_desc_lev conf base lev sp) ||
-                           show_path
+                           show_path)
                         then
                           Output.printf conf "%s %s %s%s\n"
-                            (person_title_text conf base p)
-                            (Util.transl conf "with")
+                            (person_title_text conf base p) (Util.transl conf "with")
                             (person_title_text conf base sp) (Util.transl conf ":") ;
                         print_descend_upto conf base cnt_t iplist splist max_cnt
                           ini_p ini_br (lev - 1) children print print_sosa;
