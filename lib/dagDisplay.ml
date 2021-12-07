@@ -761,7 +761,6 @@ let print_slices_menu conf hts =
   let title _ = Output.print_string conf (txt 0) in
   Hutil.header conf title;
   Hutil.print_link_to_welcome conf true;
-  Util.include_template conf conf.env "buttons_rel" (fun () -> ());
   Output.printf conf "<form method=\"get\" action=\"%s\">\n" conf.command;
   Output.print_string conf "<p>" ;
   hidden_env conf;
@@ -825,7 +824,6 @@ let print_dag_page conf page_title hts next_txt =
   in
   let title _ = Output.print_string conf page_title in
   Hutil.header_no_page_title conf title;
-  Util.include_template conf conf.env "buttons_rel" (fun () -> ());
   print_html_table conf hts;
   if next_txt <> "" then
     begin

@@ -208,10 +208,6 @@ let print_cousins_lev conf base max_cnt p lev1 lev2 =
   else Output.printf conf "%s.\n" (Utf8.capitalize_fst (transl conf "no match"));
   if lev1 > 1 then Output.print_string conf "</ul>\n"
 
-let include_templ conf name =
-  Util.include_template conf [] name
-    (fun () -> Output.printf conf "Failed to open: %s.txt" name)
-
 (* HTML main *)
 
 let print_cousins conf base p lev1 lev2 =
@@ -233,6 +229,7 @@ let print_cousins conf base p lev1 lev2 =
       Not_found | Failure _ -> default_max_cnt
   in
   Perso.interp_notempl_with_menu title "perso_header" conf base p;
+  Output.print_string conf "<div>\n";
   Output.print_string conf "<h3>\n";
   title false;
   Output.print_string conf "</h3>\n";

@@ -20,10 +20,9 @@ let give_access conf base ia_asex p1 b1 p2 b2 print_sosa =
       "<a href=\"" ^ commd conf ^ "m=RL&" ^ acces_n conf base "1" p1 ^
       "&b1=" ^ Sosa.to_string (Util.old_sosa_of_branch conf base (ia_asex :: b1)) ^ "&" ^
       acces_n conf base "2" p2 ^ "&b2=" ^
-      Sosa.to_string (Util.old_sosa_of_branch conf base (ia_asex :: b2)) ^ "&spouse=" ^
-      (if p_getenv conf.env "spouse" = Some "on" then "on" else "") ^
-      "&image=" ^
-      (if p_getenv conf.env "image" = Some "off" then "off" else "") ^ "&bd=" ^
+      Sosa.to_string (Util.old_sosa_of_branch conf base (ia_asex :: b2)) ^ 
+      (if p_getenv conf.env "spouse" = Some "on" then "&spouse=on" else "") ^
+      (if p_getenv conf.env "image" = Some "off" then "&image=off" else "") ^ "&bd=" ^
       (match p_getenv conf.env "bd" with
          Some x -> x
        | None -> "0") ^
@@ -249,10 +248,6 @@ let brother_label conf x =
     Printf.sprintf (ftransl conf "%s cousins")
       (transl_nth conf "nth (cousin)" (n - 1))
 
-let include_templ conf name =
-  Util.include_template conf [] name
-    (fun () -> Output.printf conf "Failed to open: %s.txt" name)
-
 let print_rlm conf base iplist ip0  =
   Output.print_string conf ("<p>\n<a href=\"" ^ commd conf ^ "m=RLM&" ^
     (let rec loop i s ipl =
@@ -288,7 +283,6 @@ let print_cousins conf base p lev1 lev2 =
   in
   !V7_interp.notempl_with_menu title "perso_header" conf base p;
   Output.print_string conf "<div>\n";
-  (*include_templ conf "cousins_tools";*)
   Output.print_string conf "<h3>\n";
   title false;
   Output.print_string conf "</h3>\n";
