@@ -304,8 +304,8 @@ let print_cousins conf base p lev1 lev2 =
   else if cnt >= 1 then
     let paths = if cnt = cnt_t then ""
       else Printf.sprintf " (%d %s)"
-        cnt_t (Util.translate_eval ("@(c)" ^ transl_nth conf "person/persons"
-        (if cnt > 1 then 1 else 0)))
+        cnt_t (Util.translate_eval ("@(c)" ^ transl_nth conf "path/paths"
+        (if cnt_t > 1 then 1 else 0)))
     in
     Output.printf conf "%s%s %d %s%s" (Utf8.capitalize_fst (transl conf "total"))
       (Util.transl conf ":")
