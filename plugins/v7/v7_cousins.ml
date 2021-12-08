@@ -306,6 +306,7 @@ let print_cousins conf base p lev1 lev2 =
   Output.print_string conf "<div>\n";
   Output.print_string conf "<p>\n";
   let cnt = (List.length iplist) in
+  let cnt_sp = (List.length iplist) in
   if cnt >= max_cnt then Output.print_string conf "etc...\n"
   else if cnt >= 1 then
     let paths = if cnt = cnt_t then ""
@@ -314,12 +315,13 @@ let print_cousins conf base p lev1 lev2 =
         (if cnt_t > 1 then 1 else 0)))
     in
     Output.printf conf "%s%s %d %s%s" (Utf8.capitalize_fst (transl conf "total"))
-      (Util.transl conf ":") (List.length iplist) 
-      (Util.translate_eval ("@(c)" ^ transl_nth conf "person/persons"
+      (Util.transl conf ":")
+      cnt (Util.translate_eval ("@(c)" ^ transl_nth conf "person/persons"
         (if cnt > 1 then 1 else 0))) paths;
   if p_getenv conf.env "spouse" = Some "on" then
-    Output.printf conf " %s %d %s.\n" (transl conf "and") (List.length splist)
-      (Util.translate_eval ("@(c)" ^ transl_nth conf "spouse/spouses" 1))
+    Output.printf conf " %s %d %s.\n" (transl conf "and")
+      cnt_sp (Util.translate_eval ("@(c)" ^ transl_nth conf "spouse/spouses"
+        (if cnt_sp > 1 then 1 else 0)))
   else Output.printf conf ".\n" ;
   Output.print_string conf "</p>\n";
   print_rlm conf base iplist (get_iper p);
