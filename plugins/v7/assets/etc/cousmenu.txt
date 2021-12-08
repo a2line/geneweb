@@ -102,7 +102,7 @@
 %let;minw;%if;has_children;2%else;1%end;%in;
 %let;zero;%for;i;0;maxv;0%end;%in;
 %define;cous(vvv,www)
-  %cousins.vvv.www;
+  %if;plugin.v7;%expr(cousins.vvv.www)%end;
 %end;
 %define;row_counts(xxx)
   %for;i;0;maxv;
@@ -115,14 +115,16 @@
   %if;(row=zero)%incr_count1;%end;
 %end;
 %let;maxdesc;%expr(maxw-count1)%in;
-%(COUNT : %count;|
-ROW : %maxw;|
-ZERO : %zero;|
-MAXDESC : %maxdesc;%)
 %define;link_cousin(vvv,www,ttt,sss)
-  %let;cousins_vvv_www;%if;plugin.v7;%cousins.vvv.www;%end;%in;
+  %let;cousins_vvv_www_float;%if;plugin.v7;%cousins.vvv.www;%end;%in;
+  %let;cousins_vvv_www;%expr(cousins_vvv_www_float/.1)%in;
   <a role="button" href="%prefix_base_password;%access;&m=C&v1=vvv&v2=www" data-toggle="tooltip" data-html="true" title="sss" class="btn btn-light %if;(cousins_vvv_www!="" and cousins_vvv_www=0) disabled%end; w-100" %if;(www-vvv<=10) style="height:120px;"%end;>
-    <span class="badge badge-%if;(vvv=0)info%elseif;(vvv%2=1)primary%else;danger%end;">%cousins_vvv_www;</span><br>
+    <span class="badge badge-%if;(vvv=0)info%elseif;(vvv%2=1)primary%else;danger%end;">%cousins_vvv_www;</span>%nn;
+    %if;(plugin.v7 and "." in cousins_vvv_www_float)
+      %let;couspaths_vvv_www;%cousins.vvv.www.paths;%in;
+      +<span class="badge badge-info">%couspaths_vvv_www;</span>
+    %for;i;0;couspaths_vvv_www;%incr_count3;%end;
+    %end;<br>
     ttt</a><div>%if;(vvv=0)%expr((100/.(2^(vvv+www))))%else;%expr((100/.(2^(vvv+www-1))))%end; %%</div>
     %for;i;0;cousins_vvv_www;%incr_count;%end;
 %end;
@@ -153,7 +155,6 @@ MAXDESC : %maxdesc;%)
                      %and;%apply;cousin_lex_tt(i,j-xxx+i)
                    %end;
                  </div>
-                 
                </td>
              %end;
           %end;
@@ -165,14 +166,14 @@ MAXDESC : %maxdesc;%)
     </tr>
   </table>
 %end;
-%reset_count;
+%reset_count;%reset_count3;
 %if;(evar.v="")
   %apply;table(4)
 %elseif(evar.v>0 or evar.v<10)
   %apply;table(evar.v+1)
 %end;
 
-%if;plugin.v7;Total : %count; cousins !%end;
+%if;plugin.v7;Total[:] %count; [person/persons]1%if;(count3>0) (+ <span class="badge badge-info">%count3;</span> = %expr(count+count3) [path/paths]1)%end;.%end;
 %include;trl
 %include;copyr
 </div>
