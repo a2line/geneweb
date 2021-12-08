@@ -140,7 +140,7 @@ let rec print_descend_upto conf base cnt_t iplist splist max_cnt
                             (Cousins.children_of_fam base ifam)
                         in
                         let sp = get_spouse base ip ifam in
-                        if print && ((Array.length (get_family p)) > 1 && lev >= 2 &&
+                        if print && lev >= 2 && ((Array.length (get_family p)) > 1 &&
                            ((List.length children) > 0) &&
                            (Cousins.has_desc_lev conf base lev sp) ||
                            show_path)
@@ -308,23 +308,27 @@ let print_cousins conf base p lev1 lev2 =
   let cnt = (List.length iplist) in
   let cnt_sp = (List.length iplist) in
   if cnt >= max_cnt then Output.print_string conf "etc...\n"
-  else if cnt >= 1 then
-    let paths = if cnt = cnt_t then ""
-      else Printf.sprintf " (%d %s)"
-        cnt_t (Util.translate_eval ("@(c)" ^ transl_nth conf "path/paths"
-        (if cnt_t > 1 then 1 else 0)))
-    in
-    Output.printf conf "%s%s %d %s%s" (Utf8.capitalize_fst (transl conf "total"))
-      (Util.transl conf ":")
-      cnt (Util.translate_eval ("@(c)" ^ transl_nth conf "person/persons"
-        (if cnt > 1 then 1 else 0))) paths;
-  if p_getenv conf.env "spouse" = Some "on" then
-    Output.printf conf " %s %d %s.\n" (transl conf "and")
-      cnt_sp (Util.translate_eval ("@(c)" ^ transl_nth conf "spouse/spouses"
-        (if cnt_sp > 1 then 1 else 0)))
-  else Output.printf conf ".\n" ;
+  else
+    begin
+      if cnt >= 1 then
+        let paths = if cnt = cnt_t then ""
+          else Printf.sprintf " (%d %s)"
+            cnt_t (Util.translate_eval ("@(c)" ^ transl_nth conf "path/paths"
+            (if cnt_t > 1 then 1 else 0)))
+        in
+        Output.printf conf "%s%s %d %s%s" (Utf8.capitalize_fst (transl conf "total"))
+          (Util.transl conf ":")
+          cnt (Util.translate_eval ("@(c)" ^ transl_nth conf "person/persons"
+            (if cnt > 1 then 1 else 0))) paths;
+        if p_getenv conf.env "spouse" = Some "on" then
+          Output.printf conf " %s %d %s.\n" (transl conf "and")
+            cnt_sp (Util.translate_eval ("@(c)" ^ transl_nth conf "spouse/spouses"
+              (if cnt_sp > 1 then 1 else 0)))
+        else Output.printf conf ".\n" ;
+    end;
+
   Output.print_string conf "</p>\n";
-  print_rlm conf base iplist (get_iper p);
+  if cnt >= 1 then print_rlm conf base iplist (get_iper p);
   Output.print_string conf "</div>\n";
   Hutil.trailer conf
 
