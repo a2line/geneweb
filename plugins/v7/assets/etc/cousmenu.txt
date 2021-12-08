@@ -173,7 +173,8 @@
   %apply;table(evar.v+1)
 %end;
 
-%if;plugin.v7;Total[:] %count; [person/persons]1%if;(count3>0) (+ <span class="badge badge-info">%count3;</span> = %expr(count+count3) [path/paths]1)%end;.%end;
+%let;paths;%expr(count+count3)%in;
+%if;plugin.v7;Total[:] %count; %if;(count=1)[person/persons]0%else;[person/persons]1%end;%if;(count3>0) (+ <span class="badge badge-info">%count3;</span> = %paths; %if;(paths=1)[path/paths]0%else;[path/paths]1%end;)%end;.%end;
 %include;trl
 %include;copyr
 </div>
