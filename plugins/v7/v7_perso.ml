@@ -1684,6 +1684,11 @@ and eval_simple_str_var conf base env (_, p_auth) =
         Vcnt c -> string_of_int !c
       | _ -> ""
       end
+  | "count3" ->
+      begin match get_env "count3" env with
+        Vcnt c -> string_of_int !c
+      | _ -> ""
+      end
   | "desc_cnt" ->
       begin match get_env "desc_cnt" env with
         Vint c -> string_of_int c
@@ -1779,6 +1784,11 @@ and eval_simple_str_var conf base env (_, p_auth) =
       end
   | "incr_count2" ->
       begin match get_env "count2" env with
+        Vcnt c -> incr c; ""
+      | _ -> ""
+      end
+  | "incr_count3" ->
+      begin match get_env "count3" env with
         Vcnt c -> incr c; ""
       | _ -> ""
       end
@@ -1963,6 +1973,11 @@ and eval_simple_str_var conf base env (_, p_auth) =
       end
   | "reset_count2" ->
       begin match get_env "count2" env with
+        Vcnt c -> c := 0; ""
+      | _ -> ""
+      end
+  | "reset_count3" ->
+      begin match get_env "count3" env with
         Vcnt c -> c := 0; ""
       | _ -> ""
       end
@@ -2628,7 +2643,12 @@ and eval_person_field_var conf base env (p, p_auth as ep) loc =
       if cnt = cnt_t then
         VVstring (string_of_int cnt)
       else
-        VVstring ((string_of_int cnt) ^ "+" ^ (string_of_int cnt_t))
+        VVstring ((string_of_int cnt) ^ ".")
+  | ["cousins"; l1; l2; "paths"] ->
+      let l1 = int_of_string l1 in
+      let l2 = int_of_string l2 in
+      let (cnt, cnt_t, _cnt_sp) = count_cousins conf base p l1 l2 in
+      VVstring (string_of_int (cnt_t - cnt))
   | "cremated_date" :: sl ->
       begin match get_burial p with
         Cremated cod when p_auth ->
@@ -5048,6 +5068,7 @@ let gen_interp_templ ?(no_headers = false) menu title templ_fname conf base p =
      ("count", Vcnt (ref 0));
      ("count1", Vcnt (ref 0));
      ("count2", Vcnt (ref 0));
+     ("count3", Vcnt (ref 0));
      ("list", Vslist (ref SortedList.empty));
      ("listb", Vslist (ref SortedList.empty));
      ("listc", Vslist (ref SortedList.empty));
