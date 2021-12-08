@@ -291,7 +291,7 @@
     %if;(public_name!="")%public_name;%else;%first_name;%end; %surname; %end;
   <small class="text-muted">%apply;togend(l_v)</small>
 </h3>
-<form class="form-inline mt-2">
+<form class="form-inline my-2">
   <div id="filterbysurname" class="form-row d-none">
     <span class="form-control-sm">[*filter by][:]</span>%nn;
     %apply;input(1)%apply;input(2)%apply;input(3)%apply;input(4)%apply;input(5)
@@ -309,7 +309,7 @@
 %foreach;sorted_list_item;
   %incr_count;
 %end;
-<div class="mt-2">[*total][:] %apply;desc_count(max_desc_level) [descendants] (%count; [person/persons]1 [with] [spouse/spouses]1)</div>
+<div id="total" class="mt-2" title="[unfiltered total]">[*total][:] %apply;desc_count(max_desc_level) [descendants] (%count; [person/persons]1 [with] [spouse/spouses]1)</div>
 %include;trl
 %include;copyr
 </div>

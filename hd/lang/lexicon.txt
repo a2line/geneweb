@@ -17741,6 +17741,10 @@ fr: filtrer par
 en: clear every filters
 fr: effacer tous les filtres
 
+    unfiltered total
+en: unfiltered total
+fr: total non filtré
+
     no line break in names
 en: no line break in names
 fr: afficher les noms sans saut de ligne

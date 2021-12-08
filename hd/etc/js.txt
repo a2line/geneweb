@@ -81,17 +81,19 @@
 <script%if;(evar.templ!="") type="text/javascript"%end;>
  <!--
    $("#btnshowfilter").on("click", function() {
-    var nbinput = $('input.filter:text:disabled').length; 
-    if (nbinput == 5) { 
+    var nbinput = $('input.filter:text:disabled').length;
+    if (nbinput == 5) {
       $('#input1').prop('disabled', false);
       $('#filterbysurname').removeClass("d-none");
-      $('#input1').focus(); } 
+      $('#total').addClass("text-muted");
+      $('#input1').focus(); }
     else { 
       $('.filter').prop('disabled', true);
-      $('#filterbysurname').addClass("d-none"); }
+      $('#filterbysurname').addClass("d-none");
+      $('#total').removeClass("text-muted"); }
   });
   $("#btnplus").on("click", function() {
-    var len = $('.filter:text:not(:disabled)').length + 1; 
+    var len = $('.filter:text:not(:disabled)').length + 1;
     $('#input'+len).removeClass("d-none").prop('disabled', false).focus();
     if (len == 5) { $("#btnplus").addClass("disabled").attr('tabindex', '-1'); }
   });
