@@ -281,11 +281,6 @@ a.male-underline:hover { border-bottom: 1px solid #318CE7; }
 a.female-underline:hover { border-bottom: 1px solid #F653A6; }
 a.neuter-underline:hover { border-bottom: 1px solid grey; }
 
-/* Fixed width button in books indexes using monospace font */
-a.book-char{
-  font-family: monospace, monospace;
-}
-
 /* Fix noword-wrap on long a href */
 a {
   word-wrap: break-word
