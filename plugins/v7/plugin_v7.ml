@@ -132,7 +132,7 @@ let _ =
     ; "DOC", aux doc
     ; "L", aux l
     ; "MOD_DATA", aux md
-    ; "MOD_DATA_OK", aux 
+    ; "MOD_DATA_OK", aux md_ok
     ; "P", aux p
     ; "PS", aux ps
     ; "S", aux s
