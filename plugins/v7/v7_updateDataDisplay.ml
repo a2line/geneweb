@@ -112,7 +112,6 @@ type 'a env =
     Vlist_data of (istr * string) list
   | Vlist_ini of string list
   | Vlist_value of (istr * string) list
-  | Venv_keys of (string * int) list
   | Vint of int
   | Vcnt of int ref
   | Vstring of string
@@ -179,16 +178,6 @@ and eval_simple_str_var conf _base env _xx =
         Vcnt c -> incr c; ""
       | _ -> ""
       end
-  | "keys" ->
-      let k =
-        match get_env "keys" env with
-          Venv_keys k -> k
-        | _ -> []
-      in
-      List.fold_left
-        (fun accu (k, i) -> accu ^ k ^ "=" ^ string_of_int i ^ "&") "" k
-  | "key_name" -> eval_string_env "key_name" env
-  | "key_value" -> eval_int_env "key_value" env
   | "max" -> eval_int_env "max" env
   | "nb_results" ->
     begin match get_env "list" env with
@@ -271,7 +260,6 @@ let print_foreach conf print_ast _eval_expr =
     match s :: sl with
       ["initial"] -> print_foreach_initial env xx al
     | ["entry"] -> print_foreach_entry env xx el al
-    | ["env_keys"] -> print_foreach_env_keys env xx el al
     | ["substr"; e] -> print_foreach_substr env xx el al e
     | ["value"] -> print_foreach_value env xx al
     | _ -> raise Not_found
@@ -299,20 +287,6 @@ let print_foreach conf print_ast _eval_expr =
       | [] -> ()
     in
     loop 0 list
-  and print_foreach_env_keys env xx _el al =
-    let env_keys =
-      match get_env "env_keys" env with
-        Venv_keys env_keys -> env_keys
-      | _ -> []
-    in
-    let rec loop =
-      function
-        (s, i) :: l ->
-          let env = ("key_name", Vstring s) :: ("key_value", Vint i) :: env in
-          List.iter (print_ast env xx) al; loop l
-      | [] -> ()
-    in
-    loop env_keys
   and print_foreach_substr env xx _el al evar =
     let evar =
       match p_getenv conf.env evar with
@@ -373,9 +347,8 @@ let print_foreach conf print_ast _eval_expr =
              ("cnt", Vint cnt)
           :: ("max", Vint max)
           :: ("entry_value", Vstring s)
-          (* :: ("entry_value_rev", Vstring (V7_place.fold_place_long false s)) *)
+          (* :: ("entry_value_rev", Vstring (V7_place.unfold_place_long false s)) *)
           :: ("entry_key", Vstring (string_of_istr i))
-          (* :: ("keys", Venv_keys k) *)
           :: env
         in
         List.iter (print_ast env xx) al; loop (cnt + 1) s_no_sub l
