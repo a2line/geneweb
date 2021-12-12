@@ -131,6 +131,12 @@ let string_to_list str =
         else acc
   in loop [] str
 
+let unfold_place_long inverted s =
+  let (_s, pl) = V7_place.fold_place_long inverted s in
+  let s = List.fold_left
+    (fun acc p -> acc ^ (if acc = "" then "" else ", ") ^ p) "" pl
+  in s
+
 let get_env v env = try List.assoc v env with Not_found -> Vnone
 let get_vother =
   function
@@ -347,7 +353,7 @@ let print_foreach conf print_ast _eval_expr =
              ("cnt", Vint cnt)
           :: ("max", Vint max)
           :: ("entry_value", Vstring s)
-          (* :: ("entry_value_rev", Vstring (V7_place.unfold_place_long false s)) *)
+          :: ("entry_value_rev", Vstring (unfold_place_long false s))
           :: ("entry_key", Vstring (string_of_istr i))
           :: env
         in
