@@ -82,14 +82,13 @@
     </div>
   </div>
 %( Idée facile mais moins esthétique pour les cas longs, fixé à 7, sans utiliser nbs atm, une bvar plutôt qu'evar ? %)
-%( TODO FIXME
   %reset_count;
   %foreach;entry;
     %foreach;value;
       %incr_count;
     %end;
   %end;
-  %let;value_list_len;%count;%in;%)
+  %let;value_list_len;%count;%in;
   <div class="col-auto">
     <div class="btn-group" role="toolbar" aria-label="sub-selection">
       %if;(evar.s!="")

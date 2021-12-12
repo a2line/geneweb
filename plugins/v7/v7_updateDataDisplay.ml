@@ -112,11 +112,25 @@ type 'a env =
     Vlist_data of (istr * string) list
   | Vlist_ini of string list
   | Vlist_value of (istr * string) list
+  | Venv_keys of (string * int) list
   | Vint of int
+  | Vcnt of int ref
   | Vstring of string
   | Vbool of bool
   | Vother of 'a
   | Vnone
+
+let string_to_list str =
+  let rec loop acc =
+    function
+      s ->
+        if String.length s > 0 then
+          let nbc = Utf8.nbc s.[0] in
+          let c = String.sub s 0 nbc in
+          let s1 = String.sub s nbc (String.length s - nbc) in
+          loop (c :: acc) s1
+        else acc
+  in loop [] str
 
 let get_env v env = try List.assoc v env with Not_found -> Vnone
 let get_vother =
@@ -150,25 +164,54 @@ and eval_simple_bool_var _conf _base env _xx = function
   | _ -> raise Not_found
 and eval_simple_str_var conf _base env _xx =
   function
-    "entry_ini" -> eval_string_env "entry_ini" env
+  | "cnt" -> eval_int_env "cnt" env
+  | "count" ->
+      begin match get_env "count" env with
+        Vcnt c -> string_of_int !c
+      | _ -> ""
+      end
+  | "entry_ini" -> eval_string_env "entry_ini" env
   | "entry_value" -> eval_string_env "entry_value" env
   | "entry_key" -> eval_string_env "entry_key" env
   | "ini" -> eval_string_env "ini" env
+  | "incr_count" ->
+      begin match get_env "count" env with
+        Vcnt c -> incr c; ""
+      | _ -> ""
+      end
+  | "keys" ->
+      let k =
+        match get_env "keys" env with
+          Venv_keys k -> k
+        | _ -> []
+      in
+      List.fold_left
+        (fun accu (k, i) -> accu ^ k ^ "=" ^ string_of_int i ^ "&") "" k
+  | "key_name" -> eval_string_env "key_name" env
+  | "key_value" -> eval_int_env "key_value" env
+  | "max" -> eval_int_env "max" env
   | "nb_results" ->
     begin match get_env "list" env with
         Vlist_data l -> string_of_int (List.length l)
       | _ -> "0"
-    end
-  | "suburb" -> 
-    begin match p_getenv conf.env "data" with
-    | Some "place" -> V7_place.only_suburb (eval_string_env "entry_value" env)
-    | _ -> ""
     end
   | "other" -> 
     begin match p_getenv conf.env "data" with
     | Some "place" -> V7_place.without_suburb (eval_string_env "entry_value" env)
     | _ -> ""
     end
+  | "reset_count" ->
+      begin match get_env "count" env with
+        Vcnt c -> c := 0; ""
+      | _ -> ""
+      end
+  | "suburb" -> 
+    begin match p_getenv conf.env "data" with
+    | Some "place" -> V7_place.only_suburb (eval_string_env "entry_value" env)
+    | _ -> ""
+    end
+  | "substr" -> eval_string_env "substr" env
+  | "tail" -> eval_string_env "tail" env
   | "title" ->
     let len =
       match get_env "list" env with
@@ -189,11 +232,28 @@ and eval_compound_var conf base env xx sl =
   let rec loop =
     function
       [s] -> eval_simple_str_var conf base env xx s
-    | ["evar"; s] -> Opt.default "" (p_getenv conf.env s)
+    | ["evar"; "p"; s] ->
+        begin match p_getenv conf.env s with
+          Some s -> if String.length s > 1 then String.sub s 0 (String.length s - 1) else ""
+        | None -> ""
+        end
+    | ["evar"; "length"; s] ->
+        begin match p_getenv conf.env s with
+          Some s -> string_of_int (String.length s)
+        | None -> ""
+        end
+    | ["evar"; s] ->
+        begin match p_getenv conf.env s with
+          Some s -> s
+        | None -> ""
+        end
     | "encode" :: sl -> Mutil.encode (loop sl)
     | "escape" :: sl -> Util.escape_html (loop sl)
     | "html_encode" :: sl -> no_html_tags (loop sl)
     | "printable" :: sl -> only_printable (loop sl)
+    | ["subs"; n; s] ->
+        let n = int_of_string n in
+        if String.length s > n then String.sub s 0 (String.length s - n) else ""
     | _ -> raise Not_found
   in
   str_val (loop sl)
@@ -211,6 +271,8 @@ let print_foreach conf print_ast _eval_expr =
     match s :: sl with
       ["initial"] -> print_foreach_initial env xx al
     | ["entry"] -> print_foreach_entry env xx el al
+    | ["env_keys"] -> print_foreach_env_keys env xx el al
+    | ["substr"; e] -> print_foreach_substr env xx el al e
     | ["value"] -> print_foreach_value env xx al
     | _ -> raise Not_found
   and print_foreach_entry env xx _el al =
@@ -220,20 +282,75 @@ let print_foreach conf print_ast _eval_expr =
       | _ -> []
     in
     let list = V7_updateData.build_list_long conf list in
+    let max = List.length list in
     let k = Opt.to_string @@ p_getenv conf.env "key" in
-    let rec loop =
+    let rec loop cnt =
       function
         (ini_k, (list_v : (istr * string) list)) :: l ->
         let env =
-          ("key", Vstring k)
+             ("cnt", Vint cnt)
+          :: ("max", Vint max)
+          :: ("key", Vstring k)
           :: ("entry_ini", Vstring ini_k)
           :: ("list_value", Vlist_value list_v)
           :: env
         in
-        List.iter (print_ast env xx) al; loop l
+        List.iter (print_ast env xx) al; loop (cnt + 1) l
       | [] -> ()
     in
-    loop list
+    loop 0 list
+  and print_foreach_env_keys env xx _el al =
+    let env_keys =
+      match get_env "env_keys" env with
+        Venv_keys env_keys -> env_keys
+      | _ -> []
+    in
+    let rec loop =
+      function
+        (s, i) :: l ->
+          let env = ("key_name", Vstring s) :: ("key_value", Vint i) :: env in
+          List.iter (print_ast env xx) al; loop l
+      | [] -> ()
+    in
+    loop env_keys
+  and print_foreach_substr env xx _el al evar =
+    let evar =
+      match p_getenv conf.env evar with
+        Some s -> s
+      | None -> ""
+    in
+    let list_of_char = string_to_list evar in
+    let list_of_sub =
+      let rec loop acc =
+        function
+        | c :: l ->
+            let s1 = List.fold_left (fun acc cc -> cc ^ acc) c l in
+            loop (s1 :: acc) l
+        | [] -> acc
+      in loop [] list_of_char
+    in
+    let max = List.length list_of_sub in
+    let rec loop first cnt =
+      function
+      | s :: l ->
+          if List.length l > 0 then
+          begin
+            let tail = List.hd (string_to_list s) in
+            let env =
+                 ("substr", Vstring s)
+              :: ("tail", Vstring tail)
+              :: ("first", Vbool first)
+              :: ("max", Vint max)
+              :: ("cnt", Vint cnt)
+              :: env
+            in
+            List.iter (print_ast env xx) al ;
+            loop false (cnt + 1) l
+          end
+          else () (* dont do last element *)
+      | [] -> ()
+    in
+    loop true 0 list_of_sub
   and print_foreach_value env xx al =
     let list =
       match get_env "list_value" env with
@@ -247,20 +364,24 @@ let print_foreach conf print_ast _eval_expr =
           l
       | _ -> []
     in
-    let rec loop prev =
+    let max = List.length list in
+    let rec loop cnt prev =
       function
         (i, s) :: l ->
         let s_no_sub = V7_place.without_suburb s in
         let env =
-          ("entry_value", Vstring s)
-          :: ("first", Vbool (not (prev=s_no_sub)))
+             ("cnt", Vint cnt)
+          :: ("max", Vint max)
+          :: ("entry_value", Vstring s)
+          (* :: ("entry_value_rev", Vstring (V7_place.fold_place_long false s)) *)
           :: ("entry_key", Vstring (string_of_istr i))
+          (* :: ("keys", Venv_keys k) *)
           :: env
         in
-        List.iter (print_ast env xx) al; loop s_no_sub l
+        List.iter (print_ast env xx) al; loop (cnt + 1) s_no_sub l
       | [] -> ()
     in
-    loop "" list
+    loop 0 "" list
   and print_foreach_initial env xx al =
     let list =
       match get_env "list" env with
@@ -283,7 +404,9 @@ let print_mod conf base =
   match p_getenv conf.env "data" with
   | Some ("place" | "src" | "occu" | "fn" | "sn") ->
     let list = V7_updateData.build_list conf base in
-    let env = ["list", Vlist_data list] in
+    let env = ("list", Vlist_data list) ::
+              ("count", Vcnt (ref 0)) :: []
+    in
     V7_interp.gen_interp false conf "upddata"
       {Templ.eval_var = eval_var conf base;
        Templ.eval_transl = (fun _ -> Templ.eval_transl conf);
