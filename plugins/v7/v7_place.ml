@@ -378,35 +378,38 @@ let print_place_list conf opt long link_to_ind max_rlm_nbr pl_l =
           | _ -> (cnt, so, p)
           in loop2 0 "" [] pl;
         in
-        if not first then Output.printf conf ", " ;
-        let p1 =  List.hd p in
-        let p2 = p1 ^
-          (if List.length p > 1 then (", " ^ (List.hd (List.tl p))) else "")
-        in
-        Output.printf conf
-          "<a href=\"%sm=PS%s%s%s\" title=\"%s\">%s</a>"
-            (commd conf) opt ("&k=" ^ (Mutil.encode p2))
-            (if not long then "&display=long" else "&display=short") title (p1) ;
-        if link_to_ind && cnt < max_rlm_nbr then
-          begin
-          Output.printf conf " (<a href=\"%sm=L%s%s&nb=%d%s" (commd conf)
-            ("&k=" ^ (Mutil.encode so)) opt cnt
-            (if max_rlm <> "" then "&max_rlm_nbr=" ^ max_rlm else "") ;
-          let rec loop3 cnt =
-            function
-            | (so, _, ipl) :: t_pl ->
-                Output.printf conf "&p%d=%s" cnt so ;
-                List.iteri (fun i ip ->
-                  Output.printf conf "&i%d=%s" (i + cnt) (Gwdb.string_of_iper ip))
-                ipl ;
-                loop3 (cnt + List.length ipl) t_pl
-            | _ -> ()
-          in loop3 0 pl ;
-          Output.printf conf "\" title=\" %s\">%d</a>)"
-            (Utf8.capitalize (transl conf "summary book ascendants")) cnt
-          end
-        else
-          Output.printf conf " (%d)" cnt ;
+        if so.[0] <> '[' then
+        begin
+          if not first then Output.printf conf ", " ;
+          let p1 =  List.hd p in
+          let p2 = p1 ^
+            (if List.length p > 1 then (", " ^ (List.hd (List.tl p))) else "")
+          in
+          Output.printf conf
+            "<a href=\"%sm=PS%s%s%s\" title=\"%s\">%s</a>"
+              (commd conf) opt ("&k=" ^ (Mutil.encode p2))
+              (if not long then "&display=long" else "&display=short") title (p1) ;
+          if link_to_ind && cnt < max_rlm_nbr then
+            begin
+            Output.printf conf " (<a href=\"%sm=L%s%s&nb=%d%s" (commd conf)
+              ("&k=" ^ (Mutil.encode so)) opt cnt
+              (if max_rlm <> "" then "&max_rlm_nbr=" ^ max_rlm else "") ;
+            let rec loop3 cnt =
+              function
+              | (so, _, ipl) :: t_pl ->
+                  Output.printf conf "&p%d=%s" cnt so ;
+                  List.iteri (fun i ip ->
+                    Output.printf conf "&i%d=%s" (i + cnt) (Gwdb.string_of_iper ip))
+                  ipl ;
+                  loop3 (cnt + List.length ipl) t_pl
+              | _ -> ()
+            in loop3 0 pl ;
+            Output.printf conf "\" title=\" %s\">%d</a>)"
+              (Utf8.capitalize (transl conf "summary book ascendants")) cnt
+            end
+          else
+            Output.printf conf " (%d)" cnt ;
+        end;
         loop1 false t_pl_l
     | _ -> ()
     in
