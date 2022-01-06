@@ -218,7 +218,7 @@ and eval_simple_str_var conf _base env _xx =
     let result =
       if ini = "" then Printf.sprintf " (%d %s)" len title
       else
-        " - " ^
+        "<br>" ^
         Printf.sprintf (ftransl conf "%d %s starting with %s") len title ini
     in
     Utf8.capitalize_fst book_of ^ result
