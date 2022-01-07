@@ -1195,28 +1195,28 @@ fr: quatre-fois-arrière-petits-cousins au 1<sup>er</sup> degré
     a descendant
 af: 'n afstammeling
 bg: потомък
-br: un diskennad/ un diskennadez
-ca: un descendent/una descendent
-co: un discendente/una discendente
+br: un diskennad/ un diskennadez/diskennad
+ca: un descendent/una descendent/descendent
+co: un discendente/una discendente/discendente
 cs: potomek
 da: en efterkommer
 de: ein:d:+em Nachkomme:d:+n
 en: a descendant
 eo: posteulo
-es: un descendiente/una descendiente
+es: un descendiente/una descendiente/descendiente
 et: järglane:g:--se
 fi: jälkeläinen:g:---sen
-fr: un descendant/une descendante
+fr: un descendant/une descendante/descendant
 he:   צאצא/ צאצאה
 is: afkomandi
-it: un discendente/una discendente
+it: un discendente/una discendente/discendente
 lt: palikuonis
 lv: pēcnācējs
 nl: een afstammeling
 no: en etterkommer
-oc: un descendent/una descendenta
+oc: un descendent/una descendenta/descendent
 pl: potomek
-pt: um descendente/uma descendente
+pt: um descendente/uma descendente/descendente
 ro: un descendent
 ru: потомок
 sk: potomok
@@ -11438,6 +11438,15 @@ fr: de
 pt: de
 sv: av
 tr: /
+
+    of (du)
+co: di
+en: of
+fr: du
+pt: de
+sv: av
+tr: /
+
 
     of course dead
 af: oorlede

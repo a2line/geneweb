@@ -4023,7 +4023,7 @@ let eval_transl conf base env upp s c =
           "n" ->
             (* replaced by %apply;nth([...],sex) *)
             begin match get_env "p" env with
-              Vind p -> 1 - index_of_sex (get_sex p)
+              Vind p -> index_of_sex (get_sex p)
             | _ -> 2
             end
         | "s" ->
