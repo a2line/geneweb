@@ -74,39 +74,29 @@
   %end;
 %end;
 
-%define;sosa()
-  %reset_count;
-  %if;(has_sosa and not cancel_links)
-    <div class="%if;(op_m=2 or op_m=3)text-center%end;">
-      <i class="fa fa-dot-circle-o text-success mr-1"></i>%nn;
-      [*Sosa]
-      %if;(sosa=1)%sosa;
-      %else;<a href="%prefix;%sosa_link;">%sosa;</a>
-        %apply;a_of_b%with;%and;
-          %if;(sosa_ref.is_restricted)%sosa_ref;%else;<a href="%prefix;%sosa_ref.access;">%sosa_ref;</a>%end;
-        %end;
-      %end;
-    </div>
-  %end;
+%define;cousin(l1,l2)
+  [*cousin.l1.l2]s
 %end;
-
-%( from @arboriculteur on Geneanet forum %)
 
 %define;from_sosa()
   %if;(browsing_with_sosa_ref and has_parents and not has_sosa)
-    %reset_count;
+    %reset_count; %reset_count1;
     %foreach;ancestor_level;
+      %incr_count1;
       %if;(count = 0 and level <= 10)
         %foreach;ancestor;
           %if;(ancestor.has_sosa and ancestor.anc_sosa.v < 1024)
             %if;(count = 0)
               %incr_count;
-              <li>[*a descendant]n [of (du)] [Sosa]
-              %if;(cancel_links)%ancestor.sosa;
+              %let;l1;%expr(ancestor.sosa.lvl-1)%in;
+              %let;l2;%expr(count1-1)%in;
+              <li>%apply;cousin(l1,l2) de %sosa_ref;, ancêtre commun
+              %if;(cancel_links) %ancestor;
               %else;
-                <a href="%prefix;m=NG&em=R&ei=%index;&select=%sosa_ref.index;&long=on&">%ancestor.sosa;</a>
+                <a href="%prefix;m=RL&i=%ancestor.index;%nn;
+                  &i1=%sosa_ref.index;&l1=%l1;&i2=%index;&l2=%l2;%nn;
+                  &dag=on&"> %ancestor;</a>
               %end;
-              %apply;a_of_b%with;(%ancestor;)%and;%sosa_ref;%end;
             %end;
           %end;
         %end;
@@ -184,6 +174,20 @@
   %end;
 %end;
 
+%define;sosa()
+  %reset_count;
+  %if;(has_sosa and not cancel_links)
+    <div class="%if;(op_m=2 or op_m=3)text-center%end;">
+      <i class="fa fa-dot-circle-o text-success mr-1"></i>%nn;
+      [*Sosa]
+      %if;(sosa=1)%sosa;
+      %else;<a href="%prefix;%sosa_link;">%sosa;</a> %apply;a_of_b%with;%and;
+        %if;(sosa_ref.is_restricted)%sosa_ref;%else;<a href="%prefix;%sosa_ref.access;">%sosa_ref;</a>%end;%end;
+      %end;
+    </div>
+  %end;
+%end;
+
 %define;border()
   <div class="w-50 border border-dark border-left-0 border-top-0 border-bottom-0">&#8203;</div>
 %end;
@@ -244,6 +248,6 @@
       </div>
     </div>
   %else;
-  Unavailambe option value!
+  Unavailable option value!
   %end;
 %end;
