@@ -1155,41 +1155,44 @@ sv: en kusin
 tr: bir kuzeni
 
     cousin.2.2
+->: a cousin
+
+    cousins.2.2
 en: cousins 1rd
 fr: cousins
 
-    cousin.2.2 tt
+    cousins.2.2 tt
 fr: cousins au 1<sup>er</sup> degré<br>cousins germains ou non
 
-    cousin.2.3
+    cousins.2.3
 en: 1st cousins once removed
 fr: petit-cousin/petits-cousins
 
-    cousin.2.3 tt
+    cousins.2.3 tt
 fr: petits-cousins au 1<sup>er</sup> degré<br>neveux et nièces à la mode de Bourgogne ou Bretagne<br>neveux et nièces issus de germains<hr>← cousins issus de germains des enfants
 
-    cousin.2.4
+    cousins.2.4
 fr: arrière-petit-cousin/arrière-petits-cousins
 
-    cousin.2.4 tt
+    cousins.2.4 tt
 fr: arrière-petits-cousins au 1<sup>er</sup> degré<hr>fils d’un petit-cousin ou d’une petite cousine
 
-    cousin.2.5
+    cousins.2.5
 fr: arrière-arrière-petit-cousin/arrière-arrière-petits-cousins
 
-    cousin.2.5 tt
+    cousins.2.5 tt
 fr: deux-fois-arrière-petits-cousins au 1<sup>er</sup> degré
 
-    cousin.2.6
+    cousins.2.6
 fr: trois-fois-arrière-petit-cousin/trois-fois-arrière-petits-cousins
 
-    cousin.2.6 tt
+    cousins.2.6 tt
 fr: trois-fois-arrière-petits-cousins au 1<sup>er</sup> degré
 
-    cousin.2.7
+    cousins.2.7
 fr: quatre-fois-arrière-petit-cousin/quatre-fois-arrière-petits-cousins
 
-    cousin.2.7 tt
+    cousins.2.7 tt
 fr: quatre-fois-arrière-petits-cousins au 1<sup>er</sup> degré
 
     a descendant
@@ -1385,33 +1388,46 @@ sv: en gammel-nevö/en gammel-niece
 tr: bir büyük yeğen/bir büyük yeğen/büyük yeğen/büyük yeğen/büyük yeğenler ve büyük yeğenler
 
     cousin.1.3
-en: grandnephews
-fr: petits-neveux
+en: un grandnephew/a grandniece/a grandchild
+fr: un petit-neveu/une petite-nièce/un petit-enfant
 
-    cousin.1.3 tt
+    cousins.1.3
+en: grandnephew/grandnephews/grandniece/grandnieces
+fr: petit-neveu/petits-neveux/petite-nièce/petites-nièces
+
+    cousins.1.3 tt
+en: great-nephews and great-nieces
 fr: arrière-neveux et arrière-nièces (soutenu)<br>enfant d’un neveu ou d’une nièce
 
     cousin.1.4
+en: a great-grandnephew/a great-grandniece/a great-grandchild
+fr: un arrière-petit-neveu/une arrière-petite-nièce/un arrière-petit-enfant
+
+    cousins.1.4
 en: great-grandnephew/great-grandnephews
 fr: arrière-petit-neveu/arrière-petits-neveux
 
-    cousin.1.4 tt
+    cousins.1.4 tt
 fr: enfant d’un petit-neveu ou d’une petit-nièce
 
     cousin.1.5
+en: a great-great-grandnephew/a great-great-grandniece/a great-great-grandchild
+fr: un arrière-arrière-petit-neveu/une arrière-arrière-petite-nièce/un arrière-arrière-petit-enfant
+
+    cousins.1.5
 en: great-great-grandnephew/great-great-grandnephews
 fr: arrière-arrière-petit-neveu/arrière-arrière-petits-neveux
 
-    cousin.1.6
+    cousins.1.6
 fr: trois-fois-arrière-petits-neveux
 
-    cousin.1.7
+    cousins.1.7
 fr: quatre-fois-arrière-petits-neveux
 
-    cousin.1.8
+    cousins.1.8
 fr: cinq-fois-arrière-petits-neveux
 
-    cousin.1.9
+    cousins.1.9
 fr: six-fois-arrière-petits-neveux
 
     a great-uncle/a great-aunt
@@ -1529,10 +1545,13 @@ sv: en nevö/en niece/nevöer/niecer/nevöer och niecer
 tr: bir yeğen/bir yeğen/yeğenler/yeğenler/yeğenler ve yeğenler
 
     cousin.1.2
+->: a nephew/a niece
+
+    cousins.1.2
 en: nephew and nieces
 fr: neveux et nièces
 
-    cousin.1.2 tt
+    cousins.1.2 tt
 fr: enfants des frères et sœurs<br>« petits-frères et petites-sœurs »<hr>← cousins germains des enfants
 
     a sibling-in-law/siblings-in-law
@@ -4064,12 +4083,56 @@ sv: barn/barn
 tr: çocuk/çocuklar
 zh:  子女
 
+    son/daughter/child
+af: seun/dogter/kind
+bg: син/дъщеря/деца
+br: mab/merc'h/bugel
+ca: fill/filla/fill(a)
+co: figliolu/figliola/zittellu(a)
+cs: je synem/je dcerou/je dítětem
+da: søn/datter/barn
+de: Sohn/Tochter/Kind
+en: son/daughter/child
+eo: filo/filino/ido
+es: hijo/hija/hijo(a)
+et: poeg/tütar/laps
+fi: poika/tytär/lapsi
+fr: fils/fille/enfant
+he:  בן/ בת
+is: sonur/dóttir/barn
+it: figlio/figlia/figlio(a)
+lt: sūnus/duktė/vaikai
+lv: dēls/meita/bērns
+nl: zoon/dochter/kind
+no: sønn/datter/barn
+oc: filh/filha/enfant
+pl: syn/córka/dziecko
+pt: filho/filha/filho(a)
+ro: fiu/fica/copil
+ru: сын/дочь/дети
+sk: syn/dcéra/dieťa
+sl: sin/hčerka/otrok
+sv: son/dotter/barn
+tr: oğul/kız/çocuk
+
+    sons/daughters/children
+co: figlioli/figliole/zitelli
+de: Söhne/Töchter/Kinder
+en: sons/daughters/children
+fr: fils/filles/enfants
+pt: filhos/filhas/filhos
+sv: söner/döttrar/barn
+tr: oğulları/kızları/çocukları
+
     cousin.0.1
+->: son/daughter/child
+
+    cousins.0.1
 ->: child/children
 
-    cousin.0.1 tt
+    cousins.0.1 tt
 en: sons and daughters
-fr: fils et filles
+fr: fils et filles, enfants
 
     children's names changed
 af: kinders se name is verander
@@ -7104,10 +7167,10 @@ sl: stari starši
 sv: farföräldrar/morföräldrar
 tr: büyük ebeveynler
 
-    cousin.2.0
+    cousins.2.0
 ->: grand-parents
 
-    cousin.2.0 tt
+    cousins.2.0 tt
 fr: aïeul·e·s<br>parents des parents<br>grands-pères et grands-mères
 
     great-grand-parents
@@ -7142,10 +7205,10 @@ sl: prastari starši
 sv: gammel-farföräldrar/gammel-morföräldrar
 tr: büyük-büyük-ebeveynler
 
-    cousin.3.0
+    cousins.3.0
 ->: great-grand-parents
 
-    cousin.3.0 tt
+    cousins.3.0 tt
 fr: bisaïeul·e·s
 
     great-great-grandparents
@@ -7154,54 +7217,54 @@ en: great-great-grandparents
 eo: prapraavo
 fr: arrière-arrière-grands-parents
 
-    cousin.4.0
+    cousins.4.0
 ->: great-great-grandparents
 
-    cousin.4.0 tt
+    cousins.4.0 tt
 en: 2nd-great-grand-parents
 fr: tri(s)aïeul·e·s<br>aïeul·e·s des aïeul·e·s
 
-    cousin.5.0
+    cousins.5.0
 en: great-great-great-grandparents
 fr: arrière-arrière-arrière-grands-parents
 
-    cousin.5.0 tt
+    cousins.5.0 tt
 en: 3rd-great-grandparents
 fr: trois-fois-arrière-grands-parents<br>3×-arrière-grands-parents<br>quadri(s)aïeul·e·s<br>quartaïeul·e·s
 
-    cousin.6.0
+    cousins.6.0
 en: 4th-great-grandparents
 fr: quatre-fois-arrière-grands-parents
 
-    cousin.6.0 tt
+    cousins.6.0 tt
 fr: 4×-arrière-grands-parents<br>quint(is)aïeuls<br>quinquisaïeuls
 
-    cousin.7.0
+    cousins.7.0
 en: 5th-great-grandparents
 fr: cinq-fois-arrière-grands-parents
 
-    cousin.7.0 tt
+    cousins.7.0 tt
 fr: 5×-arrière-grands-parents<br>sext(is)aïeuls
 
-    cousin.8.0
+    cousins.8.0
 en: 6th-great-grandparents
 fr: six-fois-arrière-grands-parents
 
-    cousin.8.0 tt
+    cousins.8.0 tt
 fr: sept(is)aïeuls
 
-    cousin.9.0
+    cousins.9.0
 en: 7th-great-grandparents
 fr: sept-fois-arrière-grands-parents
 
-    cousin.9.0 tt
+    cousins.9.0 tt
 fr: octaïeuls
 
-    cousin.10.0
+    cousins.10.0
 en: 8th-great-grandparents
 fr: huit-fois-arrière-grands-parents
 
-    cousin.10.0 tt
+    cousins.10.0 tt
 fr: nonaïeuls
 
     gregorian/julian/french/hebrew
@@ -11949,9 +12012,12 @@ tr: ebeveynler
 zh:  父母
 
     cousin.1.0
+->: father/mother
+
+    cousins.1.0
 ->: parents
 
-    cousin.1.0 tt
+    cousins.1.0 tt
 en: father and mother
 fr: père et mère<br>géniteur et génitrice
 
@@ -13930,9 +13996,12 @@ sv: syskon
 tr: kardeşler
 
     cousin.1.1
+->: a brother/a sister/a sibling
+
+    cousins.1.1
 ->: siblings
 
-    cousin.1.1 tt
+    cousins.1.1 tt
 fr: adelphe·s<br>sibling·s<br>cousins germains 50 %,<br>consanguins ou utérins 25 %
 
     siblings of the grandparents
@@ -13946,51 +14015,57 @@ sv: syskon till far- och morföräldrar
 tr: büyük amcalar ve büyük teyzeler
 
     cousin.3.1
+->: a great-uncle/a great-aunt
+
+    cousins.3.1
 ->: siblings of the grandparents
 
-    cousin.3.1 tt
+    cousins.3.1 tt
 fr: frères et sœurs des grand-parents
 
-    cousin.3.2
+    cousins.3.2
 fr: grands-cousins
 
-    cousin.3.2 tt
+    cousins.3.2 tt
 fr: oncles et tantes à la mode de Bourgogne ou Bretagne<br>petits-oncles et petites-tantes (désuets)<hr><- cousins germains des parents, oncles et tantes
 
     cousin.3.3
+->: a 2nd cousin
+
+    cousins.3.3
 ->: 2nd cousins
 
-    cousin.3.3 tt
+    cousins.3.3 tt
 fr: cousins au 2<sup>e</sup> degré<br>cousins à la mode de Bourgogne ou Bretagne<br>petits-cousins (désuet)<br>cousins remués de germain (vieilli)
 
-    cousin.3.4
+    cousins.3.4
 fr: petits-cousins 2<sup>e</sup>
 
-    cousin.3.4 tt
+    cousins.3.4 tt
 fr: petits-cousins au 2<sup>e</sup> degré<br>petits-cousins issus de germains<hr><- cousins issus d’issus de germains des enfants
 
-    cousin.3.5
+    cousins.3.5
 fr: arrière-petits-cousins 2<sup>e</sup>
 
-    cousin.3.5 tt
+    cousins.3.5 tt
 fr: arrière-petits-cousins au 2<sup>e</sup> degré
 
-    cousin.3.6
+    cousins.3.6
 fr: arrière-arrière-petits-cousins 2<sup>e</sup>
 
-    cousin.3.6 tt
+    cousins.3.6 tt
 fr: deux-fois-arrière-petits-cousins au deuxième degré
 
-    cousin.3.7
+    cousins.3.7
 fr: trois-fois-arrière-petits-cousins 2<sup>e</sup>
 
-    cousin.3.7 tt
+    cousins.3.7 tt
 fr: trois-fois-arrière-petits-cousins au deuxième degré
 
-    cousin.3.8
+    cousins.3.8
 fr: quatre-fois-arrière-petits-cousins 2<sup>e</sup>
 
-    cousin.3.8 tt
+    cousins.3.8 tt
 fr: quatre-fois-arrière-petits-cousins au deuxième degré
 
 
@@ -14004,425 +14079,432 @@ sv: syskon till föräldrar tre generationer bakåt
 tr: büyük büyük amcalar ve büyük büyük teyzeler
 
     cousin.4.1
+en: a great-granduncle/a grandaunt
+fr: un arrière-grand-oncle/une arrière-grande-tante
+
+    cousins.4.1
 ->: siblings of the great-grandparents
 
-    cousin.4.1 tt
+    cousins.4.1 tt
 fr: frères et sœurs des arrière-grands-parents
 
-    cousin.4.2
+    cousins.4.2
 fr: arrière-grands-cousins
 
-    cousin.4.2 tt
+    cousins.4.2 tt
 fr: grands-oncles et grandes-tantes à la mode de Bourgogne ou Bretagne<hr><- cousins germains des grands-parents, grands oncles et grandes-tantes
 
-    cousin.4.3
+    cousins.4.3
 fr: grands-cousins 2<sup>e</sup>
 
-    cousin.4.3 tt
+    cousins.4.3 tt
 fr: grands-cousins au 2<sup>e</sup> degré<br>cousins arrière-issus de germains<hr><- cousins issus de germains des parents
 
     cousin.4.4
+->: a 3rd cousin
+
+    cousins.4.4
 ->: 3rd cousins
 
-    cousin.4.4 tt
+    cousins.4.4 tt
 fr: cousins au 3<sup>e</sup> degré
 
-    cousin.4.5
+    cousins.4.5
 fr: petits-cousins 3<sup>e</sup></i>
 
-    cousin.4.5 tt
+    cousins.4.5 tt
 fr: petits-cousins au 3<sup>e</sup> degré<br>petits-cousins issus d’issus de germains
 
-    cousin.4.6
+    cousins.4.6
 fr: arrière-petits-cousins 3<sup>e</sup>
 
-    cousin.4.6 tt
+    cousins.4.6 tt
 fr: arrière-petits-cousins au troisième degré
 
-    cousin.4.7
+    cousins.4.7
 fr: arrière-arrière-petits-cousins 3<sup>e</sup>
 
-    cousin.4.7 tt
+    cousins.4.7 tt
 fr: deux-fois-arrière-petits-cousins au troisième degré
 
-    cousin.4.8
+    cousins.4.8
 fr: trois-fois-arrière-petits-cousins 3<sup>e</sup>
 
-    cousin.4.8 tt
+    cousins.4.8 tt
 fr: trois-fois-arrière-petits-cousins au troisième degré
 
-    cousin.4.9
+    cousins.4.9
 fr: quatre-fois-arrière-petits-cousins 3<sup>e</sup>
 
-    cousin.4.9 tt
+    cousins.4.9 tt
 fr: quatre-fois-arrière-petits-cousins au troisième degré
 
-    cousin.5.1
+    cousins.5.1
 en: great-great-granduncles
 fr: arrière-arrière-grands-oncles
 
-    cousin.5.1 tt
+    cousins.5.1 tt
 en: siblings of the great-great-grandparents
 fr: frères et sœurs des trisaïeuls
 
-    cousin.5.2
+    cousins.5.2
 fr: arrière-arrière-grands-cousins
 
-    cousin.5.2 tt
+    cousins.5.2 tt
 fr: arrière-grand-oncles et arrière-grandes-tantes à la mode de Bourgogne ou Bretagne<hr><- cousins des arrière-grands-parents et arrière-grands-oncles
 
-    cousin.5.3
+    cousins.5.3
 fr: arrière-grands-cousins 2<sup>e</sup>
 
-    cousin.5.3 tt
+    cousins.5.3 tt
 fr: arrière-grands-cousins au deuxième degré<hr><- cousins issus de germains des grands-parents et grands-oncles
 
-    cousin.5.4
+    cousins.5.4
 fr: grands-cousins 3<sup>e</sup>
 
-    cousin.5.4 tt
+    cousins.5.4 tt
 fr: grands-cousins au troisième degré<hr><- cousins issus d’issus de germains des parents
 
-    cousin.5.5
+    cousins.5.5
 en: 4th cousins
 fr: cousins 4<sup>e</sup>
 
-    cousin.5.5 tt
+    cousins.5.5 tt
 fr: cousins issus d’issus d’issus de germains<hr>arrière-petits-cousins
 
-    cousin.5.6
+    cousins.5.6
 fr: petits-cousins 4<sup>e</sup>
 
-    cousin.5.6 tt
+    cousins.5.6 tt
 fr: petits-cousins au quatrième degré
 
-    cousin.5.7
+    cousins.5.7
 fr: arrière-petits-cousins 4<sup>e</sup>
 
-    cousin.5.7 tt
+    cousins.5.7 tt
 fr: arrière-petits-cousins au quatrième degré
 
-    cousin.5.8
+    cousins.5.8
 fr: arrière-arrière-petits-cousins 4<sup>e</sup>
 
-    cousin.5.8 tt
+    cousins.5.8 tt
 fr: deux-fois-arrière-petits-cousins au quatrième degré
 
-    cousin.5.9
+    cousins.5.9
 fr: trois-fois-arrière-petits-cousins 4<sup>e</sup>
 
-    cousin.5.9 tt
+    cousins.5.9 tt
 fr: trois-fois-arrière-petits-cousins au quatrième degré
 
-    cousin.5.10
+    cousins.5.10
 fr: quatre-fois-arrière-petits-cousins 4<sup>e</sup>
 
-    cousin.5.10 tt
+    cousins.5.10 tt
 fr: quatre-fois-arrière-petits-cousins au quatrième degré
 
-    cousin.6.1
+    cousins.6.1
 en: third great-granduncles
 fr: trois-fois-arrière-grands-oncles
 
-    cousin.6.1 tt
+    cousins.6.1 tt
 fr: frères et sœurs des quadrisaïeuls<hr>trois-fois-arrière-grands-oncles
 
-    cousin.6.2
+    cousins.6.2
 fr: trois-fois-arrière-grands-cousins
 
-    cousin.6.2 tt
+    cousins.6.2 tt
 fr: arrière-arrière-arrière-grands-cousins au premier degré
 
-    cousin.6.3
+    cousins.6.3
 fr: arrière-arrière-grands-cousins 2<sup>e</sup>
 
-    cousin.6.3 tt
+    cousins.6.3 tt
 fr: arrière-arrière-grands-cousins au deuxième degré<br><- cousins issus de germains des arrière-grands-parents et arrière-grands-oncles
 
-    cousin.6.4
+    cousins.6.4
 fr: arrière-grands-cousins 3<sup>e</sup>
 
-    cousin.6.4 tt
+    cousins.6.4 tt
 fr: arrière-grands-cousins au troisième degré<br><- cousins issus d’isuss de germains des grands-parents et grands-oncles
 
-    cousin.6.5
+    cousins.6.5
 fr: grands-cousins 4<sup>e</sup>
 
-    cousin.6.5 tt
+    cousins.6.5 tt
 fr: grands-cousins au quatrième degré
 
-    cousin.6.6
+    cousins.6.6
 en: fifth cousins
 fr: cousins 5<sup>e</sup>
 
-    cousin.6.6 tt
+    cousins.6.6 tt
 fr: cousins au cinquième degré
 
-    cousin.6.7
+    cousins.6.7
 fr: petits-cousins 5<sup>e</sup>
 
-    cousin.6.7 tt
+    cousins.6.7 tt
 fr: petits-cousins au cinquième degré
 
-    cousin.6.8
+    cousins.6.8
 fr: arrière-petits-cousins 5<sup>e</sup>
 
-    cousin.6.8 tt
+    cousins.6.8 tt
 fr: arrière-petits-cousins au cinquième degré
 
-    cousin.6.9
+    cousins.6.9
 fr: arrière-arrière-petits-cousins 5<sup>e</sup>
 
-    cousin.6.9 tt
+    cousins.6.9 tt
 fr: deux-fois-arrière-petits-cousins au cinquième degré
 
-    cousin.6.10
+    cousins.6.10
 fr: trois-fois-arrière-petits-cousins 5<sup>e</sup>
 
-    cousin.6.10 tt
+    cousins.6.10 tt
 fr: trois-fois-arrière-petits-cousins au cinquième degré
 
-    cousin.6.11
+    cousins.6.11
 fr: quatre-fois-arrière-petits-cousins 5<sup>e</sup>
 
-    cousin.7.1
+    cousins.7.1
 en: fourth great-granduncles
 fr: quatre-fois-arrière-grands-oncles
 
-    cousin.7.1 tt
+    cousins.7.1 tt
 fr: frères et sœurs des quinquisaïeuls
 
-    cousin.7.2
+    cousins.7.2
 fr: quatre-fois-arrière-grands-cousins
 
-    cousin.7.2 tt
+    cousins.7.2 tt
 fr: arrrière-arrière-arrière-arrière-grands-cousins au premier degré
 
-    cousin.7.3
+    cousins.7.3
 fr: trois-fois-arrière-grands-cousins 2<sup>e</sup>
 
-    cousin.7.3 tt
+    cousins.7.3 tt
 fr: arrière-arrière-arrière-grands-cousins au deuxième degré
 
-    cousin.7.4
+    cousins.7.4
 fr: arrière-arrière-grands-cousins 3<sup>e</sup>
 
-    cousin.7.4 tt
+    cousins.7.4 tt
 fr: arrière-arrière-grands-cousins au troisième degré
 
-    cousin.7.5
+    cousins.7.5
 fr: arrière-grands-cousins 4<sup>e</sup>
 
-    cousin.7.5 tt
+    cousins.7.5 tt
 fr: arrière-grands-cousins au quatrième degré
 
-    cousin.7.6
+    cousins.7.6
 fr: grands-cousins 5<sup>e</sup>
 
-    cousin.7.6 tt
+    cousins.7.6 tt
 fr: grands-cousins au 5e degré
 
-    cousin.7.7
+    cousins.7.7
 en: 6th cousins
 fr: cousins 6<sup>e</sup>
 
-    cousin.7.7 tt
+    cousins.7.7 tt
 fr: cousins au sixième degré
 
-    cousin.7.8
+    cousins.7.8
 fr: petits-cousins 6<sup>e</sup>
 
-    cousin.7.8 tt
+    cousins.7.8 tt
 fr: petits-cousins au sixième degré
 
-    cousin.7.9
+    cousins.7.9
 fr: arrière-petits-cousins 6<sup>e</sup>
 
-    cousin.7.9 tt
+    cousins.7.9 tt
 fr: arrière-petits-cousins au sixième degré
 
-    cousin.7.10
+    cousins.7.10
 fr: arrière-arrière-petits-cousins 6<sup>e</sup>
 
-    cousin.7.10 tt
+    cousins.7.10 tt
 fr: deux-fois-arrière-petits-cousins au sixième degré
 
-    cousin.7.11
+    cousins.7.11
 fr: trois-fois-arrière-petits-cousins 6<sup>e</sup>
 
-    cousin.7.11 tt
+    cousins.7.11 tt
 fr: trois-fois-arrière-petits-cousins au sixième degré
 
-    cousin.7.12
+    cousins.7.12
 fr: quatre-fois-arrière-petits-cousins 6<sup>e</sup>
 
-    cousin.7.12 tt
+    cousins.7.12 tt
 fr: quatre-fois-arrière-petits-cousins au sixième degré
 
-    cousin.8.1
+    cousins.8.1
 en: fifth great-granduncles
 fr: cinq-fois-arrière-grands-oncles
 
-    cousin.8.1 tt
+    cousins.8.1 tt
 fr: frères et sœurs des septisaïeuls
 
-    cousin.8.2
+    cousins.8.2
 fr: cinq-fois-arrière-grands-cousins
 
-    cousin.8.2 tt
+    cousins.8.2 tt
 fr: cinq-fois-arrière-grands-cousins au premier degré
 
-    cousin.8.3
+    cousins.8.3
 fr: quatre-fois-arrière-grands-cousins 2<sup>e</sup>
 
-    cousin.8.3 tt
+    cousins.8.3 tt
 fr: quatre-fois-arrière-grands-cousins au deuxième degré
 
-    cousin.8.4
+    cousins.8.4
 fr: trois-fois-arrière-grands-cousins 3<sup>e</sup>
 
-    cousin.8.4 tt
+    cousins.8.4 tt
 fr: trois-fois-arrière-grands-cousins au troisième degré
 
-    cousin.8.5
+    cousins.8.5
 fr: arrière-arrière-grands-cousins 4<sup>e</sup>
 
-    cousin.8.5 tt
+    cousins.8.5 tt
 fr: arrière-arrière-grands-cousins au quatrième degré
 
-    cousin.8.6
+    cousins.8.6
 fr: arrière-grands-cousins 5<sup>e</sup>
 
-    cousin.8.6 tt
+    cousins.8.6 tt
 fr: arrière-grands-cousins au cinquième degré
 
-    cousin.8.7
+    cousins.8.7
 fr: grands-cousins 6e
 
-    cousin.8.7 tt
+    cousins.8.7 tt
 fr: grands-cousins au sixième degré
 
-    cousin.8.8
+    cousins.8.8
 en: 7th cousins
 fr: cousins 7<sup>e</sup>
 
-    cousin.8.8 tt
+    cousins.8.8 tt
 en: seventh cousins
 fr: cousins au septième degré
 
-    cousin.8.9
+    cousins.8.9
 fr: petits-cousins 7<sup>e</sup>
 
-    cousin.8.9 tt
+    cousins.8.9 tt
 fr: petits-cousins au septième degré
 
-    cousin.8.10
+    cousins.8.10
 fr: arrière-petits-cousins 7<sup>e</sup>
 
-    cousin.8.10 tt
+    cousins.8.10 tt
 fr: arrière-petits-cousins au septième degré
 
-    cousin.8.11
+    cousins.8.11
 fr: arrière-arrière-petits-cousins 7<sup>e</sup>
 
-    cousin.8.11 tt
+    cousins.8.11 tt
 fr: arrière-arrière-petits-cousins au septième degré
 
-    cousin.8.12
+    cousins.8.12
 fr: trois-fois-arrière-petits-cousins 7<sup>e</sup>
 
-    cousin.8.12 tt
+    cousins.8.12 tt
 fr: trois-fois-arrière-petits-cousins au septième degré
 
-    cousin.8.13
+    cousins.8.13
 fr: quatre-fois-arrière-petits-cousins 7<sup>e</sup>
 
-    cousin.8.13 tt
+    cousins.8.13 tt
 fr: quatre-fois-arrière-petits-cousins au septième degré
 
-    cousin.9.1
+    cousins.9.1
 en: sixth great-granduncles
 fr: six-fois-arrière-grands-oncles
 
-    cousin.9.1 tt
+    cousins.9.1 tt
 fr: frères et sœurs des octosaïeuls
 
-    cousin.9.2
+    cousins.9.2
 fr: six-foix-arrière-grands-cousins
 
-    cousin.9.2 tt
+    cousins.9.2 tt
 fr: six-foix-arrière-grands-cousins au premier degré
 
-    cousin.9.3
+    cousins.9.3
 fr: cinq-fois-arrière-grands-cousins 2<sup>e</sup>
 
-    cousin.9.3 tt
+    cousins.9.3 tt
 fr: cinq-fois-arrière-grands-cousins au deuxième degré
 
-    cousin.9.4
+    cousins.9.4
 fr: quatre-fois-arrière-grands-cousins 3<sup>e</sup>
 
-    cousin.9.4 tt
+    cousins.9.4 tt
 fr: quatre-fois-arrière-grands-cousins au troisième degré
 
-    cousin.9.5
+    cousins.9.5
 fr: trois-fois-arrière-grands-cousins 4<sup>e</sup>
 
-    cousin.9.5 tt
+    cousins.9.5 tt
 fr: trois-fois-arrière-grands-cousins au quatrième degré
 
-    cousin.9.6
+    cousins.9.6
 fr: arrière-arrière-grands-cousins 5<sup>e</sup>
 
-    cousin.9.6 tt
+    cousins.9.6 tt
 fr: deux-fois-arrière-grands-cousins au cinquième degré
 
-    cousin.9.7
+    cousins.9.7
 fr: arrière-grands-cousins 6<sup>e</sup>
 
-    cousin.9.4 tt
+    cousins.9.4 tt
 fr: arrière-grands-cousins au sixième degré
 
-    cousin.9.8
+    cousins.9.8
 fr: grands-cousins 7e
 
-    cousin.9.8 tt
+    cousins.9.8 tt
 fr: grands-cousins au septième degré
 
-    cousin.9.9
+    cousins.9.9
 fr: cousins 8<sup>e</sup>
 
-    cousin.9.9 tt
+    cousins.9.9 tt
 fr: cousins au huitième degré
 
-    cousin.9.10
+    cousins.9.10
 fr: petits-cousins 8<sup>e</sup>
 
-    cousin.9.10 tt
+    cousins.9.10 tt
 fr: petits-cousins au huitième degré
 
-    cousin.9.11
+    cousins.9.11
 fr: arrière-petits-cousins 8<sup>e</sup>
 
-    cousin.9.11 tt
+    cousins.9.11 tt
 fr: arrière-petits-cousins au huitième degré
 
-    cousin.9.12
+    cousins.9.12
 fr: arrière-arrière-petits-cousins 8<sup>e</sup>
 
-    cousin.9.12 tt
+    cousins.9.12 tt
 fr: arrière-arrière-petits-cousins au huitième degré
 
-    cousin.9.13
+    cousins.9.13
 fr: trois-fois-arrière-petits-cousins 8<sup>e</sup>
 
-    cousin.9.13 tt
+    cousins.9.13 tt
 fr: arrière-arrière-arrière-petits-cousins au huitième degré
 
-    cousin.9.14
+    cousins.9.14
 fr: quatre-fois-arrière-petits-cousins 8<sup>e</sup>
 
-    cousin.9.14 tt
+    cousins.9.14 tt
 fr: quatre-fois-arrière-petits-cousins au huitième degré
 
     coefficient of relationship
@@ -14473,47 +14555,6 @@ fr: echelle
 pt: escala
 sv: skala
 tr: ölçek
-
-    son/daughter/child
-af: seun/dogter/kind
-bg: син/дъщеря/деца
-br: mab/merc'h/bugel
-ca: fill/filla/fill(a)
-co: figliolu/figliola/zittellu(a)
-cs: je synem/je dcerou/je dítětem
-da: søn/datter/barn
-de: Sohn/Tochter/Kind
-en: son/daughter/child
-eo: filo/filino/ido
-es: hijo/hija/hijo(a)
-et: poeg/tütar/laps
-fi: poika/tytär/lapsi
-fr: fils/fille/enfant
-he:  בן/ בת
-is: sonur/dóttir/barn
-it: figlio/figlia/figlio(a)
-lt: sūnus/duktė/vaikai
-lv: dēls/meita/bērns
-nl: zoon/dochter/kind
-no: sønn/datter/barn
-oc: filh/filha/enfant
-pl: syn/córka/dziecko
-pt: filho/filha/filho(a)
-ro: fiu/fica/copil
-ru: сын/дочь/дети
-sk: syn/dcéra/dieťa
-sl: sin/hčerka/otrok
-sv: son/dotter/barn
-tr: oğul/kız/çocuk
-
-    sons/daughters/children
-co: figlioli/figliole/zitelli
-de: Söhne/Töchter/Kinder
-en: sons/daughters/children
-fr: fils/filles/enfants
-pt: filhos/filhas/filhos
-sv: söner/döttrar/barn
-tr: oğulları/kızları/çocukları
 
     sort by/branch/alphabetic order
 co: urganizà da :/ghjemba/ordine alfabeticu
@@ -15741,53 +15782,62 @@ sv: barnbarnen
 tr: torunlar
 
     cousin.0.2
+->: a grandson/a granddaughter/a grandchild
+
+    cousins.0.2
 en: grandchild/grandchildren
 fr: petit-enfant/petits-enfants
 
-    cousin.0.2 tt
+    cousins.0.2 tt
 en: children of one’s son or daughters
 fr: enfants de son fils ou de sa fille
 
     cousin.0.3
+->: a grandson/a granddaughter/a grandchild
+
+    cousins.0.3
 en: great-grandchild/great-grandchildren
 fr: arrière-petit-enfant/arrière-petits-enfants
 
-    cousin.0.3 tt
+    cousins.0.3 tt
 en: children of one’s grandson or granddaughter
 fr: enfants de son petit-fils ou de sa petite-fille
 
     cousin.0.4
+->: a great-grandson/a great-granddaughter/a great-grandchild
+
+    cousins.0.4
 en: great-great-grandchild/great-great-grandchildren
 fr: arrière-arrière-petit-enfant/arrière-arrière-petits-enfants
 
-    cousin.0.4 tt
+    cousins.0.4 tt
 en: children of one’s great-grandson or great-granddaughter
 fr: enfants de son arrière-petit-fils ou de son arrière-petite-fille
 
-    cousin.0.5
+    cousins.0.5
 en: third great-grandchild/third great-grandchildren
 fr: arrière-arrière-arrière-petit-enfant/arrière-arrière-arrière-petits-enfants
 
-    cousin.0.5 tt
+    cousins.0.5 tt
 en: three times great-grandchildren
 fr: trois-fois-arrière-petits-enfants
 
-    cousin.0.6
+    cousins.0.6
 en: fourth great-grandchild/fourth great-grandchildren
 fr: quatre-fois-arrière-petit-enfant/quatre-fois-arrière-petits-enfants
 
-    cousin.0.6 tt
+    cousins.0.6 tt
 en: four times great-grandchildren
 
-    cousin.0.7
+    cousins.0.7
 en: fifth great-grandchild/fifth great-grandchildren
 fr: cinq-fois-arrière-petit-enfant/cinq-fois-arrière-petits-enfants
 
-    cousin.0.8
+    cousins.0.8
 en: sixth great-grandchild/sixth great-grandchildren
 fr: six-fois-arrière-petit-enfant/six-fois-arrière-petits-enfants
 
-    cousin.0.9
+    cousins.0.9
 en: seventh great-grandchild/seventh great-grandchildren
 fr: sept-fois-arrière-petit-enfant/sept-fois-arrière-petits-enfants
 
@@ -16855,9 +16905,12 @@ sv: farbröder-morbröder och fastrar-mostrar
 tr: amcalar ve teyzeler
 
     cousin.2.1
+->: an uncle/an aunt
+
+    cousins.2.1
 ->: uncles and aunts
 
-    cousin.2.1 tt
+    cousins.2.1 tt
 fr: frères et sœurs des parents
 
     undefined sex for %t

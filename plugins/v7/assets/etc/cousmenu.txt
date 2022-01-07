@@ -42,11 +42,11 @@
   </div>
 </div>
 %define;cousin_lex(vvv,www)
-  [cousin.vvv.www]1
+  [cousins.vvv.www]1
 %end;
 %define;cousin_lex_tt(vvv,www)
   %( condition pour garder la tooltip (title="") vide si elle n'est pas définie pour la langue en cours %)
-  %if;([cousin.vvv.www tt]!="[cousin.vvv.www tt]")[cousin.vvv.www tt]1%else;%end;
+  %if;([cousins.vvv.www tt]!="[cousins.vvv.www tt]")[cousins.vvv.www tt]1%else;%end;
 %end;
 %define;list_ancestor(vvv)
   %(todo: remove implexes%)

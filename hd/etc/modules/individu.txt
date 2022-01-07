@@ -83,19 +83,33 @@
     %reset_count; %reset_count1;
     %foreach;ancestor_level;
       %incr_count1;
-      %if;(count = 0 and level <= 10)
+      %if;(count = 0 and level <= 15)
         %foreach;ancestor;
-          %if;(ancestor.has_sosa and ancestor.anc_sosa.v < 1024)
+          %if;(ancestor.has_sosa and ancestor.anc_sosa.v < 18096)
             %if;(count = 0)
               %incr_count;
               %let;l1;%expr(ancestor.sosa.lvl-1)%in;
               %let;l2;%expr(count1-1)%in;
-              <li>%apply;cousin(l1,l2) de %sosa_ref;, ancêtre commun
-              %if;(cancel_links) %ancestor;
-              %else;
-                <a href="%prefix;m=RL&i=%ancestor.index;%nn;
-                  &i1=%sosa_ref.index;&l1=%l1;&i2=%index;&l2=%l2;%nn;
-                  &dag=on&"> %ancestor;</a>
+              <li>%apply;a_of_b%with;               
+                    %if;(cancel_links)%apply;cousin(l1,l2)
+                    %else;
+                      <a href="%prefix;m=RL&i=%ancestor.index;%nn;
+                        &i1=%sosa_ref.index;&l1=%l1;&i2=%index;&l2=%l2;&dag=on"
+                        tooltip="[*relationship link/relationship links]0 ([to see the first relationship link])">%nn;
+                        %apply;cousin(l1,l2)</a>
+                     %end;
+                  %and;
+                    <a href="%prefix;%sosa_ref.access;"
+                    title="[Sosa 1]">%sosa; %sosa_ref;</a>%nn;
+                  %end;
+              %if;(l1!=0) ([ancestor]
+                %if;(cancel_links) %ancestor;
+                %else;
+                  <a href="%prefix;%ancestor.access;"
+                    title="%nn;
+                    %apply;a_of_b%with;Sosa %ancestor.anc_sosa.v;%and;%self;%end;&#013;
+                    %apply;a_of_b%with;Sosa %ancestor.sosa;%and%sosa_ref;%end">%ancestor;</a>%nn;
+                %end;)
               %end;
             %end;
           %end;

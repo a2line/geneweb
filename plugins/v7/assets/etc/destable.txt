@@ -789,12 +789,12 @@ zzz est lui même si yyy="desc" ou son conjoint si yyy="spous"
     %if;(count1=1)
       %if;(ttt=1)[a descendant]0%(to remove if [descendant/descendants] is added to lexicon%)
       %else;
-        %if;(vvv<10) [cousin.0.vvv]0%else; [person/persons]0%end;
+        %if;(vvv<10) [cousins.0.vvv]0%else; [person/persons]0%end;
       %end;
     %else;
       %if;(ttt=1) [descendants]%nn;
       %else;
-        %if;(vvv<10) [cousin.0.vvv]1%else; [person/persons]1%end;
+        %if;(vvv<10) [cousins.0.vvv]1%else; [person/persons]1%end;
       %end;
     %end;
     %if;(ttt=1 and count2!=1)
