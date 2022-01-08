@@ -78,26 +78,42 @@
   %if;([cousin.l1.l2]!="[cousin.l1.l2]")[*cousin.l1.l2]s%else;[*close family]0 (<small class="text-muted">l1/l2</small>)%end;
 %end;
 
+%define;ancestor()
+  %if;(cancel_links) %ancestor;
+  %else;
+    <a href="%prefix;%ancestor.access;"
+      title="%apply;a_of_b%with;Sosa %ancestor.anc_sosa.v;%and;%self;%end;&#013;
+             %apply;a_of_b%with;Sosa %ancestor.sosa;%and%sosa_ref;%end">%ancestor;</a>%nn;
+  %end;
+%end;
+%define;all_link()
+  %if;(not cancel_links)
+    %sp;(<a href="%prefix;&m=NG&em=R&et=A&ei=%index;&select=%sosa_ref.index;&spouse=on&long=on"
+           title="[*searching all] [relationship link/relationship links]1"><i class="fa fa-user-friends"></i></a>)
+  %end;
+%end;
 %define;from_sosa()
   %if;(browsing_with_sosa_ref and has_parents and not has_sosa)
-    %reset_count; %reset_count1;
+    %reset_count; %reset_count1; %reset_count2; %reset_count3;
     %foreach;ancestor_level;
       %incr_count1;
-      %if;(count = 0 or count = 1 and level <= 15)
+      %if;(count < 3 and level <= 15)
         %foreach;ancestor;
           %if;(ancestor.has_sosa and ancestor.anc_sosa.v < 16385)
             %if;(count = 0)
               %incr_count;
               %let;l1;%expr(ancestor.sosa.lvl-1)%in;
               %let;l2;%expr(count1-1)%in;
-              <li>%apply;a_of_b%with;               
+              %for;i;0;ancestor.anc_sosa.v;%incr_count2;%end;
+              %for;i;0;ancestor.sosa;%incr_count3;%end;
+              <li>%apply;a_of_b%with;
                     %if;(cancel_links)%apply;cousin(l1,l2)
                     %else;
                       <a href="%prefix;m=RL&i=%ancestor.index;%nn;
                         &i1=%sosa_ref.index;&l1=%l1;&i2=%index;&l2=%l2;&dag=on"
                         title="[*to see the first relationship link]%sp;
-                          [relationship link/relationship links]0[:]%sp;
-                          [degree of kinship] %l1;/%l2;">%nn;
+                          [relationship link/relationship links]0, 
+                          [degree of kinship] %expr(l1+l2) (%l1;/%l2;)">%nn;
                         %apply;cousin(l1,l2)</a>
                      %end;
                   %and;
@@ -105,20 +121,19 @@
                     title="[Sosa 1]">%sosa; %sosa_ref;</a>%nn;
                   %end;
               %if;(l1!=0) [passing by]
-                %if;(cancel_links) %ancestor;
-                %else;
-                  <a href="%prefix;%ancestor.access;"
-                    title="%nn;
-                    %apply;a_of_b%with;Sosa %ancestor.anc_sosa.v;%and;%self;%end;&#013;
-                    %apply;a_of_b%with;Sosa %ancestor.sosa;%and%sosa_ref;%end">%ancestor;</a>%nn;
-                %end;
+                %apply;ancestor()
               %end;
             %elseif;(count = 1)
               %incr_count;
-              %if;(not cancel_links)
-                %sp;(<a href="%prefix;&m=NG&em=R&et=A&ei=%index;&select=%sosa_ref.index;&spouse=on&long=on"
-                    title="[*searching all] [relationship link/relationship links]1"><i class="fa fa-user-friends"></i></a>)
+              %if;(count2 %2 = 0 and ancestor.anc_sosa.v-count2 = 1
+                and count3 %2 = 0 and ancestor.sosa-count3 = 1)
+                %sp;[and] %apply;ancestor()
+              %else;
+                %apply;all_link()
               %end;
+            %elseif;(count = 2)
+              %incr_count;
+              %apply;all_link()
             %end;
           %end;
         %end;
