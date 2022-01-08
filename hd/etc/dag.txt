@@ -273,7 +273,7 @@
       <a href="%prefix_base_password;%nn;
         %foreach;env_binding;%if;(env.key!="" and env.key!="i" and env.key!="ei")%env.key;=%env.val;&%end;%end;
         &i=%evar.ei;&ei=%evar.i;"
-        title="[*swap]"><i class="fa fa-exchange-alt fa-fw ml-2"></i>
+        title="[*invert]"><i class="fa fa-exchange-alt fa-fw ml-2"></i>
       </a>
       <a href="%url&cgl=on" target="_blank"><i class="fa fa-unlink fa-fw ml-2" title="[*cancel GeneWeb links]"></i></a>
     </div>
