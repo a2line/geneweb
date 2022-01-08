@@ -129,9 +129,10 @@
                 and count3 %2 = 0 and ancestor.sosa-count3 = 1)
                 %sp;[and] %apply;ancestor()
               %else;
+                %reset_count2;
                 %apply;all_link()
               %end;
-            %elseif;(count = 2)
+            %elseif;(count = 2 and count2!=0)
               %incr_count;
               %apply;all_link()
             %end;
