@@ -21,16 +21,18 @@
 
 <div class="container%if;(evar.wide="on")-fluid%end;">
 
+%if;(evar.slices = "on")
+  <h1>[*display by slices/slice width/overlap/total width]0</h1>
+%else;
+  <h1>[*tree]</h1>
+%end;
+
 %if;not cancel_links;
   <div class="d-flex justify-content-center">
     %include;home
   </div>
-
   %if;(evar.m="A")
     %if;(evar.slices = "on")
-      <h1>%nn;
-        [*display by slices/slice width/overlap/total width]0%nn;
-      </h1>
       <form method="GET" action="%action;">
       <p>
       %hidden;
@@ -230,14 +232,11 @@
         </div>
       </div>
     </div>
-  %else;
-    <h2>[*tree]</h2>
   %end; %( evar.m="A" %)
-  %include;buttons_rel
 %end; %( if not cancel_links %)
 
 %if;(evar.slices!="on")
-  %if;(link_next!="" and evar.cgl!="on")
+  %if;(link_next!="" and not cancel_links)
     <div class="btn-toolbar mt-1 mb-2" role="toolbar" arial-label="config buttons toolbar">
       <img src="%image_prefix;/picto_parente.png" alt="&gt;&gt;" %/>
       %if;(evar.i!="")
@@ -252,30 +251,26 @@
       %end;
       <a href="%link_next;%if;(evar.image!="")&image=%evar.image;%end;;"
         title="[*next relationship path] (>)" accesskey=">">
-        <i class="fa fa-chevron-right fa-fw p-0 ml-1"></i>
-      </a>
+        <i class="fa fa-chevron-right fa-fw p-0 ml-1"></i></a>
       <a href="%prefix_base_password;%nn;
         %foreach;env_binding;%if;(env.key!="image")%env.key;=%env.val;;%end;%end;%nn;
         %if;(evar.image!="off")image=off;%end;"
         %if;(evar.dag="on")class="disabled"%end;
         title="%if;(evar.image!="off")[*visualize/show/hide/summary]2%else;
             [*visualize/show/hide/summary]1%end; [image/images]0">
-        <i class="far fa-images fa-fw p-0 ml-1%if;(evar.image!="off") text-muted%end;"></i>
-      </a>
+        <i class="far fa-images fa-fw p-0 ml-1%if;(evar.image!="off") text-muted%end;"></i></a>
       <a href="%prefix_base_password;%nn;
         %foreach;env_binding;%if;(env.key!="spouse")%env.key;=%env.val;;%end;%end;%nn;
         %if;(evar.spouse!="on")spouse=on;%end;"
         %if;(evar.dag="on")class="disabled"%end;"
         title="%if;(evar.spouse!="on")[*visualize/show/hide/summary]1%else;
             [*visualize/show/hide/summary]2%end; [spouse/spouses]0">
-        <i class="fa fa-user male p-0 ml-2"></i>%if;(evar.spouse!="on")<i class="fa fa-user female p-0"></i>%end;
-      </a>
+        <i class="fa fa-user male p-0 ml-2"></i>%if;(evar.spouse!="on")<i class="fa fa-user female p-0"></i>%end;</a>
       <a href="%prefix_base_password;%nn;
         %foreach;env_binding;%if;(env.key!="" and env.key!="i" and env.key!="ei")%env.key;=%env.val;&%end;%end;
         &i=%evar.ei;&ei=%evar.i;"
-        title="[*invert]"><i class="fa fa-exchange-alt fa-fw ml-2"></i>
-      </a>
-      <a href="%url&cgl=on" target="_blank"><i class="fa fa-unlink fa-fw ml-2" title="[*cancel GeneWeb links]"></i></a>
+        title="[*swap]"><i class="fa fa-exchange-alt fa-fw ml-2"></i></a>
+      <a href="%url;&cgl=on" target="_blank"><i class="fa fa-unlink fa-fw ml-2" title="[*cancel GeneWeb links]"></i></a>
     </div>
   %end;
   %if;(evar.notab = "on" or evar.pos2 != "")
@@ -323,7 +318,7 @@
         <td colspan="%if;(dag_cell.colspan > 1)%dag_cell.colspan;%else;1%end;"%if;(evar.image!="off") valign="bottom"%end; align="%dag_cell.align;">%nn;
         %if;dag_cell.is_nothing;&nbsp;%nn;
         %elseif;dag_cell.is_bar;
-          %if;(dag_cell.bar_link != "" and evar.cgl != "on")
+          %if;(dag_cell.bar_link != "" and not cancel_links)
             <a style="text-decoration:none" href="%dag_cell.bar_link;%if;(evar.image!="")&image=%evar.image;%end;">|</a>%nn;
           %else;|%end;
         %elseif;(dag_cell.item != "")%dag_cell.item;
