@@ -277,7 +277,7 @@ let print_rlm conf base iplist ip0  =
 let print_cousins conf base p lev1 lev2 =
   let title h =
     let cousins_l1_l2 =
-      "cousin." ^ (string_of_int lev1) ^ "." ^ (string_of_int lev2)
+      "cousins." ^ (string_of_int lev1) ^ "." ^ (string_of_int lev2)
     in
     let s = person_text conf base p in
     let trsl = transl_nth conf cousins_l1_l2 1 in

@@ -4284,7 +4284,7 @@ de: naher Angehöriger
 en: a parent
 es: un amigo
 fi: sukulainen
-fr: un proche
+fr: un parent proche
 it: un parente
 nl: een naaste
 no: en slektning
@@ -14023,6 +14023,9 @@ tr: büyük amcalar ve büyük teyzeler
     cousins.3.1 tt
 fr: frères et sœurs des grand-parents
 
+    cousin.3.2
+fr: un oncle à la mode de Bretagne/une tante à la mode de Bretagne
+
     cousins.3.2
 fr: grands-cousins
 
@@ -14037,6 +14040,9 @@ fr: oncles et tantes à la mode de Bourgogne ou Bretagne<br>petits-oncles et pet
 
     cousins.3.3 tt
 fr: cousins au 2<sup>e</sup> degré<br>cousins à la mode de Bourgogne ou Bretagne<br>petits-cousins (désuet)<br>cousins remués de germain (vieilli)
+
+    cousin.3.4
+fr: un petit-cousin au 2<sup>e</sup> degré/une petite-cousine au 2<sup>e</sup> degré
 
     cousins.3.4
 fr: petits-cousins 2<sup>e</sup>
@@ -14108,6 +14114,9 @@ fr: grands-cousins au 2<sup>e</sup> degré<br>cousins arrière-issus de germains
 
     cousins.4.4 tt
 fr: cousins au 3<sup>e</sup> degré
+
+    cousin.4.5
+fr: un petit-cousin au 3<sup>e</sup> degré/une petite-cousine au 3<sup>e</sup> degré
 
     cousins.4.5
 fr: petits-cousins 3<sup>e</sup></i>
@@ -14215,6 +14224,8 @@ fr: trois-fois-arrière-grands-cousins
     cousins.6.2 tt
 fr: arrière-arrière-arrière-grands-cousins au premier degré
 
+    cousin.6.3
+fr: un arrière-arrière-grand-cousin au 2<sup>e</sup> degré/une arrière-arrière-grande-cousine au 2<sup>e</sup> degré
     cousins.6.3
 fr: arrière-arrière-grands-cousins 2<sup>e</sup>
 
@@ -15782,7 +15793,7 @@ sv: barnbarnen
 tr: torunlar
 
     cousin.0.2
-->: a grandson/a granddaughter/a grandchild
+->: a grandson/a granddaughter/a grandchild
 
     cousins.0.2
 en: grandchild/grandchildren
@@ -15793,7 +15804,7 @@ en: children of one’s son or daughters
 fr: enfants de son fils ou de sa fille
 
     cousin.0.3
-->: a grandson/a granddaughter/a grandchild
+->: a great-grandson/a great-granddaughter/a great-grandchild
 
     cousins.0.3
 en: great-grandchild/great-grandchildren
@@ -17830,3 +17841,7 @@ fr: un coin coloré indique l’existence de notes (bleu), sources (jaune) ou de
     modify the size of images to
 en: modify the size of images to
 fr: modifier la taille des images à
+
+    passing by
+en: passing by
+fr: en passant par

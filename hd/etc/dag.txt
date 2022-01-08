@@ -233,6 +233,7 @@
   %else;
     <h2>[*tree]</h2>
   %end; %( evar.m="A" %)
+  %include;buttons_rel
 %end; %( if not cancel_links %)
 
 %if;(evar.slices!="on")

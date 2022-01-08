@@ -75,7 +75,7 @@
 %end;
 
 %define;cousin(l1,l2)
-  [*cousin.l1.l2]s
+  %if;([cousin.l1.l2]!="[cousin.l1.l2]")[*cousin.l1.l2]s%else;[*close family]0 (<small class="text-muted">l1/l2</small>)%end;
 %end;
 
 %define;from_sosa()
@@ -83,9 +83,9 @@
     %reset_count; %reset_count1;
     %foreach;ancestor_level;
       %incr_count1;
-      %if;(count = 0 and level <= 15)
+      %if;(count = 0 or count = 1 and level <= 15)
         %foreach;ancestor;
-          %if;(ancestor.has_sosa and ancestor.anc_sosa.v < 18096)
+          %if;(ancestor.has_sosa and ancestor.anc_sosa.v < 16385)
             %if;(count = 0)
               %incr_count;
               %let;l1;%expr(ancestor.sosa.lvl-1)%in;
@@ -95,21 +95,29 @@
                     %else;
                       <a href="%prefix;m=RL&i=%ancestor.index;%nn;
                         &i1=%sosa_ref.index;&l1=%l1;&i2=%index;&l2=%l2;&dag=on"
-                        tooltip="[*relationship link/relationship links]0 ([to see the first relationship link])">%nn;
+                        title="[*to see the first relationship link]%sp;
+                          [relationship link/relationship links]0[:]%sp;
+                          [degree of kinship] %l1;/%l2;">%nn;
                         %apply;cousin(l1,l2)</a>
                      %end;
                   %and;
                     <a href="%prefix;%sosa_ref.access;"
                     title="[Sosa 1]">%sosa; %sosa_ref;</a>%nn;
                   %end;
-              %if;(l1!=0) ([ancestor]
+              %if;(l1!=0) [passing by]
                 %if;(cancel_links) %ancestor;
                 %else;
                   <a href="%prefix;%ancestor.access;"
                     title="%nn;
                     %apply;a_of_b%with;Sosa %ancestor.anc_sosa.v;%and;%self;%end;&#013;
                     %apply;a_of_b%with;Sosa %ancestor.sosa;%and%sosa_ref;%end">%ancestor;</a>%nn;
-                %end;)
+                %end;
+              %end;
+            %elseif;(count = 1)
+              %incr_count;
+              %if;(not cancel_links)
+                %sp;(<a href="%prefix;&m=NG&em=R&et=A&ei=%index;&select=%sosa_ref.index;&spouse=on&long=on"
+                    title="[*searching all] [relationship link/relationship links]1"><i class="fa fa-user-friends"></i></a>)
               %end;
             %end;
           %end;
