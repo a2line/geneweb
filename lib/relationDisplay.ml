@@ -166,8 +166,23 @@ let print_shortest_path conf base p1 p2 =
           end
         else
           begin
+            let title _ =
+              Output.print_string conf
+                ((Utf8.capitalize_fst (transl_nth conf "relation/relations" 0)) ^
+                " (" ^ (transl conf "shortest path") ^ ")")
+            in
+            Output.print_string conf "<h1>";
+            title false;
+            Output.print_string conf "</h1>\n";
+            Hutil.print_link_to_welcome conf true;
+            Perso.interp_templ ~no_headers:true "buttons_rel" conf base
+              (Gwdb.empty_person base Gwdb.dummy_iper);
+            Output.print_string conf
+            ((Utf8.capitalize_fst (transl conf "no more")) ^ " " ^
+              (transl conf "link between"));
             Output.print_string conf "<ul>\n";
             Output.printf conf "<li>%s</li>\n" s1;
+            Output.print_string conf (transl conf "and");
             Output.printf conf "<li>%s</li>\n" s2;
             Output.print_string conf "</ul>\n"
           end;
@@ -854,7 +869,7 @@ let print_main_relationship conf base long p1 p2 rel =
   in
   Hutil.header conf title;
   Hutil.print_link_to_welcome conf true;
-  Perso.interp_templ ~no_headers:true "buttons_rel" conf base 
+  Perso.interp_templ ~no_headers:true "buttons_rel" conf base
     (Gwdb.empty_person base Gwdb.dummy_iper);
   begin match p_getenv conf.env "spouse" with
     Some "on" -> conf.senv <- conf.senv @ ["spouse", "on"]

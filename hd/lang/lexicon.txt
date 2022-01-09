@@ -8853,6 +8853,10 @@ pt: link de regresso aos pais
 sv: länk tillbaka till föräldrarna
 tr: ebeveynlere geri bağlantı
 
+    no more
+en: no more
+fr: plus de
+
     link between
 af: mense tussen
 bg: родство между
