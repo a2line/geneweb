@@ -20,26 +20,20 @@
       <span class="invisible"><i class="fa fa-chevron-up fa-fw"></i></span>
     %end;
     %if;(evar.i!="")
-      <span class="ml-2 mr-1">
-      <a %if;(evar.et="A")class="border rounded"%end;
+      <a class="ml-2 mr-1%if;(evar.et="A") border rounded%end;"
         href="%prefix_base_password&em=R&et=A%l_o;&long=on"
         title="[*relationship link/relationship links]1" accesskey="^">%nn;
         <i class="fa fa-user ml-1"></i><i class="fa fa-arrow-up"></i></a>
-      </span>
-      <span class="ml-2 mr-1">
-      <a %if;(evar.et="M")class="border rounded"%end;
+      <a class=" ml-2 mr-1%if;(evar.et="M") border rounded%end;"
         href="%prefix_base_password&em=R&et=M%l_o;&long=on"
         title="[*relationship by marriage]" accesskey="-">%nn;
         <i class="fa fa-user ml-1"></i>-<i class="fa fa-user female"></i></a>
-      </span>
     %end;
-    <span class="ml-2 mr-4">
-    <a %if;(evar.et="S")class="border rounded"%end;
+    <a class="ml-2 mr-4%if;(evar.et="S") border rounded%end;"
       href="%if(link_next!="")%link_next;%else;%nn;
       %prefix_base_password&em=R&et=S%l_o;%end;"
       title="[*shortest path], [next relationship path]" accesskey=">">%nn;
       <i class="fa fa-user fa-fw ml-1"></i><i class="fa fa-arrow-right"></i></a>
-    </span>
     
     <a href="%prefix_base_password;%nn;
       %foreach;env_binding;%if;(env.key!="image")%env.key;=%env.val;;%end;%end;%nn;
