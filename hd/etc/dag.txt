@@ -24,7 +24,7 @@
 %if;(evar.slices = "on")
   <h1>[*display by slices/slice width/overlap/total width]0</h1>
 %else;
-  <h1>[*tree]</h1>
+  <h1>[*relation/relations]0 ([shortest path])</h1>
 %end;
 
 %if;not cancel_links;

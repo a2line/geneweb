@@ -823,7 +823,16 @@ let print_main_relationship conf base long p1 p2 rel =
     | Some (_, total, _) -> total
   in
   let title _ =
-    Output.print_string conf (Utf8.capitalize_fst (transl conf "relationship"));
+    match p_getenv conf.env "et" with
+    | Some "A" ->
+        Output.print_string conf (Utf8.capitalize_fst (transl conf "relationship by ancestors"))
+    | Some "M" ->
+        Output.print_string conf (Utf8.capitalize_fst (transl conf "relationship by marriage"))
+    | Some "S" ->
+        Output.print_string conf (Utf8.capitalize_fst (transl_nth conf "relation/relations" 0) ^
+          " (" ^ (transl conf "shortest path") ^ ")")
+    | _ -> 
+        Output.print_string conf (Utf8.capitalize_fst (transl conf "relationship"));
     if Sosa.eq total Sosa.zero then ()
     else
       begin
