@@ -88,7 +88,8 @@
 %end;
 %define;all_link()
   %if;(not cancel_links)
-    %sp;(<a href="%prefix;&m=NG&em=R&et=A&ei=%index;&select=%sosa_ref.index;&spouse=on&long=on"
+    %sp;(<a href="%prefix;em=R&et=S&ei=%index;&i=%sosa_ref.index;&dag=on"
+%(  %sp;(<a href="%prefix;&m=NG&em=R&et=A&ei=%index;&select=%sosa_ref.index;&spouse=on&long=on" %)
            title="[*searching all] [relationship link/relationship links]1"><i class="fa fa-user-friends"></i></a>)
   %end;
 %end;
@@ -109,7 +110,6 @@
               <li>%apply;a_of_b%with;
                     %if;(cancel_links)%apply;cousin(l1,l2)
                     %else;
-                      %( ou %prefix;em=R&et=S&ei=%index;&i=%sosa_ref.index;&dag=on pour les boutons ? %)
                       <a href="%prefix;m=RL&i=%ancestor.index;&i1=%sosa_ref.index;&l1=%l1;&i2=%index;&l2=%l2;&spouse=on&dag=on"
                         title="[*to see the first relationship link]%sp;
                           [relationship link/relationship links]0, 

@@ -1,9 +1,15 @@
-<!-- $Id: buttons_rel.txt v7.00 28/10/2018 17:16:03 $ -->
+<!-- $Id: buttons_rel.txt v7.01 2022/01/09 13:06:03 $ -->
 <!-- Copyright (c) 1998-2018 INRIA -->
 %( Boutons de configurations et d'options %)
 %if;(evar.cgl!="on")
-  <div class="btn-toolbar mt-1 mb-3" role="toolbar" arial-label="config buttons toolbar">
-    %if;(evar.em="R")
+  %let;l_o;&ei=%evar.i;&i=%evar.ei;%nn;
+    %if;(evar.image!="")&image=%evar.image;%end;%nn;
+    %if;(evar.spouse!="")&spouse=%evar.spouse;%end;%nn;
+    %if;(evar.bd!="")&bd=%evar.bd;%end;%nn;
+    %if;(evar.color!="")&color=%evar.color;%end;%nn;
+  %in;
+  <div class="btn-toolbar mt-1 mb-2" role="toolbar" arial-label="config buttons toolbar">
+    %if;(evar.et="A" or evar.et="M")
       <a href="%prefix_base_password;%nn;
         %foreach;env_binding;%if;(env.key!="" and env.key!="long")%env.key;=%env.val;&%end;%end;
         %if;(evar.long!="on")long=on%end;"
@@ -12,26 +18,47 @@
        <i class="fa fa-chevron-%if;(evar.long="on")up%else;down%end; fa-fw"></i>
       </a>
     %end;
-    %if;((evar.em="R" and evar.long="on") or evar.m="RL")
-      <a href="%prefix_base_password;%nn;
-        %foreach;env_binding;%if;(env.key!="" and env.key!="image")%env.key;=%env.val;&%end;%end;
-        %if;(evar.image!="off")image=off%end;"
-        title="%if;(evar.image!="off")[*visualize/show/hide/summary]2%else;
-            [*visualize/show/hide/summary]1%end; [image/images]0">%nn;
-        <i class="fa fa-images p-0 ml-1%if;(evar.image!="off") text-muted%end;"></i>
-      </a>
-      <a href="%prefix_base_password;%nn;
-        %foreach;env_binding;%if;(env.key!="" and env.key!="spouse")%env.key;=%env.val;&%end;%end;
-        %if;(evar.spouse!="on")spouse=on%end;"
-        title="%if;(evar.spouse!="on")[*visualize/show/hide/summary]1%else;
-          [*visualize/show/hide/summary]2%end; [spouse/spouses]0">%nn;
-          <i class="fa fa-user%if;(evar.spouse!="on")-friends%end; fa-fw ml-2"></i></a>
-      <a href="%prefix_base_password;%nn;
-        %foreach;env_binding;%if;(env.key!="" and env.key!="i" and env.key!="ei")%env.key;=%env.val;&%end;%end;
-        &i=%evar.ei;&ei=%evar.i;"
-        title="[*swap]"><i class="fa fa-exchange-alt fa-fw ml-2"></i>
-      </a>
-      <a href="%url&cgl=on" target="_blank"><i class="fa fa-unlink fa-fw ml-2" title="[*cancel GeneWeb links]"></i></a>
+    %if;(evar.i!="")
+      <a class="ml-2" href="%prefix_base_password&em=R&et=A%l_o;&long=on"
+        title="[*relationship link/relationship links]1"
+        %if;(evar.et="A")class="border rounded"%end;">%nn;
+        <i class="fa fa-user ml-1"></i>%nn;
+        <i class="fa fa-plus"></i></a>
+      &nbsp;&nbsp;
+      <a class="ml-2" href="%prefix_base_password&em=R&et=M%l_o;&long=on"
+        title="[*relationship by marriage]"
+        %if;(evar.et="M")class="border rounded"%end;">%nn;
+        <i class="fa fa-user ml-1"></i>-%nn;
+        <i class="fa fa-user female"></i>
+        </a>
+      &nbsp;&nbsp;
     %end;
+    <a href="%if(link_next!="")%link_next;%else;%nn;
+      %prefix_base_password&em=R&et=S%l_o;%end;%nn;
+      %if;(evar.image!="")&image=%evar.image;%end;;"
+      title="[*shortest path], [next relationship path]" accesskey=">"
+      %if;(evar.et="S")class="border rounded"%end;">%nn;
+      <i class="fa fa-user fa-fw ml-1"></i>%nn;
+      <i class="fa fa-arrow-right"></i></a>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <a href="%prefix_base_password;%nn;
+      %foreach;env_binding;%if;(env.key!="image")%env.key;=%env.val;;%end;%end;%nn;
+      %if;(evar.image!="off")image=off;%end;"
+      %if;(evar.dag="on")class="disabled"%end;
+      title="%if;(evar.image!="off")[*visualize/show/hide/summary]2%else;
+          [*visualize/show/hide/summary]1%end; [image/images]0">
+      <i class="far fa-images fa-fw p-0 ml-1%if;(evar.image!="off") text-muted%end;"></i></a>
+    <a href="%prefix_base_password;%nn;
+      %foreach;env_binding;%if;(env.key!="spouse")%env.key;=%env.val;;%end;%end;%nn;
+      %if;(evar.spouse!="on")spouse=on;%end;"
+      %if;(evar.dag="on")class="disabled"%end;"
+      title="%if;(evar.spouse!="on")[*visualize/show/hide/summary]1%else;
+          [*visualize/show/hide/summary]2%end; [spouse/spouses]0">
+      <i class="fa fa-user male p-0 ml-2"></i>%if;(evar.spouse!="on")<i class="fa fa-user female p-0"></i>%end;</a>
+    <a href="%prefix_base_password;%nn;
+      %foreach;env_binding;%if;(env.key!="" and env.key!="i" and env.key!="ei")%env.key;=%env.val;&%end;%end;
+      &i=%evar.ei;&ei=%evar.i;"
+      title="[*swap]"><i class="fa fa-exchange-alt fa-fw ml-2"></i></a>
+    <a href="%url;&cgl=on" target="_blank"><i class="fa fa-unlink fa-fw ml-2" title="[*cancel GeneWeb links]"></i></a>
   </div>
 %end;
