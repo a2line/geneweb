@@ -2,8 +2,8 @@
 <!-- Copyright (c) 1998-2018 INRIA -->
 %( Boutons de configurations et d'options %)
 %if;(evar.cgl!="on")
-  %let;l_o;&ei=%evar.i;&i=%evar.ei;%nn;
-    %if;(evar.image!="")&image=%evar.image;%end;%nn;
+  %let;l_o1;&ei=%evar.i;&i=%evar.ei;%in;
+  %let;l_o2;%if;(evar.image!="")&image=%evar.image;%end;%nn;
     %if;(evar.spouse!="")&spouse=%evar.spouse;%end;%nn;
     %if;(evar.bd!="")&bd=%evar.bd;%end;%nn;
     %if;(evar.color!="")&color=%evar.color;%end;%nn;
@@ -21,20 +21,27 @@
     %end;
     %if;(evar.i!="")
       <a class="ml-2 mr-1%if;(evar.et="A") border rounded%end;"
-        href="%prefix_base_password&em=R&et=A%l_o;&long=on"
+        href="%prefix_base_password&em=R&et=A%l_o1;%l_o2;&long=on"
         title="[*relationship link/relationship links]1" accesskey="^">%nn;
         <i class="fa fa-user ml-1"></i><i class="fa fa-arrow-up"></i></a>
       <a class=" ml-2 mr-1%if;(evar.et="M") border rounded%end;"
-        href="%prefix_base_password&em=R&et=M%l_o;&long=on"
+        href="%prefix_base_password&em=R&et=M%l_o1;%l_o2;&long=on"
         title="[*relationship by marriage]" accesskey="-">%nn;
         <i class="fa fa-user ml-1"></i>-<i class="fa fa-user female"></i></a>
     %end;
-    %if;(evar.m!="NG")
+    %if;(evar.m!="NG" and evar.i!="" and evar.ei!="")
       <a class="ml-2 mr-4%if;(evar.et="S") border rounded%end;"
         href="%if(link_next!="")%link_next;%else;%nn;
-        %prefix_base_password&em=R&et=S%l_o;%end;"
+        %prefix_base_password&em=R&et=S%l_o1;%l_o2;%end;"
         title="[*shortest path], [next relationship path]" accesskey=">">%nn;
         <i class="fa fa-user fa-fw ml-1"></i><i class="fa fa-arrow-right"></i></a>
+    %elseif;(evar.m!="NG" and person_index.1!="" and person_index.2!="")
+      <a class="ml-2 mr-4%if;(evar.et="S") border rounded%end;"
+        href="%prefix_base_password&em=R&et=S%l_o2;%nn;
+        &ei=%person_index.1;&i=%person_index.2;"
+        title="[*shortest path], [next relationship path]" accesskey=">">%nn;
+        <i class="fa fa-user fa-fw ml-1"></i><i class="fa fa-arrow-right"></i></a>
+    
     %end;
     <a href="%prefix_base_password;%nn;
       %foreach;env_binding;%if;(env.key!="image")%env.key;=%env.val;;%end;%end;%nn;
@@ -54,6 +61,14 @@
       <a href="%prefix_base_password;%nn;
         %foreach;env_binding;%if;(env.key!="" and env.key!="i" and env.key!="ei")%env.key;=%env.val;&%end;%end;
         &i=%evar.ei;&ei=%evar.i;"
+        title="[*swap]"><i class="fa fa-exchange-alt fa-fw ml-2"></i></a>
+    %elseif;(person_index.1!="" and person_index.2!="")
+      <a href="%prefix_base_password;%nn;
+        %foreach;env_binding;%if;(env.key!="" and env.key!="i1" and env.key!="i2" and
+                    env.key!="p1" and env.key!="n1" and env.key!="oc1" and
+                    env.key!="p2" and env.key!="n2" and env.key!="oc2"
+                    )%env.key;=%env.val;&%end;%end;
+        &i1=%person_index.2;&i2=%person_index.1;&"
         title="[*swap]"><i class="fa fa-exchange-alt fa-fw ml-2"></i></a>
     %end;
     <a href="%url;&cgl=on" target="_blank"><i class="fa fa-unlink fa-fw ml-2" title="[*cancel GeneWeb links]"></i></a>

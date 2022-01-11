@@ -606,7 +606,7 @@ let print_relation_ok conf base info =
       None, None -> ()
     | _ -> Output.printf conf " %d" info.c2
   in
-  Hutil.header_no_page_title conf title;
+  Hutil.header conf title;
   Hutil.print_link_to_welcome conf true;
   Perso.interp_templ ~no_headers:true "buttons_rel" conf base 
     (Gwdb.empty_person base Gwdb.dummy_iper);
