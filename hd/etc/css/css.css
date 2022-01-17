@@ -253,7 +253,11 @@ span.image_small_size {
 
 /* Fix dag line height */
 table#dag {
-  line-height: 1.05
+  empty-cells: show;
+}
+tr#dag, td#dag {
+  font-family:Noto Sans;
+  vertical-align:top;
 }
 
 /* Sex symbol color */

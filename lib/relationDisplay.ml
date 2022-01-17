@@ -180,11 +180,9 @@ let print_shortest_path conf base p1 p2 =
             Output.print_string conf
             ((Utf8.capitalize_fst (transl conf "no more")) ^ " " ^
               (transl conf "link between"));
-            Output.print_string conf "<ul>\n";
-            Output.printf conf "<li>%s</li>\n" s1;
+            Output.printf conf " %s " s1;
             Output.print_string conf (transl conf "and");
-            Output.printf conf "<li>%s</li>\n" s2;
-            Output.print_string conf "</ul>\n"
+            Output.printf conf " %s.\n" s2;
           end;
         Hutil.trailer conf
 let parents_label conf base info =

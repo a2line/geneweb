@@ -131,17 +131,17 @@
       <div>
         <span>[*relationship computing mode][:]</span>
         <div class="ml-2 mt-1">
+          <div class="custom-control custom-radio" id="rel_shortest_path">
+            <input type="radio" class="custom-control-input" id="etS" name="et" value="S" checked>
+            <label class="custom-control-label" for="etS">[*shortest path]</label>
+          </div>
           <div class="custom-control custom-radio" id="rel_ancestors">
-            <input type="radio" class="custom-control-input" id="etA" name="et" value="A" checked>
+            <input type="radio" class="custom-control-input" id="etA" name="et" value="A">
             <label class="custom-control-label" for="etA">[*relationship by ancestors]</label>
           </div>
           <div class="custom-control custom-radio" id="rel_by_marriage">
             <input type="radio" class="custom-control-input" id="etM" name="et" value="M">
             <label class="custom-control-label" for="etM">[*relationship by marriage]</label>
-          </div>
-          <div class="custom-control custom-radio" id="rel_shortest_path">
-            <input type="radio" class="custom-control-input" id="etS" name="et" value="S">
-            <label class="custom-control-label" for="etS">[*shortest path]</label>
           </div>
         </div>
       </div>

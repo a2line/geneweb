@@ -8855,7 +8855,7 @@ tr: ebeveynlere geri bağlantı
 
     no more
 en: no more
-fr: plus de
+fr: pas d’autres
 
     link between
 af: mense tussen
@@ -12892,7 +12892,7 @@ de: Direkte Vorfahren
 en: ancestry
 es: ascendientes directos
 fi: esipolvet
-fr: ascendants directs
+fr: liens de parenté (ascendants directs)
 it: ascendenti diretti
 nl: rechtstreekse voorouders
 no: aner

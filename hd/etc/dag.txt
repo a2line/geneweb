@@ -276,24 +276,28 @@
     %end;
     </pre>
   %else;
-    <table id="dag" border="%border;" width="100%%"><tr><td align="center">
+    <table id="dag" width="100%%"><tr><td align="center">
     <table border="%border;" cellspacing="0" cellpadding="0">
     %foreach;dag_line;
       <tr align="left">
       %foreach;dag_cell;
-        <td colspan="%if;(dag_cell.colspan > 1)%dag_cell.colspan;%else;1%end;"%if;(evar.image!="off") valign="bottom"%end; align="%dag_cell.align;">%nn;
+        <td%if;(dag_cell.colspan > 1) colspan="%dag_cell.colspan;"%end;%sp;
+        style="line-height:%if;(dag_cell.item!="")1rem
+                           %elseif;(dag_cell.is_bar)0.85rem%elseif;dag_cell.is_nothing;0rem%end;"
+        %if;(evar.image!="off") valign="bottom"%end; align="%dag_cell.align;">%nn;
         %if;dag_cell.is_nothing;&nbsp;%nn;
         %elseif;dag_cell.is_bar;
-          %if;(dag_cell.bar_link != "" and not cancel_links)
-            <a style="text-decoration:none" href="%dag_cell.bar_link;%if;(evar.image!="")&image=%evar.image;%end;">|</a>%nn;
-          %else;|%end;
-        %elseif;(dag_cell.item != "")%dag_cell.item;
+          %if;(dag_cell.bar_link != "" and not cancel_links and evar.em!="R")
+            %( added em!=R here condition because first button_rel is static and does the same %)
+            <a href="%dag_cell.bar_link;;image=%evar.image;" title="[*tree]">┃%if;(evar.m!="NG")<br>╹%end;</a>%nn;
+          %else;┃%end;
+        %elseif;(dag_cell.item != "")<div class="my-1">%dag_cell.item;</div>
         %elseif;(dag_cell.text != "")%dag_cell.text;
         %else;
           %if;dag_cell.is_hr_left;
             <hr class="%left;"%/>%nn;
           %elseif;dag_cell.is_hr_right;
-            <hr class="%right;"%/>%nn;
+            <hr class="%right;" %/>%nn;
           %else;
             <hr class="full"%/>%nn;
           %end;

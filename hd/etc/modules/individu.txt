@@ -106,7 +106,7 @@
               %let;l1;%expr(ancestor.sosa.lvl-1)%in;
               %let;l2;%expr(count1-1)%in;
               %for;i;0;ancestor.anc_sosa.v;%incr_count2;%end;
-              %for;i;0;ancestor.sosa;%incr_count3;%end;
+              %for;i;0;ancestor.sosa.v;%incr_count3;%end;
               <li>%apply;a_of_b%with;
                     %if;(cancel_links)%apply;cousin(l1,l2)
                     %else;
@@ -126,7 +126,7 @@
             %elseif;(count = 1)
               %incr_count;
               %if;(count2 %2 = 0 and ancestor.anc_sosa.v-count2 = 1
-                and count3 %2 = 0 and ancestor.sosa-count3 = 1)
+                and count3 %2 = 0 and ancestor.sosa.v-count3 = 1)
                 %sp;[and] %apply;ancestor()
               %else;
                 %reset_count2;
