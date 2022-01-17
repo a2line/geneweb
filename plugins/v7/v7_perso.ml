@@ -2271,6 +2271,15 @@ and eval_compound_var conf base env (a, _ as ep) loc =
         if is_hidden (fst ep) then raise Not_found
         else eval_person_field_var conf base env ep loc sl
       (* else raise Not_found *)
+  | ["set_count"; n; v] ->
+    begin match n with
+    | "1" | "2" | "3" ->
+      begin match get_env ("count" ^ n) env with
+        Vcnt c -> c := int_of_string v; VVstring ""
+      | _ -> raise Not_found
+      end
+    | _ -> raise Not_found
+    end
   | "svar" :: i :: sl ->
       (* http://localhost:2317/HenriT_w?m=DAG&p1=henri&n1=duchmol&s1=243&s2=245
          access to sosa si=n of a person pi ni
