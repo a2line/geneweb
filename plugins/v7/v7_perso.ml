@@ -1277,6 +1277,7 @@ type 'a env =
   | Vcell of cell
   | Vcelll of cell list
   | Vcnt of int ref
+  | Vvars of (string * string) list ref
   | Vdesclevtab of ((iper, int) Marker.t * (ifam, int) Marker.t) lazy_t
   | Vdmark of (iper, bool) Marker.t ref
   | Vslist of SortedList.t ref
@@ -2280,6 +2281,23 @@ and eval_compound_var conf base env (a, _ as ep) loc =
       end
     | _ -> raise Not_found
     end
+  | ["get_var"; name;] ->
+      begin match get_env ("vars") env with
+        Vvars lv ->
+          let vv = try List.assoc name !lv
+          with Not_found -> raise Not_found
+          in
+          VVstring vv
+      | _ -> VVstring ("%get_var;" ^ name ^ "?")
+      end
+  | ["set_var"; name; value] ->
+      begin match get_env ("vars") env with
+        Vvars lv ->
+          if List.mem_assoc name !lv
+          then lv := List.remove_assoc name !lv;
+          lv := (name, value) :: !lv; VVstring ""
+      | _ -> raise Not_found
+      end
   | "svar" :: i :: sl ->
       (* http://localhost:2317/HenriT_w?m=DAG&p1=henri&n1=duchmol&s1=243&s2=245
          access to sosa si=n of a person pi ni
@@ -5078,6 +5096,7 @@ let gen_interp_templ ?(no_headers = false) menu title templ_fname conf base p =
      ("count1", Vcnt (ref 0));
      ("count2", Vcnt (ref 0));
      ("count3", Vcnt (ref 0));
+     ("vars", Vvars (ref []));
      ("list", Vslist (ref SortedList.empty));
      ("listb", Vslist (ref SortedList.empty));
      ("listc", Vslist (ref SortedList.empty));
