@@ -73,76 +73,103 @@
     %if;(not is_dead and computable_age)[*age][:] %age;%end;
   %end;
 %end;
-
 %define;cousin(l1,l2)
   %if;([cousin.l1.l2]!="[cousin.l1.l2]")[*cousin.l1.l2]s%else;[*close family]0 (<small class="text-muted">l1/l2</small>)%end;
 %end;
-
-%define;ancestor()
-  %if;(cancel_links) %ancestor;
+%define;ancestor(aaa,ccc,sss,ttt)
+  %if;(cancel_links) aaa
   %else;
-    <a href="%prefix;%ancestor.access;"
-      title="%apply;a_of_b%with;Sosa %ancestor.anc_sosa.v;%and;%self;%end;&#013;
-             %apply;a_of_b%with;Sosa %ancestor.sosa;%and%sosa_ref;%end">%ancestor;</a>%nn;
+    <a href="%prefix;ccc"
+      title="%apply;a_of_b%with;Sosa sss%and;%self;%end;&#013;
+             %apply;a_of_b%with;Sosa ttt%and%sosa_ref;%end">aaa</a>%nn;
   %end;
 %end;
 %define;all_link()
   %if;(not cancel_links)
-    %sp;(<a href="%prefix;em=R&et=S&ei=%index;&i=%sosa_ref.index;&dag=on"
-%(  %sp;(<a href="%prefix;&m=NG&em=R&et=A&ei=%index;&select=%sosa_ref.index;&spouse=on&long=on" %)
-           title="[*searching all] [relationship link/relationship links]1"><i class="fa fa-user-friends"></i></a>)
+     <span class="text-nowrap">(<a href="%prefix;em=R&et=S&ei=%index;&i=%sosa_ref.index;&dag=on"
+%( autre possibilité %prefix;&m=NG&em=R&et=A&ei=%index;&select=%sosa_ref.index;&spouse=on&long=on" %)
+       title="[*searching all] [relationship link/relationship links]1"><i class="fa fa-user-friends"></i></a>).</span>
   %end;
+%end;
+%define;setvar(nnn,vvv)
+  %set_var.nnn.vvv;
+%end;
+%define;getvar(nnn)
+  %get_var.nnn;
+%end;
+%define;getdata(index,value)
+  %qvar.index.value;
 %end;
 %define;from_sosa()
   %if;(browsing_with_sosa_ref and has_parents and not has_sosa)
-    %reset_count; %reset_count1; %reset_count2; %reset_count3;
+    %reset_count;%reset_count1;
     %foreach;ancestor_level;
       %incr_count1;
-      %if;(count < 3 and level <= 15)
+      %if;(count < 2 and level <= 15)
         %foreach;ancestor;
           %if;(ancestor.has_sosa and ancestor.anc_sosa.v < 16385)
             %if;(count = 0)
               %incr_count;
-              %let;l1;%expr(ancestor.sosa.lvl-1)%in;
-              %let;l2;%expr(count1-1)%in;
-              %for;i;0;ancestor.anc_sosa.v;%incr_count2;%end;
-              %for;i;0;ancestor.sosa.v;%incr_count3;%end;
-              <li>%apply;a_of_b%with;
-                    %if;(cancel_links)%apply;cousin(l1,l2)
-                    %else;
-                      <a href="%prefix;m=RL&i=%ancestor.index;&i1=%sosa_ref.index;&l1=%l1;&i2=%index;&l2=%l2;&spouse=on&dag=on"
-                        title="[*to see the first relationship link]%sp;
-                          [relationship link/relationship links]0, 
-                          [degree of kinship] %expr(l1+l2) (%l1;/%l2;)">%nn;
-                        %apply;cousin(l1,l2)</a>
-                     %end;
-                  %and;
-                    <a href="%prefix;%sosa_ref.access;"
-                    title="[Sosa 1]">%sosa; %sosa_ref;</a>%nn;
-                  %end;
-              %if;(l1!=0) [passing by]
-                %apply;ancestor()
-              %end;
+              %apply;setvar(l1,ancestor.sosa.lvl-1)
+              %apply;setvar(l2,count1-1)
+              %apply;setvar(ancestor1_anc_sosa,ancestor.anc_sosa.v)
+              %apply;setvar(ancestor1_sosa_cujus,ancestor.sosa.v)
+              %apply;setvar(ancestor1_index,ancestor.index)
+              %apply;setvar(ancestor1_access,ancestor.access)
+              %apply;setvar(ancestor1,ancestor)
             %elseif;(count = 1)
-              %incr_count;
-              %if;(count2 %2 = 0 and ancestor.anc_sosa.v-count2 = 1
-                and count3 %2 = 0 and ancestor.sosa.v-count3 = 1)
-                %sp;[and] %apply;ancestor()
-              %else;
-                %reset_count2;
-                %apply;all_link()
+              %let;a1s;%apply;getvar(ancestor1_anc_sosa)%in;
+              %let;a1sc;%apply;getvar(ancestor1_sosa_cujus)%in;
+              %if;(a1s %2 = 0 and ancestor.anc_sosa.v-a1s = 1
+                and a1sc %2 = 0 and ancestor.sosa.v-a1sc = 1)
+                %incr_count;
+                %apply;setvar(ancestor2_anc_sosa,ancestor.anc_sosa.v)
+                %apply;setvar(ancestor2_sosa_cujus,ancestor.sosa.v)
+                %apply;setvar(ancestor2_access,ancestor.access)
+                %apply;setvar(ancestor2,ancestor)
+              %else;%incr_count;%incr_count;
               %end;
-            %elseif;(count = 2 and count2!=0)
-              %incr_count;
-              %apply;all_link()
             %end;
           %end;
         %end;
       %end;
     %end;
+    %let;l1;%apply;getvar(l1)%in;
+    %let;l2;%apply;getvar(l2)%in;
+    %let;anc1_ind;%apply;getvar(ancestor1_index)%in;
+    %let;anc1;%apply;getvar(ancestor1)%in;
+    %let;anc1_sosa;%apply;getvar(ancestor1_anc_sosa)%in;
+    %let;anc1_sosa_cuj;%apply;getvar(ancestor1_sosa_cujus)%in;
+    %let;anc1_acc;%apply;getvar(ancestor1_access)%in;
+    %let;anc2;%apply;getvar(ancestor2)%in;
+    %let;anc2_sosa;%apply;getvar(ancestor2_anc_sosa)%in;
+    %let;anc2_sosa_cuj;%apply;getvar(ancestor1_sosa_cujus)%in;
+    %let;anc2_acc;%Apply;getvar(ancestor2_access)%in;
+    %anc2;
+    %if;(anc1!="")
+      <li>
+        %apply;a_of_b%with;
+          %if;(count=3)½-%end;
+          %if;(cancel_links)%apply;cousin(l1,l2)
+          %else;
+            <a href="%prefix;m=RL&i=%anc1_ind;&i1=%sosa_ref.index;&l1=%l1;&i2=%index;&l2=%l2;&spouse=on&dag=on"
+              title="[*to see the first relationship link]%sp;
+                [relationship link/relationship links]0,
+                [degree of kinship] %expr(l1+l2) (%l1;/%l2;)">%nn;
+              %apply;cousin(l1,l2)</a>
+           %end;
+        %and;
+          <a href="%prefix;%sosa_ref.access;"
+            title="[Sosa 1]">%sosa_ref;</a>%nn;
+        %end;
+        %if;(l1!=0)%sp;[passing by] %apply;ancestor(anc1,anc1_acc,anc1_sosa,anc1_sosa_cuj)%end;
+        %if;(count=2) [and] %apply;ancestor(anc2,anc2_acc,anc2_sosa,anc2_sosa_cuj)%end;
+        %apply;all_link()
+      </li>
+      %( on peut simplifier un peu avec %apply;getdata(anc1_ind,"access") %)
+    %end;
   %end;
 %end;
-
 %define;etat_civil()
   <ul>
     %if;has_birth_date;
