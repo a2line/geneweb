@@ -1,4 +1,5 @@
 (* $Id: dag2html.mli,v 5.0 2005-12-13 11:51:26 ddr Exp $ *)
+open Gwdb
 
 (* TODOCP *)
 type 'a dag = { mutable dag : 'a node array }
@@ -18,7 +19,7 @@ and ghost_id
 type align = LeftA | CenterA | RightA
 type ('a, 'b) table_data =
     TDitem of 'a
-  | TDtext of string
+  | TDtext of iper * string
   | TDhr of align
   | TDbar of 'b option
   | TDnothing

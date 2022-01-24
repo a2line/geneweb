@@ -1208,7 +1208,7 @@ let make_tree_hts conf base gv p =
           else
             let ifam = (get_family p).(i) in
             let tdl =
-              if i > 0 then (1, LeftA, TDtext "...") :: tdl else tdl
+              if i > 0 then (1, LeftA, TDtext ((get_iper p), "...")) :: tdl else tdl
             in
             let td =
               let fam = foi base ifam in

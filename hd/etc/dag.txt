@@ -29,11 +29,15 @@
   </h1>
 %end;
 
+%let;prefix_a;%prefix_base_password&p=%evar.p;&n=%evar.n;%nn;
+  %if;(evar.oc!="")&oc=%evar.oc;%end;%in; %(%access does not work %)
+
 %if;not cancel_links;
   <div class="d-flex justify-content-center">
     %include;home
   </div>
-  %if;(evar.m="A")
+
+  %if;(evar.m="A" or evar.m="D")
     %if;(evar.slices = "on")
       <form method="GET" action="%action;">
       <p>
@@ -85,7 +89,7 @@
       <p><input type="submit" value="Ok"%/></p>
       </form>
     %else;
-      %if;(evar.notab != "on")
+      %if;(evar.notab != "on" and evar.t!="TV")
         <div class="text-%right">
           <a href="%prefix_base_password;%foreach;env_binding;%env.key;=%env.val;;%end;%nn;
                 notab=on;slices=on" accesskey="/"
@@ -110,10 +114,12 @@
               %elseif;(maxlev>9 and evarv>5)%expr(evarv-4)
               %else;1%end;%in;
     %(minv %minv; < evarv %evarv; < maxv %maxv; (maxlev %maxlev;)%)
-    <div class="d-flex justify-content-between">
+    <div class="d-flex justify-content-between mb-3">
       <h2 id="a">%if;(evar.t = "A")[*male line/female line]0%nn;
       %elseif;(evar.t = "C")[*male line/female line]1%nn;
-      %else[*ascendants tree]%end;</h2>
+      %elseif;(evar.m = "A")[*ascendants tree]%nn;
+      %elseif;(evar.m = "D")[*descendants tree]%end;%nn;
+      %if;(evar.oi!="") [partial]%end;</h2>
       <div class="form-inline">
         <div class="btn-group mx-2">
           %if;(maxlev>9 and evarv>5)
@@ -144,7 +150,7 @@
               title="(+5) [visualize/show/hide/summary]1 %expr(evarv+5) [generation/generations]1 (max %maxlev;)"> +⁵</a>
           %end;
         </div>
-        %if;(evarv>1)
+        %if;(evarv>1 and evar.m = "A")
           <div class="btn-group mx-2">
             <a href="%prefix_base_password;t=A;%nn;
               %foreach;env_binding;%if;(env.key!="t")%env.key;=%env.val;;%end;%end;"
@@ -171,6 +177,19 @@
             <i class="fa fa-toggle-%if;(evar.image!="off")on%else;off%end; text-muted"></i>
           </a>
         </div>
+        %if;(evar.m = "D")
+        <div class="mx-2">
+          <a href="%prefix_base_password;%nn;
+              %foreach;env_binding;%if;(env.key != "spouses")%env.key;=%env.val;;%end;%end;%nn;
+              %if;(evar.spouses="")spouses=off;%end;"
+            class="btn btn-outline-secondary btn-sm border-0 px-0 " %( disabled WIP %)
+            title="%if;(evar.spouses="")[*visualize/show/hide/summary]1%else;%nn;
+              [*visualize/show/hide/summary]2%end; [spouse/spouses]1"
+          ><i class="fa fa-user-plus fa-fw"></i><i class="fa fa-user fa-fw"></i>
+            <i class="fa fa-toggle-%if;(evar.spouses!="off")on%else;off%end; text-muted"></i>
+          </a>
+        </div>
+        %end;
         %if;(evarv>1 and evar.t="T")
           <div class="mx-2">
             <a href="%prefix_base_password;%nn;
@@ -283,18 +302,29 @@
     %foreach;dag_line;
       <tr align="left">
       %foreach;dag_cell;
-        <td%if;(dag_cell.colspan > 1) colspan="%dag_cell.colspan;"%end;%sp;
-        style="line-height:%if;(dag_cell.item!="")1rem
-                           %elseif;(dag_cell.is_bar)0.85rem%elseif;dag_cell.is_nothing;0rem%end;"
-        %if;(evar.image!="off") valign="bottom"%end; align="%dag_cell.align;">%nn;
+        <td %if;(not dag_cell.is_hr)class="align-top"%end; 
+        colspan="%if;(dag_cell.colspan > 1)%dag_cell.colspan;%else;1%end;" align="%dag_cell.align;">%nn;
         %if;dag_cell.is_nothing;&nbsp;%nn;
         %elseif;dag_cell.is_bar;
-          %if;(dag_cell.bar_link != "" and not cancel_links and evar.em!="R")
-            %( added em!=R here condition because first button_rel is static and does the same %)
-            <a href="%dag_cell.bar_link;;image=%evar.image;" title="[*tree]">┃%if;(evar.m!="NG")<br>╹%end;</a>%nn;
-          %else;┃%end;
-        %elseif;(dag_cell.item != "")<div class="my-1">%dag_cell.item;</div>
-        %elseif;(dag_cell.text != "")%dag_cell.text;
+          %if;(dag_cell.bar_link != "" and evar.cgl != "on")
+            <a style="text-decoration:none" href="%dag_cell.bar_link;%if;(evar.image!="")&image=%evar.image;%end;">|</a>%nn;
+          %else;|%end;
+        %elseif;(dag_cell.item != "")%dag_cell.item;
+        %elseif;(dag_cell.text != "")
+        %if;(dag_cell.index!="-1")
+          <div class="list-group-item border-0" mx-0 px-0 style="zindex:0;">
+            <a href="%prefix_no_pmod;i=%dag_cell.index;&m=D;t=TV;%foreach;env_binding;%nn;
+              %if;(not (env.key="i" or env.key="p" or env.key="n" or env.key="oc" or
+                        env.key="m" or env.key="t"))%nn;
+                %env.key;=%env.val;;%nn;
+            %end;%end;"
+            class="big_anchor list-group-item-action mx-0 px-0"
+            title="[*navigation]"></a>
+          </div>
+          %dag_cell.text;
+        %else;%dag_cell.text;
+        %end;
+        %( navigation cannot work until dag_cell carries the appropriate access values %)
         %else;
           %if;dag_cell.is_hr_left;
             <hr class="%left;"%/>%nn;
@@ -312,7 +342,7 @@
     </td></tr></table>
   %end;
 %end;
-
+<br>
 %include;trl
 %include;copyr
 </div>

@@ -104,7 +104,7 @@ let print_table conf hts =
         Output.print_string conf ">";
         begin match td with
           TDitem s -> Output.print_string conf s
-        | TDtext s -> Output.print_string conf s
+        | TDtext (ip, s) -> Output.print_string conf s
         | TDnothing -> Output.print_string conf "&nbsp;"
         | TDbar None -> Output.print_string conf "|"
         | TDbar (Some s) ->
@@ -305,7 +305,7 @@ let gen_compute_columns_sizes size_fun hts ncol =
                   let len =
                     match td with
                       TDitem s -> size_fun s
-                    | TDtext s -> size_fun s
+                    | TDtext (ip, s) -> size_fun s
                     | _ -> 1
                   in
                   let currsz =
@@ -536,7 +536,16 @@ let print_table_pre conf hts =
             let (colspan, _, td) = hts.(i).(j) in
             let stra =
               match td with
-                TDitem s | TDtext s ->
+                TDitem s ->
+                  let sz =
+                    let rec loop sz k =
+                      if k = 0 then sz
+                      else loop (sz + colsz.(col+k-1)) (k - 1)
+                    in
+                    loop 0 colspan
+                  in
+                  Array.of_list (displayed_strip s sz)
+              | TDtext (ip, s) ->
                   let sz =
                     let rec loop sz k =
                       if k = 0 then sz
@@ -851,6 +860,26 @@ let get_vother =
   | _ -> None
 let set_vother x = Vother x
 
+let eval_predefined_apply conf f vl =
+  let vl =
+    List.map
+      (function
+         VVstring s -> s
+       | _ -> raise Not_found)
+      vl
+  in
+  match f, vl with
+  | "min", s :: sl ->
+      begin try
+        let m =
+          List.fold_right (fun s -> min (int_of_string s)) sl
+            (int_of_string s)
+        in
+        string_of_int m
+      with Failure _ -> raise Not_found
+      end
+  | _ -> raise Not_found
+
 let rec eval_var conf page_title next_txt env _xx _loc =
   function
     "dag" :: sl ->
@@ -870,6 +899,7 @@ let rec eval_var conf page_title next_txt env _xx _loc =
       end
   | ["head_title"] -> VVstring page_title
   | ["link_next"] -> VVstring next_txt
+  | ["static_max_anc_level"] -> VVstring "10"
   | _ -> raise Not_found
 and eval_dag_var _conf (tmincol, tcol, _colminsz, colsz, _ncol) =
   function
@@ -906,6 +936,16 @@ and eval_dag_cell_var conf (colspan, align, td) =
         TDhr RightA -> VVbool true
       | _ -> VVbool false
       end
+  | ["is_hr_center"] ->
+      begin match td with
+        TDhr CenterA -> VVbool true
+      | _ -> VVbool false
+      end
+  | ["is_hr"] ->
+      begin match td with
+        TDhr RightA | TDhr LeftA | TDhr CenterA -> VVbool true
+      | _ -> VVbool false
+      end
   | ["is_nothing"] -> VVbool (td = TDnothing)
   | ["item"] ->
       begin match td with
@@ -914,7 +954,12 @@ and eval_dag_cell_var conf (colspan, align, td) =
       end
   | ["text"] ->
       begin match td with
-        TDtext s -> VVstring s
+        TDtext (ip, s) -> VVstring s
+      | _ -> VVstring ""
+      end
+  | ["index"] ->
+      begin match td with
+        TDtext (ip, s) -> VVstring (string_of_iper ip)
       | _ -> VVstring ""
       end
   | _ -> raise Not_found
@@ -1048,7 +1093,15 @@ and print_foreach_dag_line_pre conf hts print_ast env al =
           let (colspan, _, td) = hts.(i).(j) in
           let stra =
             match td with
-              TDitem s | TDtext s ->
+            | TDitem s ->
+                let sz =
+                  let rec loop sz k =
+                    if k = 0 then sz else loop (sz + colsz.(col+k-1)) (k - 1)
+                  in
+                  loop 0 colspan
+                in
+                Array.of_list (displayed_strip s sz)
+            | TDtext (ip, s) ->
                 let sz =
                   let rec loop sz k =
                     if k = 0 then sz else loop (sz + colsz.(col+k-1)) (k - 1)
@@ -1109,7 +1162,7 @@ let print_slices_menu_or_dag_page conf page_title hts next_txt =
     Hutil.interp conf "dag"
       {Templ.eval_var = eval_var conf page_title next_txt;
        Templ.eval_transl = (fun _ -> Templ.eval_transl conf);
-       Templ.eval_predefined_apply = (fun _ -> raise Not_found);
+       Templ.eval_predefined_apply = (fun _ -> eval_predefined_apply conf);
        Templ.get_vother = get_vother; Templ.set_vother = set_vother;
        Templ.print_foreach = print_foreach conf hts}
       env ()

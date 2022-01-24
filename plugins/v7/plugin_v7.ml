@@ -19,6 +19,35 @@ let person_selected conf base p =
   | Some _ -> false
   | None -> V7_perso.print conf base p ; true
 
+let a = w_base @@ fun conf base ->
+    match Util.find_person_in_env conf base "" with
+    | Some p ->
+      if Util.p_getenv conf.env "t" = Some  "FC"
+      then !V7_interp.templ "fanchart" conf base p
+      else V7_perso.print_ascend conf base p ;
+      true
+    | _ -> false
+
+let c = w_base @@ fun conf base ->
+    match Util.find_person_in_env conf base "" with
+    | Some p -> V7_cousins.print conf base p ; true
+    | _ -> false
+
+let d = w_base @@ w_person @@ fun conf base p ->
+  V7_descend.print conf base p; true
+
+let doc = w_base @@ fun conf base ->
+    match Util.p_getenv conf.env "s" with
+    | Some f ->
+        begin
+          if Filename.check_suffix f ".txt" then
+            let f = Filename.chop_suffix f ".txt" in
+            V7_srcfile.new_print_source conf base f
+          else V7_srcfile.new_print_source_image conf f;
+          true
+        end
+    | None -> false
+
 let home conf base : bool =
   if base <> None
   then
@@ -32,40 +61,34 @@ let home conf base : bool =
     end conf base
   else false
 
-let l =
-  w_base begin fun conf base ->
+let l = w_base @@ fun conf base ->
     Gwdb.dummy_iper
     |> Gwdb.empty_person base
     |> !V7_interp.templ "list" conf base
     |> fun () -> true
     end
     
-let md =
-  w_base begin fun conf base ->
+let md = w_base begin fun conf base ->
     V7_updateDataDisplay.print_mod conf base ;
     true
   end
 
-let md_ok =
-  w_base begin fun conf base ->
+let md_ok = w_base begin fun conf base ->
     V7_updateDataDisplay.print_mod_ok conf base ;
     true
   end
   
-let p =
-  w_base begin fun conf base -> match Util.p_getenv conf.env "v" with
+let p = w_base begin fun conf base -> match Util.p_getenv conf.env "v" with
     | Some v -> V7_some.first_name_print conf base v ; true
     | None -> false
-  end
 
-let ps =
-  w_base begin fun conf base ->
-    V7_place.print_all_places_surnames conf base ;
-    true
-  end
+let ps = w_base @@ fun conf base ->
+    V7_place.print_all_places_surnames conf base ; true
 
-let tp =
-  w_base begin fun conf base ->
+let s = w_base @@ fun conf base -> V7_searchName.print conf base
+    Request.specify Request.unknown; true
+
+let tp = w_base begin fun conf base ->
     match Util.p_getenv conf.env "v" with
     | Some f ->
       begin match Util.find_person_in_env conf base "" with
@@ -77,45 +100,9 @@ let tp =
       true
     | None -> false
   end
- 
-let a =
-  w_base begin fun conf base ->
-    match Util.find_person_in_env conf base "" with
-    | Some p ->
-      if Util.p_getenv conf.env "t" = Some  "FC"
-      then !V7_interp.templ "fanchart" conf base p
-      else V7_perso.print_ascend conf base p ;
-      true
-    | _ -> false
-  end
 
-let c =
-  w_base begin fun conf base ->
-    match Util.find_person_in_env conf base "" with
-    | Some p -> V7_cousins.print conf base p ; true
-    | _ -> false
-  end
-
-let doc =
-  w_base begin fun conf base ->
-    match Util.p_getenv conf.env "s" with
-    | Some f ->
-        begin
-          if Filename.check_suffix f ".txt" then
-            let f = Filename.chop_suffix f ".txt" in
-            V7_srcfile.new_print_source conf base f
-          else V7_srcfile.new_print_source_image conf f;
-          true
-        end
-    | None -> false
-  end
-
-let d =
-  w_base @@ w_person @@ fun conf base p -> V7_descend.print conf base p; true
-
-let s =
-  w_base @@ fun conf base -> V7_searchName.print conf base
-    Request.specify Request.unknown; true
+let tv = w_base @@ w_person @@ fun conf base p ->
+  V7_descend.print conf base p; true
 
 let ns = "v7"
 
