@@ -2621,7 +2621,7 @@ eo: mortotagaj datrevenoj
 es: aniversarios de las personas fallecidas
 et: surnud inimeste mälestuspäevad
 fi: kuolleiden vuosipäiviä
-fr: anniversaires des personnes décédées
+fr: anniversaires des personnes mortes
 he:   ימי שנה למוות
 is: ártíðir
 it: anniversari delle persone decedute
@@ -5332,7 +5332,7 @@ eo: mortinta
 es: fallecido/fallecida/fallecido(a)
 et: surnud
 fi: kuollut
-fr: décédé/décédée/décédé(e)
+fr: mort/morte/mort(e)
 he:   נפטר/ נפטרה
 is: dó
 it: deceduto/deceduta/deceduto(a)
@@ -5357,7 +5357,7 @@ de: ist in hohem Alter verstorben
 en: Deceased of old age
 es: ha fallecido a una edad avanzada
 fi: kuollut vanhuuteen
-fr: est décédé à un âge avancé/est décédée à un âge avancé/est décédé(e) à un âge avancé
+fr: est mort à un âge avancé/est morte à un âge avancé/est mort(e) à un âge avancé
 it: è morto ad un'età avanzata/è morta ad un'età avanzata/è morto/a ad un'età avanzata
 nl: is overleden op gevorderde leeftijd
 no: død gammel
@@ -7167,6 +7167,10 @@ sl: stari starši
 sv: farföräldrar/morföräldrar
 tr: büyük ebeveynler
 
+    cousin.2.0
+en: great-parent
+fr: grand-parent
+
     cousins.2.0
 ->: grand-parents
 
@@ -7204,6 +7208,9 @@ sk: praprastarí rodičia
 sl: prastari starši
 sv: gammel-farföräldrar/gammel-morföräldrar
 tr: büyük-büyük-ebeveynler
+
+    cousin.3.0
+    great-grand-parent
 
     cousins.3.0
 ->: great-grand-parents
@@ -11530,7 +11537,7 @@ eo: mortinta
 es: fallecido/a (fecha desconocida)
 et: surnud
 fi: varmuudella kuollut
-fr: certainement décédé(e)
+fr: certainement mort(e)
 he:   נפטר
 is: dó
 it: sicuramente morto
@@ -12016,7 +12023,8 @@ tr: ebeveynler
 zh:  父母
 
     cousin.1.0
-->: father/mother
+en: parent
+fr: parent
 
     cousins.1.0
 ->: parents

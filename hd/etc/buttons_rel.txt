@@ -10,7 +10,7 @@
   <div class="btn-toolbar mt-2 mb-3" role="toolbar" arial-label="config buttons toolbar">
     <div class="col-2">
       %if;(evar.em="R" or ((evar.i!="" and evar.ei!="") or (person_index.1!="" and person_index.2!="")))
-        <a class="%if;(link_next="")disabled%end;%if;(evar.et="S") border rounded%end;"
+        <a class="%if;(link_next="") disabled%end;%if;(evar.et="S") border rounded%end;"
           href="%if(link_next!="")%link_next;%(%else;%nn;
           %prefix_base_password&em=R&et=S%nn;
           %if;(evar.i!="")&i=%evar.i;&ei=%evar.ei;%nn;
