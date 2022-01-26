@@ -4090,8 +4090,8 @@ let eval_transl conf base env upp s c =
             end
         | _ -> assert false
       in
-      let r = Util.translate_eval (Util.transl_nth conf s n) in
-      if upp then Utf8.capitalize_fst r else r
+      let c = string_of_int n in
+      V7_templ.eval_transl_lexicon conf upp s c
   | _ -> Templ.eval_transl conf upp s c
 
 let print_foreach conf base print_ast eval_expr =
