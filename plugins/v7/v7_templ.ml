@@ -324,38 +324,40 @@ let apply_format conf nth s1 s2 =
   let s1  = (* perform nth selection before format check *)
     match nth with
       Some n -> Util.transl_nth conf s1 n
-    | None -> s1
+    | None -> Util.transl conf s1
   in
- match Util.check_format "%t" s1 with
-  | Some s3 -> Printf.sprintf s3 (fun _ -> s2)
-  | None ->
-    match Util.check_format "%s" s1 with
-      Some s3 -> Printf.sprintf s3 s2
+  try let _ = String.index s1 '%' in
+    match Util.check_format "%t" s1 with
+    | Some s3 -> Printf.sprintf s3 (fun _ -> s2)
     | None ->
-      match Util.check_format "%d" s1 with
-       Some s3 -> Printf.sprintf s3 (int_of_string s2)
+      match Util.check_format "%s" s1 with
+        Some s3 -> Printf.sprintf s3 s2
       | None ->
-        let (s21, s22) =
-          try let i = String.index s2 ':' in
-              String.sub s2 0 i,
-              String.sub s2 (i + 1) (String.length s2 - i - 1)
-          with _ -> "", ""
-        in
-         match Util.check_format "%s%s" s1 with
-          Some s3 -> Printf.sprintf s3 s21 s22
+        match Util.check_format "%d" s1 with
+         Some s3 -> Printf.sprintf s3 (int_of_string s2)
         | None ->
-          match Util.check_format "%t%s" s1 with
-            Some s3 -> Printf.sprintf s3 (fun _ -> s21) s22
+          let (s21, s22) =
+            try let i = String.index s2 ':' in
+                String.sub s2 0 i,
+                String.sub s2 (i + 1) (String.length s2 - i - 1)
+            with _ -> "", ""
+          in
+           match Util.check_format "%s%s" s1 with
+            Some s3 -> Printf.sprintf s3 s21 s22
           | None ->
-            match Util.check_format "%s%t" s1 with
-              Some s3 -> Printf.sprintf s3 s21 (fun _ -> s22)
+            match Util.check_format "%t%s" s1 with
+              Some s3 -> Printf.sprintf s3 (fun _ -> s21) s22
             | None ->
-              match Util.check_format "%t%d" s1 with
-                Some s3 -> Printf.sprintf s3 (fun _ -> s21) (int_of_string s22)
+              match Util.check_format "%s%t" s1 with
+                Some s3 -> Printf.sprintf s3 s21 (fun _ -> s22)
               | None ->
-                match Util.check_format "%s%d" s1 with
-                  Some s3 -> Printf.sprintf s3 s21 (int_of_string s22)
-                | None -> "[" ^ s1 ^ "?]"
+                match Util.check_format "%t%d" s1 with
+                  Some s3 -> Printf.sprintf s3 (fun _ -> s21) (int_of_string s22)
+                | None ->
+                  match Util.check_format "%s%d" s1 with
+                    Some s3 -> Printf.sprintf s3 s21 (int_of_string s22)
+                  | None -> "[" ^ s1 ^ "?]"
+  with _ -> s1
 
 let rec eval_ast conf =
   function
