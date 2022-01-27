@@ -336,9 +336,10 @@ let apply_format conf nth s1 s2 =
        Some s3 -> Printf.sprintf s3 (int_of_string s2)
       | None ->
         let (s21, s22) =
-          let i = String.index s2 ':' in
-          String.sub s2 0 i,
-          String.sub s2 (i + 1) (String.length s2 - i - 1)
+          try let i = String.index s2 ':' in
+              String.sub s2 0 i,
+              String.sub s2 (i + 1) (String.length s2 - i - 1)
+          with _ -> "", ""
         in
          match Util.check_format "%s%s" s1 with
           Some s3 -> Printf.sprintf s3 s21 s22
@@ -354,7 +355,7 @@ let apply_format conf nth s1 s2 =
               | None ->
                 match Util.check_format "%s%d" s1 with
                   Some s3 -> Printf.sprintf s3 s21 (int_of_string s22)
-                | None -> raise Not_found
+                | None -> "[" ^ s1 ^ "?]"
 
 let rec eval_ast conf =
   function
@@ -374,9 +375,7 @@ and eval_transl_lexicon conf upp s c =
     match split_at_coloncolon s with
       None ->
         let s2 =
-          match nth with
-            Some n -> Util.transl_nth conf s n
-          | None -> Util.transl conf s
+          try apply_format conf nth s "" with Failure _ -> "[" ^ s ^ "?]"
         in
         if c = "n" then s2 else Mutil.nominative s2
     | Some (s1, s2) ->
@@ -397,10 +396,13 @@ and eval_transl_lexicon conf upp s c =
               | None -> Util.transl conf s4
             in
             let s2 = s3 ^ s5 in Util.transl_decline conf s1 s2
-          else if String.length s2 > 0 && s2.[0] = ':' then
-            let s2 = String.sub s2 1 (String.length s2 - 1) in
+          else 
+            let s2 =
+              if String.length s2 > 0 && s2.[0] = ':' then
+                String.sub s2 1 (String.length s2 - 1)
+              else ""
+            in
             try apply_format conf nth s1 s2 with Failure _ -> raise Not_found
-          else raise Not_found
         with Not_found ->
           let s3 =
             match nth with
