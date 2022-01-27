@@ -129,15 +129,15 @@
   <h2 class="mt-2 w-100">
     %if;(op_m!=1)
       %if;(count2>0)
-        %if(nb_families>1)[*marriage/marriages]1%else;[*marriage/marriages]0%end;%nn;
+        [*marriage/marriages]f%nn;
       %else;
-        %if(nb_families>1)[*spouse/spouses]1%else[*spouse/spouses]0%end;%nn;
+        [*spouse/spouses]f%nn;
       %end;
       %if;(op_m=2 or op_m=3 or count>0)
-        %sp; %if;(nb_children=1)[and::child/children]0%else;[and::child/children]1%end;%nn;
+        %sp;[and] [child/children]c%nn;
       %end;
     %else;
-      %if(nb_families>1)[*family/families]1%else;[*family/families]0%end;%nn;
+      [*family/families]f%nn;
     %end;
     %if;(op_m=4 or op_m=5)
       %if;(count>2)

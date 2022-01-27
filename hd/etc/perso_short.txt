@@ -981,7 +981,7 @@
       <table class="fp_table_marriage" cellspacing="0">
         <tr>
           <th>
-            [*marriage/marriages]1 %if;(evar.children = "on" and xx.has_children) [and::child/children]1%end;
+            [*marriage/marriages]f %if;(evar.children = "on" and xx.has_children) [and] [child/children]c%end;
           </th>
         </tr>
         <tr>
