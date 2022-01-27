@@ -398,14 +398,12 @@ and eval_transl_lexicon conf upp s c =
               | None -> Util.transl conf s4
             in
             let s2 = s3 ^ s5 in Util.transl_decline conf s1 s2
-          else 
-            let s2 =
-              if String.length s2 > 0 && s2.[0] = ':' then
-                String.sub s2 1 (String.length s2 - 1)
-              else ""
-            in
+          else if String.length s2 > 0 && s2.[0] = ':' then
+            (* ::: case *)
+            let s2 = String.sub s2 1 (String.length s2 - 1) in
             try apply_format conf nth s1 s2 with Failure _ -> raise Not_found
-        with Not_found ->
+          else raise Not_found
+        with Not_found -> (* case :: *)
           let s3 =
             match nth with
               Some n -> Util.transl_nth conf s2 n
