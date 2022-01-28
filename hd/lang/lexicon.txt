@@ -944,7 +944,7 @@ sl: <em>številka"Sosa"</em>, v odnosu z %t
 sv: <em>annummer</em> med %t som proband (Kekules system)
 tr: <em>Sosa sayısı</em> %t'e göre
 
-    a %s cousin
+    a cousin
 af: 'n neef in die %s -de geslag/'n niggie in die %s -de geslag
 bg: %sи братовчед/%sа братовчедка
 br: ur c'henderv a live an %s derez/ur geniterv a live an %s derez/ ur c'h(g)enderv(ez) a live an %s derez
@@ -1131,12 +1131,12 @@ co: un cuginu/una cugina
 cs: bratranec/sestřenice
 da: en fætter/en kusine
 de: ein:d:+em Cousin/eine:d:+r Cousine
-en: a cousin
+en: a %scousin
 eo: kuzo/kuzino
 es: un primo/una prima
 et: nõbu:g:--o
 fi: serkku:g:--un
-fr: un cousin/une cousine
+fr: un %scousin/une %scousine/un·e %s·cousin·e
 he:  בן-דוד/ בת-דוד
 is: systkynabarn
 it: un cugino/una cugina
@@ -7393,8 +7393,8 @@ sv: Halvsyskon
 tr: üvey kardeşler
 
     half-relationship
-en: /half-
-fr: /demi-
+en: half-/half-/half-/
+fr: demi-/demie-/demi-/
 
     happy birthday to them!
 co: felice nataliziu !
