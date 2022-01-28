@@ -178,8 +178,8 @@
           <a href="%prefix;m=RL&i=%apply;getvar(ancestor1_index)&i1=%sosa_ref.index;&l1=%l1;&i2=%index;&l2=%l2;&spouse=on&dag=on"
             title="[*to see the first relationship link]%sp;
               [relationship link/relationship links]0,
-              [degree of kinship] %expr(l1+l2) (%l1;/%l2;)">%nn;
-            %apply;cousin%with;%l1;%and;%l2;%and;%if;(count=3 and l1!=0)[half-relationship]s%else;[half-relationship]4%end;%and;ccc%end;</a>
+              [degree of kinship] %expr(l1+l2) (%l1;/%l2;)">%nn;[half-relationship]3
+            %apply;cousin%with;%l1;%and;%l2;%and;%if;(count=3 and l1!=0)[half-relationship]s%else;[half-relationship]3%end;%and;ccc%end;</a>
         %and;
           <a href="%prefix;%sosa_ref.access;"
             title="[Sosa 1]">%sosa_ref;</a>%nn;

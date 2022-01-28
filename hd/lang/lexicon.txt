@@ -7224,8 +7224,9 @@ eo: prapraavo
 fr: arrière-arrière-grands-parents
 
     cousin.4.0
-fr: a great-grandfather/a great-grandmother/a great-grandparent
-fr: un arrière-
+fr: a great-great-grandfather/a great-great-grandmother/a great-great-grandparent
+fr: un arrière-arrière-grand-père/une arrière-arrière-grand-mère/un arrière-arrière-grand-parent
+
     cousins.4.0
 ->: great-great-grandparents
 
@@ -7393,8 +7394,8 @@ sv: Halvsyskon
 tr: üvey kardeşler
 
     half-relationship
-en: half-/half-/half-/
-fr: demi-/demie-/demi-/
+en: half-/half-/half-/ 
+fr: demi-/demie-/demi-/ 
 
     happy birthday to them!
 co: felice nataliziu !
@@ -14168,6 +14169,9 @@ fr: arrière-arrière-grands-cousins
 
     cousins.5.2 tt
 fr: arrière-grand-oncles et arrière-grandes-tantes à la mode de Bourgogne ou Bretagne<hr><- cousins des arrière-grands-parents et arrière-grands-oncles
+
+    cousin.5.3
+fr: %sarrière-grand-cousin 2<sup>e</sup>/%sarrière-grande-cousine 2<sup>e</sup>
 
     cousins.5.3
 fr: arrière-grands-cousins 2<sup>e</sup>
