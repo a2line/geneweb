@@ -2425,7 +2425,7 @@ eo: onklo/onklino
 es: un tío/una tía
 et: onu/tädi
 fi: setä:g:---dän/täti:g:--din/eno:g:+n/täti:g:--din
-fr: un oncle/une tante
+fr: oncle/tante
 he:   דוד/ דודה
 is: föður(móður)bróðir/föður(móður)systir
 it: uno zio/una zia
@@ -7102,7 +7102,7 @@ eo: baptofilo/baptofilino/baptofil(in)o
 es: ahijado/ahijada/ahijado(a)
 et: ristipoeg/ristitütar/ristilaps
 fi: kummipoika/kummityttö/kummilapsi
-fr: filleul/filleule/filleul(e)
+fr: filleul/filleule/filleul·e
 he:  בן סנדקאות/ בת סנדקאות/ ילד סנדקאות
 is: guðsonur/guðdóttir/guðbarn
 it: figlioccio/figlioccia/figlioccio
@@ -7168,8 +7168,7 @@ sv: farföräldrar/morföräldrar
 tr: büyük ebeveynler
 
     cousin.2.0
-en: great-parent
-fr: grand-parent
+->: a grandfather/a grandmother/a grandparent
 
     cousins.2.0
 ->: grand-parents
@@ -7210,7 +7209,7 @@ sv: gammel-farföräldrar/gammel-morföräldrar
 tr: büyük-büyük-ebeveynler
 
     cousin.3.0
-    great-grand-parent
+->: a great-grandfather/a great-grandmother/a great-grandparent
 
     cousins.3.0
 ->: great-grand-parents
@@ -7224,6 +7223,9 @@ en: great-great-grandparents
 eo: prapraavo
 fr: arrière-arrière-grands-parents
 
+    cousin.4.0
+fr: a great-grandfather/a great-grandmother/a great-grandparent
+fr: un arrière-
     cousins.4.0
 ->: great-great-grandparents
 
@@ -7389,6 +7391,10 @@ pt: meios irmãos e irmãs
 ru: сводные братья или сёстры
 sv: Halvsyskon
 tr: üvey kardeşler
+
+    half-relationship
+en: /half-
+fr: /demi-
 
     happy birthday to them!
 co: felice nataliziu !
@@ -12022,17 +12028,6 @@ sv: föräldrar
 tr: ebeveynler
 zh:  父母
 
-    cousin.1.0
-en: parent
-fr: parent
-
-    cousins.1.0
-->: parents
-
-    cousins.1.0 tt
-en: father and mother
-fr: père et mère<br>géniteur et génitrice
-
     parrish registrar/parrish registrar/parrish registrar
 de: religiöser Amtsträger/religiöser Amtsträger/religiöser Amtsträger
 en: parish registrar/parish registrar/parish registrar
@@ -14096,9 +14091,9 @@ pt: tios-bisavôs e tias-bisavós
 sv: syskon till föräldrar tre generationer bakåt
 tr: büyük büyük amcalar ve büyük büyük teyzeler
 
-    cousin.4.1
-en: a great-granduncle/a grandaunt
-fr: un arrière-grand-oncle/une arrière-grande-tante
+    cou%sin.4.1
+en: a %sgreat-granduncle/a %sgrandaunt
+fr: un %sarrière-grand-oncle/une %sarrière-grande-tante
 
     cousins.4.1
 ->: siblings of the great-grandparents
@@ -15647,6 +15642,16 @@ sv: fadern/modern/en förälder
 tr: baba/anne/ebeveyn
 zh:  父/ 母/a parent
 
+    cousin.1.0
+->: the father/the mother/a parent
+
+    cousins.1.0
+->: parents
+
+    cousins.1.0 tt
+en: father and mother
+fr: père et mère<br>géniteur et génitrice
+
     the file is temporarily locked: please try again
 af: die lêer is tydelik gesluit: probeer asseblief later weer
 bg: файлът е временно заключен; опитайте отново. Ако това не помага, изчакайте малко преди да опитате пак
@@ -15827,7 +15832,8 @@ en: children of one’s grandson or granddaughter
 fr: enfants de son petit-fils ou de sa petite-fille
 
     cousin.0.4
-->: a great-grandson/a great-granddaughter/a great-grandchild
+en: a great-great-grandson/a great-great-granddaughter/a great-great-grandchild
+fr: un arrière-arrière-petit-fils/une arrière-arrière-petite-fille/un arrière-arrière-petit-enfant
 
     cousins.0.4
 en: great-great-grandchild/great-great-grandchildren
@@ -15837,31 +15843,44 @@ fr: arrière-arrière-petit-enfant/arrière-arrière-petits-enfants
 en: children of one’s great-grandson or great-granddaughter
 fr: enfants de son arrière-petit-fils ou de son arrière-petite-fille
 
-    cousins.0.5
-en: third great-grandchild/third great-grandchildren
-fr: arrière-arrière-arrière-petit-enfant/arrière-arrière-arrière-petits-enfants
+    cousin.0.5
+en: a three-times-great-grandson/a three-times-great-granddaughter/a three-times-great-grandchild
+fr: un trois-fois-arrière-petit-fils/une trois-fois-arrière-petite-fille/un trois-fois-arrière-petit-enfant
 
-    cousins.0.5 tt
-en: three times great-grandchildren
-fr: trois-fois-arrière-petits-enfants
+    cousins.0.5
+en: three-times-great-grandchild/three-times-great-grandchildren
+fr: trois-fois-arrière-petits-enfant/trois-fois-arrière-petits-enfants
+
+    cousin.0.6
+en: a four-times-great-grandson/a four-times-great-granddaughter/a four-times-great-grandchild
+fr: un quatre-fois-arrière-petit-fils/une quatre-fois-arrière-petite-fille/un quatre-fois-arrière-petit-enfant
 
     cousins.0.6
-en: fourth great-grandchild/fourth great-grandchildren
+en: four-times-great-grandchild/four-times-great-grandchildren
 fr: quatre-fois-arrière-petit-enfant/quatre-fois-arrière-petits-enfants
 
-    cousins.0.6 tt
-en: four times great-grandchildren
+    cousin.0.7
+en: a five-times-great-grandson/a five-times-great-granddaughter/a five-times-great-grandchild
+fr: un cinq-fois-arrière-petit-fils/une cinq-fois-arrière-petite-fille/un cinq-fois-arrière-petit-enfant
 
     cousins.0.7
-en: fifth great-grandchild/fifth great-grandchildren
+en: five-times-great-grandchild/five-times-great-grandchildren
 fr: cinq-fois-arrière-petit-enfant/cinq-fois-arrière-petits-enfants
 
+    cousin.0.8
+en: a six-times-great-grandson/a six-times-great-granddaughter/a six-times-great-grandchild
+fr: un six-fois-arrière-petit-fils/une six-fois-arrière-petite-fille/un six-fois-arrière-petit-enfant
+
     cousins.0.8
-en: sixth great-grandchild/sixth great-grandchildren
+en: six-times-great-grandchild/six-times-great-grandchildren
 fr: six-fois-arrière-petit-enfant/six-fois-arrière-petits-enfants
 
+    cousin.0.9
+en: a seven-times-great-grandson/a seven-times-great-granddaughter/a seven-times-great-grandchild
+fr: un sept-fois-arrière-petit-fils/une sept-fois-arrière-petite-fille/un sept-fois-arrière-petit-enfant
+
     cousins.0.9
-en: seventh great-grandchild/seventh great-grandchildren
+en: seven-times-great-grandchild/seven-times-great-grandchildren
 fr: sept-fois-arrière-petit-enfant/sept-fois-arrière-petits-enfants
 
     the grandparents
