@@ -2994,12 +2994,10 @@ and eval_bool_event_field base (p, p_auth)
   | "computable_age" ->
       if p_auth then
         match Adef.od_of_cdate (get_birth p) with
-          Some (Dgreg (d, _)) ->
-            not (d.day = 0 && d.month = 0 && d.prec <> Sure)
+          Some (Dgreg (d, _)) -> d.prec = Sure
         | _ ->
             match Adef.od_of_cdate (get_baptism p) with
-              Some (Dgreg (d, _)) ->
-                not (d.day = 0 && d.month = 0 && d.prec <> Sure)
+              Some (Dgreg (d, _)) -> d.prec <> Sure
             | _ -> false
       else false
   | _ -> raise Not_found
@@ -3143,8 +3141,7 @@ and eval_bool_person_field conf base env (p, p_auth) =
   | "computable_age" ->
       if p_auth then
         match Adef.od_of_cdate (get_birth p), get_death p with
-          Some (Dgreg (d, _)), NotDead ->
-            not (d.day = 0 && d.month = 0 && d.prec <> Sure)
+          Some (Dgreg (d, _)), NotDead -> d.prec = Sure
         | _ -> false
       else false
   | "computable_death_age" ->
@@ -3156,7 +3153,7 @@ and eval_bool_person_field conf base env (p, p_auth) =
           when d1 <> d2 ->
             let a = Date.time_elapsed d1 d2 in
             a.year > 0 ||
-            a.year = 0 && (a.month > 0 || a.month = 0 && a.day > 0)
+            a.year = 0 && (a.month > 0 || a.month = 0 && a.day >= 0)
         | _ -> false
       else false
   | "computable_marriage_age" ->
@@ -3171,7 +3168,7 @@ and eval_bool_person_field conf base env (p, p_auth) =
               Some (Dgreg (({prec = Sure | About | Maybe} as d2), _)) ->
                 let a = Date.time_elapsed d1 d2 in
                 a.year > 0 ||
-                a.year = 0 && (a.month > 0 || a.month = 0 && a.day > 0)
+                a.year = 0 && (a.month > 0 || a.month = 0 && a.day >= 0)
             | _ -> false
           else false
       | _ -> raise Not_found

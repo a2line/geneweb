@@ -224,16 +224,16 @@
     xx%end;
 %end;
 %define;compute_age1(z1,z2,z3)
-  %if;(z1 > 0)
-    %if;(z1 = 1)[year/month/day]0%else;z1 [years old]%end;
+  %if;(z1 > 0)z1 %nn;
+    %if;(z1 = 1)[year/month/day]0%else;[years old]%end;
     %if;(z2 > 0 or z3 > 0), %end;
   %end;
-  %if;(z2 > 0)
-    %if;(z2 = 1)[year/month/day]1%else;z2 [months old]%end;
+  %if;(z2 > 0)z2 %nn;
+    %if;(z2 = 1)[year/month/day]1%else;[months old]%end;
     %if;(z3 > 0), %end;
   %end;
-  %if;(z3 > 0)
-    %if;(z3 = 1)[year/month/day]2%else;z3 [days old]%end;
+  %if;(z3 >= 0)z3 %nn;
+    %if;(z3 = 0 or z3 = 1)[year/month/day]2%else;[days old]%end;
   %end;
   %if;(l_nbd > 999) (%expr(l_nbd/1000)[(thousand separator)]%apply;remainder(l_nbd) [days old])%nn;
   %elseif;(l_nbd > 31) (%l_nbd; [days old])%end;
@@ -321,7 +321,7 @@
         %end;
       </li>%nl;
     %end;
-    %if;(age!=[birth] and (computable_death_age or computable_age))
+    %if;(computable_death_age or computable_age)
       <li class="mt-1" title="%nn;
         %if;(is_dead and computable_death_age)[*age at death]
         %elseif;(not is_dead and computable_age)[*age]
