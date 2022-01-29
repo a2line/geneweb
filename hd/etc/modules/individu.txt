@@ -201,6 +201,12 @@
   %end;
 %end;
 %( Calculs d’âge en année/mois/jour et total de  jours de Mickael Rouesné %)
+%define;remainder(xxx)
+  %let;tmp;%expr(xxx - ((xxx/1000)*1000))%in;
+  %if;(tmp<10)00%tmp;%nn;
+  %elseif;(tmp<100)0%tmp;%nn;
+  %else;%tmp;%end;
+%end;
 %let;l_nbd;
   %if;(is_dead and computable_death_age
                and birth_date.day != "" and birth_date.prec = ""
@@ -230,7 +236,8 @@
   %end;
   %if;(z3 > 0)
     %if;(z3 = 1)[one day old]%else;z3 [days old]%end;
-  %end; %if;(l_nbd > 31)(%l_nbd; [days old])%end;
+  %end; %if;(l_nbd > 999) (%expr(l_nbd/1000)[(thousand separator)]%apply;remainder(l_nbd) [days old])%nn;
+  %elseif;(l_nbd > 31)(%l_nbd; [days old])%end;
 %end;
 %define;compute_age(z1,z2)
   %( test for z1.year has been done before call %)
@@ -331,7 +338,7 @@
           [*consanguinity][:] %consanguinity;
         %else;
           <a href="%prefix;m=NG;em=R;et=A;ei=%mother.index;;select=%father.index;;spouse=on%if;(evar.image!="");image=%evar.image;%end;"
-             title="[*relationship computing] [father/mother]0/[father/mother]1">[*consanguinity][:] %consanguinity;
+             title="[*relationship computing] [father/mother]0/[father/mother]1">[*consanguinity][:] %consanguinity;</a>
         %end;
       </li>%nl;
     %end;
