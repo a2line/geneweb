@@ -179,7 +179,7 @@
       %apply;add_in_sorted_list(index)
       %apply;add_in_sorted_listc(index)
       %if;(not cancel_links)
-        <a data-index="%index;" href="%prefix;%access;">%self;</a>
+        <a data-index="%index;" href="%prefix;%access;">%self;</a>%if;(self.title!=""), %self.title;%end;
       %else;
         %self;
       %end; %dates;%nn;
