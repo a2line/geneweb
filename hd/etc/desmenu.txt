@@ -139,7 +139,7 @@ function table_spouse_disabled () {
         </div>
         <div class="custom-control custom-checkbox">
           <input type="checkbox" class="custom-control-input" id="ld_inline" name="inline">
-          <label class="custom-control-label" for="ld_inline">[*display notes/sources inline]</label>
+          <label class="custom-control-label" for="ld_inline">[*display notes and sources inline]</label>
         </div>
       </div>
       %( BORDER AND COLOR NICE TO COPY TO RELMENU 

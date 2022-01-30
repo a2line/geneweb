@@ -132,7 +132,7 @@
 %define;all_link()
   <a href="%prefix;em=R&et=S&ei=%index;&i=%sosa_ref.index;&dag=on"
 %( autre possibilité %prefix;&m=NG&em=R&et=A&ei=%index;&select=%sosa_ref.index;&spouse=on&long=on" %)
-    title="[*searching all] [relationship link/relationship links]1">
+    title="[*link between] %self; [and] %sosa_ref;">
     <i class="fas fa-%if;(l1=0)child%else;user-friends%end;"></i></a>
 %end;
 %define;from_sosa(ccc)
@@ -176,9 +176,7 @@
         %apply;a_of_b%with;
           %if;(ccc>0)%apply;rela()%end;
           <a href="%prefix;m=RL&i=%apply;getvar(ancestor1_index)&i1=%sosa_ref.index;&l1=%l1;&i2=%index;&l2=%l2;&spouse=on&dag=on"
-            title="[*to see the first relationship link]%sp;
-              [relationship link/relationship links]0,
-              [degree of kinship] %expr(l1+l2) (%l1;/%l2;)">%nn;[half-relationship]3
+            title="[*to see the first relationship link] [with] %sosa_ref; (%expr(l1+l2) [degree of kinship]1, %l1;↑%l2;↓)">%nn;
             %apply;cousin%with;%l1;%and;%l2;%and;%if;(count=3 and l1!=0)[half-relationship]s%else;[half-relationship]3%end;%and;ccc%end;</a>
         %and;
           <a href="%prefix;%sosa_ref.access;"
@@ -200,9 +198,9 @@
     %end;
   %end;
 %end;
-%( Calculs d’âge en année/mois/jour et total de  jours de Mickael Rouesné %)
+%( Calculs d’âge en années/mois/jours et en jours de Mickael Rouesné %)
 %define;remainder(xxx)
-  %let;tmp;%expr(xxx - ((xxx/1000)*1000))%in;
+  %let;tmp;%expr(xxx-((xxx/1000)*1000))%in;
   %if;(tmp<10)00%tmp;%nn;
   %elseif;(tmp<100)0%tmp;%nn;
   %else;%tmp;%end;
@@ -227,17 +225,18 @@
 %end;
 %define;compute_age1(z1,z2,z3)
   %if;(z1 > 0)
-    %if;(z1 = 1)[one year old]%else;z1 [years old]%end;
+    %if;(z1 = 1)[year/month/day]0%else;z1 [years old]%end;
     %if;(z2 > 0 or z3 > 0), %end;
   %end;
   %if;(z2 > 0)
-    %if;(z2 = 1)[one month old]%else;z2 [months old]%end;
+    %if;(z2 = 1)[year/month/day]1%else;z2 [months old]%end;
     %if;(z3 > 0), %end;
   %end;
   %if;(z3 > 0)
-    %if;(z3 = 1)[one day old]%else;z3 [days old]%end;
-  %end; %if;(l_nbd > 999) (%expr(l_nbd/1000)[(thousand separator)]%apply;remainder(l_nbd) [days old])%nn;
-  %elseif;(l_nbd > 31)(%l_nbd; [days old])%end;
+    %if;(z3 = 1)[year/month/day]2%else;z3 [days old]%end;
+  %end;
+  %if;(l_nbd > 999) (%expr(l_nbd/1000)[(thousand separator)]%apply;remainder(l_nbd) [days old])%nn;
+  %elseif;(l_nbd > 31) (%l_nbd; [days old])%end;
 %end;
 %define;compute_age(z1,z2)
   %( test for z1.year has been done before call %)
@@ -279,7 +278,8 @@
 %define;etat_civil()
   <ul class="fa-ul">
     %if;(has_birth_date or has_birth_place)
-      <li><span class="fa-li"><i class="fas fa-baby"></i></span>
+      <li title="[*birth]">
+        <span class="fa-li"><i class="fas fa-baby"></i></span>
         %if;has_birth_date;[*born]s %on_birth_date;
           %if;birthday; ([happy birthday to you!])%end;
           %if;has_birth_place; - %birth_place;%end;
@@ -290,7 +290,7 @@
       </li>%nl;
     %end;
     %if;(has_baptism_date or has_baptism_place)
-      <li>
+      <li title="[*baptism]">
         <span class="fa-li"><i class="fas fa-dove"></i></span>
         %if;has_baptism_date;[*baptized]s %on_baptism_date;
             %if;has_baptism_place; - %baptism_place;%end;
@@ -301,14 +301,16 @@
       </li>%nl;
     %end;
     %if;is_dead;
-      <li class="mt-1"><span class="fa-li"><i class="fas fa-skull-crossbones"></i></span>
+      <li class="mt-1" title="[*death]">
+        <span class="fa-li"><i class="fas fa-skull-crossbones"></i></span>
         [*died]s
         %if;has_death_date; %on_death_date;%end;
         %if;has_death_place; - %death_place;%end;
         %if;(has_linked_page.DEATH and linked_page.DEATH!="") (%linked_page.DEATH;)%end;</li>%nl;
     %end;
     %if;(is_buried or is_cremated)
-      <li><span class="fa-li"><i class="fas fa-cross"></i></span>
+      <li title="%if;(is_buried)[*burial]%elseif;(is_cremated)[*cremation]%end;">
+        <span class="fa-li"><i class="fas fa-cross"></i></span>
         %if;is_buried;[*buried]s
           %if;has_burial_date; %on_burial_date;%end;
           %if;has_burial_place; - %burial_place;%end;</li>%nl;
@@ -319,33 +321,37 @@
         %end;
       </li>%nl;
     %end;
-    %if;(computable_death_age or computable_age)
-      <li class="mt-1"><span class="fa-li"><i class="far fa-id-card"></i></span>
+    %if;(age!=[birth] and (computable_death_age or computable_age))
+      <li class="mt-1" title="%nn;
+        %if;(is_dead and computable_death_age)[*age at death]
+        %elseif;(not is_dead and computable_age)[*age]
+        %end;"><span class="fa-li"><i class="far fa-id-card"></i></span>
         %if;(is_dead and computable_death_age)%apply;curr_age()%end;
         %if;(not is_dead and computable_age)%apply;curr_age()%end;
       </li>
     %end;
     %if;has_occupation;
-      <li class="mt-1"><span class="fa-li"><i class="fas fa-user-tie"></i></span>
+      <li class="mt-1" title="[*occupation/occupations]0"><span class="fa-li"><i class="fas fa-user-tie"></i></span>
         %apply;capitalize(occupation)</li>%nl;
     %end;
     %if;(has_linked_page.OCCU and linked_page.OCCU!="")
       <li>%apply;capitalize(linked_page.OCCU)</li>%nl;
     %end;
     %if;(has_consanguinity and bvar.show_consang!="no")
-      <li class="mt-1"><span class="fa-li"><i class="fas fa-percentage"></i></span>
+      <li class="mt-1" title="[*consanguinity]"><span class="fa-li"><i class="fas fa-percentage"></i></span>
         %if;(cancel_links)
           [*consanguinity][:] %consanguinity;
         %else;
-          <a href="%prefix;m=NG;em=R;et=A;ei=%mother.index;;select=%father.index;;spouse=on%if;(evar.image!="");image=%evar.image;%end;"
-             title="[*relationship computing] [father/mother]0/[father/mother]1">[*consanguinity][:] %consanguinity;</a>
+          <a href="%prefix;m=NG&em=R&et=A&ei=%mother.index;&select=%father.index;&spouse=on%if;(evar.image!="")&image=%evar.image;%end;&long=on"
+             title="[*link between] [the father/the mother/a parent]0 [and] [the father/the mother/a parent]1">[*consanguinity][:] %consanguinity;</a>
         %end;
       </li>%nl;
     %end;
     %if;not cancel_links;
       %reset_count2;
       %foreach;relation;
-        %if;((has_relation_him and relation_him=sosa_ref) or (has_relation_her and relation_her=sosa_ref))
+        %if;((has_relation_him and relation_him=sosa_ref)
+          or (has_relation_her and relation_her=sosa_ref))
           %incr_count2;
         %end;
       %end;
@@ -356,7 +362,7 @@
       %end;
       %if;has_sosa;
         %apply;sosa(count2)
-      %else;
+      %elseif;plugin.v7;
         %apply;from_sosa(count2)
       %end;
     %end;
