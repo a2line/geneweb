@@ -232,7 +232,7 @@ co: caratteri difesi (%s) impiegati in casata/nome
 da: forkert karakter (%s) brugt i efternavn/fornavn
 de: ungültiges Zeichen (%s) im Nachnamen/Vornamen
 en: invalid character (%s) used in surname/first name
-es: carácter inválido (%) en la apellido/nombre
+es: carácter inválido (%s) en la apellido/nombre
 fi: olet kättänyt sopimatonta merkkiä (%s) sukunimi/etunimi
 fr: caractères interdits (%s) dans le patronyme/prénom
 it: carattere non valido (%s) nella cognome/nome
@@ -464,7 +464,7 @@ da: %t er født senere end 2 å efter faderens død %t
 de: %t ist mehr als 2 Jahre nach dem Tod des Vaters %t geboren
 en: %t is born more than 2 years after the death of his/her father %t
 eo: %t naskiĝis pli ol 2 jaroj post la morto de sia patro %t
-es: %t ha nacido más de 2 años después de la muerte de su padre %
+es: %t ha nacido más de 2 años después de la muerte de su padre %t
 et: %t on sündinud enam kui 2 aastat pärast oma isa %t surma
 fi: %t on syntynyt yli 2 vuotta isänsä kuoleman jälkeen %t
 fr: %t est né(e) plus de 2 ans après la mort de son père %t
@@ -6071,7 +6071,7 @@ pt: noivo%t de/noiva%t de
 ro: logodit%t cu/logodita%t cu
 ru: %t помолвлен с
 sk: zasnúbený %t s/zasnúbená %t s
-sl: zaročen z %/zaročena z
+sl: zaročen z %t/zaročena z
 sv: förlovad%t med
 tr: nişanlı %t için
 
@@ -9157,7 +9157,7 @@ tr: kontrol
     loop in database: %s is his/her own ancestor
 af: fout in die databasis: %s sy/haar eie voorvader
 bg: зацикляне в базата от данни
-br: dol er bon roadoù : % a zo e/he hendad dezhañ/i e/hec'h-unan
+br: dol er bon roadoù : %s a zo e/he hendad dezhañ/i e/hec'h-unan
 ca: bucle a la base de dades: %s és avantpassat d'ell mateix
 co: referenza circulare in a basa di dati : %s hè u so propiu antenatu
 cs: smyčka v databázi: %s je svůj předek
@@ -14534,8 +14534,8 @@ en: The <a href="https://en.wikipedia.org/wiki/Coefficient_of_relationship">coef
 fr: Le <a href="https://en.wikipedia.org/wiki/Coefficient_of_relationship">coefficient de parenté</a> indique le pourcentage moyen de gènes partagés entre deux individus.
 
     half DNA
-en: This coefficient is divided by two for “half-relations”: for eg., full siblings 50 % > half-siblings 25 %.
-fr: Ce coefficient est divisé par deux pour les « demi-relations » : par ex., fratrie 50 % > demi-fratrie 25 %.
+en: This coefficient is divided by two for “half-relations”: for eg., full siblings 50 &#37; > half-siblings 25 &#37;.
+fr: Ce coefficient est divisé par deux pour les « demi-relations » : par ex., fratrie 50 &#37; > demi-fratrie 25 &#37;.
 
     one ancestor counted
 en: Descendants of only one ancestor are included in counts (half-siblings/half-cousins, etc.).
@@ -15230,9 +15230,9 @@ he: יתכן ש-%d הזוגות המבוגרים ביותר עודם בחיים 
 is: %d elstu pörin eru hugsanlega enn saman og á lífi
 it: le %d coppie più anziane forse ancora viventi e fidanzate
 lt: %d greičiaisiai vyriausi gyvy sutuoktiniai arba sužadėtiniai
-lv: % iespējams vēl dzīvu un saderīnātu vecāko pāru
+lv: %d iespējams vēl dzīvu un saderīnātu vecāko pāru
 nl: de %d oudste, mogelijk nog in leven zijnde, verloofde paren
-no: det % eldste par som kanskje fremdeles er i live og forlovet
+no: det %d eldste par som kanskje fremdeles er i live og forlovet
 oc: los %d parelhs mai vièlhs benlèu encara vius e promés
 pl: %d najstarszych par prawdopodobnie jeszcze zyjących i pozostających zaręczeni
 pt: o %d mais velho casal talvez ainda vivo e noivado
