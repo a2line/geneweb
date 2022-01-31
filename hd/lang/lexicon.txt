@@ -14010,7 +14010,7 @@ tr: kardeşler
 ->: siblings
 
     cousins.1.1 tt
-fr: adelphe·s<br>sibling·s<br>cousins germains 50 %,<br>consanguins ou utérins 25 %
+fr: adelphe·s<br>sibling·s<br>cousins germains 50 &#37;,<br>consanguins ou utérins 25 &#37;
 
     siblings of the grandparents
 co: arcizii è arcizie
