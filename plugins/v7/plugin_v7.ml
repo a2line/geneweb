@@ -101,9 +101,6 @@ let tp = w_base begin fun conf base ->
     | None -> false
   end
 
-let tv = w_base @@ w_person @@ fun conf base p ->
-  V7_descendDisplay.print conf base p; true
-
 let ns = "v7"
 
 let _ =
