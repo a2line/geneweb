@@ -6,19 +6,17 @@ open Geneweb.TemplAst
 open Gwdb
 open Geneweb.Util
 
+module DagDisplay = V7_dagDisplay
+module Templ = V7_templ
+module SrcfileDisplay = Geneweb.SrcfileDisplay
+
 module CheckItem = Geneweb.CheckItem
 module Dag = Geneweb.Dag
-module DagDisplay = Geneweb.DagDisplay
-module Date = Date
 module DateDisplay = Geneweb.DateDisplay
-module Gutil = Gutil
-module Gwdb = Gwdb
 module HistoryDiff = Geneweb.HistoryDiff
 module Hutil = Geneweb.Hutil
 module Notes = Geneweb.Notes
 module Output = Geneweb.Output
-module SrcfileDisplay = Geneweb.SrcfileDisplay
-module Templ = V7_templ
 module Util = Geneweb.Util
 module Wiki = Geneweb.Wiki
 

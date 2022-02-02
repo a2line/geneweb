@@ -4,8 +4,6 @@ open Geneweb.Config
 open Gwdb
 open Geneweb.Util
 
-module Gutil = Gutil
-module Gwdb = Gwdb
 module Hutil = Geneweb.Hutil
 module Output = Geneweb.Output
 module Templ = V7_templ

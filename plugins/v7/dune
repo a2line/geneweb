@@ -8,8 +8,11 @@
   (libraries geneweb geneweb.gwd_lib geneweb.util)
   (modules
     v7_cousins
-    v7_descend
+    v7_dag
+    v7_dag2html
+    v7_dagDisplay
     v7_date
+    v7_descendDisplay
     v7_interp
     v7_perso
     v7_place

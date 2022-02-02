@@ -34,7 +34,7 @@ let c = w_base @@ fun conf base ->
     | _ -> false
 
 let d = w_base @@ w_person @@ fun conf base p ->
-  V7_descend.print conf base p; true
+  V7_descendDisplay.print conf base p; true
 
 let doc = w_base @@ fun conf base ->
     match Util.p_getenv conf.env "s" with
@@ -102,7 +102,7 @@ let tp = w_base begin fun conf base ->
   end
 
 let tv = w_base @@ w_person @@ fun conf base p ->
-  V7_descend.print conf base p; true
+  V7_descendDisplay.print conf base p; true
 
 let ns = "v7"
 

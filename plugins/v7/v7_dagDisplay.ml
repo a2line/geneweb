@@ -1,22 +1,36 @@
-open Config
-open Dag2html
-open Def
+open Geneweb.Config
 open Gwdb
-open TemplAst
-open Util
-open Dag
+open Def
+open Geneweb.TemplAst
+open Geneweb.Util
+
+open V7_dag
+open V7_dag2html
+open V7_templ
+
+module Dag2html = V7_dag2html
+module Templ = V7_templ
+module Dag = V7_dag
+
+module DateDisplay = Geneweb.DateDisplay
+module Output = Geneweb.Output
+module Hutil = Geneweb.Hutil
+module Util = Geneweb.Util
+
 
 let image_normal_txt conf base p fname width height =
+  let image_txt = Utf8.capitalize_fst (transl_nth conf "image/images" 0) in
   let s = Unix.stat fname in
   let b = acces conf base p in
   let k = default_image_name base p in
   let r =
     Printf.sprintf "\
-<img src=\"%sm=IM&d=%d&%s&k=/%s\"%s%s class=\"mb-1\" style=\"%s %s\">"
+<img src=\"%sm=IM&d=%d&%s&k=/%s\"%s%s alt=\"%s\" title=\"%s\" style=\"%s %s\" />"
       (commd conf)
       (int_of_float (mod_float s.Unix.st_mtime (float_of_int max_int))) b k
       (if width = 0 then "" else " width=\"" ^ string_of_int width ^ "\"")
       (if height = 0 then "" else " height=\"" ^ string_of_int height ^ "\"")
+      image_txt image_txt
       (if width = 0 then "" else " max-width:" ^ string_of_int width ^ "px;")
       (if height = 0 then ""
        else " max-height:" ^ string_of_int height ^ "px;")
@@ -24,17 +38,20 @@ let image_normal_txt conf base p fname width height =
   Printf.sprintf "<a href=\"%sm=IM&%s&k=/%s\">" (commd conf) b k ^ r ^ "</a>"
 
 let image_url_txt conf url_p url height =
+  let image_txt = Utf8.capitalize_fst (transl_nth conf "image/images" 0) in
   Printf.sprintf "<a href=\"%s\">" url_p ^
-  Printf.sprintf "<img src=\"%s\" class=\"mb-1\" style=\"%s\">" url
+  Printf.sprintf "<img src=\"%s\"\n alt=\"%s\" title=\"%s\" style=\"%s\" />" url
+    image_txt image_txt
     (if height = 0 then ""
-     else "max-height:" ^ string_of_int height ^ "px;") ^
+     else " max-height:" ^ string_of_int height ^ "px;") ^
   "</a>\n"
 
 let image_url_txt_with_size conf url_p url width height =
+  let image_txt = Utf8.capitalize_fst (transl_nth conf "image/images" 0) in
   Printf.sprintf "<a href=\"%s\">" url_p ^
   Printf.sprintf
-    "<img src=\"%s\"\nwidth=%d height=\"%d\" class=\"mb-1\" style=\"%s %s\">"
-    url width height
+    "<img src=\"%s\"\nwidth=%d height=\"%d\" alt=\"%s\" title=\"%s\" style=\"%s %s\" />"
+    url width height image_txt image_txt
     (if width = 0 then "" else " max-width:" ^ string_of_int width ^ "px;")
     (if height = 0 then ""
      else " max-height:" ^ string_of_int height ^ "px;") ^
@@ -47,23 +64,27 @@ let image_txt conf base p =
       if has_image conf base p then
         match image_and_size conf base p (limited_image_size 100 75) with
           Some (true, f, Some (wid, hei)) ->
-            "\n<center><table border=\"0\"><tr align=\"left\"><td>\n" ^
+            "<br" ^
+            ">\n<center><table border=\"0\"><tr align=\"left\"><td>\n" ^
             image_normal_txt conf base p f wid hei ^
             "</td></tr></table></center>\n"
         | Some (true, f, None) ->
-            "\n<center><table border=\"0\"><tr align=\"left\"><td>\n" ^
+            "<br" ^
+            ">\n<center><table border=\"0\"><tr align=\"left\"><td>\n" ^
             image_normal_txt conf base p f 0 75 ^
             "</td></tr></table></center>\n"
         | Some (false, url, Some (wid, hei)) ->
             let url_p = commd conf ^ acces conf base p in
-            "\n<center><table border=\"0\"><tr align=\"left\"><td>\n" ^
+            "<br" ^
+            ">\n<center><table border=\"0\"><tr align=\"left\"><td>\n" ^
             image_url_txt_with_size conf url_p url wid hei ^
             "</td></tr></table></center>\n"
         | Some (false, url, None) ->
             let url_p = commd conf ^ acces conf base p in
             let height = 75 in
+            "<br" ^
             (* La hauteur est ajoutée à la table pour que les textes soient alignés. *)
-            "\n<center><table border=\"0\" style=\"height: " ^ string_of_int height ^
+            ">\n<center><table border=\"0\" style=\"height: " ^ string_of_int height ^
             "px\"><tr align=\"left\"><td>\n" ^
               image_url_txt conf url_p url height ^ "</td></tr></table></center>\n"
         | _ -> ""
@@ -104,7 +125,7 @@ let print_table conf hts =
         Output.print_string conf ">";
         begin match td with
           TDitem s -> Output.print_string conf s
-        | TDtext s -> Output.print_string conf s
+        | TDtext (ip, s) -> Output.print_string conf s
         | TDnothing -> Output.print_string conf "&nbsp;"
         | TDbar None -> Output.print_string conf "|"
         | TDbar (Some s) ->
@@ -305,7 +326,7 @@ let gen_compute_columns_sizes size_fun hts ncol =
                   let len =
                     match td with
                       TDitem s -> size_fun s
-                    | TDtext s -> size_fun s
+                    | TDtext (ip, s) -> size_fun s
                     | _ -> 1
                   in
                   let currsz =
@@ -536,7 +557,16 @@ let print_table_pre conf hts =
             let (colspan, _, td) = hts.(i).(j) in
             let stra =
               match td with
-                TDitem s | TDtext s ->
+                TDitem s ->
+                  let sz =
+                    let rec loop sz k =
+                      if k = 0 then sz
+                      else loop (sz + colsz.(col+k-1)) (k - 1)
+                    in
+                    loop 0 colspan
+                  in
+                  Array.of_list (displayed_strip s sz)
+              | TDtext (ip, s) ->
                   let sz =
                     let rec loop sz k =
                       if k = 0 then sz
@@ -752,6 +782,7 @@ let print_slices_menu conf hts =
   let title _ = Output.print_string conf (txt 0) in
   Hutil.header conf title;
   Hutil.print_link_to_welcome conf true;
+  Util.include_template conf conf.env "buttons_rel" (fun () -> ());
   Output.printf conf "<form method=\"get\" action=\"%s\">\n" conf.command;
   Output.print_string conf "<p>" ;
   hidden_env conf;
@@ -815,6 +846,7 @@ let print_dag_page conf page_title hts next_txt =
   in
   let title _ = Output.print_string conf page_title in
   Hutil.header_no_page_title conf title;
+  Util.include_template conf conf.env "buttons_rel" (fun () -> ());
   print_html_table conf hts;
   if next_txt <> "" then
     begin
@@ -851,6 +883,26 @@ let get_vother =
   | _ -> None
 let set_vother x = Vother x
 
+let eval_predefined_apply conf f vl =
+  let vl =
+    List.map
+      (function
+         VVstring s -> s
+       | _ -> raise Not_found)
+      vl
+  in
+  match f, vl with
+  | "min", s :: sl ->
+      begin try
+        let m =
+          List.fold_right (fun s -> min (int_of_string s)) sl
+            (int_of_string s)
+        in
+        string_of_int m
+      with Failure _ -> raise Not_found
+      end
+  | _ -> raise Not_found
+
 let rec eval_var conf page_title next_txt env _xx _loc =
   function
     "dag" :: sl ->
@@ -870,6 +922,7 @@ let rec eval_var conf page_title next_txt env _xx _loc =
       end
   | ["head_title"] -> VVstring page_title
   | ["link_next"] -> VVstring next_txt
+  | ["static_max_anc_level"] -> VVstring "10"
   | _ -> raise Not_found
 and eval_dag_var _conf (tmincol, tcol, _colminsz, colsz, _ncol) =
   function
@@ -906,6 +959,16 @@ and eval_dag_cell_var conf (colspan, align, td) =
         TDhr RightA -> VVbool true
       | _ -> VVbool false
       end
+  | ["is_hr_center"] ->
+      begin match td with
+        TDhr CenterA -> VVbool true
+      | _ -> VVbool false
+      end
+  | ["is_hr"] ->
+      begin match td with
+        TDhr RightA | TDhr LeftA | TDhr CenterA -> VVbool true
+      | _ -> VVbool false
+      end
   | ["is_nothing"] -> VVbool (td = TDnothing)
   | ["item"] ->
       begin match td with
@@ -914,7 +977,12 @@ and eval_dag_cell_var conf (colspan, align, td) =
       end
   | ["text"] ->
       begin match td with
-        TDtext s -> VVstring s
+        TDtext (ip, s) -> VVstring s
+      | _ -> VVstring ""
+      end
+  | ["index"] ->
+      begin match td with
+        TDtext (ip, s) -> VVstring (string_of_iper ip)
       | _ -> VVstring ""
       end
   | _ -> raise Not_found
@@ -1048,7 +1116,15 @@ and print_foreach_dag_line_pre conf hts print_ast env al =
           let (colspan, _, td) = hts.(i).(j) in
           let stra =
             match td with
-              TDitem s | TDtext s ->
+            | TDitem s ->
+                let sz =
+                  let rec loop sz k =
+                    if k = 0 then sz else loop (sz + colsz.(col+k-1)) (k - 1)
+                  in
+                  loop 0 colspan
+                in
+                Array.of_list (displayed_strip s sz)
+            | TDtext (ip, s) ->
                 let sz =
                   let rec loop sz k =
                     if k = 0 then sz else loop (sz + colsz.(col+k-1)) (k - 1)
@@ -1106,17 +1182,17 @@ let print_slices_menu_or_dag_page conf page_title hts next_txt =
       in
       ["dag", Vlazy (Lazy.from_fun table_pre_dim)]
     in
-    Hutil.interp conf "dag"
+    V7_interp.gen_interp false conf "dag"
       {Templ.eval_var = eval_var conf page_title next_txt;
        Templ.eval_transl = (fun _ -> Templ.eval_transl conf);
-       Templ.eval_predefined_apply = (fun _ -> raise Not_found);
+       Templ.eval_predefined_apply = (fun _ -> eval_predefined_apply conf);
        Templ.get_vother = get_vother; Templ.set_vother = set_vother;
        Templ.print_foreach = print_foreach conf hts}
       env ()
 
 let make_and_print_dag conf base elem_txt vbar_txt invert set spl page_title
     next_txt =
-  let d = make_dag conf base set in
+  let d = Dag.make_dag conf base set in
   let hts = make_tree_hts conf base elem_txt vbar_txt invert set spl d in
   print_slices_menu_or_dag_page conf page_title hts next_txt
 

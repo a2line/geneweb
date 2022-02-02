@@ -1,4 +1,10 @@
 (* $Id: dag2html.ml,v 5.0 2005-12-13 11:51:26 ddr Exp $ *)
+open Geneweb.Config
+open Gwdb
+open Def
+open Geneweb.TemplAst
+open Geneweb.Util
+
 
 type 'a dag = { mutable dag : 'a node array }
 and 'a node =
@@ -29,7 +35,7 @@ let new_ghost_id = let i = ref 0 in fun () -> incr i; ghost_id_of_int !i
 type align = LeftA | CenterA | RightA
 type ('a, 'b) table_data =
     TDitem of 'a
-  | TDtext of string
+  | TDtext of iper * string
   | TDhr of align
   | TDbar of 'b option
   | TDnothing
