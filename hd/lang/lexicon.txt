@@ -5197,8 +5197,8 @@ tr: madalya
     degree of kinship
 co: gradu di parentia
 de: Grad der Elternschaft
-en: degree of kinship/degrees of kinship
-fr: degré de parenté/degrés de parenté
+en: degree of kinship
+fr: degré de parenté
 pt: grau de parentesco
 sv: släktskapsgrad
 tr: akrabalık derecesi
