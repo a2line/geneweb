@@ -921,7 +921,12 @@ let rec eval_var conf page_title next_txt env _xx _loc =
       | _ -> raise Not_found
       end
   | ["head_title"] -> VVstring page_title
-  | ["link_next"] -> VVstring next_txt
+  | ["line_nbr"] -> 
+       begin match get_env "line_nbr" env with
+      | Vdline i -> VVstring (string_of_int i)
+      | _ -> raise Not_found
+      end
+ | ["link_next"] -> VVstring next_txt
   | ["static_max_anc_level"] -> VVstring "10"
   | _ -> raise Not_found
 and eval_dag_var _conf (tmincol, tcol, _colminsz, colsz, _ncol) =
@@ -1094,7 +1099,9 @@ and print_foreach_dag_cell hts print_ast env al =
   done
 and print_foreach_dag_line print_ast env hts al =
   for i = 0 to Array.length hts - 1 do
-    let print_ast = print_ast (("dag_line", Vdline i) :: env) () in
+    let print_ast = print_ast
+      (("line_nbr", Vdline i) :: ("dag_line", Vdline i) :: env) ()
+    in
     List.iter print_ast al
   done
 and print_foreach_dag_line_pre conf hts print_ast env al =
