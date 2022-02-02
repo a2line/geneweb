@@ -7,16 +7,18 @@ open Util
 open Dag
 
 let image_normal_txt conf base p fname width height =
+  let image_txt = Utf8.capitalize_fst (transl_nth conf "image/images" 0) in
   let s = Unix.stat fname in
   let b = acces conf base p in
   let k = default_image_name base p in
   let r =
     Printf.sprintf "\
-<img src=\"%sm=IM&d=%d&%s&k=/%s\"%s%s class=\"mb-1\" style=\"%s %s\">"
+<img src=\"%sm=IM&d=%d&%s&k=/%s\"%s%s alt=\"%s\" title=\"%s\" style=\"%s %s\" />"
       (commd conf)
       (int_of_float (mod_float s.Unix.st_mtime (float_of_int max_int))) b k
       (if width = 0 then "" else " width=\"" ^ string_of_int width ^ "\"")
       (if height = 0 then "" else " height=\"" ^ string_of_int height ^ "\"")
+      image_txt image_txt
       (if width = 0 then "" else " max-width:" ^ string_of_int width ^ "px;")
       (if height = 0 then ""
        else " max-height:" ^ string_of_int height ^ "px;")
@@ -24,17 +26,20 @@ let image_normal_txt conf base p fname width height =
   Printf.sprintf "<a href=\"%sm=IM&%s&k=/%s\">" (commd conf) b k ^ r ^ "</a>"
 
 let image_url_txt conf url_p url height =
+  let image_txt = Utf8.capitalize_fst (transl_nth conf "image/images" 0) in
   Printf.sprintf "<a href=\"%s\">" url_p ^
-  Printf.sprintf "<img src=\"%s\" class=\"mb-1\" style=\"%s\">" url
+  Printf.sprintf "<img src=\"%s\"\n alt=\"%s\" title=\"%s\" style=\"%s\" />" url
+    image_txt image_txt
     (if height = 0 then ""
-     else "max-height:" ^ string_of_int height ^ "px;") ^
+     else " max-height:" ^ string_of_int height ^ "px;") ^
   "</a>\n"
 
 let image_url_txt_with_size conf url_p url width height =
+  let image_txt = Utf8.capitalize_fst (transl_nth conf "image/images" 0) in
   Printf.sprintf "<a href=\"%s\">" url_p ^
   Printf.sprintf
-    "<img src=\"%s\"\nwidth=%d height=\"%d\" class=\"mb-1\" style=\"%s %s\">"
-    url width height
+    "<img src=\"%s\"\nwidth=%d height=\"%d\" alt=\"%s\" title=\"%s\" style=\"%s %s\" />"
+    url width height image_txt image_txt
     (if width = 0 then "" else " max-width:" ^ string_of_int width ^ "px;")
     (if height = 0 then ""
      else " max-height:" ^ string_of_int height ^ "px;") ^
@@ -47,23 +52,27 @@ let image_txt conf base p =
       if has_image conf base p then
         match image_and_size conf base p (limited_image_size 100 75) with
           Some (true, f, Some (wid, hei)) ->
-            "\n<center><table border=\"0\"><tr align=\"left\"><td>\n" ^
+            "<br" ^
+            ">\n<center><table border=\"0\"><tr align=\"left\"><td>\n" ^
             image_normal_txt conf base p f wid hei ^
             "</td></tr></table></center>\n"
         | Some (true, f, None) ->
-            "\n<center><table border=\"0\"><tr align=\"left\"><td>\n" ^
+            "<br" ^
+            ">\n<center><table border=\"0\"><tr align=\"left\"><td>\n" ^
             image_normal_txt conf base p f 0 75 ^
             "</td></tr></table></center>\n"
         | Some (false, url, Some (wid, hei)) ->
             let url_p = commd conf ^ acces conf base p in
-            "\n<center><table border=\"0\"><tr align=\"left\"><td>\n" ^
+            "<br" ^
+            ">\n<center><table border=\"0\"><tr align=\"left\"><td>\n" ^
             image_url_txt_with_size conf url_p url wid hei ^
             "</td></tr></table></center>\n"
         | Some (false, url, None) ->
             let url_p = commd conf ^ acces conf base p in
             let height = 75 in
+            "<br" ^
             (* La hauteur est ajoutée à la table pour que les textes soient alignés. *)
-            "\n<center><table border=\"0\" style=\"height: " ^ string_of_int height ^
+            ">\n<center><table border=\"0\" style=\"height: " ^ string_of_int height ^
             "px\"><tr align=\"left\"><td>\n" ^
               image_url_txt conf url_p url height ^ "</td></tr></table></center>\n"
         | _ -> ""
