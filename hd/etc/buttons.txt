@@ -138,9 +138,9 @@
       </a>
     %end;
     <span class="sr-only">—</span>
-    %if;(evar.m="A" and evar.t="Z")
+    %if;(evar.m="A")
       <span class="sr-only">—</span>
-      <a role="button" class="btn btn-link px-0"%sp;
+      <a role="button" class="btn btn-link px-0%if;(evar.t="Y") disabled%end;"%sp;
         href="%prefix_base_password;%nn;
                  %foreach;env_binding;
                    %if;(env.key!="csv" and env.key!="")&%env.key=%env.val;%end;%nn;
@@ -154,7 +154,7 @@
     %let;couple_table;%prefix_base;%access;&m=A&t=Y%if;(evar.only="on")&only=on%end;%if;(evar.image="off")&image=off%end;&v=%evar.v&%in;
     %if;(evar.csv!="on" and evar.m="A" and evar.t="Z" or evar.t="Y")
       <span class="sr-only">—</span>
-      <a role="button" class="btn btn-link %if;(evar.t="Y")ml-5%end;"
+      <a role="button" class="btn btn-link px-0"
         href="%prefix_base_password;%nn;
                  %foreach;env_binding;
                    %if;(env.key="t")&t=%if;(evar.t!="Y")Y%else;Z%end;%nn;

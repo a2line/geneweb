@@ -24,7 +24,7 @@
 %define;picklvl(vvv)
   <a role="button" class="btn btn-primary btn-sm%if;((evar.v="" and vvv=3) or (evar.v!="" and evar.v=vvv)) disabled%end; align-self-center" 
   href="%prefix_base_password;%foreach;env_binding;%if;(env.val!="" and env.key!="v")&%env.key=%env.val;%end;%end;%if;(vvv!=3)&v=%expr(vvv)%end;" 
-  title="[*maximum degre of ascendant parentship]">vvv</a>
+  title="[*ascending/descending (degree)]0 [maximum]">vvv</a>
 %end;
 <div class="d-flex justify-content-between">
   <h1>%nn;

@@ -985,12 +985,12 @@ co: un cuginu à u secondu gradu/una cugina à u secondu gradu/un(a) cuginu(a) �
 cs: bratranec z druhého kolena/sestřenice z druhého kolena
 da: en fætter af 2. grad/en kusine af 2. grad
 de: ein:d:+em Cousin 2. Grades/eine:d:+r Cousine 2. Grades
-en: a 2nd cousin
+en: a %s2nd cousin
 eo: rekta prakuzo/rekta prakuzino/rekta kuz(in)o
 es: un primo nacido de primos hermanos/una prima nacida de primos hermanos/un(a) primo(a) nacido(a) de primos hermanos
 et: teise astme nõbu:g:--o
 fi: pikkuserkku:g:--un
-fr: un cousin issu de germains/une cousine issue de germains/un(e) cousin(e) issu(e) de germains
+fr: un %scousin issu de germains/une %scousine issue de germains
 he:  בן-דוד שני/ בת-דוד שניה
 is: tremenningur
 it: un cugino di 2o grado/una cugina di 2o grado/un(a) cugino(a) di 2o grado
@@ -1017,12 +1017,12 @@ co: un cuginu à u terzu gradu/una cugina à u terzu gradu/un(a) cuginu(a) à u 
 cs: bratranec z třetího kolena/sestřenice z třetího kolena
 da: en fætter af 3. grad/en kusine af 3. grad
 de: ein:d:+em Cousin 3. Grades/eine:d:+r Cousine 3. Grades
-en: a 3rd cousin
+en: a %s3rd cousin
 eo: 3a grada kuzo/3a grada kuzino/3a grada kuz(in)o
 es: un primo 3ro/una prima 3ro/un(a) primo(a) 3ro
 et: kolmanda astme nõbu:g:--o
 fi: kolmas serkku:g:nnen serkun
-fr: un cousin issu d’issus de germains/une cousine issue d’issus de germains/un(e) cousin(e) issu(e) d’issus de germains
+fr: un %scousin issu d’issus de germains/une %scousine issue d’issus de germains/un(e) %scousin(e) issu(e) d’issus de germains
 he:  בן-דוד שלישי/ בת-דוד שלישית
 is: fjórmenningur
 it: un cugino di 3o grado/una cugina di 3o grado/un(a) cugino(a) di 3o grado
@@ -1090,12 +1090,12 @@ co: un fratellu/una surella/un fratellu o una surella
 cs: bratr/sestra/sourozenec
 da: en broder/en søster/en broder eller en søster
 de: ein Bruder/eine Schwester/ein Bruder oder eine Schwester
-en: a brother/a sister/a sibling
+en: a %sbrother/a %ssister/a %ssibling
 eo: frato/fratino/frat(in)o
 es: un hermano/una hermana/un(a) hermano(a)
 et: vend:g:-na/õde:g:--e/õde:g:--e või vend:g:-na
 fi: veli:g:-jen/sisar:g:+en/sisarus:g:-ksen
-fr: un frère/une sœur/un frère ou une sœur
+fr: un %sfrère/une %ssœur/un %sfrère ou sœur
 he:   אח/ אחות/ אח(ות)
 is: bróðir/systir/systkyn
 it: un fratello/una sorella/un fratello o una sorella
@@ -1388,8 +1388,8 @@ sv: en gammel-nevö/en gammel-niece
 tr: bir büyük yeğen/bir büyük yeğen/büyük yeğen/büyük yeğen/büyük yeğenler ve büyük yeğenler
 
     cousin.1.3
-en: un grandnephew/a grandniece/a grandchild
-fr: un petit-neveu/une petite-nièce/un petit-enfant
+en: un %sgrandnephew/a %sgrandniece/a %sgrandchild
+fr: un %spetit-neveu/une %spetite-nièce/un %spetit-enfant
 
     cousins.1.3
 en: grandnephew/grandnephews/grandniece/grandnieces
@@ -1400,8 +1400,8 @@ en: great-nephews and great-nieces
 fr: arrière-neveux et arrière-nièces (soutenu)<br>enfant d’un neveu ou d’une nièce
 
     cousin.1.4
-en: a great-grandnephew/a great-grandniece/a great-grandchild
-fr: un arrière-petit-neveu/une arrière-petite-nièce/un arrière-petit-enfant
+en: a %sgreat-grandnephew/a %sgreat-grandniece/a %sgreat-grandchild
+fr: un %sarrière-petit-neveu/une %sarrière-petite-nièce/un %sarrière-petit-enfant
 
     cousins.1.4
 en: great-grandnephew/great-grandnephews
@@ -1411,24 +1411,52 @@ fr: arrière-petit-neveu/arrière-petits-neveux
 fr: enfant d’un petit-neveu ou d’une petit-nièce
 
     cousin.1.5
-en: a great-great-grandnephew/a great-great-grandniece/a great-great-grandchild
-fr: un arrière-arrière-petit-neveu/une arrière-arrière-petite-nièce/un arrière-arrière-petit-enfant
+en: a %sgreat-great-grandnephew/a %sgreat-great-grandniece/a %sgreat-great-grandchild
+fr: un %sarrière-arrière-petit-neveu/une %sarrière-arrière-petite-nièce/un %sarrière-arrière-petit-enfant
 
     cousins.1.5
 en: great-great-grandnephew/great-great-grandnephews
 fr: arrière-arrière-petit-neveu/arrière-arrière-petits-neveux
 
+    cousin.1.6
+en: a %sthree-times-great-grandnephew/a %sthree-times-great-grandniece/a %sthree-times-great-grandchild
+fr: un %strois-fois-arrière-petit-neveu/une %strois-fois-arrière-petite-nièce/un %strois-fois-arrière-petit-enfant
+
     cousins.1.6
-fr: trois-fois-arrière-petits-neveux
+en: three-times-great-grandnephew/three-times-great-grandnephews
+fr: trois-fois-arrière-petit-neveu/trois-fois-arrière-petits-neveux
+
+    cousin.1.7
+en: a %sfour-times-great-grandnephew/a %sfour-times-great-grandniece/a %sfour-times-great-grandchild
+fr: un %squatre-fois-arrière-petit-neveu/une %squatre-fois-arrière-petite-nièce/un %squatre-fois-arrière-petit-enfant
 
     cousins.1.7
-fr: quatre-fois-arrière-petits-neveux
+en: four-times-great-grandnephew/four-times-great-grandnephews
+fr: quatre-fois-arrière-petit-neveu/quatre-fois-arrière-petits-neveux
+
+    cousin.1.8
+en: a %sfive-times-great-grandnephew/a %sfive-times-great-grandniece/a %sfive-times-great-grandchild
+fr: un %scinq-fois-arrière-petit-neveu/une %scinq-fois-arrière-petite-nièce/un %scinq-fois-arrière-petit-enfant
 
     cousins.1.8
-fr: cinq-fois-arrière-petits-neveux
+en: five-times-great-grandnephew/five-times-great-grandnephews
+fr: cinq-fois-arrière-petit-neveu/cinq-fois-arrière-petits-neveux
+
+    cousin.1.9
+en: a %ssix-times-great-grandnephew/a %ssix-times-great-grandniece/a %ssix-times-great-grandchild
+fr: un %ssix-fois-arrière-petit-neveu/une %ssix-fois-arrière-petite-nièce/un %ssix-fois-arrière-petit-enfant
 
     cousins.1.9
-fr: six-fois-arrière-petits-neveux
+en: six-times-great-grandnephew/six-times-great-grandnephews
+fr: six-fois-arrière-petit-neveu/six-fois-arrière-petits-neveux
+
+    cousin.1.10
+en: a %sseven-times-great-grandnephew/a %sseven-times-great-grandniece/a %sseven-times-great-grandchild
+fr: un %ssept-fois-arrière-petit-neveu/une %ssept-fois-arrière-petite-nièce/un %ssept-fois-arrière-petit-enfant
+
+    cousins.1.10
+en: seven-times-great-grandnephew/seven-times-great-grandnephews
+fr: sept-fois-arrière-petit-neveu/sept-fois-arrière-petits-neveux
 
     a great-uncle/a great-aunt
 af: 'n grootoom/'n groottante
@@ -2442,6 +2470,12 @@ sk: strýc/teta
 sl: stric/teta
 sv: en farbror/en faster/en morbror/en moster
 tr: bir amca/bir teyze/amcalar/teyzeler/amcalar ve teyzeler
+
+    ascending/descending (degree)
+de: aufsteigender Grad/absteigender Grad/aufsteigender Grade/absteigender Grade
+en: ascending degree/descending degree/ascending degrees/descending degrees
+fr: degré ascendant/degré descendant/degrés ascendants/degrés descendants
+
 
     ancestors
 af: voorouers
@@ -14112,7 +14146,7 @@ fr: grands-oncles et grandes-tantes à la mode de Bourgogne ou Bretagne<hr><- co
 fr: grands-cousins 2<sup>e</sup>
 
     cousins.4.3 tt
-fr: grands-cousins au 2<sup>e</sup> degré<br>cousins arrière-issus de germains<hr><- cousins issus de germains des parents
+fr: grands-cousins au 2<sup>e</sup> degré<hr><- cousins issus de germains des parents
 
     cousin.4.4
 ->: a 3rd cousin
@@ -14121,7 +14155,7 @@ fr: grands-cousins au 2<sup>e</sup> degré<br>cousins arrière-issus de germains
 ->: 3rd cousins
 
     cousins.4.4 tt
-fr: cousins au 3<sup>e</sup> degré
+fr: cousins au 3<sup>e</sup> degré<br>cousins arrière-issus-de-germains
 
     cousin.4.5
 fr: un petit-cousin au 3<sup>e</sup> degré/une petite-cousine au 3<sup>e</sup> degré

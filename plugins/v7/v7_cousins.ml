@@ -285,7 +285,7 @@ let print_cousins conf base p lev1 lev2 =
     match String.index_opt trnsl '[' with
     | Some i -> Output.printf conf "%s %d / %s %d"
         (Utf8.capitalize_fst (transl conf "ancestors")) lev1
-        (Utf8.capitalize_fst (transl conf "descendants")) lev2
+        (transl conf "descendants") lev2
     | None -> Output.printf conf "%s" (Utf8.capitalize_fst trnsl)
   in
   let max_cnt =
