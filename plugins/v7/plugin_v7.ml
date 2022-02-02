@@ -66,7 +66,6 @@ let l = w_base @@ fun conf base ->
     |> Gwdb.empty_person base
     |> !V7_interp.templ "list" conf base
     |> fun () -> true
-    end
     
 let md = w_base begin fun conf base ->
     V7_updateDataDisplay.print_mod conf base ;
@@ -81,6 +80,7 @@ let md_ok = w_base begin fun conf base ->
 let p = w_base begin fun conf base -> match Util.p_getenv conf.env "v" with
     | Some v -> V7_some.first_name_print conf base v ; true
     | None -> false
+  end
 
 let ps = w_base @@ fun conf base ->
     V7_place.print_all_places_surnames conf base ; true

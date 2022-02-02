@@ -1,4 +1,4 @@
-<!-- $Id: menubar.txt v7.00 11/08/2017 15:35:40 -->
+<!-- $Id: menubar.txt v7.00 02/02/2022 15:35:40 -->
 %let;laA;title="[*add::family/families]0 (A)" accesskey="A"%in;
 %let;laD;title="[*difference between the two revisions] (D)" accesskey="D"%in;
 %let;laI;title="[*send::image/images]0 (I)" accesskey="I"%in;
@@ -360,7 +360,7 @@ fr: Sélectionnez les modules en cliquant sur le bouton correspondant (max 15).
             <div class="dropdown-menu">
               <a class="dropdown-item" href="%prefix;m=R&%access;" %laR;><span class="fa fa-cog fa-fw mr-2"></span>[*relationship computing]</a>
               <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="%prefix;%access;&m=C%if;(static_max_anc_level<=3)&v=%expr(static_max_anc_level-1)%end;" title="[*relationship link/relationship links]0 [with] [close family]"><span class="fa fa-users-cog fa-fw mr-2"></span>[*relationship]</a>
+              <a class="dropdown-item" href="%prefix;%access;&m=C" title="[*relationship link/relationship links]0 [with] [close family]"><span class="fa fa-users-cog fa-fw mr-2"></span>[*relationship]</a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" %nn;
                 href="%prefix;m=F;%access;;%nn;
