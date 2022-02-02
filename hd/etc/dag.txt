@@ -311,19 +311,19 @@
           %else;|%end;
         %elseif;(dag_cell.item != "")%dag_cell.item;
         %elseif;(dag_cell.text != "")
-        %if;(dag_cell.index!="-1")
-          <div class="list-group-item border-0" mx-0 px-0 style="zindex:0;">
-            <a href="%prefix_no_pmod;i=%dag_cell.index;&m=D;t=TV;%foreach;env_binding;%nn;
-              %if;(not (env.key="i" or env.key="p" or env.key="n" or env.key="oc" or
-                        env.key="m" or env.key="t"))%nn;
-                %env.key;=%env.val;;%nn;
-            %end;%end;"
-            class="big_anchor list-group-item-action mx-0 px-0"
-            title="[*navigation]"></a>
-          </div>
-          %dag_cell.text;
-        %else;%dag_cell.text;
-        %end;
+          %if;(plugin.v7 and dag_cell.index!="-1")
+            <div class="list-group-item border-0" mx-0 px-0 style="zindex:0;">
+              <a href="%prefix_no_pmod;i=%dag_cell.index;&m=D;t=TV;%foreach;env_binding;%nn;
+                %if;(not (env.key="i" or env.key="p" or env.key="n" or env.key="oc" or
+                          env.key="m" or env.key="t"))%nn;
+                  %env.key;=%env.val;;%nn;
+              %end;%end;"
+              class="big_anchor list-group-item-action mx-0 px-0"
+              title="[*navigation]">|</a>
+            </div>
+          %end;
+        %dag_cell.text;
+
         %( navigation cannot work until dag_cell carries the appropriate access values %)
         %else;
           %if;dag_cell.is_hr_left;
