@@ -33,7 +33,7 @@ let image_normal_txt conf base p fname width height =
       (if height = 0 then ""
        else " max-height:" ^ string_of_int height ^ "px;")
   in
-  Printf.sprintf "<a href=\"%sm=IM&%s&k=/%s\">" (commd conf) b k ^ r ^ "</a>"
+  Printf.sprintf "<a href=\"%sm=IM&%s&k=/%s\" class=\"normal_anchor\">" (commd conf) b k ^ r ^ "</a>"
 
 let image_url_txt conf url_p url height =
   Printf.sprintf "<a href=\"%s\">" url_p ^
