@@ -1453,7 +1453,7 @@ let reference conf base p s =
       ["<a href=\""; commd conf; acces conf base p;
        "\" id=\"i"; string_of_iper iper; "\"";
        " class=\"normal_anchor\"";
-       " style=\"zindex:10;\">"; s; "</a>"]
+       " title=\"[go on individual page]\">"; s; "</a>"]
 
 let get_text conf base p filler =
   let (bd, td_prop) = get_bd_td_prop conf in
@@ -1567,7 +1567,7 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses images =
   in  
   let txt = get_text conf base p (ifaml <> []) in
   let only =
-     Printf.sprintf "<a href=\"%sm=D&t=TV%s%s%s%s\" %s title=\"%s\" style=\"line-height:1rem;zindex:10\">│</a>"
+     Printf.sprintf "<a href=\"%sm=D&t=TV%s%s%s%s\" %s title=\"%s\">│</a>"
      (commd conf) vv pz_index pp_index ("&oi=" ^ (string_of_iper (get_iper p)))
      ("class=\"normal_anchor\"")
      (Utf8.capitalize_fst (Util.transl conf "limit tree to ancestors and siblings"))

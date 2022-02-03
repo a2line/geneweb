@@ -21,7 +21,7 @@
 
 %let;prefix_a;%prefix_base_password&p=%evar.p;&n=%evar.n;%nn;
   %if;(evar.oc!="")&oc=%evar.oc;%end;%in; %(%access does not work %)
-<div class="container%if;(evar.wide="on")-fluid%end;">
+<div class="container-fluid">
 %if;(evar.slices = "on")
   <h1>[*display by slices/slice width/overlap/total width]0</h1>
 %else;
@@ -294,15 +294,14 @@
     %end;
     </pre>
   %else;
-    <table id="dag" width="100%%"><tr><td align="center">
-    <table border="%border;" cellspacing="0" cellpadding="0" style="line-height:1rem;">
+    <table id="dag" border="%border;" cellspacing="0" cellpadding="0" style="line-height:1rem;">
     %foreach;dag_line;
       <tr align="left">
       %foreach;dag_cell;
-        <td %if;(not dag_cell.is_hr)class="align-top%( position-relative%)"%end;
+        <td %if;(not dag_cell.is_hr)class="align-top"%end;
           %if;(dag_cell.colspan>1) colspan="%dag_cell.colspan;"%end;
-          style="line-height:%if;(dag_cell.item!="")1rem‰nn;
-                             %elseif;(dag_cell.is_bar)0.85rem‰nn;
+          style="line-height:%if;(dag_cell.item!="")1rem%nn;
+                             %elseif;(dag_cell.is_bar)0.85rem%nn;
                              %elseif;dag_cell.is_nothing;0.1rem%end;"‰nn;
         %if;(evar.image!="off") valign="bottom"%end;
         align="%dag_cell.align;">
@@ -315,15 +314,14 @@
         %elseif;(dag_cell.item != "")<div class="my-1">%dag_cell.item;</div>
         %elseif;(dag_cell.text != "")
           %if;(plugin.v7 and line_nbr!=0 and dag_cell.index!="-1")
-            %( TODO : étendre ce lien de navigation à toute la cellule en fond en jouant avec z-index tout en gardant les 2 autres liens au-dessus, sans contenu pour éviter les doubles barres verticales, à défaut on les garde ! %)
-            <div class="list-group-item px-0 mx-0 border-0" style="zindex:0;">
+            <div class="position-relative">
               <a href="%prefix_no_pmod;i=%dag_cell.index;&m=D&t=TV&%foreach;env_binding;%nn;
                 %if;(not (env.key="i" or env.key="p" or env.key="n" or env.key="oc" or
                           env.key="m" or env.key="t"))%env.key;=%env.val;&%end;%end;"
-                class="big_anchor list-group-item-action" 
-                title="[*navigation]" style="line-height:1rem"></a>
+                class="stretched-link"
+                title="[*navigation] on tree [with] this indidual" style="line-height:1rem"></a>
           %end;
-          <div%if;(dag_cell.txt!="") class="mt-1"%end; style="zindex:10;">%dag_cell.text;</div>
+          <div%if;(dag_cell.txt!="") class="mt-1"%end;>%dag_cell.text;</div>
           %if;(plugin.v7 and line_nbr!=0 and dag_cell.index!="-1")
             </div>
           %end;
@@ -342,7 +340,6 @@
       </tr>
     %end;
     </table>
-    </td></tr></table>
   %end;
 %end;
 %include;trl
