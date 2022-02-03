@@ -349,15 +349,17 @@
     %end;
     %if;not cancel_links;
       %reset_count2;
-      %foreach;relation;
-        %if;((has_relation_him and relation_him=sosa_ref)
-          or (has_relation_her and relation_her=sosa_ref))
-          %incr_count2;
+      %if;browsing_with_sosa_ref;
+        %foreach;relation;
+          %if;((has_relation_him and relation_him=sosa_ref)
+            or (has_relation_her and relation_her=sosa_ref))
+            %incr_count2;
+          %end;
         %end;
-      %end;
-      %foreach;related;
-        %if;(related=sosa_ref)
-          %incr_count2;%incr_count2;
+        %foreach;related;
+          %if;(related=sosa_ref)
+            %incr_count2;%incr_count2;
+          %end;
         %end;
       %end;
       %if;has_sosa;
