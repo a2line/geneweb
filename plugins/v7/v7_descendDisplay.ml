@@ -1446,7 +1446,7 @@ let get_bd_td_prop conf =
   (bd, td_prop)
 
 
-let get_text conf base p =
+let get_text conf base p filler =
   let (bd, td_prop) = get_bd_td_prop conf in
   let auth = authorized_age conf base p in
   let txt = person_title_text conf base p in
@@ -1454,7 +1454,17 @@ let get_text conf base p =
   let txt =
     if auth then txt ^ DateDisplay.short_dates_text conf base p else txt
   in
-  let txt = txt ^ DagDisplay.image_txt conf base p in
+  let vbar_image = if filler then Printf.sprintf "\
+\n<center><table border=\"0\"><tr align=\"left\"><td>\n\
+<img src=\"%sm=IM&v=vbar.jpg\" class=\"mb-1\">\
+</td></tr></table></center>\n"
+    (commd conf)
+    else ""
+  in
+  let txt = txt ^ 
+    if (Util.has_image conf base p) then (DagDisplay.image_txt conf base p)
+    else vbar_image
+  in
   let txt =
     if bd > 0 || td_prop <> "" then
       Printf.sprintf
@@ -1500,7 +1510,7 @@ let get_spouse base iper ifam =
 
 *)
 
-let rec p_pos conf base p x0 v ir tdal only_anc spouses =
+let rec p_pos conf base p x0 v ir tdal only_anc spouses images =
   let lx = lastx tdal ir in
   let x = if (lx+2) > x0 then (lx+2) else x0 in
   (*let x1 = x in
@@ -1516,14 +1526,14 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses =
     else ifaml
   in
   let (tdal, x, x1, xn) =
-    if v > 1 && ifaml <> [] then
+    if v >= 1 && ifaml <> [] then
       let xn = if only_anc = [] then x - (List.length ifaml) - 1 else x in
       let (tdal, x1, xn) =
         let rec loop ifaml first x1 xn tdal =
           match ifaml with
           | [] -> tdal, x1, xn
           | ifam :: ifaml ->
-              let (tdal, xn) = f_pos conf base ifam p (xn+2) v (ir+2) tdal only_anc spouses in
+              let (tdal, xn) = f_pos conf base ifam p (xn+2) v (ir+2) tdal only_anc spouses images in
               loop ifaml false (if first then xn else x1) xn tdal
         in loop ifaml true 0 xn tdal
       in
@@ -1546,7 +1556,7 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses =
     | Some p -> "&iz=" ^ (string_of_iper (get_iper p))
     | None -> ""
   in  
-  let txt = get_text conf base p in
+  let txt = get_text conf base p (ifaml <> []) in
   let only =
      Printf.sprintf "<a href=\"%sm=D&t=TV%s%s%s%s\" title=\"%s\" style=\"line-height:1rem\">│</a>"
      (commd conf) vv pz_index pp_index ("&oi=" ^ (string_of_iper (get_iper p)))
@@ -1567,7 +1577,7 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses =
   in
   (* row 2: Hbar over spouses *)
   let tdal =
-    if v > 1 && ifaml<>[] then
+    if v >= 1 && ifaml<>[] then
       let lx = lastx tdal (ir+1) in
       let lx = if lx > -1 then lx else -1 in
       if only_anc = [] then
@@ -1578,7 +1588,7 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses =
   in
   (tdal, x)
 
-and f_pos conf base ifam p x0 v ir2 tdal only_anc spouses =
+and f_pos conf base ifam p x0 v ir2 tdal only_anc spouses images =
   let d_ir = if spouses then 1 else 0 in
   let sp = get_spouse base (get_iper p) ifam in
   let continue = (only_anc = []) || (List.mem ifam only_anc) in
@@ -1595,7 +1605,7 @@ and f_pos conf base ifam p x0 v ir2 tdal only_anc spouses =
           match kids with
           | [] -> tdal, x1, xn
           | kid :: kids ->
-              let (tdal, xn) = p_pos conf base kid (xn+2) (v-1) (ir2+d_ir+1) tdal only_anc spouses in
+              let (tdal, xn) = p_pos conf base kid (xn+2) (v-1) (ir2+d_ir+1) tdal only_anc spouses images in
               loop kids false tdal (if first then xn else x1) xn
         in loop kids true tdal 0 xn
       in
@@ -1603,11 +1613,12 @@ and f_pos conf base ifam p x0 v ir2 tdal only_anc spouses =
     else (tdal, x, x, x)
   in 
   (* row 3: spouses *)
-  let txt = get_text conf base sp in
+  let txt = get_text conf base sp (kids <> [])in
+  let br_sp = if (Util.has_image conf base sp) && images then "" else "<br>" in 
   let fam = foi base ifam in
   let marr_d = DateDisplay.short_marriage_date_text conf base fam p sp in
   let text = "& " ^ marr_d ^ " " ^ txt ^
-    (if kids <> [] then "|" else "")
+    (if kids <> [] then br_sp ^ "|" else "")
   in 
   let lx = lastx tdal ir2 in
   let lx = if lx > -1 then lx else -1 in
@@ -1649,7 +1660,7 @@ let complete_rows tdal =
 let init_tdal gv =
   let rec loop tdal v =
     match v with
-    | 0 -> tdal (* 4 rows per generation  (3 if spouses=off) *)
+    | -1 -> tdal (* 4 rows per generation  (3 if spouses=off) *)
     | _ -> loop ((0, []) :: (0, []) :: (0, []) :: (0, []) :: tdal) (v-1)
   in
   loop [] gv
@@ -1708,7 +1719,12 @@ let make_vaucher_tree_hts conf base gv p =
   let spouses =
     match Util.p_getenv conf.env "spouses" with
     | Some _ -> false
-    | _ -> true (* WIP, not working well so far *)
+    | _ -> true
+  in
+  let images =
+    match Util.p_getenv conf.env "image" with
+    | None -> true
+    | _ -> false
   in
   let (only_anc, op) =
     match Util.find_person_in_env_pref conf base "o" with
@@ -1719,7 +1735,7 @@ let make_vaucher_tree_hts conf base gv p =
     if only_anc then find_ancestors base (get_iper p) (get_iper op) [] gv else []
   in
   let tdal = init_tdal gv in
-  let (tdal, _) = p_pos conf base p 0 gv 0 tdal only_anc spouses in
+  let (tdal, _) = p_pos conf base p 0 gv 0 tdal only_anc spouses images in
   let tdal = complete_rows tdal in
   let tdal = clean_rows tdal in
   let tdal = manage_vbars tdal in
