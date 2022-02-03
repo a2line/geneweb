@@ -159,7 +159,7 @@ let rec eval_variable conf =
       loop 0 n ""
     in sub
   | "time" :: sl -> eval_time_var conf sl
-  | ["url"; evar; str] ->
+  | ["urlv"; evar; str] ->
       let url = Util.commd conf in
       List.fold_left (fun c (k, v) -> c ^
         (if k = evar then k ^ "=" ^ str else k ^ "=" ^ v) ^ "&") url conf.env
