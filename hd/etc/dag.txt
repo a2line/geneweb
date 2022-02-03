@@ -295,44 +295,43 @@
     </pre>
   %else;
     <table id="dag" width="100%%"><tr><td align="center">
-    <table border="%border;" cellspacing="0" cellpadding="0">
+    <table border="%border;" cellspacing="0" cellpadding="0" style="line-height:1rem;">
     %foreach;dag_line;
       <tr align="left">
       %foreach;dag_cell;
-        <td %if;(not dag_cell.is_hr)class="align-top"%end; 
-        %if;(dag_cell.colspan>1)colspan="%dag_cell.colspan;%end;" 
-        style="line-height:%if;(dag_cell.item!="")1rem
-                           %elseif;(dag_cell.is_bar)0.85rem%elseif;dag_cell.is_nothing;0rem%end;"
+        <td %if;(not dag_cell.is_hr)class="align-top%( position-relative%)"%end;
+          %if;(dag_cell.colspan>1) colspan="%dag_cell.colspan;"%end;
+          style="line-height:%if;(dag_cell.item!="")1rem
+                             %elseif;(dag_cell.is_bar)0.85rem
+                             %elseif;dag_cell.is_nothing;0.1rem%end;"
         %if;(evar.image!="off") valign="bottom"%end;
         align="%dag_cell.align;">%nn;
         %if;dag_cell.is_nothing;&nbsp;%nn;
         %elseif;dag_cell.is_bar;
           %if;(dag_cell.bar_link != "" and not cancel_links and evar.em!="R")
              %( added em!=R here condition because first button_rel is static and does the same %)
-            <a href="%dag_cell.bar_link;%if;(evar.image!="")&image=%evar.image;%end;" title="[*tree]">┃%if;(evar.m!="NG")<br>╹%end;</a>%nn;
-          %else;┃%end;
+            <a href="%dag_cell.bar_link;%if;(evar.image!="")&image=%evar.image;%end;" title="[*tree]">│</a>%nn;
+          %else;│%end;
         %elseif;(dag_cell.item != "")<div class="my-1">%dag_cell.item;</div>
         %elseif;(dag_cell.text != "")
           %if;(plugin.v7 and line_nbr!=0 and dag_cell.index!="-1")
-            <div class="list-group-item border-0" mx-0 px-0 style="zindex:0;">
-              <a href="%prefix_no_pmod;i=%dag_cell.index;&m=D&t=TV&%foreach;env_binding;%nn;
-                %if;(not (env.key="i" or env.key="p" or env.key="n" or env.key="oc" or
-                          env.key="m" or env.key="t"))%nn;
-                  %env.key;=%env.val;&%nn;
-              %end;%end;"
-              class="big_anchor list-group-item-action mx-0 px-0"
-              title="[*navigation]">|</a>
-            </div>
+            %( TODO : étendre ce lien de navigation à toute la cellule en fond en jouant avec z-index tout en gardant les 2 autres liens au-dessus, sans contenu pour éviter les doubles barres verticales, à défaut on les garde ! %)
+            <div><a href="%prefix_no_pmod;i=%dag_cell.index;&m=D&t=TV&%foreach;env_binding;%nn;
+              %if;(not (env.key="i" or env.key="p" or env.key="n" or env.key="oc" or
+                          env.key="m" or env.key="t"))%env.key;=%env.val;&%end;%end;"
+              title="[*navigation]" class="%(stretched-link%)" style="line-height:1rem">│</a>
+           </div>
           %end;
-        %dag_cell.text;
+          <div%if;(dag_cell.txt!="") class="mt-1"%end;>%dag_cell.text;</div>
 %( navigation cannot work until dag_cell carries the appropriate access values %)
         %else;
+          %( TODO : trouver une condition pour un hr stylisé pour les conjoints %)
           %if;dag_cell.is_hr_left;
-            <hr class="%left;"%/>%nn;
+            <hr%if;(line_nbr=1) style="border-top: 1px dotted red;"%end; class="%left;"%/>%nn;
           %elseif;dag_cell.is_hr_right;
-            <hr class="%right;">%nn;
+            <hr%if;(line_nbr=1) style="border-top: 1px dotted red;"%end; class="%right;">%nn;
           %else;
-            <hr class="full"%/>%nn;
+            <hr%if;(line_nbr=1) style="border-top: 1px dashed red;"%end; class="full"%/>%nn;
           %end;
         %end;
         </td>
@@ -343,7 +342,6 @@
     </td></tr></table>
   %end;
 %end;
-<br>
 %include;trl
 %include;copyr
 </div>

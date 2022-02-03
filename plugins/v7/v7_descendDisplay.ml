@@ -1548,7 +1548,7 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses =
   in  
   let txt = get_text conf base p in
   let only =
-     Printf.sprintf "<a href=\"%sm=D&t=TV%s%s%s%s\" title=\"%s\">|</a>"
+     Printf.sprintf "<a href=\"%sm=D&t=TV%s%s%s%s\" title=\"%s\" style=\"line-height:1rem\">│</a>"
      (commd conf) vv pz_index pp_index ("&oi=" ^ (string_of_iper (get_iper p)))
      (Utf8.capitalize_fst (Util.transl conf "limit tree to ancestors and siblings"))
   in
@@ -1607,7 +1607,7 @@ and f_pos conf base ifam p x0 v ir2 tdal only_anc spouses =
   let fam = foi base ifam in
   let marr_d = DateDisplay.short_marriage_date_text conf base fam p sp in
   let text = "& " ^ marr_d ^ " " ^ txt ^
-    (if kids <> [] then "<br>|" else "")
+    (if kids <> [] then "|" else "")
   in 
   let lx = lastx tdal ir2 in
   let lx = if lx > -1 then lx else -1 in

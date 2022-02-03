@@ -733,7 +733,7 @@ let make_tree_hts conf base elem_txt vbar_txt invert set spl d =
                      p ps
                  | None -> ""
                in
-               txt ^ "<br" ^ ">\n&amp;" ^ d ^ " " ^
+               txt ^ "\n&amp;" ^ d ^ " " ^
                string_of_item conf base (elem_txt ps) ^
                image_txt conf base ps)
           txt spouses
