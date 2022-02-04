@@ -1,0 +1,129 @@
+<!-- $Id: buttons_dag.txt v7.xx exp 03/02/2022 16:40:26 $ -->
+<!-- Copyright (c) 1998-2022 INRIA -->
+%( Boutons de configurations et d’options pour les arbres descendants TODO : et dag ! %)
+%( TODO: fix urlv on dag and t=T %)
+%define;urlv(x,y)
+  %urlv.x.y;
+%end;test urlv: %urlv.p.boo;
+<hr>
+%if;(evar.slices!="on")
+  %if;(evar.notab != "on" and evar.t!="TV")
+    <div class="text-%right">
+      <a href="%prefix_base_password;%foreach;env_binding;%env.key;=%env.val;;%end;%nn;
+            notab=on;slices=on" accesskey="/"
+        title="[*display by slices/slice width/overlap/total width]0">
+        <span>//</span>
+      </a>
+    </div>
+  %end;
+%end;
+%let;evarv;%if;(evar.v!="")%evar.v;%else;3%end;%in;
+%let;maxlev;%apply;min%with;%if;(bvar.max_desc_tree!="")%bvar.max_desc_tree;%end;
+                       %and;%if;(bvar.max_desc_level!="")%bvar.max_desc_level;%end;
+                       %and;%( %static_max_desc_level; TODO fixer cette variable pour dag !%)9%end;%in;
+%let;maxv;%if;(maxlev<10 or maxlev<evarv+5)%expr(maxlev+1)
+          %elseif;(maxlev>=evarv+5 and evarv>5)%expr(evarv+5)
+          %else;10%end;%in;
+%let;minv;%if;(maxlev>9 and maxlev<evarv+5)%expr(maxv-9)
+          %elseif;(maxlev>9 and evarv>5)%expr(evarv-4)
+          %else;1%end;%in;
+%( minv %minv; < evarv %evarv; < maxv %maxv; (maxlev %maxlev;) %)
+%if;(evar.m="A" or evar.m="D")
+  <div class="btn-toolbar" role="toolbar" arial-label="dag config buttons toolbar">
+    <div class="btn-group mr-2" role="group" aria-label="first group">
+      %if;(maxlev>9 and evarv>5)
+        <a role="button" href="%apply;urlv%with;v%and;%expr(evarv-1)%end;"
+          class="btn btn-sm border-0 px-0 small"
+          title="(-1) [visualize/show/hide/summary]1 %expr(evarv-5) [generation/generations]1 (max %maxlev;)"> -⁵</a>
+        <a role="button" href="%apply;urlv%with;v%and;%expr(evarv-5)%end;"
+          class="btn btn-sm border-0 px-0 small"
+          title="(-5) [visualize/show/hide/summary]1 %expr(evarv-1) [generation/generations]1 (max %maxlev;)"> -</a>
+      %end;
+      %for;i;minv;maxv;
+        <a role="button" id="v%i;" class="btn px-1 py-0 my-0 border-0
+          btn-outline-%if;(evarv!=i)primary%else;dark font-weight-bold disabled" aria-disabled="true%end;"
+          %if;(evarv!=i)href="%apply;urlv%with;v%and;%expr(i)%end;"%end;
+          title="%if;(evarv!=i)[*visualize/show/hide/summary]1 %i; %if;(i=1)[generation/generations]0%else;[generation/generations]1%end;
+          %end; %if;(i=maxlev)(max)%end;">%i;</a>
+      %end;
+      %if;(maxlev>9 and maxlev-evarv>=5)
+        <a role="button" href="%apply;urlv%with;v%and;%expr(evarv+1)%end;"
+          class="btn btn-outline-secondary btn-sm border-0 px-0 small"
+          title="(+1) [visualize/show/hide/summary]1 %expr(evarv+1) [generation/generations]1 (max %maxlev;)"> +</a>
+        <a role="button" href="%apply;urlv%with;v%and;%expr(evarv+5)%end;"
+          class="btn btn-outline-secondary btn-sm border-0 px-0 small"
+          title="(+5) [visualize/show/hide/summary]1 %expr(evarv+5) [generation/generations]1 (max %maxlev;)"> +⁵</a>
+      %end;
+    </div>
+    <div class="btn-group" role="group" aria-label="second group">
+      <a role="button" class="mr-2"
+        href="%if;(evar.t="T")%urlv.t.TV;%else;%urlv.t.T;%end;"
+        title="%if;(evar.t="T")[*visualize/show/hide/summary]2%else;[*visualize/show/hide/summary]1%end; [compact form]">
+        <i class="fas fa-compress fa-fw%if;(evar.t!="T") text-danger%end;"></i>
+      </a>
+      <a role="button" class="mr-2" href="%if;(evar.image="")%urlv.image.off;%else;%urlv.image;%end;"
+        title="%if;(evar.image="")[*visualize/show/hide/summary]2%else;%nn;
+        [*visualize/show/hide/summary]1%end; [image/images]1">
+        <i class="fa fa-image fa-fw%if;(evar.image="") text-danger%end;"></i>
+      </a>
+      <a role="button" class="mr-2" href="%if;(evar.spouses="")%urlv.spouses.off;%else;%urlv.spouses;%end;"
+          title="%if;(evar.spouses="")[*visualize/show/hide/summary]2%else;%nn;
+            [*visualize/show/hide/summary]1%end; [spouse/spouses]1">
+          <i class="fa fa-user-plus fa-fw%if;(evar.spouses="") text-danger%end;"></i>
+        </a>
+      %( TODO: to delete or to implement, no actual effect on graphs 
+      %if;(evarv>1 and (evar.t="T" or evar.t="TV"))
+        <a role="button" class="mr-2%if;(evar.dag="on") disabled" aria-disabled="true" %else;"
+          href="%if;(evar.marriage="")%urlv.marriage.on;%else;%urlv.marriage;%end;"%end;
+          title="%if;(evar.marriage="")[*visualize/show/hide/summary]2%nn;
+                 %else;[*visualize/show/hide/summary]1%end; [date of marriage]">
+          <i class="fa fa-venus-mars fa-fw%if;(evar.marriage="") text-danger%end;"></i>
+        </a>
+      %end; %)
+      <a role="button" class="btn p-0%if;(evar.t!="T") disabled" aria-disabled="true"
+        %else;" href="%if;(evar.dag="")%urlv.dag.on;%else;urlv.dag;%end;"%end;
+        title="%if;(evar.dag="")[*dag on/dag off]0%else;[*dag on/dag off]1%end;">
+        <i class="fa fa-random fa-fw%if;(evar.dag="on") text-danger%end;"></i>
+      </a>
+    </div>
+  </div>
+
+%( <a href="%prefix_base_password;" accesskey="T"></a> ??TODO:remove? %)
+%elseif;(evar.m="RLM" or evar.m="DAG")
+  <div class="d-flex justify-content-between">
+    <div class="mt-2 mb-4 h2">[*multi relations graph]</div>
+    <div class="btn-toolbar mt-4 mr-2" role="toolbar"aria-label="Toolbar for dag/images/edit tree buttons" style='%if;(evar.wide="on")transform:translateX(-40px)%end;'>
+      <div class="btn-group">
+        <a role="button" href="%prefix_base_password;%nn;
+           %foreach;env_binding;%if;(env.key!="image" and env.val!="")%env.key;=%env.val;;%end;%end;%nn;
+           %if;(evar.image!="off")image=off;%end;"
+           title="%if;(evar.image!="off")[*visualize/show/hide/summary]2%else;%nn;
+           [*visualize/show/hide/summary]1%end; [image/images]1">
+          <i class="fa fa-image fa-lg%if;(evar.image!="off") text-muted%end;"></i>
+        </a>
+      </div>
+      <div class="btn-group ml-2">
+        <a role="button" href="%prefix_base_password;%nn;
+          %foreach;env_binding;%if;(env.key!="dag" and env.val!="")%env.key;=%env.val;;%end;%end;%nn;
+          %if;(evar.dag!="on")dag=on;%end;"
+          title="%if;(evar.dag="on")[*dag on/dag off]1%else;[*dag on/dag off]0%end;">
+          <i class="far fa-arrow-alt-circle-right fa-lg%if;(evar.dag="on") text-muted%end;"></i>
+        </a>
+      </div>
+      <div class="btn-group ml-2">
+        %if;plugin.v7;
+         <a role="button" href="%prefix_base_password;m=TP&v=upd%evar.m;&%nn;
+           %foreach;env_binding;%if(env.key!="m" and env.val!="")%env.key;=%env.val;&%end;%end;">
+          <span class="far fa-edit fa-lg mb-1" title="[*edit tree]"></span>
+         </a>
+        %else;
+          <a role="button" href="%prefix_base_password;m=U;et=S;i=2;%nn;
+            %foreach;env_binding;%if;(env.key!="m" and env.val!="")%env.key;=%env.val;;%end;%end;%nn;
+            mode=%evar.m;;upddag=on;">
+            <span class="far fa-edit fa-lg mb-1" title="[*edit tree]"></span>
+          </a>
+        %end;
+      </div>
+    </div>
+  </div>
+%end;
