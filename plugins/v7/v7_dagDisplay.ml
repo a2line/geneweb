@@ -819,7 +819,7 @@ let print_slices_menu conf hts =
   Output.print_string conf "</table>\n";
   Output.print_string conf "<p>" ;
   Output.printf conf
-    "<p><button type=\"submit\" class=\"btn btn-secondary btn-lg\">%s</button></p>"
+    "<p><button type=\"submit\" class=\"btn btn-primary btn-lg\">%s</button></p>"
     (Utf8.capitalize_fst (transl_nth conf "validate/delete" 0));
   Output.print_string conf "</form>\n";
   Hutil.trailer conf

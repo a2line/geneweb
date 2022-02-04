@@ -856,7 +856,6 @@ zzz est lui même si yyy="desc" ou son conjoint si yyy="spous"
 %foreach;sorted_list_item;
   %incr_count;
 %end;
-
 <div>[*total][:]
   %if;(evar.v<=static_max_desc_level)
     %if;(evar.only="on")

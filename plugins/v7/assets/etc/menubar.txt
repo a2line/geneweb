@@ -386,6 +386,6 @@ fr: Sélectionnez les modules en cliquant sur le bouton correspondant (max 15).
   %include;home
   </div>
   %if;(evar.m="C" and evar.v1!="" or evar.v2!="" and not cancel_links)
-    %include;cousins_tools
+    %include;buttons_cousins
   %end;
 %end;
