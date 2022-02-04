@@ -59,25 +59,24 @@ let image_txt conf base p =
       if has_image conf base p then
         match image_and_size conf base p (limited_image_size 100 75) with
           Some (true, f, Some (wid, hei)) ->
-            "\n<center><table border=\"0\"><tr align=\"left\"><td>\n" ^
+            "\n<center>\n" ^
             image_normal_txt conf base p f wid hei ^
-            "</td></tr></table></center>\n"
+            "</center>\n"
         | Some (true, f, None) ->
-            "\n<center><table border=\"0\"><tr align=\"left\"><td>\n" ^
+            "\n<center><\n" ^
             image_normal_txt conf base p f 0 75 ^
-            "</td></tr></table></center>\n"
+            "</center>\n"
         | Some (false, url, Some (wid, hei)) ->
             let url_p = commd conf ^ acces conf base p in
-            "\n<center><table border=\"0\"><tr align=\"left\"><td>\n" ^
+            "\n<center>\n" ^
             image_url_txt_with_size conf url_p url wid hei ^
-            "</td></tr></table></center>\n"
+            "</center>\n"
         | Some (false, url, None) ->
             let url_p = commd conf ^ acces conf base p in
             let height = 75 in
             (* La hauteur est ajoutée à la table pour que les textes soient alignés. *)
-            "\n<center><table border=\"0\" style=\"height: " ^ string_of_int height ^
-            "px\"><tr align=\"left\"><td>\n" ^
-              image_url_txt conf url_p url height ^ "</td></tr></table></center>\n"
+            "\n<center style=\"height: " ^ string_of_int height ^ "px\">\n" ^
+              image_url_txt conf url_p url height ^ "</center>\n"
         | _ -> ""
       else
         ""

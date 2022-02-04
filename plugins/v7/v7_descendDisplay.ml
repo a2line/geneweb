@@ -1463,10 +1463,8 @@ let get_text conf base p filler =
   let txt =
     if auth then txt ^ DateDisplay.short_dates_text conf base p else txt
   in
-  let vbar_image = if filler then Printf.sprintf "\
-\n<center><table border=\"0\"><tr align=\"left\"><td>\n\
-<img src=\"%sm=IM&v=vbar.jpg\" class=\"mb-1\">\
-</td></tr></table></center>\n"
+  let vbar_image = if filler then Printf.sprintf
+    "<br><img src=\"%sm=IM&v=vbar.jpg\" class=\"mb-1\">\n"
     (commd conf)
     else ""
   in
