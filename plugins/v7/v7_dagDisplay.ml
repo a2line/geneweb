@@ -896,7 +896,12 @@ let eval_predefined_apply conf f vl =
 
 let rec eval_var conf page_title next_txt env _xx _loc =
   function
-    "dag" :: sl ->
+  | ["browsing_with_sosa_ref"] ->
+      begin match (Util.p_getenv conf.env "pz", Util.p_getenv conf.env "nz") with
+      | (Some _, Some _) -> VVbool true
+      | (_, _) -> VVbool false
+      end
+  | "dag" :: sl ->
       begin match get_env "dag" env with
         Vdag d -> eval_dag_var conf d sl
       | _ -> raise Not_found
@@ -917,8 +922,9 @@ let rec eval_var conf page_title next_txt env _xx _loc =
       | Vdline i -> VVstring (string_of_int i)
       | _ -> raise Not_found
       end
- | ["link_next"] -> VVstring next_txt
+  | ["link_next"] -> VVstring next_txt
   | ["static_max_anc_level"] -> VVstring "10"
+  | ["static_max_desc_level"] -> VVstring "10"
   | _ -> raise Not_found
 and eval_dag_var _conf (tmincol, tcol, _colminsz, colsz, _ncol) =
   function

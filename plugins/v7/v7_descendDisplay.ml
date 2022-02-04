@@ -1776,13 +1776,13 @@ let print conf base p =
   if templ <> "" then !V7_interp.templ templ conf base p
   else
     match p_getenv conf.env "t", p_getint conf.env "v" with
-      Some "B", Some v -> DescendDisplay.print_aboville conf base v p
-    | Some "S", Some v -> DescendDisplay.display_descendants_level conf base v p
-    | Some "K", Some v -> DescendDisplay.display_descendant_with_table conf base v p
-    | Some "N", Some v -> DescendDisplay.display_descendants_with_numbers conf base v p
-    | Some "G", Some v -> DescendDisplay.display_descendant_index conf base v p
-    | Some "C", Some v -> DescendDisplay.display_spouse_index conf base v p
-    | Some "T", Some v -> DescendDisplay.print_tree conf base v p
+      Some "B", Some v -> print_aboville conf base v p
+    | Some "S", Some v -> display_descendants_level conf base v p
+    | Some "K", Some v -> display_descendant_with_table conf base v p
+    | Some "N", Some v -> display_descendants_with_numbers conf base v p
+    | Some "G", Some v -> display_descendant_index conf base v p
+    | Some "C", Some v -> display_spouse_index conf base v p
+    | Some "T", Some v -> print_tree conf base v p
     | Some "TV", Some v -> print_vaucher_tree conf base v p
     | _ -> desmenu_print conf base p
 

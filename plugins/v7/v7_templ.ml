@@ -159,10 +159,28 @@ let rec eval_variable conf =
       loop 0 n ""
     in sub
   | "time" :: sl -> eval_time_var conf sl
-  | ["urlv"; evar; str] ->
+  | ["urlv"; evar;]  ->
       let url = Util.commd conf in
-      List.fold_left (fun c (k, v) -> c ^
-        (if k = evar then k ^ "=" ^ str else k ^ "=" ^ v) ^ "&") url conf.env
+      let url = (List.hd (String.split_on_char '?' url)) ^ "?" in
+      let url = List.fold_left (fun c (k, v) ->
+        if k = evar then c
+        else
+          if v = "" then c
+          else (c ^ k ^ "=" ^ v ^ "&")) url conf.env
+      in
+      String.sub url 0 (String.length url - 1)
+  | ["urlv"; evar; str]  ->
+      let url = Util.commd conf in
+      let url = (List.hd (String.split_on_char '?' url)) ^ "?" in
+      let (url, t) = List.fold_left (fun (c, t) (k, v) ->
+        if k = evar then
+          ((c ^ k ^ "=" ^ str ^ "&"), true)
+        else
+          if v = "" then (c, t)
+          else ((c ^ k ^ "=" ^ v ^ "&"), t)) (url, false) conf.env
+      in
+      let url = String.sub url 0 (String.length url - 1) in
+      if t then url else (url ^ "&" ^ evar ^ "=" ^ str)
   | ["user"; "ident"] -> conf.user
   | ["user"; "name"] -> conf.username
   | [s] -> eval_simple_variable conf s
@@ -432,11 +450,6 @@ let loc_of_expr =
 
 let templ_eval_var conf =
   function
-  | ["browsing_with_sosa_ref"] ->
-      begin match Util.p_getenv conf.env "sosa_ref" with
-        Some _ -> VVbool true
-      | _ -> VVbool false
-      end
   | ["cancel_links"] -> VVbool (Util.p_getenv conf.env "cgl" = Some "on" )
   | ["cgi"] -> VVbool conf.cgi
   | ["false"] -> VVbool false
