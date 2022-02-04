@@ -165,7 +165,7 @@ let rec eval_variable conf =
       let url = List.fold_left (fun c (k, v) ->
         if k = evar then c
         else
-          if v = "" then c
+          if v = "" || (k = "oc" && v = "0") || (k = "ocz" && v = "0") then c
           else (c ^ k ^ "=" ^ v ^ "&")) url conf.env
       in
       String.sub url 0 (String.length url - 1)
@@ -176,7 +176,7 @@ let rec eval_variable conf =
         if k = evar then
           ((c ^ k ^ "=" ^ str ^ "&"), true)
         else
-          if v = "" then (c, t)
+          if v = "" || (k = "oc" && v = "0") || (k = "ocz" && v = "0") then (c, t)
           else ((c ^ k ^ "=" ^ v ^ "&"), t)) (url, false) conf.env
       in
       let url = String.sub url 0 (String.length url - 1) in
