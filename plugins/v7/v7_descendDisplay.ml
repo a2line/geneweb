@@ -1565,20 +1565,16 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses images marriages =
   in  
   let txt = get_text conf base p ((ifaml <> []) && spouses) in
   let only =
-     Printf.sprintf "<a href=\"%sm=D&t=TV%s%s%s%s%s%s\" %s title=\"%s\">│</a>"
+     Printf.sprintf "<a href=\"%sm=D&t=TV%s%s%s%s%s%s\" %s title=\"%s\">&nbsp;│&nbsp;</a>"
      (commd conf) vv pz_index pp_index ("&oi=" ^ (string_of_iper (get_iper p)))
-     (if spouses then "" else "spouse=off") (if images then "" else "&image=off")
+     (if spouses then "" else "&sp=off") (if images then "" else "&im=off")
      ("class=\"normal_anchor\"")
      (Utf8.capitalize_fst (Util.transl conf "limit tree to ancestors and siblings"))
   in
   let text = if ir > 0 then only ^ "<br>" ^ txt else txt in
   (* ajouter un marqueur ici si enfants et on ne continue pas !!   *)
   let continue = only_anc = [] || ifaml <> [] in
-  let br =
-    match p_getenv conf.env "image" with
-    | Some _ -> "<br>"
-    | None -> ""
-  in
+  let br = if images then "<br>" else "" in
   let text = if (not continue && descendants) then text ^ br ^ "+" else text in
   let lx = if lx > -1 then lx else -1 in
   let tdal = 
@@ -1727,24 +1723,18 @@ let rec find_ancestors base iap ip list v =
 let make_vaucher_tree_hts conf base gv p =
   let spouses =
     match Util.p_getenv conf.env "spouse", Util.p_getenv conf.env "sp" with
-    | Some "on", _ -> true
-    | _, Some "on" -> true
-    | Some _, _ -> false
-    | _, Some _ -> false
+    | Some _, _ | _, Some _ -> false
     | _ -> true
   in
   let marriages =
     match Util.p_getenv conf.env "marriage", Util.p_getenv conf.env "ma" with
-    | Some "on", _ -> true
-    | _, Some "on" -> true
-    | _, Some _ -> false
-    | Some _, _ -> false
+    | Some _, _ | _, Some _ -> false
     | _ -> true
   in
   let images =
     match Util.p_getenv conf.env "image", Util.p_getenv conf.env "im" with
-    | None, None -> true
-    | _ -> false
+    | Some _, _ | _, Some _ -> false
+    | _ -> true
   in
   let (only_anc, op) =
     match Util.find_person_in_env_pref conf base "o" with

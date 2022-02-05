@@ -53,8 +53,8 @@ let image_url_txt_with_size conf url_p url width height =
   "</a>\n"
 
 let image_txt conf base p =
-  match p_getenv conf.env "image" with
-    Some "off" -> ""
+  match p_getenv conf.env "image", p_getenv conf.env "im" with
+  | Some _, _ | _, Some _ -> ""
   | _ ->
       if has_image conf base p then
         match image_and_size conf base p (limited_image_size 100 75) with
