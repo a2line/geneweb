@@ -46,8 +46,8 @@
         <a role="button" href="%prefix_base_password;%foreach;env_binding;%if;(env.key!="m" and env.key!="t")%env.key=%env.val;&%end;%end;m=D&t=T"
          class="btn btn-outline-primary border-%if;(evar.m="D" and evar.t="T")2 disabled font-weight-bold%else;0%end;"
           title="[*descendants tree]"><i class="fas fa-sitemap fa-lg"></i><br>[*tree] desc.</a>
-        <a role="button" class="btn btn-outline-primary border-%if;(evar.m="D" and evar.t="TV")2 disabled font-weight-bold%else;0%end;"
-          href="%prefix_base_password;%foreach;env_binding;%if;(env.key!="m" and env.key!="t" and env.key!="dag")%env.key=%env.val;&%end;%end;m=D&t=TV"
+        <a role="button" class="btn btn-outline-primary border-%if;(evar.m="D" and evar.t="TV" and evar.oi=""))2 disabled font-weight-bold%else;0%end;"
+          href="%prefix_base_password;%foreach;env_binding;%if;(env.key!="m" and env.key!="t" and env.key!="dag" and env.key!="oi")%env.key=%env.val;&%end;%end;m=D&t=TV"
           title="%if;(evar.t="T")[*visualize/show/hide/summary]2%else;[*visualize/show/hide/summary]1%end; [compact form]"><i class="fas fa-compress fa-lg"></i><br>Compact</a>
     </div>
     <div class="">
@@ -92,7 +92,7 @@
         </a>
       </div>
       %( TODO: to implement on m="D", no actual effect on graphs ! %)
-      %if;(evarv>1 and evar.t="T")
+      %if;(evarv>1)
         <div class="border rounded mr-1">
           <a role="button" class="btn btn-sm btn-outline-primary border-%if;(evar.marriage="" or evar.m="D")0%else;2%end;%if;(evar.dag="on" or evar.m="D") disabled%(?%)%end;"
             href="%if;(evar.marriage="")%urlv.marriage.on;%else;%urlv.marriage;%end;"

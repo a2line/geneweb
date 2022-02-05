@@ -1517,7 +1517,7 @@ let get_spouse base iper ifam =
 
 *)
 
-let rec p_pos conf base p x0 v ir tdal only_anc spouses images =
+let rec p_pos conf base p x0 v ir tdal only_anc spouses images marriages =
   let lx = lastx tdal ir in
   let x = if (lx+2) > x0 then (lx+2) else x0 in
   (*let x1 = x in
@@ -1540,7 +1540,7 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses images =
           match ifaml with
           | [] -> tdal, x1, xn
           | ifam :: ifaml ->
-              let (tdal, xn) = f_pos conf base ifam p (xn+2) v (ir+2) tdal only_anc spouses images in
+              let (tdal, xn) = f_pos conf base ifam p (xn+2) v (ir+2) tdal only_anc spouses images marriages in
               loop ifaml false (if first then xn else x1) xn tdal
         in loop ifaml true 0 xn tdal
       in
@@ -1563,10 +1563,11 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses images =
     | Some p -> "&iz=" ^ (string_of_iper (get_iper p))
     | None -> ""
   in  
-  let txt = get_text conf base p (ifaml <> []) in
+  let txt = get_text conf base p ((ifaml <> []) && spouses) in
   let only =
-     Printf.sprintf "<a href=\"%sm=D&t=TV%s%s%s%s\" %s title=\"%s\">│</a>"
+     Printf.sprintf "<a href=\"%sm=D&t=TV%s%s%s%s%s%s\" %s title=\"%s\">│</a>"
      (commd conf) vv pz_index pp_index ("&oi=" ^ (string_of_iper (get_iper p)))
+     (if spouses then "" else "spouse=off") (if images then "" else "&image=off")
      ("class=\"normal_anchor\"")
      (Utf8.capitalize_fst (Util.transl conf "limit tree to ancestors and siblings"))
   in
@@ -1596,7 +1597,7 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses images =
   in
   (tdal, x)
 
-and f_pos conf base ifam p x0 v ir2 tdal only_anc spouses images =
+and f_pos conf base ifam p x0 v ir2 tdal only_anc spouses images marriages =
   let d_ir = if spouses then 1 else 0 in
   let sp = get_spouse base (get_iper p) ifam in
   let continue = (only_anc = []) || (List.mem ifam only_anc) in
@@ -1613,7 +1614,7 @@ and f_pos conf base ifam p x0 v ir2 tdal only_anc spouses images =
           match kids with
           | [] -> tdal, x1, xn
           | kid :: kids ->
-              let (tdal, xn) = p_pos conf base kid (xn+2) (v-1) (ir2+d_ir+1) tdal only_anc spouses images in
+              let (tdal, xn) = p_pos conf base kid (xn+2) (v-1) (ir2+d_ir+1) tdal only_anc spouses images marriages in
               loop kids false tdal (if first then xn else x1) xn
         in loop kids true tdal 0 xn
       in
@@ -1621,10 +1622,10 @@ and f_pos conf base ifam p x0 v ir2 tdal only_anc spouses images =
     else (tdal, x, x, x)
   in 
   (* row 3: spouses *)
-  let txt = get_text conf base sp (kids <> [])in
+  let txt = get_text conf base sp ((kids <> [])&& spouses) in
   let br_sp = if (Util.has_image conf base sp) && images then "" else "<br>" in 
   let fam = foi base ifam in
-  let marr_d = DateDisplay.short_marriage_date_text conf base fam p sp in
+  let marr_d = if marriages then DateDisplay.short_marriage_date_text conf base fam p sp else "" in
   let text = "& " ^ marr_d ^ " " ^ txt ^
     (if kids <> [] then br_sp ^ "|" else "")
   in 
@@ -1725,12 +1726,20 @@ let rec find_ancestors base iap ip list v =
 
 let make_vaucher_tree_hts conf base gv p =
   let spouses =
-    match Util.p_getenv conf.env "spouses" with
+    match Util.p_getenv conf.env "spouse" with
+    | Some "on" -> true
+    | Some _ -> false
+    | _ -> true
+  in
+  let marriages =
+    match Util.p_getenv conf.env "marriage" with
+    | Some "on" -> true
     | Some _ -> false
     | _ -> true
   in
   let images =
     match Util.p_getenv conf.env "image" with
+    | Some "on" -> true
     | None -> true
     | _ -> false
   in
@@ -1743,7 +1752,7 @@ let make_vaucher_tree_hts conf base gv p =
     if only_anc then find_ancestors base (get_iper p) (get_iper op) [] gv else []
   in
   let tdal = init_tdal gv in
-  let (tdal, _) = p_pos conf base p 0 gv 0 tdal only_anc spouses images in
+  let (tdal, _) = p_pos conf base p 0 gv 0 tdal only_anc spouses images marriages in
   let tdal = complete_rows tdal in
   let tdal = clean_rows tdal in
   let tdal = manage_vbars tdal in

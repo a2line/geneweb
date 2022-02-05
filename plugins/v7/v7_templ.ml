@@ -124,14 +124,14 @@ let setup_link conf =
 
 let rec eval_variable conf =
   function
-    ["bvar"; v] -> (try List.assoc v conf.base_env with Not_found -> "")
-  | ["evar"; v; "ns"] ->
+    ["bvar"; v] | ["b"; v]-> (try List.assoc v conf.base_env with Not_found -> "")
+  | ["evar"; v; "ns"] | ["e"; v; "ns"] ->
       begin try
         let vv = List.assoc v (conf.env @ conf.henv) in
         Util.escape_html (Mutil.gen_decode false vv)
       with Not_found -> ""
       end
-  | ["evar"; v] ->
+  | ["evar"; v] | ["e"; v] ->
       begin match Util.p_getenv (conf.env @ conf.henv) v with
         Some vv -> Util.escape_html vv
       | None -> ""
