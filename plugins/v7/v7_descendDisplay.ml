@@ -1726,21 +1726,24 @@ let rec find_ancestors base iap ip list v =
 
 let make_vaucher_tree_hts conf base gv p =
   let spouses =
-    match Util.p_getenv conf.env "spouse" with
-    | Some "on" -> true
-    | Some _ -> false
+    match Util.p_getenv conf.env "spouse", Util.p_getenv conf.env "sp" with
+    | Some "on", _ -> true
+    | _, Some "on" -> true
+    | Some _, _ -> false
+    | _, Some _ -> false
     | _ -> true
   in
   let marriages =
-    match Util.p_getenv conf.env "marriage" with
-    | Some "on" -> true
-    | Some _ -> false
+    match Util.p_getenv conf.env "marriage", Util.p_getenv conf.env "ma" with
+    | Some "on", _ -> true
+    | _, Some "on" -> true
+    | _, Some _ -> false
+    | Some _, _ -> false
     | _ -> true
   in
   let images =
-    match Util.p_getenv conf.env "image" with
-    | Some "on" -> true
-    | None -> true
+    match Util.p_getenv conf.env "image", Util.p_getenv conf.env "im" with
+    | None, None -> true
     | _ -> false
   in
   let (only_anc, op) =
