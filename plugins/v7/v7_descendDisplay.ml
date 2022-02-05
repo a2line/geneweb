@@ -1059,6 +1059,16 @@ let display_descendant_with_table conf base max_lev p =
   Hutil.trailer conf
 
 let make_tree_hts conf base gv p =
+  let spouses =
+    match Util.p_getenv conf.env "spouse", Util.p_getenv conf.env "sp" with
+    | Some _, _ | _, Some _ -> false
+    | _ -> true
+  in
+  let marriages =
+    match Util.p_getenv conf.env "marriage", Util.p_getenv conf.env "ma" with
+    | Some _, _ | _, Some _ -> false
+    | _ -> true
+  in
   let bd =
     match Util.p_getint conf.env "bd" with
       Some x -> x
@@ -1233,10 +1243,12 @@ let make_tree_hts conf base gv p =
                   if auth then txt ^ DateDisplay.short_dates_text conf base sp
                   else txt
                 in
+                let txt = if spouses then txt else "" in
                 "&amp;" ^
-                (if auth then DateDisplay.short_marriage_date_text conf base fam p sp
+                (if auth && marriages then DateDisplay.short_marriage_date_text conf base fam p sp
                  else "") ^
-                "&nbsp;" ^ txt ^ DagDisplay.image_txt conf base sp
+                "&nbsp;" ^ txt ^ 
+                  (if spouses then DagDisplay.image_txt conf base sp else "")
               in
               let s =
                 if bd > 0 || td_prop <> "" then
@@ -1291,8 +1303,10 @@ let make_tree_hts conf base gv p =
         Array.of_list (List.rev tdl) :: tdal
       in
       let tdal =
-        let tdl = List.fold_left (spouses_txt v) [] gen in
-        Array.of_list (List.rev tdl) :: tdal
+        if true then
+          let tdl = List.fold_left (spouses_txt v) [] gen in
+          Array.of_list (List.rev tdl) :: tdal
+        else tdal
       in
       if v > 1 then loop tdal gen (next_gen gen) (v - 1) else tdal
     in

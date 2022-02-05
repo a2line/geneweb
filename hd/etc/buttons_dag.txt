@@ -84,7 +84,7 @@
         </a>
       </div>
       <div class="border rounded mr-1">
-        <a role="button" class="btn btn-sm btn-outline-primary border-%if;(e.sp="")2%else;0%end;%if;(not (evar.m="D" and evar.t="TV")) disabled border-0%end;""
+        <a role="button" class="btn btn-sm btn-outline-primary border-%if;(e.sp="")2%else;0%end;"
           href="%if;(e.sp="")%urlv.sp.off;%else;%urlv.sp;%end;"
           title="%if;(e.sp="")[*visualize/show/hide/summary]2%else;%nn;
             [*visualize/show/hide/summary]1%end; [spouse/spouses]1">
@@ -94,7 +94,7 @@
       %( TODO: to implement on m="D", no actual effect on graphs ! %)
       %if;(evarv>1)
         <div class="border rounded mr-1">
-          <a role="button" class="btn btn-sm btn-outline-primary border-%if;(e.ma="" or evar.m="D")0%else;2%end;%if;(evar.dag="on" or evar.m="D") disabled%(?%)%end;"
+          <a role="button" class="btn btn-sm btn-outline-primary border-%if;(e.ma="" or evar.m="D")0%else;2%end;%if;(evar.dag="on") disabled%(?%)%end;"
             href="%if;(e.ma="")%urlv.ma.on;%else;%urlv.ma;%end;"
             title="%if;(e.ma="")[*visualize/show/hide/summary]2%nn;
                  %else;[*visualize/show/hide/summary]1%end; [date of marriage]">
