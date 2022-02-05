@@ -63,7 +63,7 @@ let image_txt conf base p =
             image_normal_txt conf base p f wid hei ^
             "</center>\n"
         | Some (true, f, None) ->
-            "\n<center><\n" ^
+            "\n<center>\n" ^
             image_normal_txt conf base p f 0 75 ^
             "</center>\n"
         | Some (false, url, Some (wid, hei)) ->

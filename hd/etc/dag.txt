@@ -1,40 +1,48 @@
 <!DOCTYPE html>
 <html lang="%lang;">
 <head>
-  <!-- $Id: dag.txt, v7-exp 28/10/2018 16:58:09 ddr hg Exp $ -->
-  <!-- Copyright (c) 1998-2018 INRIA -->
+  <!-- $Id: dag.txt, v7.xx 04/02/2022 14:45:14 ddr hg a2 $ -->
+  <!-- Copyright (c) 1998-2022 INRIA -->
   <title>%nn;
-    %if;(evar.slices = "on")
-      [*display by slices/slice width/overlap/total width]0%nn;
-    %else;%head_title;%end;
+    %if;(evar.slices = "on")[*display by slices/slice width/overlap/total width]0%nn;
+    %else;%apply;capitalize(head_title)%end;
   </title>
   <meta name="robots" content="none">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <link rel="shortcut icon" href="%image_prefix;/favicon_gwd.png">
 %include;css
-%include;hed
 </head>
 <body%body_prop;>
+%include;hed
 %message_to_wizard;
 %( TODO include;menubar %index, %foreach;family, do not work in this context %)
 %let;prefix_a;%prefix_base_password&p=%evar.p;&n=%evar.n;%nn;
   %if;(evar.oc!="")&oc=%evar.oc;%end;%in; %(%access does not work %)
 <div class="container-fluid">
-%if;(evar.slices = "on")
-  <h1>[*display by slices/slice width/overlap/total width]0</h1>
-%else;
-  <h1>%if;(evar.m="D")[*descendants tree]
+%include;home
+<h1 class="h3">
+  %if;(evar.slices="on")
+    [*display by slices/slice width/overlap/total width]0
+  %else;
+    %if;(evar.m="D")[*descendants tree]
+    %elseif;(evar.m="A")[*ascendants tree]
     %else;[*relation/relations]0 ([shortest path])%end;
     %if;(evar.oi!="") [partial]%end;
-  </h1>
-%end;
+    %if;(evar.dag="on") + [dag]%end;
+  %end;
+</h1>
 %if;(evar.t="A" or evar.t="C")
-  <h2>
+  <h2 class="h4">
     %if;(evar.t = "A")[*male line/female line]0%nn;
     %elseif;(evar.t = "C")[*male line/female line]1%nn;
     %end;
   </h2>
+%end;
+%if;not cancel_links;
+  <div class="d-flex justify-content-center">
+    %include;buttons_dag
+  </div><hr>
 %end;
 %if;(evar.m="A" or evar.m="D")
   %if;(evar.slices = "on")
@@ -89,10 +97,6 @@
     </form>
   %end;
 %end;
-%if;not cancel_links;
-  %include;home
-  %include;buttons_dag
-%end;
 %if;(evar.slices!="on")
   %if;(link_next!="" and not cancel_links)
     %include;buttons_rel
@@ -134,7 +138,7 @@
     %end;
     </pre>
   %else;
-    <div class="d-flex justify-content-center border-0">
+    <div class="d-flex align-items-center align-content-center">
     <table id="dag" style="line-height:1rem;">
     %foreach;dag_line;
       <tr align="left">
