@@ -1577,7 +1577,7 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses images marriages =
     | Some p -> "&iz=" ^ (string_of_iper (get_iper p))
     | None -> ""
   in  
-  let txt = get_text conf base p ((ifaml <> []) && spouses) in
+  let txt = get_text conf base p ((ifaml <> []) && spouses && images) in
   let only =
      Printf.sprintf "<a href=\"%sm=D&t=TV%s%s%s%s%s%s\" %s title=\"%s\">&nbsp;│&nbsp;</a>"
      (commd conf) vv pz_index pp_index ("&oi=" ^ (string_of_iper (get_iper p)))
@@ -1632,7 +1632,7 @@ and f_pos conf base ifam p x0 v ir2 tdal only_anc spouses images marriages =
     else (tdal, x, x, x)
   in 
   (* row 3: spouses *)
-  let txt = get_text conf base sp ((kids <> [])&& spouses) in
+  let txt = get_text conf base sp ((kids <> []) && spouses && images) in
   let br_sp = if (Util.has_image conf base sp) && images then "" else "<br>" in 
   let fam = foi base ifam in
   let marr_d = if marriages then DateDisplay.short_marriage_date_text conf base fam p sp else "" in
