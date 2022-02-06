@@ -8,7 +8,7 @@ module Output = Geneweb.Output
 
 (* removed Filename.basename from those two functions *)
 
-let new_source_file_name conf fname =
+let source_file_name conf fname =
   let bname = conf.bname in
   let lang = conf.lang in
   let fname1 =
@@ -20,16 +20,16 @@ let new_source_file_name conf fname =
     Filename.concat (Util.base_path ["src"] bname)
       (fname ^ ".txt")
 
-let new_print_source_image conf f =
+let print_source_image conf f =
   let fname =
     if f.[0] = '/' then String.sub f 1 (String.length f - 1) else f
   in
     let fname = Util.source_image_file_name conf.bname fname in
     if ImageDisplay.print_image_file conf fname then () else Hutil.incorrect_request conf
 
-let new_print_source conf base fname =
+let print_source conf base fname =
   let channel =
-    try Some (Secure.open_in (new_source_file_name conf fname)) with
+    try Some (Secure.open_in (source_file_name conf fname)) with
       Sys_error _ -> None
   in
   match channel with

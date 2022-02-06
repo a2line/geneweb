@@ -24,7 +24,7 @@ let a = w_base @@ fun conf base ->
     | Some p ->
       if Util.p_getenv conf.env "t" = Some  "FC"
       then !V7_interp.templ "fanchart" conf base p
-      else V7_perso.print_ascend conf base p ;
+      else V7_ascendDisplay.print_ascend conf base p ;
       true
     | _ -> false
 
@@ -42,8 +42,8 @@ let doc = w_base @@ fun conf base ->
         begin
           if Filename.check_suffix f ".txt" then
             let f = Filename.chop_suffix f ".txt" in
-            V7_srcfile.new_print_source conf base f
-          else V7_srcfile.new_print_source_image conf f;
+            V7_srcfile.print_source conf base f
+          else V7_srcfile.print_source_image conf f;
           true
         end
     | None -> false

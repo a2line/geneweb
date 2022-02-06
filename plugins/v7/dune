@@ -7,6 +7,7 @@
   (name plugin_v7_lib)
   (libraries geneweb geneweb.gwd_lib geneweb.util)
   (modules
+    v7_ascendDisplay
     v7_cousins
     v7_dag
     v7_dag2html
