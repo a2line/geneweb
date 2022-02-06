@@ -321,18 +321,18 @@ fr: Sélectionnez les modules en cliquant sur le bouton correspondant (max 15).
               <div class="dropdown-menu">
                 <a class="dropdown-item" href="%prefix;m=A&%access;"><span class="fa fa-cog fa-fw mr-2"></span>[*ancestors]</a>
                 <div class="dropdown-divider"></div>
-                <a class="dropdown-item" id="anc_tree" href="%prefix;%access;;m=A;t=T;v=5;marriage=on;" %laY;><span class="fa fa-sitemap fa-rotate-180 fa-fw mr-2"></span>[*ascendants tree]</a>
-                <a class="dropdown-item" href="%prefix;%access;;m=A;t=H;v=5;" title="[*horizontal tree]"><span class="fa fa-code-branch fa-rotate-90 fa-fw mr-2"></span>[*horizontal tree]</a>
-                <a class="dropdown-item" href="%prefix;%access;;m=A;t=Z;v=7;maxv=%max_anc_level;;num=on;birth=on;birth_place=on;marr=on;marr_date=on;marr_place=on;child=on;death=on;death_place=on;age=on;occu=on;gen=on;repeat=on;ns=on;%if;(evar.image="off")image=off;%end;"><span class="fa fa-table fa-fw mr-2"></span>[*table] [ancestors]</a>
-                <a class="dropdown-item" href="%prefix;%access;;m=A;t=G;v=3;maxv=%max_anc_level;;siblings=on;alias=on;spouse=on;parents=on;rel=on;witn=on;notes=on;src=on;hide=on;"><span class="fa fa-newspaper fa-fw mr-2"></span>[*long display]</a>
-                <a class="dropdown-item" href="%prefix;i=%index;;m=A;t=F;tf1=sb;v=%max_anc_level;;maxv=%max_anc_level;;"><span class="fa fa-align-justify fa-fw mr-2"></span>[*surnames branch]</a>
+                <a class="dropdown-item" id="anc_tree" href="%prefix;%access;&m=A&t=T&v=5" %laY;><span class="fa fa-sitemap fa-rotate-180 fa-fw mr-2"></span>[*ascendants tree]</a>
+                <a class="dropdown-item" href="%prefix;%access;&m=A&t=H&v=5" title="[*horizontal tree]"><span class="fa fa-code-branch fa-rotate-90 fa-fw mr-2"></span>[*horizontal tree]</a>
+                <a class="dropdown-item" href="%prefix;%access;&m=A;t=Z&v=7&maxv=%max_anc_level;&num=on&birth=on&birth_place=on&marr=on&marr_date=on&marr_place=on&child=on&death=on&death_place=on&age=on&occu=on&gen=on&repeat=on&ns=on%if;(evar.image="off")&image=off%end;"><span class="fa fa-table fa-fw mr-2"></span>[*table] [ancestors]</a>
+                <a class="dropdown-item" href="%prefix;%access;&m=A;t=G&v=3&maxv=%max_anc_level;&siblings=on&alias=on&spouse=on&parents=on&rel=on&witn=on&notes=on&src=on&hide=on"><span class="fa fa-newspaper fa-fw mr-2"></span>[*long display]</a>
+                <a class="dropdown-item" href="%prefix;i=%index;&m=A;t=F&tf1=sb&v=%max_anc_level&&maxv=%max_anc_level;"><span class="fa fa-align-justify fa-fw mr-2"></span>[*surnames branch]</a>
                 <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="%prefix;%access;;m=A;t=T;t1=CT;hi=H;v=5;scale=100;fs=17;sosa=on;" title="[*compact tree] [with] %self;"><span class="fa fa-th fa-fw mr-2"></span>[*compact tree]</a>
-                <a class="dropdown-item" href="%prefix;%access;;m=A;t=T;t1=h7;wide=on;" title="[Arbre 7 gen]"><span class="fa fa-border-none fa-fw mr-2"></span>7 [generation/generations]1</a>
-                <a class="dropdown-item" href="%prefix;%access;;m=A;t=T;t1=m;" title="[Arbre 9 gen]"><span class="fa fa-chess-board fa-fw mr-2"></span>9 [generation/generations]1</a>
+                <a class="dropdown-item" href="%prefix;%access;&m=A&t=T&t1=CT&hi=H&v=5&scale=100&fs=17&sosa=on" title="[*compact tree] [with] %self;"><span class="fa fa-th fa-fw mr-2"></span>[*compact tree]</a>
+                <a class="dropdown-item" href="%prefix;%access;&m=A&t=T&t1=h7&wide=on" title="[Arbre 7 gen]"><span class="fa fa-border-none fa-fw mr-2"></span>7 [generation/generations]1</a>
+                <a class="dropdown-item" href="%prefix;%access;&m=A&t=T&t1=m" title="[Arbre 9 gen]"><span class="fa fa-chess-board fa-fw mr-2"></span>9 [generation/generations]1</a>
                 %if;plugin.v7;
                   <div class="dropdown-divider"></div>
-                    <a class="dropdown-item" href="%prefix;%access;;m=A;t=FC;v=5;"><span class="fa fa-chart-pie fa-fw mr-2"></span>[*v7 fanchart]</a>
+                    <a class="dropdown-item" href="%prefix;%access;&m=A&t=FC&v=5"><span class="fa fa-chart-pie fa-fw mr-2"></span>[*v7 fanchart]</a>
                   </div>
                 %end;
             </li>
@@ -343,15 +343,14 @@ fr: Sélectionnez les modules en cliquant sur le bouton correspondant (max 15).
               <div class="dropdown-menu">
                 <a class="dropdown-item" href="%prefix;m=D&%access;"><span class="fa fa-cog fa-fw mr-2"></span>[*descendants]</a>
                 <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="%prefix;%access;;m=D;t=T;v=4;"%if;(not has_parents) %laY;%end;><span class="fa fa-sitemap fa-fw mr-2"></span>[*descendants tree]</a>
-                <a class="dropdown-item" href="%prefix;%access;;m=D;t=D;v=%max_desc_level;;"><span class="fa fa-code-branch fa-rotate-90 fa-fw mr-2"></span>[*descendant tree view]</a>
-                <a class="dropdown-item" href="%prefix;%access;;m=D;t=H;v=%max_desc_level;;num=on;birth=on;birth_place=on;marr=on;marr_date=on;marr_place=on;child=on;death=on;death_place=on;age=on;occu=on;gen=on;ns=on;%if;(evar.image="off")image=off;%end;"><span class="fa fa-table fa-fw mr-2"></span>[*table] [descendants]</a>
-                <a class="dropdown-item" href="%prefix;%access;;m=D;t=L;v=3;maxv=%max_desc_level;;siblings=on;alias=on;spouse=on;parents=on;rel=on;witn=on;notes=on;src=on;hide=on;"><span class="fa fa-newspaper fa-fw mr-2"></span>[*long display]</a>
-                <a class="dropdown-item" href="%prefix;%access;;m=D;t=TV;v=4;"%if;(not has_parents) %laY;%end;><span class="fa fa-sitemap fa-fw mr-2"></span>[*compact descendants tree]</a>
+                <a class="dropdown-item" href="%prefix;%access;&m=D&t=T&v=4"%if;(not has_parents) %laY;%end;><span class="fa fa-sitemap fa-fw mr-2"></span>[*descendants tree]</a>
+                <a class="dropdown-item" href="%prefix;%access;&m=D&t=D&v=%max_desc_level;"><span class="fa fa-code-branch fa-rotate-90 fa-fw mr-2"></span>[*descendant tree view]</a>
+                <a class="dropdown-item" href="%prefix;%access;&m=D&t=H&v=%max_desc_level;&num=on&birth=on&birth_place=on&marr=on&marr_date=on&marr_place=on&child=on&death=on&death_place=on&age=on&occu=on&gen=on&ns=on%if;(evar.image="off")&image=off%end;"><span class="fa fa-table fa-fw mr-2"></span>[*table] [descendants]</a>
+                <a class="dropdown-item" href="%prefix;%access;&m=D&t=L&v=3;maxv=%max_desc_level;;siblings=on;alias=on;spouse=on;parents=on;rel=on;witn=on;notes=on;src=on;hide=on;"><span class="fa fa-newspaper fa-fw mr-2"></span>[*long display]</a>
+                <a class="dropdown-item" href="%prefix;%access;&m=D&t=TV&v=4"%if;(not has_parents) %laY;%end;><span class="fa fa-sitemap fa-fw mr-2"></span>[*compact descendants tree]</a>
                 <div class="dropdown-divider"></div>
-                %(WIP%)
-                <a class="dropdown-item" href="%prefix;%access;;m=D;t=V;%if;(evar.v!="")v=%evar.v;%else;v=3%end;;spouse=on;marriage=on;"%if;(not has_parents) %laY;%end;><span class="fa fa-sitemap fa-fw mr-2"></span>[*descendants tree] (new)</a>
-                <a class="dropdown-item" href="%prefix;%access;;m=D;t=A;num=on;v=%max_desc_level;;"><span class="fa fa-code-branch fa-flip-vertical fa-fw mr-2"></span>D’Aboville</a>
+                <a class="dropdown-item" href="%prefix;%access;&m=D&t=V;%if;(evar.v!="")v=%evar.v;%else;v=3%end;;spouse=on;marriage=on;"%if;(not has_parents) %laY;%end;><span class="fa fa-sitemap fa-fw mr-2"></span>[*descendants tree] (new)</a>
+                <a class="dropdown-item" href="%prefix;%access;&m=D&t=A;num=on;v=%max_desc_level;;"><span class="fa fa-code-branch fa-flip-vertical fa-fw mr-2"></span>D’Aboville</a>
               </div>
             </li>
           %end;

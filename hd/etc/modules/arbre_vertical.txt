@@ -1,4 +1,4 @@
-<!-- $Id: modules/arbre_vertical v7.00 04/02/2022 20:10:06 Arbre ascendant vertical -->
+<!-- $Id: modules/arbre_vertical v7.00 06/02/2022 01:13:59 Arbre ascendant vertical -->
 %define;a_tree_line()
   %if;(not is_first)
     <tr>
@@ -20,11 +20,11 @@
       <td colspan="%cell.colspan;" class="text-center align-bottom py-0">%nn;
         %if;(cell.is_empty)<samp>&nbsp;</samp>%nn;
         %else;
-          %if;(evar.image!="off" and cell.person.has_image)
-            %if;(evar.cgl != "on")<a href="%cell.person.image_html_url;">%end;
+          %if;(e.im="" and cell.person.has_image)
+            %if;not cancel_links;<a href="%cell.person.image_html_url;">%end;
             <img class="rounded mb-1" src="%cell.person.image_url;"%cell.person.image_small_size;%sp;%nn;
              alt="[image/images]0" title="[image/images]0"%/>%nn;
-            %if;(evar.cgl != "on")</a>%end;<br>
+            %if;not cancel_links;</a>%end;<br>
           %end;
           %apply;short_display_person_tree("cell.person")%nn;
           %if;cell.person.has_nobility_titles;<br>%cell.person.title;%end;
@@ -38,8 +38,12 @@
       %if;(not is_first)
         <td class="text-center py-0">%nn;
         %if;cell.is_right;
-          %if;(evar.marriage = "on")
-            %if;(wizard and not cancel_links)<a class="small font-weight-italic text-center text-nowrap" href="%prefix_base_password;m=MOD_FAM;i=%cell.family.index;;ip=%index;" title="%if;(cell.family.marriage_date.year="")[*add::marriage/marriages]0%else;[*update::family/families]0%end; %cell.family.father; [and] %cell.family.mother;">%end;
+          %if;(e.ma!="0")
+            %if;(wizard and not cancel_links)
+              <a class="small font-weight-italic text-center text-nowrap"
+                href="%prefix_base_password;m=MOD_FAM;i=%cell.family.index;;ip=%index;"
+                title="%if;(cell.family.marriage_date.year="")[*add::marriage/marriages]0
+                     %else;[*update::family/families]0%end; %cell.family.father; [and] %cell.family.mother;">%end;
               %if;(cell.family.marriage_date.year!= "")
                 %if;(cell.family.marriage_date.prec = "&lt;")
                   /%cell.family.marriage_date.year;%nn;
@@ -64,12 +68,12 @@
         %elseif;(cancel_links)│%nn;
         %else;
           <a href="%cell.person.bname_prefix;%cell.person.access;%nn;
-            ;m=%if;(evar.m!="")%evar.m;%else;A%end;%nn;
-            ;t=%if;(evar.t!="")%evar.t;%else;T%end;%nn;
-            ;v=%if;(evar.v!="")%evar.v;%else;3%end;%nn;
-            %if;(evar.image!="off");image=on%end;%nn;
-            %if;(evar.marriage = "on");marriage=on%end;"
-            title="%if;(evar.m="")[*tree][:] [full width/columns]0%end;">│</a>%nn;
+            &m=%if;(e.m!="")%e.m;%else;A%end;%nn;
+            &t=%if;(e.t!="")%e.t;%else;T%end;%nn;
+            &v=%if;(e.v!="")%e.v;%else;3%end;%nn;
+            %if;(e.im=0)&im=0%end;%nn;
+            %if;(e.ma=0)&ma=0%end;"
+            title="%if;(e.m="")[*tree][:] [full width/columns]0%end;">│</a>%nn;
         %end;
       </td>
     %end;
@@ -99,7 +103,7 @@
   %if;(yy>0)
     %if;(xx.has_parents)%apply;male_line("xx.father", yy - 1)%end;
     <a href="%xx.bname_prefix;%xx.access">%xx;</a>%xx.title;%xx.dates;
-    %if;(evar.image!="off" and xx.has_image)
+    %if;(e.im="" and xx.has_image)
       <br>
       %if;not cancel_links;<a href="%xx.image_html_url;">%end;
       <img class="rounded" src="%xx.image_url;"%xx.image_small_size;%sp;%nn;
@@ -113,7 +117,7 @@
   %if;(yy>0)
     %if;(xx.has_parents)%apply;female_line("xx.mother", yy - 1)%end;
     <a href="%xx.bname_prefix;%xx.access">%xx;</a>%xx.title;%xx.dates;
-    %if;(evar.image!="off" and xx.has_image)
+    %if;(e.im="" and xx.has_image)
       <br>
       %if;not cancel_links;<a href="%xx.image_html_url;">%end;
       <img class="rounded" src="%xx.image_url;"%xx.image_small_size;%sp;%nn;
@@ -128,30 +132,30 @@
     %apply;a_tree_line()
   %end;
 %end;
-%let;evarv;%if;(evar.v!="")%evar.v;%else;3%end;%in;
+%let;gen;%if;(e.v!="")%e.v;%else;3%end;%in;
 <div class="d-flex justify-content-center">
   %include;buttons_dag
 </div>
 %if;has_parents;
   <table class="tree-vert mx-auto my-3" style="border-width:%border;">
-    %if;(evar.t="T" and evar.t1="m")
+    %if;(e.t="T" and e.t1="m")
       %include;modules/arbre_9gen
-    %elseif(evar.t = "A" or evar.t = "C")
-      %if;(evar.t = "A")
+    %elseif(e.t="A" or e.t="C")
+      %if;(e.t="A")
         <tr>
           <td class="text-center">
-            %apply;male_line("self", evarv)
+            %apply;male_line("self", gen)
           </td>
         </tr>
-      %elseif;(evar.t = "C")
+      %elseif;(e.t="C")
         <tr>
           <td class="text-center">
-            %apply;female_line("self", evarv)
+            %apply;female_line("self", gen)
           </td>
         </tr>
       %end;
     %else;
-      %apply;tree(evarv)
+      %apply;tree(gen)
     %end;
   </table>
 %end;

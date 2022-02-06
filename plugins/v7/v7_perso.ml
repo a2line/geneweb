@@ -5199,7 +5199,7 @@ let print_ascend conf base p =
   match
     p_getenv conf.env "t", p_getenv conf.env "dag", p_getint conf.env "v"
   with
-    Some "T", Some "on", Some v -> print_ancestors_dag conf base v p
+    Some "T", Some "1", Some v -> print_ancestors_dag conf base v p
   | _ ->
       let templ =
         match p_getenv conf.env "t" with
