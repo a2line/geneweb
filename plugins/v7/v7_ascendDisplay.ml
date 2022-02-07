@@ -30,11 +30,11 @@ let print_ancestors_dag conf base v p =
   in
   let elem_txt p = DagDisplay.Item (p, "") in
   (* Récupère les options d'affichage. *)
-  let options = Util.display_options conf in
+  let options = "&" ^ (Util.display_options conf) in
   let vbar_txt ip =
     let p = pget conf base ip in
-    Printf.sprintf "%sm=A&t=T&v=%d&%s&dag=1&%s" (commd conf) v options
-      (acces conf base p)
+    Printf.sprintf "%sm=A&t=T&v=%d%s&dag=1&%s"
+      (commd conf) v options (acces conf base p)
   in
   let page_title = Utf8.capitalize_fst (Util.transl conf "tree") in
   DagDisplay.make_and_print_dag conf base elem_txt vbar_txt true set [] page_title ""
