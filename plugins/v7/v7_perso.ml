@@ -3937,8 +3937,8 @@ and eval_family_field_var conf base env
           let ep = make_ep conf base ifath in
           eval_person_field_var conf base env ep loc sl
       end
-  | ["date_s"] -> VVstring (V7_date.short_family_dates_text conf base fam)
-  | "marriage_date" :: sl ->
+  | ["date_s"] | ["dates"] -> VVstring (V7_date.short_family_dates_text conf base fam)
+  | "marriage_date" :: sl | "marriage" :: sl ->
       begin match Adef.od_of_cdate (get_marriage fam) with
         Some d when m_auth -> eval_date_field_var conf d sl
       | _ -> VVstring ""
