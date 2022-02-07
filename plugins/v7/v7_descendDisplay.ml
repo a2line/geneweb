@@ -1476,7 +1476,7 @@ let get_text conf base p filler =
     if auth then txt ^ DateDisplay.short_dates_text conf base p else txt
   in
   let vbar_image = if filler then Printf.sprintf
-    "<br><img src=\"%sm=IM&v=vbar.jpg\" class=\"mb-1\">\n"
+    "</div><div class=\"flex-grow-1\"><img src=\"%sm=IM&v=vbar.jpg\" class=\"img-fluid\"></div>\n"
     (commd conf)
     else ""
   in
@@ -1577,10 +1577,10 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses images marriages =
   in  
   let txt = get_text conf base p ((ifaml <> []) && spouses && images) in
   let only =
-     Printf.sprintf "<a href=\"%sm=D&t=TV%s%s%s%s%s%s\" %s title=\"%s\">&nbsp;│&nbsp;</a>"
+     Printf.sprintf "<a href=\"%sm=D&t=TV%s%s%s%s%s%s\" %s title=\"%s\">│</a>"
      (commd conf) vv pz_index pp_index ("&oi=" ^ (string_of_iper (get_iper p)))
-     (if spouses then "" else "&sp=off") (if images then "" else "&im=off")
-     ("class=\"normal_anchor\"")
+     (if spouses then "" else "&sp=0") (if images then "" else "&im=0")
+     ("class=\"normal_anchor mx-3\"")
      (Utf8.capitalize_fst (Util.transl conf "limit tree to ancestors and siblings"))
   in
   let text = if ir > 0 then only ^ "<br>" ^ txt else txt in
@@ -1634,7 +1634,7 @@ and f_pos conf base ifam p x0 v ir2 tdal only_anc spouses images marriages =
   let br_sp = if (Util.has_image conf base sp) && images then "" else "<br>" in 
   let fam = foi base ifam in
   let marr_d = if marriages then DateDisplay.short_marriage_date_text conf base fam p sp else "" in
-  let text = "& " ^ marr_d ^ " " ^ txt ^
+  let text = "<div>&" ^ marr_d ^ " " ^ txt ^
     (if kids <> [] then br_sp ^ "|" else "")
   in 
   let lx = lastx tdal ir2 in

@@ -145,7 +145,7 @@
     %foreach;dag_line;
       <tr align="left">
       %foreach;dag_cell;
-        <td class="%if;(e.m="D")align-top%elseif;(e.m="A")align-bottom%end; px-0"
+        <td class="%if;(e.m="D")align-top%elseif;(e.m="A")align-bottom%end; px-0 text-monopace"
           %if;(dag_cell.colspan>1) colspan="%dag_cell.colspan;"%end;
           style="line-height:%if;(dag_cell.item!="")1%nn;
                              %elseif;dag_cell.is_bar;1%nn;
@@ -161,7 +161,6 @@
         %elseif;(dag_cell.item != "")%dag_cell.item;
         %elseif;(dag_cell.text != "")
           %if;(plugin.v7 and line_nbr!=0 and dag_cell.index!="-1")
-            %( TODO: add css class for hover, don't use list-group-item-action not done for that %)
             <div class="position-relative list-group-item-action">
               <a href="%prefix_no_pmod;i=%dag_cell.index;&m=D&t=TV&%foreach;env_binding;%nn;
                 %if;(not (env.key="i" or env.key="p" or env.key="n" or env.key="oc" or
@@ -169,7 +168,7 @@
                 class="stretched-link"
                 title="[*navigation] on tree [with] this individual" style="line-height:1rem"></a>
           %end;
-          <div%if;(dag_cell.txt!="") class="mt-1 mx-1"%end;>%dag_cell.text;</div>
+          <div class="d-flex-row flex-column justify-content-between %if;(dag_cell.txt!="") mt-1 mx-1%end;">%dag_cell.text;</div>
           %if;(plugin.v7 and line_nbr!=0 and dag_cell.index!="-1")
             </div>
           %end;
