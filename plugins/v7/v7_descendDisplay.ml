@@ -1244,10 +1244,8 @@ let make_tree_hts conf base gv p =
                   else txt
                 in
                 let txt = if spouses then txt else "" in
-                "&amp;" ^
-                (if auth && marriages then DateDisplay.short_marriage_date_text conf base fam p sp
-                 else "") ^
-                "&nbsp;" ^ txt ^ 
+                (if auth && marriages && spouses then "&amp;" ^ (DateDisplay.short_marriage_date_text conf base fam p sp)
+                 else if spouses then "&amp;" else "") ^ "&nbsp;" ^ txt ^
                   (if spouses then DagDisplay.image_txt conf base sp else "")
               in
               let s =
@@ -1591,7 +1589,7 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses images marriages =
   let br = if images then "<br>" else "" in
   let text = if (not continue && descendants) then text ^ br ^ "+" else text in
   let lx = if lx > -1 then lx else -1 in
-  let tdal = 
+  let tdal =
     tdal_add tdal ir ((td_fill lx (x - 1)) @ (td_cell 1 "center" text (get_iper p))) x
   in
   (* row 2: Hbar over spouses *)
