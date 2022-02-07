@@ -1412,7 +1412,7 @@ let td_fill x1 xn =
 (* hbar over xn - x1 columns. First and last are left/right and 50% *)
 let td_hbar x1 xn =
   match xn - x1 with
-  | 0 -> [1, CenterA,  TDtext (Gwdb.dummy_iper, "|")]
+  | 0 -> [1, CenterA,  TDnothing]
   | 1 -> [1, CenterA,  TDhr CenterA]
   | _ -> [1, LeftA, TDhr LeftA] @ [(xn - x1 - 1), CenterA, TDhr CenterA] @ [1, RightA, TDhr RightA]
 
@@ -1599,7 +1599,7 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses images marriages =
     if v >= 1 && ifaml<>[] then
       let lx = lastx tdal (ir+1) in
       let lx = if lx > -1 then lx else -1 in
-      if only_anc = [] then
+      if only_anc = [] && x1 <> xn then
         tdal_add tdal (ir+1) ((td_fill lx (x1 - 1)) @ (td_hbar x1 xn)) xn
       else
         tdal_add tdal (ir+1) ((td_fill lx (x - 1)) @ (td_cell 1 "center" "|" Gwdb.dummy_iper)) x
@@ -1650,8 +1650,8 @@ and f_pos conf base ifam p x0 v ir2 tdal only_anc spouses images marriages =
   if kids <> [] then
     let lx = lastx tdal (ir2+d_ir) in
     let lx = if lx > -1 then lx else -1 in
-    let tdal =
-      tdal_add tdal (ir2+d_ir) ((td_fill lx (x1 - 1)) @ (td_hbar x1 xn)) xn
+    let tdal = 
+        tdal_add tdal (ir2+d_ir) ((td_fill lx (x1 - 1)) @ (td_hbar x1 xn)) xn
     in
     (tdal, x)
   else (tdal, x)

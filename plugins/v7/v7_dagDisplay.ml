@@ -858,6 +858,8 @@ type 'a env =
   | Vdline of int
   | Vdlinep of (int * string array array * int * int option * int option)
   | Vlazy of 'a env Lazy.t
+  | Vbool of bool
+  | Vint of int
   | Vother of 'a
   | Vnone
 
@@ -916,9 +918,19 @@ let rec eval_var conf page_title next_txt env _xx _loc =
       | _ -> raise Not_found
       end
   | ["head_title"] -> VVstring page_title
-  | ["line_nbr"] -> 
-       begin match get_env "line_nbr" env with
-      | Vdline i -> VVstring (string_of_int i)
+  | ["is_first"] ->
+       begin match get_env "first" env with
+      | Vbool b -> VVbool b
+      | _ -> VVbool false
+      end
+  | ["is_last"] ->
+       begin match get_env "last" env with
+      | Vbool b -> VVbool b
+      | _ -> VVbool false
+      end
+  | ["nbr"] ->
+       begin match get_env "nbr" env with
+      | Vint i -> VVstring (string_of_int i)
       | _ -> raise Not_found
       end
   | ["link_next"] -> VVstring next_txt
@@ -1090,13 +1102,22 @@ and print_foreach_dag_cell hts print_ast env al =
     | _ -> raise Not_found
   in
   for j = 0 to Array.length hts.(i) - 1 do
-    let print_ast = print_ast (("dag_cell", Vdcell hts.(i).(j)) :: env) () in
+    let print_ast = print_ast
+      (("dag_cell", Vdcell hts.(i).(j)) ::
+       ("nbr", Vint j) ::
+       ("first", Vbool (j=0)) ::
+       ("last", Vbool (j = (Array.length hts.(i) - 1))) ::
+      env) () in
     List.iter print_ast al
   done
 and print_foreach_dag_line print_ast env hts al =
   for i = 0 to Array.length hts - 1 do
     let print_ast = print_ast
-      (("line_nbr", Vdline i) :: ("dag_line", Vdline i) :: env) ()
+      (("dag_line", Vdline i) ::
+       ("nbr", Vint i) ::
+       ("first", Vbool (i=0)) ::
+       ("last", Vbool (i = (Array.length hts - 1))) ::
+      env) ()
     in
     List.iter print_ast al
   done

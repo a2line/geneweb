@@ -21,7 +21,7 @@ let print_ancestors_dag conf base v p =
       else
         match Gwdb.get_parents (Util.pget conf base ip) with
           Some ifam ->
-            let cpl = foi base ifam in
+            let cpl = Gwdb.foi base ifam in
             let set = loop set (lev - 1) (Gwdb.get_mother cpl) in
             loop set (lev - 1) (Gwdb.get_father cpl)
         | None -> set
@@ -33,7 +33,7 @@ let print_ancestors_dag conf base v p =
   let options = Util.display_options conf in
   let vbar_txt ip =
     let p = pget conf base ip in
-    Printf.sprintf "%sm=A&t=T&v=%d&%s&dag=on&%s" (commd conf) v options
+    Printf.sprintf "%sm=A&t=T&v=%d&%s&dag=1&%s" (commd conf) v options
       (acces conf base p)
   in
   let page_title = Utf8.capitalize_fst (Util.transl conf "tree") in
@@ -41,12 +41,12 @@ let print_ancestors_dag conf base v p =
 
 let print_ascend conf base p =
   match
-    p_getenv conf.env "t", p_getenv conf.env "dag", p_getint conf.env "v"
+    Util.p_getenv conf.env "t", Util.p_getenv conf.env "dag", p_getint conf.env "v"
   with
     Some "T", Some "1", Some v -> print_ancestors_dag conf base v p
   | _ ->
       let templ =
-        match p_getenv conf.env "t" with
+        match Util.p_getenv conf.env "t" with
           Some ("E" | "F" | "H" | "L") -> "anclist"
         | Some ("D" | "G" | "M" | "N" | "P" | "X" | "Y" | "Z") -> "ancsosa"
         | Some ("A" | "C" | "T") -> "anctree"
