@@ -254,12 +254,12 @@ function table_spouse_disabled () {
               <label class="custom-control-label" for="t_nowrap">[*no line break in names]</label>
             </div>  
             <div class="custom-control custom-checkbox custom-control-inline">
-              <input type="checkbox" class="custom-control-input" id="t_title" name="title">
-              <label class="custom-control-label" for="t_title">[*title/titles]1</label>
+              <input type="checkbox" class="custom-control-input" id="t_tt" name="tt" value="1">
+              <label class="custom-control-label" for="t_tt">[*title/titles]1</label>
             </div>
           </div>
           <div class="custom-control custom-checkbox custom-control-inline">
-            <input type="checkbox" class="custom-control-input" id="t_fn" name="fn">
+            <input type="checkbox" class="custom-control-input" id="t_fn" name="fn" value="1">
             <label class="custom-control-label" for="t_fn">[*show first names]1</label>
           </div>
           <div>
@@ -334,11 +334,11 @@ function table_spouse_disabled () {
             </div>
           </div>
           <div class="custom-control custom-checkbox">
-            <input type="checkbox" class="custom-control-input" id="t_ns" name="ns">
+            <input type="checkbox" class="custom-control-input" id="t_ns" name="ns" value="1">
             <label class="custom-control-label" for="t_ns">[*see descendants notes/sources]</label>
           </div>
           <div class="custom-control custom-checkbox">
-            <input type="checkbox" class="custom-control-input" id="t_gen" name="gen">
+            <input type="checkbox" class="custom-control-input" id="t_gen" name="gen" value="1">
             <label class="custom-control-label" for="t_gen">[*display generation]</label>
           </div>
           <div class="custom-control custom-checkbox">
@@ -355,7 +355,7 @@ function table_spouse_disabled () {
               <label class="custom-control-label" for="only">[*only the generation selected] <span class="text-primary">✱</span></label>
             </div>
             <div class="custom-control custom-checkbox">
-              <input type="checkbox" class="custom-control-input" id="image" name="image" value="off">
+              <input type="checkbox" class="custom-control-input" id="image" name="im" value="0">
               <label class="custom-control-label" for="image">[*visualize/show/hide/summary]2 [image/images]1 <span class="text-info">✘</span></label>
             </div>
             <div class="custom-control custom-checkbox">

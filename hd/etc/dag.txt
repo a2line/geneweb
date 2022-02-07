@@ -4,7 +4,7 @@
   <!-- $Id: dag.txt, v7.xx 04/02/2022 14:45:14 ddr hg a2 $ -->
   <!-- Copyright (c) 1998-2022 INRIA -->
   <title>%nn;
-    %if;(evar.slices = "on")[*display by slices/slice width/overlap/total width]0%nn;
+    %if;(e.slices = "on")[*display by slices/slice width/overlap/total width]0%nn;
     %else;%apply;capitalize(head_title)%end;
   </title>
   <meta name="robots" content="none">
@@ -17,25 +17,25 @@
 %include;hed
 %message_to_wizard;
 %( TODO include;menubar %index, %foreach;family, do not work in this context %)
-%let;prefix_a;%prefix_base_password&p=%evar.p;&n=%evar.n;%nn;
-  %if;(evar.oc!="")&oc=%evar.oc;%end;%in; %(%access does not work %)
+%let;prefix_a;%prefix_base_password&p=%e.p;&n=%e.n;%nn;
+  %if;(e.oc!="")&oc=%e.oc;%end;%in; %(%access does not work %)
 <div class="container-fluid">
 %include;home
 <h1 class="h3">
-  %if;(evar.slices="on")
+  %if;(e.slices="on")
     [*display by slices/slice width/overlap/total width]0
   %else;
-    %if;(evar.m="D")[*descendants tree]
-    %elseif;(evar.m="A")[*ascendants tree]
+    %if;(e.m="D")[*descendants tree]%if;(e.t="TV") [compact] ou réduit ?%( TODO %)%end;
+    %elseif;(e.m="A")[*ascendants tree]
     %else;[*relation/relations]0 ([shortest path])%end;
-    %if;(evar.oi!="") [partial]%end;
-    %if;(evar.dag="on") + [dag]%end;
+    %if;(e.oi!="") [partial]%end;
+    %if;(e.dag="on") + [dag]%end;
   %end;
 </h1>
-%if;(evar.t="A" or evar.t="C")
+%if;(e.t="A" or e.t="C")
   <h2 class="h4">
-    %if;(evar.t = "A")[*male line/female line]0%nn;
-    %elseif;(evar.t = "C")[*male line/female line]1%nn;
+    %if;(e.t = "A")[*male line/female line]0%nn;
+    %elseif;(e.t = "C")[*male line/female line]1%nn;
     %end;
   </h2>
 %end;
@@ -44,8 +44,8 @@
     %include;buttons_dag
   </div><hr>
 %end;
-%if;(evar.m="A" or evar.m="D")
-  %if;(evar.slices = "on")
+%if;(e.m="A" or e.m="D")
+  %if;(e.slices = "on")
     <form method="GET" action="%action;">
     <p>
     %hidden;
@@ -97,15 +97,18 @@
     </form>
   %end;
 %end;
-%if;(evar.slices!="on")
+%define;ind(xx)
+%( TODO how to write ind name on navigation link? %dag_cell.index; seems empty?! %)
+%end;
+%if;(e.slices!="on")
   %if;(link_next!="" and not cancel_links)
     %include;buttons_rel
   %end;
-  %if;(evar.notab = "on" or evar.pos2 != "")
-    %let;dpos;%if;(evar.dpos != "")%evar.dpos;%else;78%end;%in;
-    %let;pos1;%if;(evar.pos1 != "")%evar.pos1;%else;0%end;%in;
-    %let;pos2;%if;(evar.pos2 != "")%evar.pos2;%else;%dpos;%end;%in;
-    %let;overlap;%if;(evar.overlap != "")%evar.overlap;%else;10%end;%in;
+  %if;(e.notab = "on" or e.pos2 != "")
+    %let;dpos;%if;(e.dpos != "")%e.dpos;%else;78%end;%in;
+    %let;pos1;%if;(e.pos1 != "")%e.pos1;%else;0%end;%in;
+    %let;pos2;%if;(e.pos2 != "")%e.pos2;%else;%dpos;%end;%in;
+    %let;overlap;%if;(e.overlap != "")%e.overlap;%else;10%end;%in;
     %if;(pos1 != 0 or pos2 < dag.ncol)
       <div style="text-align:right">
         %if;(pos1 = 0)&nbsp;%nn;
@@ -138,23 +141,22 @@
     %end;
     </pre>
   %else;
-    <div class="d-flex align-items-center align-content-center">
-    <table id="dag" style="line-height:1rem;">
+    <table id="dag" class="mx-auto" style="line-height:1.1r;">
     %foreach;dag_line;
       <tr align="left">
       %foreach;dag_cell;
-        <td class="align-top p-0"
+        <td class="%if;(e.m="D")align-top%elseif;(e.m="A")align-bottom%end; px-0"
           %if;(dag_cell.colspan>1) colspan="%dag_cell.colspan;"%end;
-          style="line-height:%if;(dag_cell.item!="")1rem%nn;
-                             %elseif;dag_cell.is_bar;0.85rem%nn;
-                             %elseif;dag_cell.is_nothing;0.15rem%end;"%nn;
-        %if;(evar.image!="off") valign="bottom"%end;
+          style="line-height:%if;(dag_cell.item!="")1%nn;
+                             %elseif;dag_cell.is_bar;1%nn;
+                             %elseif;dag_cell.is_nothing;0%end;;"%nn;
+        %if;(e.im="") valign="bottom"%end;
         align="%dag_cell.align;">
         %if;dag_cell.is_nothing;&nbsp;%nn;
         %elseif;dag_cell.is_bar;
-          %if;(dag_cell.bar_link != "" and not cancel_links and evar.em!="R")
+          %if;(dag_cell.bar_link != "" and not cancel_links and e.em!="R")
              %( added em!=R here condition because first button_rel is static and does the same %)
-            <a href="%dag_cell.bar_link;%if;(evar.image!="")&image=%evar.image;%end;" title="[*tree]">│</a>%nn;
+            <a href="%dag_cell.bar_link;%if;(e.im=0)&im=0%end;" title="[*navigate on tree] [with] %apply;ind%with;%dag_cell.index;%end;">│</a>%nn;
           %else;│%end;
         %elseif;(dag_cell.item != "")%dag_cell.item;
         %elseif;(dag_cell.text != "")
@@ -186,7 +188,6 @@
       </tr>
     %end;
     </table>
-    </div>
   %end;
 %end;
 %include;trl

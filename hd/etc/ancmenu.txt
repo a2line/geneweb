@@ -228,6 +228,16 @@ function missing_events_options () {
       </div>
     </div>
     <div class="order-3 pl-1">
+       %( <input type="radio" class="custom-control-input" name="t1" value="x" onclick="no_options()"><i class="fa fa-male fa-fw mr-1"></i>[*male line/female line]0
+      <input type="radio" class="custom-control-input" name="t1" value="m" onclick="no_options()"><i class="fa fa-male fa-fw mr-1"></span>[*male line/female line]0 %)
+      <div class="custom-control custom-radio">
+        <input type="radio" class="custom-control-input" id="tA" name="t" value="A" onclick="tree_options()">
+        <label class="custom-control-label" for="tA"><i class="fa fa-male fa-fw mr-1"></i>[*male line/female line]0 <span class="text-info">✘</span></label>
+      </div>
+      <div class="custom-control custom-radio">
+        <input type="radio" class="custom-control-input" id="tC" name="t" value="C" onclick="tree_options()">
+        <label class="custom-control-label" for="tC"><i class="fa fa-female fa-fw mr-1"></i>[*male line/female line]1 <span class="text-info">✘</span></label>
+      </div>
       <div class="custom-control custom-radio">
         <input type="radio" class="custom-control-input" id="tT" name="t" value="T" onclick="tree_options()">
         <label class="custom-control-label" for="tT"><i class="fa fa-sitemap fa-rotate-180 fa-fw mr-1"></i>[*ascendants tree] <span class="text-info">✘</span>%nn;
@@ -240,6 +250,16 @@ function missing_events_options () {
           </span>%nn;
         </label>
       </div>
+      <div class="ml-4">
+        <div class="custom-control custom-checkbox">
+          <input type="checkbox" class="custom-control-input" id="tree_marriage" name="ma" value="0">
+          <label class="custom-control-label" for="tree_marriage">[*visualize/show/hide/summary]2 [ marriage date]</label>
+        </div>
+        <div class="custom-control custom-checkbox">
+          <input type="checkbox" class="custom-control-input" id="tree_dag" name="dag">
+          <label class="custom-control-label" for="tree_dag">[*dag]<i class="fa fa-random fa-fw ml-1"></i></label>
+        </div>
+      </div>
       <div class="custom-control custom-radio">
         <input type="radio" class="custom-control-input" id="tH" name="t" value="H" onclick="tree_options()">
         <label class="custom-control-label" for="tH"><i class="fa fa-code-branch  fa-rotate-90 fa-fw mr-1"></i>[*horizontal tree] <span class="text-info">✘</span>%nn;
@@ -251,26 +271,6 @@ function missing_events_options () {
             %end;
           </span>
         </label>
-      </div>
-   %( <input type="radio" class="custom-control-input" name="t1" value="x" onclick="no_options()"><i class="fa fa-male fa-fw mr-1"></i>[*male line/female line]0
-      <input type="radio" class="custom-control-input" name="t1" value="m" onclick="no_options()"><i class="fa fa-male fa-fw mr-1"></span>[*male line/female line]0 %)
-      <div class="custom-control custom-radio">
-        <input type="radio" class="custom-control-input" id="tA" name="t" value="A" onclick="tree_options()">
-        <label class="custom-control-label" for="tA"><i class="fa fa-male fa-fw mr-1"></i>[*male line/female line]0 <span class="text-info">✘</span></label>
-      </div>
-      <div class="custom-control custom-radio">
-        <input type="radio" class="custom-control-input" id="tC" name="t" value="C" onclick="tree_options()">
-        <label class="custom-control-label" for="tC"><i class="fa fa-female fa-fw mr-1"></i>[*male line/female line]1 <span class="text-info">✘</span></label>
-      </div>
-      <div class="ml-4">
-        <div class="custom-control custom-checkbox">
-          <input type="checkbox" class="custom-control-input" id="tree_marriage" name="marriage">
-          <label class="custom-control-label" for="tree_marriage">[*display marriage date]</label>
-        </div>
-        <div class="custom-control custom-checkbox">
-          <input type="checkbox" class="custom-control-input" id="tree_dag" name="dag">
-          <label class="custom-control-label" for="tree_dag">[*dag]<i class="fa fa-random fa-fw ml-1"></i></label>
-        </div>
       </div>
      %( <input name="bd" size="1" maxlength="2" value="0"%/>
         <label>[*border]</label>
@@ -387,8 +387,8 @@ function missing_events_options () {
               <label class="custom-control-label" for="t_num">[*n° Sosa]</label>
             </div>
             <div class="custom-control custom-checkbox custom-control-inline">
-              <input type="checkbox" class="custom-control-input" id="t_title" name="title">
-              <label class="custom-control-label" for="t_title">[*title/titles]1</label>
+              <input type="checkbox" class="custom-control-input" id="t_tt" name="tt" value="1">
+              <label class="custom-control-label" for="t_tt">[*title/titles]1</label>
             </div>
           </div>
           <div class="custom-control custom-checkbox custom-control-inline">
@@ -466,11 +466,11 @@ function missing_events_options () {
             </div>
           </div>
           <div class="custom-control custom-checkbox">
-            <input type="checkbox" class="custom-control-input" id="t_ns" name="ns">
+            <input type="checkbox" class="custom-control-input" id="t_ns" name="ns" value="1">
             <label class="custom-control-label" for="t_ns">[*see descendants notes/sources]</label>
           </div>
           <div class="custom-control custom-checkbox">
-            <input type="checkbox" class="custom-control-input" id="t_gen" name="gen">
+            <input type="checkbox" class="custom-control-input" id="t_gen" name="gen" value="1">
             <label class="custom-control-label" for="t_gen">[*display generation]</label>
           </div>
           <div class="custom-control custom-checkbox">
@@ -491,7 +491,7 @@ function missing_events_options () {
               <label class="custom-control-label" for="only">[*only the generation selected] <span class="text-primary">✱</span></label>
             </div>
             <div class="custom-control custom-checkbox">
-              <input type="checkbox" class="custom-control-input" id="image" name="image" value="off">
+              <input type="checkbox" class="custom-control-input" id="image" name="im" value="0">
               <label class="custom-control-label" for="image">[*visualize/show/hide/summary]2 [image/images]1 <span class="text-info">✘</span></label>
             </div>
             <div class="custom-control custom-checkbox">

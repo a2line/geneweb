@@ -688,7 +688,7 @@
       </tr>
     </table>
     <div class="fp_person_info">
-      %if;(evar.image!="off" and xx.has_image)
+      %if;(e.im="" and xx.has_image)
         <table width="100%%">
           <tr>
             <td width="30">
@@ -764,7 +764,7 @@
           </li>
         %end;
       </ul>
-      %if;(evar.image!="off" and xx.has_image)
+      %if;(e.im="" and xx.has_image)
         </td></tr></table>
       %end;
     </div>

@@ -26,14 +26,14 @@
           %if;(evar.marr_place="")&marr_place=on%end;%if;(evar.child="")&child=on%end;%nn;
           %if;(evar.death="")&death=on%end;%if;(evar.death_place="")&death_place=on%end;%nn;
           %if;(evar.age="")&age=on%end;%if;(evar.occu="")&occu=on%end;%nn;
-          %if;(evar.gen="")&gen=on%end;%if;(evar.repeat="" and evar.m="A")&repeat=on%end;
-          %if;(evar.ns="")&ns=on%end;%nn;
+          %if;(e.gen="")&gen=1%end;%if;(evar.repeat="" and evar.m="A")&repeat=on%end;
+          %if;(e.ns="")&ns=1%end;%nn;
         %end;
         ">%nn;
   <i class="fa fa-table fa-lg fa-fw mr-1" aria-hidden="true"></i>[*table] %if;(cond=1)[descendants]%else;[ancestors]%end;</a>
   <span class="sr-only">—</span>
   <a role="button" class="btn btn-link ml-1 my-0 px-0"%sp;
-    href="%prefix_base_password;%if;(evar.templ!="")&templ=%evar.templ;%end;&%access;%root;&m=%evar.m;&t=T&v=%evar.v;%if;(evar.m="A")&marriage=on%end;%if;(evar.image="off")&image=off%end;">%nn;
+    href="%prefix_base_password;%if;(evar.templ!="")&templ=%evar.templ;%end;&%access;%root;&m=%evar.m;&t=T&v=%evar.v;%if;(e.im=0)&im=0%end;">%nn;
     <i class="fa fa-sitemap%if;(evar.m="A") fa-rotate-180%end; fa-fw mr-1" aria-hidden="true"></i>%if;(evar.m="D")[*descendants tree]%elseif;(evar.m="A")[*ascendants tree]%end;%nn;
   </a>
   <span class="sr-only">—</span>
@@ -62,21 +62,18 @@
 <div class="input-group ml-2">
   <div class="button-group" role="group" aria-label="nav buttons">
     %if;(istable=1)
-      <a role="button" class="btn btn-link mx-0 px-0 mr-1 %if;(evar.t="Y" or evar.csv="on")TODO allfn sur table/couple %) disabled%end;"
-        href="%prefix_base_password;%nn;
-              %foreach;env_binding;
-                %if;(env.key!="fn" and env.key!="")&%env.key=%env.val;%end;
-              %end;
-              %if;(evar.fn!="on")&fn=on%end;" title="[*visualize/show/hide/summary]1 %if;(evar.fn="on")[public name]%else;[first name/first names]1%end;">%nn;
-        <i class="fas fa-address-%if;(evar.fn="on")book%else;card%end; fa-fw fa-lg" aria-hidden="true"></i>%nn;
+      %( TODO allfn sur table/couple %)
+      <a role="button" class="btn btn-link mx-0 px-0 mr-1 %if;(evar.t="Y" or evar.csv="on") disabled%end;"
+        href="%if;(e.fn=1)%urlv.fn;%else;%urlv.fn.1;%end;" title="[*visualize/show/hide/summary]1 %if;(e.fn=1)[public name]%else;[first name/first names]1%end;">%nn;
+        <i class="fas fa-address-%if;(e.fn=1)book%else;card%end; fa-fw fa-lg" aria-hidden="true"></i>%nn;
       </a>
-      <a role="button" class="btn btn-link mx-0 px-0%if;(evar.csv="on") disabled%end;%if;(evar.image!="off") text-danger%end;"
-        href="%prefix_base_password;%nn;
-              %foreach;env_binding;
-                %if;(env.key!="image" and env.key!="")&%env.key=%env.val;%end;
-              %end;
-              %if;(evar.image!="off")&image=off%end;"
-        title="%if;(evar.image="off")[*visualize/show/hide/summary]1%else;[*visualize/show/hide/summary]2%end; [image/images]1">%nn;
+      <a role="button" class="btn btn-link mx-0 px-0 mr-1 %if;(evar.t="Y" or evar.csv="on") disabled%end;%if;(e.tt=1) text-danger%end;"
+        href="%if;(e.tt=1)%urlv.tt;%else;%urlv.tt.1;%end;" title="%if;(e.tt=0)[*visualize/show/hide/summary]2%else;[*visualize/show/hide/summary]1%end; [title/titles]1">%nn;
+        <i class="fas fa-crown fa-fw fa-lg" aria-hidden="true"></i>%nn;
+      </a>
+      <a role="button" class="btn btn-link mx-0 px-0%if;(evar.csv="on") disabled%end;%if;(e.im=0) text-danger%end;"
+        href="%if;(e.im=0)%urlv.im;%else;%urlv.im.0;%end;"
+          title="%if;(e.im=0)[*visualize/show/hide/summary]2%else;[*visualize/show/hide/summary]1%end; [image/images]1">%nn;
         <i class="fa fa-image fa-lg fa-fw" aria-hidden="true"></i>%nn;
       </a>
       <span class="sr-only">—</span>
@@ -84,17 +81,13 @@
       %apply;size_btn(90,"")
       %apply;size_btn(120,"fa-lg")
       %if;(evar.templ="")
-        <span class="sr-only">—</span>
-        <a role="button" class="btn btn-link px-0%if;(evar.ns="on") text-danger%end;%if;(evar.t="Y" or evar.csv="on") disabled%end;"
-          title="%if;(evar.ns="" or evar.ns!="on")[*visualize/show/hide/summary]1%else;[*visualize/show/hide/summary]2%end; [note/notes]1 [and] [source/sources]1%if;(evar.ns!="on"). [*colored corner]%end;"
-          href="%prefix_base_password;%nn;
-                %foreach;env_binding;
-                  %if;(env.key!="ns" and env.key!="")&%env.key=%env.val;%end;%nn;
-                %end;
-                %if;(evar.ns!="on")&ns=on%end;">
-          <i class="far fa-sticky-note fa-flip-vertical fa-lg fa-fw mb-1 mr-1" aria-hidden="true"></i>%nn;
-          <span class="notecolor">[*note/notes]1</span> <span class="notesourcecolor">[and]</span> <span class="sourcecolor">[source/sources]1</span>%nn;
-        </a>
+      <span class="sr-only">—</span>
+      <a role="button" class="btn btn-link px-0%if;(e.ns=1) text-danger%end;%if;(e.t="Y" or e.csv="on") disabled%end;"
+        title="%if;(e.ns=1)[*visualize/show/hide/summary]2%else;[*visualize/show/hide/summary]1%end; [note/notes]1 [and] [source/sources]1%if;(e.ns=""). [*colored corner]%end;"
+        href="%if;(e.ns=1)%urlv.ns;%else;%urlv.ns.1;%end;">
+        <i class="far fa-sticky-note fa-flip-vertical fa-lg fa-fw mb-1 mr-1" aria-hidden="true"></i>%nn;
+        <span class="notecolor">[*note/notes]1</span> <span class="notesourcecolor">[and]</span> <span class="sourcecolor">[source/sources]1</span>%nn;
+      </a>
       %end;
       %if;(evar.m="D" and (evar.marr="on" or evar.marr_place="on" or evar.marr_date="on"))
         <span class="sr-only">—</span>
@@ -151,7 +144,7 @@
       </a>
     %end;
     <span class="sr-only">—</span>
-    %let;couple_table;%prefix_base;%access;&m=A&t=Y%if;(evar.only="on")&only=on%end;%if;(evar.image="off")&image=off%end;&v=%evar.v&%in;
+    %let;couple_table;%prefix_base;%access;&m=A&t=Y%if;(evar.only="on")&only=on%end;%if;(e.im!="")&im=0%end;&v=%evar.v&%in;
     %if;(evar.csv!="on" and evar.m="A" and evar.t="Z" or evar.t="Y")
       <span class="sr-only">—</span>
       <a role="button" class="btn btn-link px-0"
