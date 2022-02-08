@@ -1535,7 +1535,7 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses images marriages =
   (*let x1 = x in
   let xn = x in *)
   let ifaml = List.rev (Array.to_list (get_family p)) in
-  let ifam_nbr = if List.length ifaml <= 1 then -1 else 0 in
+  let ifam_nbr = List.length ifaml in
   let descendants = ifaml <> [] in
   (* find right family there *)
   let ifaml =
@@ -1554,7 +1554,7 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses images marriages =
           | [] -> tdal, x1, xn
           | ifam :: ifaml ->
               let (tdal, xn) = f_pos conf base ifam ifam_nbr only_one first last p (xn+2) v (ir+1) tdal only_anc spouses images marriages in
-              loop ifaml (ifam_nbr+1) only_one
+              loop ifaml (ifam_nbr-1) only_one
                 false ((List.length ifaml)=1) (if first then xn else x1) xn tdal
         in loop ifaml ifam_nbr (List.length ifaml=1) true ((List.length ifaml)=1) 0 xn tdal
       in
@@ -1639,9 +1639,10 @@ and f_pos conf base ifam ifam_nbr only_one first last p x0 v ir2 tdal only_anc s
   let fam = foi base ifam in
   let marr_d = if marriages then DateDisplay.short_marriage_date_text conf base fam p sp else "" in
   let m_txt = (* families are scanned in reverse order *)
+  let f_nbr = string_of_int ifam_nbr in
     "<span class=\"text-nowrap\">" ^
       (if last || only_one then "" else "…") ^
-      (if only_one then "" else "& ") ^ marr_d ^
+      (if only_one then "" else " &" ^ f_nbr ^ " ") ^ marr_d ^
       (if first || only_one then "" else "…") ^
     "</span>" ^ (if only_one && not marriages then "" else "<br>")
   in
