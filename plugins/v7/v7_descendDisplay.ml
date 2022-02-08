@@ -1476,7 +1476,7 @@ let get_text conf base p filler =
     if auth then txt ^ DateDisplay.short_dates_text conf base p else txt
   in
   let vbar_image = if filler then Printf.sprintf
-    "</div><div class=\"flex-grow-1\"><img src=\"%sm=IM&v=vbar.jpg\" class=\"img-fluid\"></div>\n"
+    "<div class=\"flex-grow-1\"><img src=\"%sm=IM&v=vbar.jpg\" class=\"img-fluid\"></div>\n"
     (commd conf)
     else ""
   in
@@ -1535,6 +1535,7 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses images marriages =
   (*let x1 = x in
   let xn = x in *)
   let ifaml = List.rev (Array.to_list (get_family p)) in
+  let ifam_nbr = if List.length ifaml <= 1 then -1 else 0 in
   let descendants = ifaml <> [] in
   (* find right family there *)
   let ifaml =
@@ -1548,13 +1549,14 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses images marriages =
     if v >= 1 && ifaml <> [] then
       let xn = if only_anc = [] then x - (List.length ifaml) - 1 else x in
       let (tdal, x1, xn) =
-        let rec loop ifaml first x1 xn tdal =
+        let rec loop ifaml ifam_nbr only_one first last x1 xn tdal =
           match ifaml with
           | [] -> tdal, x1, xn
           | ifam :: ifaml ->
-              let (tdal, xn) = f_pos conf base ifam p (xn+2) v (ir+2) tdal only_anc spouses images marriages in
-              loop ifaml false (if first then xn else x1) xn tdal
-        in loop ifaml true 0 xn tdal
+              let (tdal, xn) = f_pos conf base ifam ifam_nbr only_one first last p (xn+2) v (ir+1) tdal only_anc spouses images marriages in
+              loop ifaml (ifam_nbr+1) only_one
+                false ((List.length ifaml)=1) (if first then xn else x1) xn tdal
+        in loop ifaml ifam_nbr (List.length ifaml=1) true ((List.length ifaml)=1) 0 xn tdal
       in
       (tdal, (x1+xn)/2, x1, xn)
     else (tdal, x, x, x) (* ?? correct ?? *)
@@ -1583,16 +1585,17 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses images marriages =
      ("class=\"normal_anchor mx-3\"")
      (Utf8.capitalize_fst (Util.transl conf "limit tree to ancestors and siblings"))
   in
-  let text = if ir > 0 then only ^ "<br>" ^ txt else txt in
+  let txt = if ir > 0 then only ^ "<br>" ^ txt else txt in
   (* ajouter un marqueur ici si enfants et on ne continue pas !!   *)
   let continue = only_anc = [] || ifaml <> [] in
   let br = if images then "<br>" else "" in
-  let text = if (not continue && descendants) then text ^ br ^ "+" else text in
+  let txt = if (not continue && descendants) then txt ^ br ^ "+" else txt in
   let lx = if lx > -1 then lx else -1 in
   let tdal =
-    tdal_add tdal ir ((td_fill lx (x - 1)) @ (td_cell 1 "center" text (get_iper p))) x
+    tdal_add tdal ir ((td_fill lx (x - 1)) @ (td_cell 1 "center" txt (get_iper p))) x
   in
   (* row 2: Hbar over spouses *)
+  (*
   let tdal =
     if v >= 1 && ifaml<>[] then
       let lx = lastx tdal (ir+1) in
@@ -1603,10 +1606,11 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses images marriages =
         tdal_add tdal (ir+1) ((td_fill lx (x - 1)) @ (td_cell 1 "center" "|" Gwdb.dummy_iper)) x
     else tdal
   in
+  *)
   (tdal, x)
 
-and f_pos conf base ifam p x0 v ir2 tdal only_anc spouses images marriages =
-  let d_ir = if spouses then 1 else 0 in
+(* ifam_nbr = -1 = 1 family, otherwize rank *)
+and f_pos conf base ifam ifam_nbr only_one first last p x0 v ir2 tdal only_anc spouses images marriages =
   let sp = get_spouse base (get_iper p) ifam in
   let continue = (only_anc = []) || (List.mem ifam only_anc) in
   let lx = (lastx tdal ir2) + 2 in
@@ -1618,12 +1622,12 @@ and f_pos conf base ifam p x0 v ir2 tdal only_anc spouses images marriages =
     if kids <> [] && continue then
       let xn = x - (List.length kids) - 1 in
       let (tdal, x1, xn) =
-        let rec loop kids first tdal x1 xn =
+        let rec loop kids first_kid tdal x1 xn =
           match kids with
           | [] -> tdal, x1, xn
           | kid :: kids ->
-              let (tdal, xn) = p_pos conf base kid (xn+2) (v-1) (ir2+d_ir+1) tdal only_anc spouses images marriages in
-              loop kids false tdal (if first then xn else x1) xn
+              let (tdal, xn) = p_pos conf base kid (xn+2) (v-1) (ir2+2) tdal only_anc spouses images marriages in
+              loop kids false tdal (if first_kid then xn else x1) xn
         in loop kids true tdal 0 xn
       in
       (tdal, (x1+xn)/2, x1, xn)
@@ -1634,22 +1638,30 @@ and f_pos conf base ifam p x0 v ir2 tdal only_anc spouses images marriages =
   let br_sp = if (Util.has_image conf base sp) && images then "" else "<br>" in 
   let fam = foi base ifam in
   let marr_d = if marriages then DateDisplay.short_marriage_date_text conf base fam p sp else "" in
-  let text = "<div>&" ^ marr_d ^ " " ^ txt ^
-    (if kids <> [] then br_sp ^ "|" else "")
-  in 
+  let m_txt = (* families are scanned in reverse order *)
+    "<span class=\"text-nowrap\">" ^
+      (if last || only_one then "" else "…") ^
+      (if only_one then "" else "& ") ^ marr_d ^
+      (if first || only_one then "" else "…") ^
+    "</span>" ^ (if only_one && not marriages then "" else "<br>")
+  in
+  let txt = txt ^ (if kids <> [] then br_sp else "") in
+  let txt = if spouses then m_txt ^ txt else m_txt in
+  let txt = if kids <> [] then txt ^ "|" else txt in
   let lx = lastx tdal ir2 in
   let lx = if lx > -1 then lx else -1 in
-  let tdal = 
-    if spouses then
-      tdal_add tdal ir2 ((td_fill lx (x - 1)) @ (td_cell 1 "center" text (get_iper sp))) x
-    else tdal
+  let tdal =
+    if true then
+      tdal_add tdal ir2 ((td_fill lx (x - 1)) @ (td_cell 1 "center" txt (get_iper sp))) x
+    else
+      tdal
   in
   (* rox 4: Hbar over kids *)
   if kids <> [] then
-    let lx = lastx tdal (ir2+d_ir) in
+    let lx = lastx tdal (ir2+1) in
     let lx = if lx > -1 then lx else -1 in
     let tdal = 
-        tdal_add tdal (ir2+d_ir) ((td_fill lx (x1 - 1)) @ (td_hbar x1 xn)) xn
+        tdal_add tdal (ir2+1) ((td_fill lx (x1 - 1)) @ (td_hbar x1 xn)) xn
     in
     (tdal, x)
   else (tdal, x)
