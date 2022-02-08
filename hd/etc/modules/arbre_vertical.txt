@@ -1,4 +1,7 @@
 <!-- $Id: modules/arbre_vertical v7.00 06/02/2022 01:13:59 Arbre ascendant vertical -->
+%define;widow(xxx,yyy,nnn)
+   %if;(nnn=0)[*widower/widow:::xxx:yyy]1%else;[*widower/widow:::xxx:yyy]0%end;
+%end;
 %define;a_tree_line()
   %if;(not is_first)
     <tr>
@@ -6,7 +9,7 @@
         %if;(not is_first)
           <td class="text-center"><samp>&nbsp;</samp></td>
         %end;
-        <td colspan="%if;(e.v>2 and is_last)%expr(cell.colspan-1)%else;%cell.colspan;%end;" class="text-center py-0 mx-0">%nn;
+        <td colspan="%cell.colspan;" class="text-center py-0 mx-0">%nn;
           %if;(cell.is_empty or cell.is_top)<samp>&nbsp;</samp>%else;│%end;
         </td>
       %end;
@@ -17,7 +20,7 @@
       %if;(not is_first)
         <td class="text-center"><samp>&nbsp;</samp></td>
       %end;
-      <td colspan="%if;(e.v>2 and is_last)%expr(cell.colspan-1)%else;%cell.colspan;%end;" class="text-center align-bottom py-0">%nn;
+      <td colspan="%cell.colspan;"%( style="max-width:%expr(1024/(2^(e.v-1)))px"%) class="col-1 text-center align-bottom py-0">%nn;
         %if;(cell.is_empty)<samp>&nbsp;</samp>%nn;
         %else;
           %if;(e.im="" and cell.person.has_image)
@@ -40,14 +43,54 @@
         %if;cell.is_right;
           %if;(e.ma!="0")
             %if;(wizard and not cancel_links)
-              <a class="small font-weight-italic text-center text-nowrap"
+              <a class="small font-italic text-center text-nowrap"
                 href="%prefix_base_password;m=MOD_FAM;i=%cell.family.index;;ip=%index;"
                 title="%if;(cell.family.marriage_date.year="")[*add::marriage/marriages]0
                      %else;[*update::family/families]0%end; %cell.family.father; [and] %cell.family.mother;">%end;
-              %(%if;plugin.v7;%cell.family.date_s;%else;%cell.marriage.date_s;%end; TODO cell.marriage.date_s don't work here ?! %)
-              %if;(plugin.v7 and cell.family.marriage_date.year!= "")%cell.family.date_s;%nn;
-              %elseif;(wizard and not cancel_links)-%nn;
-              %end;
+                %if;(cell.family.marriage_date.year!="")
+                  %let;prntsdead;%if;(cell.family.father.death_date.year!="" and cell.family.father.death_date.prec="" and cell.family.mother.death_date.year!="" and cell.family.mother.death_date.prec="")1%end;%in;
+                  %let;fwy;
+                    %if;(prntsdead=1)
+                      %if;(cell.family.father.death_date.year-cell.family.mother.death_date.year=0)1%elseif;(cell.family.father.death_date.year-cell.family.mother.death_date.year<0)0%else;3%end;
+                    %else;
+                      %if;(cell.family.father.death_date.year!="" and cell.family.father.death_date.prec="")2%nn;
+                      %elseif;(cell.family.mother.death_date.year!="" and cell.family.mother.death_date.prec="")4;%nn;
+                      %end;
+                    %end;
+                  %in;
+                  %let;fwy_date;
+                    %if;(fwy<3)%if;(fwy=2)?%end;%cell.family.father.death_date.year;%nn;
+                    %elseif;(fwy>2)%if;(fwy=4)?%end;%cell.family.mother.death_date.year;%nn;
+                    %end;
+                  %in;
+                  %( TODO: — also calculate relation length if couple alive 
+                           — print if widow remaried or not
+                           - test variable before = debug gwd log
+                           - rethink render (color/bold..) %)
+                  %if;plugin.v7;
+                    %if;(fwy!="" and not ("–" in cell.family.dates)) 
+                       %cell.family.dates;–<span class="font-weight-bold %if;(fwy=0)female%elseif;(fwy=1)female%end;" title="%if;(prntsdead=1)%nn;
+                         %apply;a_of_b%with;%expr(fwy_date-cell.family.dates) [years old]%and;[relation/relations]0%end;
+                         %apply;a_of_b%with;
+                           %if;(fwy=0 or fwy=3).%sp;
+                             %apply;widow%with;%if;(fwy=0)%cell.family.mother;%else;%cell.family.father;%end;
+                               %and;%if;(fwy=0)%if;(cell.family.mother.is_dead)[since/for]1%else;[since/for]0%end;
+                                    %else;%if;(cell.family.father.is_dead)[since/for]1%else;[since/for]0%end;
+                                    %end;
+                               %and;%if;(fwy=0)0%end;
+                               %end;
+                             %if;(fwy=0) %expr(cell.family.mother.death_date.year-cell.family.father.death_date.year)%nn;
+                             %else; %expr(cell.family.father.death_date.year-cell.family.mother.death_date.year)%end; [years old]%nn;
+                           %end;
+                         %and;%if;(fwy=0)%cell.family.father;%else;%cell.family.mother;%end;
+                         %end;.
+                       %end;">%fwy_date;</span>
+                    %else;
+                      <span class="mr-4">%cell.family.dates;</span>
+                    %end;
+                  %else;%cell.family.marriage.date_s;%end;
+                %elseif;(wizard and not cancel_links)-%nn;
+                %end;
             %if;(wizard and not cancel_links)</a>%end;
           %else;<samp>&nbsp;</samp>
           %end;

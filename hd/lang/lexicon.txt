@@ -17914,3 +17914,11 @@ fr: modifier la taille des images à
     passing by
 en: passing by
 fr: en passant par
+
+    widower/widow
+en: %s widower %s/%s widow %s
+fr: %s veuf %s/%s veuve %s
+
+    since/for
+en: since/for
+fr: depuis/pendant

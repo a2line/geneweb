@@ -31,6 +31,6 @@ let short_family_dates_text conf _base fam =
     | _ -> None
   in
   match marr_dates, sep_dates with
-  | Some m, Some s -> m ^ "-" ^ s
+  | Some m, Some s -> m ^ "–" ^ s
   | Some m, None -> m
   | _, _ -> ""
