@@ -3943,6 +3943,16 @@ and eval_family_field_var conf base env
         Some d when m_auth -> eval_date_field_var conf d sl
       | _ -> VVstring ""
       end
+  | "divorce_date" :: sl | "divorce" :: sl ->
+      begin match get_divorce fam with
+      | Divorced d ->
+          let d = Adef.od_of_cdate d in
+          begin match d with
+          | Some d when m_auth -> eval_date_field_var conf d sl
+          | _ -> VVstring ""
+          end
+      | _ -> VVstring ""
+      end
   | "mother" :: sl ->
       begin match get_env "f_link" env with
         Vbool _ -> raise Not_found
