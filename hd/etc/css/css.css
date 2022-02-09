@@ -13,10 +13,33 @@ p {
 	vertical-align: middle;
 	height: 140px;
 }
-	
-.tooltip-inner{
+
+.tooltip.show {
+  opacity: 1;
+}
+
+.tooltip-inner {
    white-space: nowrap;
-   max-width: 450px;
+   max-width: 600px;
+   background-color: #A9A9A9;
+   box-shadow: 0px 0px 4px black;
+   opacity: 1 !important;
+}
+
+.tooltip.bs-tooltip-right .arrow:before {
+  border-right-color: #A9A9A9 !important;
+}
+
+.tooltip.bs-tooltip-left .arrow:before {
+ border-left-color: #A9A9A9 !important;
+}
+
+.tooltip.bs-tooltip-bottom .arrow:before {
+ border-bottom-color: #A9A9A9 !important;
+}
+
+.tooltip.bs-tooltip-top .arrow:before {
+ border-top-color: #A9A9A9 !important;
 }
 
 /*! Small webfont with 50 monospaced glyphs for descending tree view	p {

@@ -3938,6 +3938,7 @@ and eval_family_field_var conf base env
           eval_person_field_var conf base env ep loc sl
       end
   | ["date_s"] | ["dates"] -> VVstring (V7_date.short_family_dates_text conf base fam)
+  | ["sep_date_s"] -> VVstring (V7_date.short_family_sep_dates conf base fam)
   | "marriage_date" :: sl | "marriage" :: sl ->
       begin match Adef.od_of_cdate (get_marriage fam) with
         Some d when m_auth -> eval_date_field_var conf d sl

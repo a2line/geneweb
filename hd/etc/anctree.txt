@@ -61,5 +61,12 @@
 %end;
 </div>
 %include;js
+%(%if;(e.m="A" and e.t="T")
+<script>
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+%end;%)
 </body>
 </html>
