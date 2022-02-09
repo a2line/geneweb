@@ -37,7 +37,7 @@
     <div class="btn-group border rounded mr-2" role="toolbar" arial-label="ascendant+dag+desc. buttons groups">
       <a role="button" href="%prefix_base_password;%foreach;env_binding;%if;(env.key!="m" and env.key!="t")%env.key=%env.val;&%end;%end;m=A&t=T"
         class="btn btn-outline-primary border-%if;(e.m="A" and e.t="T")2 disabled font-weight-bold%else;0%end;"
-        title="[*ascendants tree]"><i class="fas fa-sitemap fa-rotate-180 fa-lg"></i><br>[*tree] asc.</a>
+        title="[*ascendants tree]"><i class="fas fa-code-fork fa-lg"></i><br>[*tree] asc.</a>
       <a role="button" class="btn btn-outline-%if;(e.dag=1)primary font-weight-bold border-2%elseif;(e.t="C" or e.t="A" or e.t="TV")dark disabled border-0%else;primary border-0%end;"
         href="%if;(e.dag="")%urlv.dag.1;%else;%urlv.dag;%end;"
         title="%if;(e.dag="")[*dag on/dag off]0%else;[*dag on/dag off]1%end; ([dag])">
