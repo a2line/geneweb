@@ -41,7 +41,7 @@
   %include;modules/arbre_9gen
 %elseif;(evar.t="T" and evar.t1="CT") %(CT for compatibility with templm %)
   %include;modules/arbre_hi_tools
-  %include;tools
+  %include;templm/tools
   %include;modules/arbre_hi_indexes
   %include;modules/arbre_hi
 %elseif;(evar.t="A" or evar.t="C" or evar.t="T")
@@ -61,12 +61,5 @@
 %end;
 </div>
 %include;js
-%(%if;(e.m="A" and e.t="T")
-<script>
-  $(function () {
-    $('[data-toggle="tooltip"]').tooltip()
-  })
-</script>
-%end;%)
 </body>
 </html>

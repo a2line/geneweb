@@ -17916,9 +17916,9 @@ en: passing by
 fr: en passant par
 
     widower/widow
-en: %s widower %s/%s widow %s
-fr: %s veuf %s/%s veuve %s
+en: widower/widow
+fr: veuf/veuve
 
-    since/for
-en: since/for
-fr: depuis/pendant
+    for/since
+en: for/since
+fr: pendant/depuis

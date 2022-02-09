@@ -32,7 +32,7 @@ let short_family_dates_text conf _base marr_sep fam =
   in
   if marr_sep then
     match marr_dates_aux, sep_dates_aux with
-    | Some m, Some s -> m ^ "–" ^ s
+    | Some m, Some s -> m ^ "-" ^ s
     | Some m, None -> m
     | _, _ -> ""
   else

@@ -242,11 +242,11 @@
     <a href="%prefix;m=MOD_IND;i=%xx.index;" title="[*modify::] %xx.first_name;%if;(xx.occ!="0").%xx.occ;%end; %xx.surname;">
   %end;
   <div class="text-nowrap font-italic%nn;
-      %if;(e.m="A" and xx.index!=index)
+      %(%if;(e.m="A" and xx.index!=index)
         %if;(not xx.is_dead) mr-5%nn;
         %else;%if;(xx.death_date.year="") mr-4%end;
         %end;
-      %end;">%nn;
+      %end;"%)>%nn;
     %if;(xx.dates!="")%xx.dates;%nn;
     %elseif;(wizard and not cancel_links)-%nn;
     %elseif;(cancel_links)
