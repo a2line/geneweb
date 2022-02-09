@@ -40,11 +40,11 @@
         %if;cell.is_right;
           %if;(e.ma!="0")
             %if;(wizard and not cancel_links)
-              <a class="small text-center text-nowrap"
-                href="%prefix_base_password;m=MOD_FAM&i=%cell.family.index;&ip=%index;"
+              <a ref="%prefix_base_password;m=MOD_FAM&i=%cell.family.index;&ip=%index;"
             %else;
-              <span class="small font-italic"
+              <span
             %end;
+              class="small font-italic text-center text-nowrap"
               title="%if;((not (cell.family.father.is_dead and cell.family.mother.is_dead)) or (plugin.v7 and "-" in cell.family.date_s and cell.family.sep_date_s!="" and cell.family.marriage_date.prec=""))
                        %if;(cell.family.sep_date_s!="")
                          %apply;a_of_b%with;%expr(cell.family.sep_date_s-cell.family.marriage_date.year) [years old]%and;[relation/relations]0%end;%nn;
@@ -65,7 +65,7 @@
                   %if;(cell.family.father.death_date.year!="" and cell.family.father.death_date.prec="")
                     %if;cell.family.mother.is_dead;2%else;5%end;
                   %elseif;(cell.family.mother.death_date.year!="" and cell.family.mother.death_date.prec="")
-                    %if;cell.family.father.is.dead;4%else;6%end;
+                    %if;cell.family.father.is_dead;4%else;6%end;
                   %end;
                 %end;
               %in;
@@ -87,7 +87,7 @@
               %in;
               %if;plugin.v7;
                 %if;(fw!="" and (cell.family.date_s=cell.family.marriage_date.year)and cell.family.sep_date_s="")
-                  %( DEBUG %fw;|%widow_year;|%widow_period;<br>%)
+                  %(DEBUG %fw;|%widow_year;|%widow_period;<br>%)
                   <span class="font-italic">%cell.family.date_s;</span>%nn;
                   <span class="small font-weight-bold %if;(fw=3)male%elseif;(fw=0)female%elseif;(fw=5 or fw=6)text-success%end;"
                    title="%nn;
