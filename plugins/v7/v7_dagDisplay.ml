@@ -902,6 +902,11 @@ let rec eval_var conf page_title next_txt env _xx _loc =
       | (Some _, Some _) -> VVbool true
       | (_, _) -> VVbool false
       end
+  | ["cell_nbr"] ->
+       begin match get_env "cell_nbr" env with
+      | Vint i -> VVstring (string_of_int i)
+      | _ -> raise Not_found
+      end
   | "dag" :: sl ->
       begin match get_env "dag" env with
         Vdag d -> eval_dag_var conf d sl
@@ -928,8 +933,8 @@ let rec eval_var conf page_title next_txt env _xx _loc =
       | Vbool b -> VVbool b
       | _ -> VVbool false
       end
-  | ["nbr"] ->
-       begin match get_env "nbr" env with
+  | ["line_nbr"] ->
+       begin match get_env "line_nbr" env with
       | Vint i -> VVstring (string_of_int i)
       | _ -> raise Not_found
       end
@@ -1104,7 +1109,7 @@ and print_foreach_dag_cell hts print_ast env al =
   for j = 0 to Array.length hts.(i) - 1 do
     let print_ast = print_ast
       (("dag_cell", Vdcell hts.(i).(j)) ::
-       ("nbr", Vint j) ::
+       ("cell_nbr", Vint j) ::
        ("first", Vbool (j=0)) ::
        ("last", Vbool (j = (Array.length hts.(i) - 1))) ::
       env) () in
@@ -1114,7 +1119,7 @@ and print_foreach_dag_line print_ast env hts al =
   for i = 0 to Array.length hts - 1 do
     let print_ast = print_ast
       (("dag_line", Vdline i) ::
-       ("nbr", Vint i) ::
+       ("line_nbr", Vint i) ::
        ("first", Vbool (i=0)) ::
        ("last", Vbool (i = (Array.length hts - 1))) ::
       env) ()

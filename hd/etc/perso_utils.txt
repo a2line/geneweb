@@ -246,7 +246,7 @@
         %if;(not xx.is_dead) mr-5%nn;
         %else;%if;(xx.death_date.year="") mr-4%end;
         %end;
-      %end;"%)>%nn;
+      %end;%)">%nn;
     %if;(xx.dates!="")%xx.dates;%nn;
     %elseif;(wizard and not cancel_links)-%nn;
     %elseif;(cancel_links)
