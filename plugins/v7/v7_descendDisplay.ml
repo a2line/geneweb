@@ -1320,7 +1320,7 @@ let print_tree conf base v p =
        transl_a_of_gr_eq_gen_lev conf (transl conf "descendants") s s)
   in
   let hts = make_tree_hts conf base gv p in
-  DagDisplay.print_slices_menu_or_dag_page conf page_title hts ""
+  DagDisplay.print_slices_menu_or_dag_page conf base page_title hts ""
 
 let print_aboville conf base max_level p =
   let max_level = min (Perso.limit_desc conf) max_level in
@@ -1786,7 +1786,7 @@ let print_vaucher_tree conf base v p =
        transl_a_of_gr_eq_gen_lev conf (transl conf "descendants") s s)
   in
   let hts = make_vaucher_tree_hts conf base gv p in
-  DagDisplay.print_slices_menu_or_dag_page conf page_title hts ""
+  DagDisplay.print_slices_menu_or_dag_page conf base page_title hts ""
 
 let print conf base p =
   let templ =

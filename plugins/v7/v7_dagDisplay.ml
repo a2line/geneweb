@@ -895,7 +895,7 @@ let eval_predefined_apply conf f vl =
       end
   | _ -> raise Not_found
 
-let rec eval_var conf page_title next_txt env _xx _loc =
+let rec eval_var conf base page_title next_txt env _xx _loc =
   function
   | ["browsing_with_sosa_ref"] ->
       begin match (Util.p_getenv conf.env "pz", Util.p_getenv conf.env "nz") with
@@ -909,12 +909,12 @@ let rec eval_var conf page_title next_txt env _xx _loc =
       end
   | "dag" :: sl ->
       begin match get_env "dag" env with
-        Vdag d -> eval_dag_var conf d sl
+        Vdag d -> eval_dag_var conf base d sl
       | _ -> raise Not_found
       end
   | "dag_cell" :: sl ->
       begin match get_env "dag_cell" env with
-        Vdcell dcell -> eval_dag_cell_var conf dcell sl
+        Vdcell dcell -> eval_dag_cell_var conf base dcell sl
       | _ -> raise Not_found
       end
   | ["dag_cell_pre"] ->
@@ -942,13 +942,13 @@ let rec eval_var conf page_title next_txt env _xx _loc =
   | ["static_max_anc_level"] -> VVstring "10"
   | ["static_max_desc_level"] -> VVstring "10"
   | _ -> raise Not_found
-and eval_dag_var _conf (tmincol, tcol, _colminsz, colsz, _ncol) =
+and eval_dag_var _conf _base (tmincol, tcol, _colminsz, colsz, _ncol) =
   function
     ["max_wid"] -> VVstring (string_of_int tcol)
   | ["min_wid"] -> VVstring (string_of_int tmincol)
   | ["ncol"] -> VVstring (string_of_int (Array.fold_left (+) 0 colsz))
   | _ -> raise Not_found
-and eval_dag_cell_var conf (colspan, align, td) =
+and eval_dag_cell_var conf base (colspan, align, td) =
   function
     ["align"] ->
       begin match align with
@@ -1003,14 +1003,105 @@ and eval_dag_cell_var conf (colspan, align, td) =
         TDtext (ip, s) -> VVstring (string_of_iper ip)
       | _ -> VVstring ""
       end
+  | ["access"] ->
+      begin match td with
+        TDtext (ip, s) -> VVstring (Util.acces conf base (poi base ip))
+      | _ -> VVstring ""
+      end
+  | ["father"; "access"] ->
+      begin match td with
+      | TDtext (ip, s) ->
+        begin match get_parents (poi base ip) with
+        | Some ifam ->
+            let cpl = foi base ifam in
+            VVstring (Util.acces conf base (poi base (get_father cpl)))
+        | None -> VVstring ""
+        end
+      | _ -> VVstring ""
+      end
+  | ["mother"; "access"] ->
+      begin match td with
+      | TDtext (ip, s) ->
+        begin match get_parents (poi base ip) with
+        | Some ifam ->
+            let cpl = foi base ifam in
+            VVstring (Util.acces conf base (poi base (get_mother cpl)))
+        | None -> VVstring ""
+        end
+      | _ -> VVstring ""
+      end
+  | ["has_next_sibling"] ->
+      begin match td with
+      | TDtext (ip, s) ->
+        begin match get_parents (poi base ip) with
+        | Some ifam ->
+            let sib = (get_children (foi base ifam)) in (* array *)
+            let i = ref (-1) in
+            let _ = Array.iteri (fun n s -> if ip = s then i := n else ()) sib in
+            if !i >= 0 && !i < (Array.length sib) - 1 then VVbool true
+            else VVbool false
+        | None -> VVbool false
+        end
+      | _ -> VVbool false
+      end
+  | ["has_prev_sibling"] ->
+      begin match td with
+      | TDtext (ip, s) ->
+        begin match get_parents (poi base ip) with
+        | Some ifam ->
+            let sib = (get_children (foi base ifam)) in (* array *)
+            let i = ref (-1) in
+            let _ = Array.iteri (fun n s -> if ip = s then i := n else ()) sib in
+            if !i >= 1 then VVbool true
+            else VVbool false
+        | None -> VVbool false
+        end
+      | _ -> VVbool false
+      end
+  | ["next_sibling"; "access"] ->
+      begin match td with
+      | TDtext (ip, s) ->
+        begin match get_parents (poi base ip) with
+        | Some ifam ->
+            let sib = (get_children (foi base ifam)) in (* array *)
+            let i = ref (-1) in
+            let _ = Array.iteri (fun n s -> if ip = s then i := n else ()) sib in
+            if !i >= 0 && !i < (Array.length sib) - 1 then
+            begin
+              let s_ip = sib.(!i + 1) in
+              VVstring (Util.acces conf base (poi base s_ip))
+            end
+            else VVstring "next_sibling.access?"
+        | None -> VVstring "next_sibling.access?"
+        end
+      | _ -> VVstring "next_sibling.access?"
+      end
+  | ["prev_sibling"; "access"] ->
+      begin match td with
+      | TDtext (ip, s) ->
+        begin match get_parents (poi base ip) with
+        | Some ifam ->
+            let sib = (get_children (foi base ifam)) in (* array *)
+            let i = ref (-1) in
+            let _ = Array.iteri (fun n s -> if ip = s then i := n else ()) sib in
+            if !i >= 1 then
+            begin
+              let s_ip = sib.(!i - 1) in
+              VVstring (Util.acces conf base (poi base s_ip))
+            end
+            else VVstring "prev_sibling.access?"
+        | None -> VVstring "prev_sibling.access?"
+        end
+      | _ -> VVstring "prev_sibling.access?"
+      end
   | _ -> raise Not_found
 
-let rec print_foreach conf hts print_ast _eval_expr env () _loc s sl _el al =
+let rec print_foreach conf base hts print_ast _eval_expr env () _loc s sl _el al =
   match s :: sl with
     ["dag_cell"] -> print_foreach_dag_cell hts print_ast env al
   | ["dag_cell_pre"] -> print_foreach_dag_cell_pre hts print_ast env al
   | ["dag_line"] -> print_foreach_dag_line print_ast env hts al
-  | ["dag_line_pre"] -> print_foreach_dag_line_pre conf hts print_ast env al
+  | ["dag_line_pre"] -> print_foreach_dag_line_pre conf base hts print_ast env al
   | _ -> raise Not_found
 and print_foreach_dag_cell_pre hts print_ast env al =
   let i =
@@ -1126,7 +1217,7 @@ and print_foreach_dag_line print_ast env hts al =
     in
     List.iter print_ast al
   done
-and print_foreach_dag_line_pre conf hts print_ast env al =
+and print_foreach_dag_line_pre conf base hts print_ast env al =
   let i =
     match get_env "dag_line" env with
       Vdline i -> i
@@ -1184,9 +1275,9 @@ and print_foreach_dag_line_pre conf hts print_ast env al =
 
 let old_print_slices_menu_or_dag_page conf page_title hts next_txt =
   if p_getenv conf.env "slices" = Some "on" then print_slices_menu conf hts
-  else print_dag_page conf  page_title hts next_txt
+  else print_dag_page conf page_title hts next_txt
 
-let print_slices_menu_or_dag_page conf page_title hts next_txt =
+let print_slices_menu_or_dag_page conf base page_title hts next_txt =
   if p_getenv conf.env "old" = Some "on" then
     old_print_slices_menu_or_dag_page conf page_title hts next_txt
   else
@@ -1212,18 +1303,18 @@ let print_slices_menu_or_dag_page conf page_title hts next_txt =
       ["dag", Vlazy (Lazy.from_fun table_pre_dim)]
     in
     V7_interp.gen_interp false conf "dag"
-      {Templ.eval_var = eval_var conf page_title next_txt;
+      {Templ.eval_var = eval_var conf base page_title next_txt;
        Templ.eval_transl = (fun _ -> Templ.eval_transl conf);
        Templ.eval_predefined_apply = (fun _ -> eval_predefined_apply conf);
        Templ.get_vother = get_vother; Templ.set_vother = set_vother;
-       Templ.print_foreach = print_foreach conf hts}
+       Templ.print_foreach = print_foreach conf base hts}
       env ()
 
 let make_and_print_dag conf base elem_txt vbar_txt invert set spl page_title
     next_txt =
   let d = Dag.make_dag conf base set in
   let hts = make_tree_hts conf base elem_txt vbar_txt invert set spl d in
-  print_slices_menu_or_dag_page conf page_title hts next_txt
+  print_slices_menu_or_dag_page conf base page_title hts next_txt
 
 let print conf base =
   let set = get_dag_elems conf base in
