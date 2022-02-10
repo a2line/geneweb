@@ -326,8 +326,13 @@
         %if;(is_dead and computable_death_age)[*age at death]
         %elseif;(not is_dead and computable_age)[*age]
         %end;"><span class="fa-li"><i class="far fa-id-card"></i></span>
-        %if;(is_dead and computable_death_age)%apply;curr_age()%end;
-        %if;(not is_dead and computable_age)%apply;curr_age()%end;
+        %if;(is_dead and computable_death_age)
+          %if;(death_date.month!="" and death_date.day!=""
+           and birth_date.month!="" and birth_date.day!="")%apply;curr_age()%else;~ %death_age;%end;
+        %end;
+        %if;(not is_dead and computable_age)
+          %if;(birth_date.month!="" and birth_date.day!="")%apply;curr_age()%else;~ %age;%end;
+        %end;
       </li>
     %end;
     %if;has_occupation;
