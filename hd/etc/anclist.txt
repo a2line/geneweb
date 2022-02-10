@@ -313,9 +313,9 @@
             %ancestor.place;
           </td>
           <td align="center">
-            %if;(ancestor.date_begin.prec = "&lt;")
+            %if;(ancestor.date_begin.prec = "&#60;")
               /%ancestor.date_begin.year;%nn;
-            %elseif;(ancestor.date_begin.prec = "&gt;")
+            %elseif;(ancestor.date_begin.prec = "&#62;")
               %ancestor.date_begin.year;/%nn;
             %elseif;(ancestor.date_begin.prec = "|" or ancestor.date_begin.prec = "..")
               %ancestor.date_begin.year;%nn;
@@ -324,9 +324,9 @@
             %end;
           </td>
           <td align="center">
-            %if;(ancestor.date_end.prec = "&lt;")
+            %if;(ancestor.date_end.prec = "&#60;")
               /%ancestor.date_end.year;%nn;
-            %elseif;(ancestor.date_end.prec = "&gt;")
+            %elseif;(ancestor.date_end.prec = "&#62;")
               %ancestor.date_end.year;/%nn;
             %elseif;(ancestor.date_end.prec = "|" or ancestor.date_end.prec = "..")
               %ancestor.date_end.year;%nn;
@@ -510,9 +510,9 @@
             %ancestor.place;
           </td>
           <td>
-            %if;(ancestor.date_begin.prec = "&lt;")
+            %if;(ancestor.date_begin.prec = "&#60;")
               /%ancestor.date_begin.year;%nn;
-            %elseif;(ancestor.date_begin.prec = "&gt;")
+            %elseif;(ancestor.date_begin.prec = "&#62;")
               %ancestor.date_begin.year;/%nn;
             %elseif;(ancestor.date_begin.prec = "|" or ancestor.date_begin.prec = "..")
               %ancestor.date_begin.year;%nn;
@@ -520,9 +520,9 @@
               %ancestor.date_begin.prec;%ancestor.date_begin.year;%nn;
             %end;
             -%nn;
-            %if;(ancestor.date_end.prec = "&lt;")
+            %if;(ancestor.date_end.prec = "&#60;")
               /%ancestor.date_end.year;%nn;
-            %elseif;(ancestor.date_end.prec = "&gt;")
+            %elseif;(ancestor.date_end.prec = "&#62;")
               %ancestor.date_end.year;/%nn;
             %elseif;(ancestor.date_end.prec = "|" or ancestor.date_end.prec = "..")
               %ancestor.date_end.year;%nn;
