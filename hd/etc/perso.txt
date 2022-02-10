@@ -89,13 +89,13 @@
      </div>
   %end;
  <div class="row">
-    %(be carefull h1 is col-12 for full width then an opening <div class="col-8"> is inside personnal_data %)
+    %(be carefull h1 is col-12 for full width then an opening <div class="col-8"> is individu.txt %)
       %let;op_m;3%in;%include;modules/individu
       %let;op_m;2%in;%include;modules/unions
       %let;op_m;1%in;%include;modules/chronologie
       %let;op_m;1%in;%include;modules/notes
       %let;op_m;2%in;%include;modules/sources
-    %if;(p_mod="" or p_mod="zz")</div>%end; %( end of <div class="col-8"> from personnal_data %)
+    %if;(p_mod="" or p_mod="zz")</div>%end; %( end of <div class="col-8"> from individu.txt %)
     <div class="col-4">
       %if;has_parents;
         <div class="collapse show" id="collapseExample2">

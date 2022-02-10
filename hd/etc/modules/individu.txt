@@ -418,7 +418,7 @@
   </div> %( closing div just before h1 %)
 
   %if;((p_mod="zz" or p_mod="") and evar.m!="F")
-    <div class="col-12%if;(evar.wide!="on") col-lg-8%end;">
+    <div class="col-lg-8">
   %end;
   %if;(op_m=1)
     %apply;portrait()

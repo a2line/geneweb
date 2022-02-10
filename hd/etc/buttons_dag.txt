@@ -42,18 +42,18 @@
         href="%if;(e.dag="")%urlv.dag.1;%else;%urlv.dag;%end;"
         title="%if;(e.dag="")[*dag on/dag off]0%else;[*dag on/dag off]1%end; ([dag])">
           <i class="fa fa-random fa-fw fa-lg"></i><br>Dag</a>
+    </div>
+    <div class="btn-group border rounded mr-2">
       <a role="button" href="%prefix_base_password;%foreach;env_binding;%if;(env.key!="m" and env.key!="t")%env.key=%env.val;&%end;%end;m=D&t=T"
         class="btn btn-outline-primary border-%if;(e.m="D" and e.t="T")2 disabled font-weight-bold%else;0%end;"
         title="[*descendants tree]"><i class="fas fa-sitemap fa-lg"></i><br>[*tree] desc.</a>
-    </div>
-    <div class="btn-group border rounded mr-2">
       <a role="button" class="btn btn-outline-primary border-%if;(e.m="D" and e.t="TV" and e.oi="")2 disabled font-weight-bold%else;0%end;"
         href="%prefix_base_password;%foreach;env_binding;%if;(env.key!="m" and env.key!="t" and env.key!="dag" and env.key!="oi")%env.key=%env.val;&%end;%end;m=D&t=TV"
         title="%if;(e.t!="TV")[*visualize/show/hide/summary]1 [compact form]%end;"><i class="fas fa-compress fa-lg"></i><br>Compact</a>
     </div>
     <div>
       <div class="btn-group border rounded" role="group" aria-label="generation pickup buttons group">
-        <span class="btn btn-primary disabled border rounded-left py-0">[*generation/generations]0</span>
+        <span class="btn btn-primary disabled border border-info rounded-left py-0 w-100 h-100">[*generation/generations]0</span>
         %if;(maxlev>9 and evarv>5)
           %(<a role="button" href="%apply;urlv%with;v%and;%expr(evarv-5)%end;"
             class="btn btn-outline-primary font-weight-bold border-0 px-2 py-0"
@@ -111,6 +111,7 @@
       </div>
     </div>
   </div>
+</div>
 %elseif;(e.m="RLM")
   <div class="d-flex justify-content-between">
     <div class="mt-2 mb-4 h2">[*multi relations graph]</div>
@@ -132,3 +133,82 @@
     </div>
   </div>
 %end;
+%( TODO : has_parents missing cell.person.has_parents before checking those father/mother?
+— both cell.person.mother/father.access are not working !?
+— probably same for siblings > missing has_siblings/is_sibling_after/is_sibling_before/child.surname/child.first_name/child.access 
+– use dag_cell_pre ??? %)
+%if;(e.m="D" and e.t="T")
+  %foreach;dag_line;
+      %foreach;dag_cell;
+        %if;is_first;%dag_cell.index;
+          %let;father_fn;%dag_cell.father.first_name;%in;
+          %let;father_sn;%dag_cell.father.surname;%in;
+          %let;father_access;%dag_cell.father.access;%in;
+          %let;mother_fn;%dag_cell_pre.mother.first_name;%in;
+          %let;mother_sn;%dag_cell_pre.mother.surname;%in;
+          %let;mother_access;%dag_cell_pre.mother.access;%in;
+        %end;
+      %end;
+    
+  %end;
+%else;
+  %let;father_fn;%father.first_name;%in;
+  %let;father_sn;%father.surname;%in;
+  %let;father_access;%father.access;%in;
+  %let;mother_fn;%mother.first_name;%in;
+  %let;mother_sn;%mother.surname;%in;
+  %let;mother_access;%mother.access;%in;
+%end;
+<div class="d-flex justify-content-around">
+  %if;(e.m="D")
+    <div>
+      %if;(has_parents and father_sn!="?" and father_fn!="?")
+       <a href="%prefix_no_pmod;m=D;t=V;%father_access;%nn;
+          %foreach;env_binding;%nn;
+          %if;(not (env.key="p" or env.key="n" or env.key="oc" or env.key="m" or env.key="t"))%nn;
+            %env.key;=%env.val;;%end;%nn;
+          %end;"
+        title="[*descendants tree] [of] %father_fn; %father_sn; ([*father/mother]0)">[*father/mother]0</a>
+      %end;
+    </div>
+  %end;
+  %if;(e.m="D" or e.m="A")
+    <div>
+      %if;has_siblings;
+        %foreach;father.child;
+          %if;is_sibling_before;
+            <a href="%prefix_no_pmod;%child.access;;%nn;
+              %foreach;env_binding;%nn;
+                %if;(not (env.key="p" or env.key="n" or env.key="oc"))%nn;
+                  %env.key;=%env.val;;%end;%nn;
+                %end;" class="mx-1"
+                title="%if;(e.m="D")[*descendants tree]%elseif;(e.m="A")[*ascendants tree]%end; [of] %child.first_name; %child.surname;">&lt;</a>
+          %end;
+        %end;
+          [*siblings]
+        %foreach;father.child;
+          %if;is_sibling_after;
+            <a href="%prefix_no_pmod;%child.access;;%nn;
+              %foreach;env_binding;%nn;
+                %if;(not (env.key="p" or env.key="n" or env.key="oc"))%nn;
+                  %env.key;=%env.val;;%end;%nn;
+                %end;" class="mx-1"
+                title="%if;(e.m="D")[*descendants tree]%elseif;(e.m="A")[*ascendants tree]%end; [of] %child.first_name; %child.surname;">&gt;</a>
+          %end;
+        %end;
+    %end;
+    </div>
+  %end;
+  %if;(e.m="D")
+    <div>
+      %if;(has_parents and mother_sn!="?" and mother_fn!="?")
+        <a href="%prefix_no_pmod;m=D&t=V&%mother_access;%nn;
+          %foreach;env_binding;%nn;
+            %if;(not (env.key="p" or env.key="n" or env.key="oc" or env.key="m" or env.key="t"))%nn;
+            %env.key;=%env.val;;%end;%nn;
+          %end;"
+          title="[*descendants tree] [of] %mother_fn; %mother_sn; ([*father/mother]1)">[*father/mother]1</a>
+      %end;
+    </div>
+  %end;
+</div>
