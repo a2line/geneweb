@@ -957,8 +957,8 @@ let rec eval_var conf base env page_title next_txt env _xx _loc =
         Vvars lv ->
           if List.mem_assoc name !lv
           then lv := List.remove_assoc name !lv;
-          lv := (name, value) :: !lv; VVstring "x0"
-      | _ -> VVstring "x1"
+          lv := (name, value) :: !lv; VVstring ""
+      | _ -> raise Not_found
       end
   | _ -> raise Not_found
 and eval_dag_var _conf _base _env (tmincol, tcol, _colminsz, colsz, _ncol) =
