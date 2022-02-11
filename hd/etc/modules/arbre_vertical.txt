@@ -31,18 +31,17 @@
               we can’t do a single mark from bottom to mark upper cells because table %foreach;cell start at top rows %)
           %let;self_parent_dead;
             %if;(birth_date!="" and birth_date.year<today.year-120)1%end;
-              %if;has_parents;
-                %if;(father.birth_date!="" and father.birth_date.year<today.year-120)
-                 or (mother.birth_date!="" and mother.birth_date.year<today.year-120))1%end;
-                %if;father.has_parents;
-                  %if;(father.father.birth_date!="" and father.father.birth_date.year<today.year-120)
-                   or (father.mother.birth_date!="" and father.mother.birth_date.year<today.year-120))1%end;
-                %end;
-                %if;mother.has_parents;
-                  %if;(mother.father.birth_date!="" and mother.father.birth_date.year<today.year-120)
-                   or (mother.mother.birth_date!="" and mother.mother.birth_date.year<today.year-120))1%end;
-                %end;
-              %end;
+            %if;has_parents;
+              %if;((father.birth_date!="" and father.birth_date.year<today.year-120)
+               or (mother.birth_date!="" and mother.birth_date.year<today.year-120))1%end;
+              %if;father.has_parents;
+                %if;((father.father.birth_date!="" and father.father.birth_date.year<today.year-120)
+                 or (father.mother.birth_date!="" and father.mother.birth_date.year<today.year-120))1%end;
+               %end;
+              %if;mother.has_parents;
+                %if;((mother.father.birth_date!="" and mother.father.birth_date.year<today.year-120)
+                 or (mother.mother.birth_date!="" and mother.mother.birth_date.year<today.year-120))1%end;
+               %end;
             %end;
           %in;
           %let;cell_person_dead;
@@ -64,7 +63,7 @@
             %end;
           %in;
           %apply;short_display_person_tree("cell.person")%nn;
-          %if;(cell_person_dead!="" and cell.person!=self and self.person!=self.mother and self.person!=self.father)
+          %if;(cell_person_dead!="" and cell.person!=self and cell.person!=self.mother and cell.person!=self.father)
             <div class="text-danger" title="Please! Let me rest in peace!">†</div>
           %end;
           %if;cell.person.has_nobility_titles;%cell.person.title;%end;
@@ -84,12 +83,15 @@
             %else;
               <span
             %end;
-              class="small font-italic text-center text-nowrap"
+              %let;spouses_dead;%if;(cell.family.marriage_date.year!="")%if;(today.year-cell.family.marriage_date.year>100)1%end;%end;%in;
+              class="small font-italic text-center text-nowrap%if;(spouses_dead=1) text-danger%end;"
               title="%if;(cell.family.marriage_date.year!="" and ((not (cell.family.father.is_dead and cell.family.mother.is_dead)) or (plugin.v7 and "-" in cell.family.date_s and cell.family.sep_date_s!="" and cell.family.marriage_date.prec="")))
                        %if;(cell.family.sep_date_s!="")
                          %apply;a_of_b%with;%expr(cell.family.sep_date_s-cell.family.marriage_date.year) [years old]%and;[relation/relations]0%end;%nn;
-                       %elseif;(cell.family.sep_date_s="" and not ("-" in cell.family.date_s) and not cell.family.father.is_dead and not cell.family.mother.is_dead)
-                         %apply;a_of_b%with;%expr(today.year-cell.family.marriage_date.year) [years old]%and;[relation/relations]0%end;%end;%nn;
+                       %elseif;(cell.family.sep_date_s="" and not (("-" in cell.family.date_s) and cell.family.father.is_dead and cell.family.mother.is_dead))
+                         %apply;a_of_b%with;%expr(today.year-cell.family.marriage_date.year) [years old]%if;(spouses_dead=1) (?!)%end;%and;[relation/relations]0%end;
+                         %if;(spouses_dead=1)&#013;&#013;Please let both spouses rest in peace!%end;
+                       %end;%nn;
                      %end;
                      %if;wizard;&#013;&#013;%nn;
                        %if;(cell.family.marriage_date.year="")[*add::marriage/marriages]0
