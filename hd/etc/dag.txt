@@ -100,6 +100,51 @@
 %define;ind(xx)
 %( TODO how to write ind name on navigation link? %dag_cell.index; seems empty?! %)
 %end;
+%define;nav_parents() %( inspiré de buttons_dag %)
+%if;(dag_cell.index>=0)
+<div class="d-flex justify-content-around">
+  <div>
+    %if;(dag_cell.father.access!="")
+     <a href="%prefix_no_pmod;%dag_cell.father.access;&%nn;
+        %foreach;env_binding;%nn;
+        %if;(not (env.key="p" or env.key="n" or env.key="oc"))%nn;
+          %env.key;=%env.val;&%end;%nn;
+        %end;"
+      title="[*descendants tree] [of] [*father/mother]0">[*father/mother]0</a>
+    %end;
+  </div>
+  <div>
+    %if;dag_cell.has_prev_sibling;
+      <a href="%prefix;%dag_cell.prev_sibling.access;&%nn;
+        %foreach;env_binding;%nn;
+          %if;(not (env.key="p" or env.key="n" or env.key="oc"))%nn;
+            %env.key;=%env.val;&%end;%nn;
+        %end;" class="mx-1"
+        title="%[*descendants tree] [of] [sibling/siblings]0">&lt;</a>
+    %end;
+    [*siblings]
+    %if;dag_cell.has_next_sibling;
+      <a href="%prefix;%dag_cell.next_sibling.access;&%nn;
+        %foreach;env_binding;%nn;
+          %if;(not (env.key="p" or env.key="n" or env.key="oc"))%nn;
+            %env.key;=%env.val;&%end;%nn;
+        %end;" class="mx-1"
+        title="[*descendants tree] [of] [sibling/siblings]0">&gt;</a>
+    %end;
+  </div>
+  <div>
+    %if;(dag_cell.mother.access!="")
+      <a href="%prefix;%dag_cell.mother.access;&%nn;
+        %foreach;env_binding;%nn;
+        %if;(not (env.key="p" or env.key="n" or env.key="oc"))%nn;
+          %env.key;=%env.val;&%end;%nn;
+        %end;"
+        title="[*descendants tree] [of] [*father/mother]1">[*father/mother]1</a>
+    %end;
+  </div>
+</div>
+%end;
+%end;
 %if;(e.slices!="on")
   %if;(link_next!="" and not cancel_links)
     %include;buttons_rel
@@ -141,6 +186,15 @@
     %end;
     </pre>
   %else;
+    %( gros hack pour extraire parents/siblings de la racine %)
+    %foreach;dag_line; 
+      %foreach;dag_cell;
+        %if;(line_nbr=0 and (cell_nbr=0 or cell_nbr=1))
+          <tr align="left">
+            <td colspan=100>%apply;nav_parents()</td>
+          </tr>
+      %end;
+    %end;
     <table id="dag" class="mx-auto">
     %foreach;dag_line;
       <tr align="left">
