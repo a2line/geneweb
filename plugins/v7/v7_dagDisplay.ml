@@ -950,7 +950,7 @@ let rec eval_var conf base env page_title next_txt env _xx _loc =
           with Not_found -> raise Not_found
           in
           VVstring vv
-      | _ -> VVstring ("%get_var;" ^ name ^ "?")
+      | _ -> raise Not_found
       end
   | ["set_var"; name; value] ->
       begin match get_env ("vars") env with
