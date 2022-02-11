@@ -860,7 +860,9 @@ type 'a env =
   | Vlazy of 'a env Lazy.t
   | Vbool of bool
   | Vint of int
+  | Vcnt of int ref
   | Vother of 'a
+  | Vvars of (string * string) list ref
   | Vnone
 
 let get_env v env =
@@ -895,7 +897,7 @@ let eval_predefined_apply conf f vl =
       end
   | _ -> raise Not_found
 
-let rec eval_var conf base page_title next_txt env _xx _loc =
+let rec eval_var conf base env page_title next_txt env _xx _loc =
   function
   | ["browsing_with_sosa_ref"] ->
       begin match (Util.p_getenv conf.env "pz", Util.p_getenv conf.env "nz") with
@@ -909,12 +911,12 @@ let rec eval_var conf base page_title next_txt env _xx _loc =
       end
   | "dag" :: sl ->
       begin match get_env "dag" env with
-        Vdag d -> eval_dag_var conf base d sl
+        Vdag d -> eval_dag_var conf base env d sl
       | _ -> raise Not_found
       end
   | "dag_cell" :: sl ->
       begin match get_env "dag_cell" env with
-        Vdcell dcell -> eval_dag_cell_var conf base dcell sl
+        Vdcell dcell -> eval_dag_cell_var conf base env dcell sl
       | _ -> raise Not_found
       end
   | ["dag_cell_pre"] ->
@@ -941,14 +943,31 @@ let rec eval_var conf base page_title next_txt env _xx _loc =
   | ["link_next"] -> VVstring next_txt
   | ["static_max_anc_level"] -> VVstring "10"
   | ["static_max_desc_level"] -> VVstring "10"
+  | ["get_var"; name;] ->
+      begin match get_env ("vars") env with
+        Vvars lv ->
+          let vv = try List.assoc name !lv
+          with Not_found -> raise Not_found
+          in
+          VVstring vv
+      | _ -> VVstring ("%get_var;" ^ name ^ "?")
+      end
+  | ["set_var"; name; value] ->
+      begin match get_env ("vars") env with
+        Vvars lv ->
+          if List.mem_assoc name !lv
+          then lv := List.remove_assoc name !lv;
+          lv := (name, value) :: !lv; VVstring "x0"
+      | _ -> VVstring "x1"
+      end
   | _ -> raise Not_found
-and eval_dag_var _conf _base (tmincol, tcol, _colminsz, colsz, _ncol) =
+and eval_dag_var _conf _base _env (tmincol, tcol, _colminsz, colsz, _ncol) =
   function
     ["max_wid"] -> VVstring (string_of_int tcol)
   | ["min_wid"] -> VVstring (string_of_int tmincol)
   | ["ncol"] -> VVstring (string_of_int (Array.fold_left (+) 0 colsz))
   | _ -> raise Not_found
-and eval_dag_cell_var conf base (colspan, align, td) =
+and eval_dag_cell_var conf base env (colspan, align, td) =
   function
     ["align"] ->
       begin match align with
@@ -1300,10 +1319,15 @@ let print_slices_menu_or_dag_page conf base page_title hts next_txt =
           done;
         Vdag (tmincol, tcol, colminsz, colsz, ncol)
       in
-      ["dag", Vlazy (Lazy.from_fun table_pre_dim)]
+      [ ("count", Vcnt (ref 0));
+        ("count1", Vcnt (ref 0));
+        ("count2", Vcnt (ref 0));
+        ("count3", Vcnt (ref 0));
+        ("vars", Vvars (ref []));
+        ("dag", Vlazy (Lazy.from_fun table_pre_dim))]
     in
     V7_interp.gen_interp false conf "dag"
-      {Templ.eval_var = eval_var conf base page_title next_txt;
+      {Templ.eval_var = eval_var conf base env page_title next_txt;
        Templ.eval_transl = (fun _ -> Templ.eval_transl conf);
        Templ.eval_predefined_apply = (fun _ -> eval_predefined_apply conf);
        Templ.get_vother = get_vother; Templ.set_vother = set_vother;

@@ -193,6 +193,7 @@
           <tr align="left">
             <td colspan=100>%apply;nav_parents()</td>
           </tr>
+        %end;
       %end;
     %end;
     <table id="dag" class="mx-auto">
