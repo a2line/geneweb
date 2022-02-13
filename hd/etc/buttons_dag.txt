@@ -133,42 +133,34 @@
     </div>
   </div>
 %end;
-%( TODO : has_parents missing cell.person.has_parents before checking those father/mother?
-— both cell.person.mother/father.access are not working !?
-— probably same for siblings > missing has_siblings/is_sibling_after/is_sibling_before/child.surname/child.first_name/child.access 
-– use dag_cell_pre ??? %)
-%if;(e.m="D" and e.t="T")
+%( TODO : not working on m=D t=T but ok on t=TV why ? %)
+%define;setvar(nnn,vvv)
+  %set_var.nnn.vvv;
+%end;
+%define;getvar(nnn)
+  %get_var.nnn;
+%end;
+%let;dtree;%if;(e.m="D" and (e.t="T" or e.t="TV"))1%end;%in;
+%if;(dtree=1)
   %foreach;dag_line;
       %foreach;dag_cell;
-        %if;is_first;%dag_cell.index;
-          %let;father_fn;%dag_cell.father.first_name;%in;
-          %let;father_sn;%dag_cell.father.surname;%in;
-          %let;father_access;%dag_cell.father.access;%in;
-          %let;mother_fn;%dag_cell_pre.mother.first_name;%in;
-          %let;mother_sn;%dag_cell_pre.mother.surname;%in;
-          %let;mother_access;%dag_cell_pre.mother.access;%in;
+        %if;(dag_cell.index>=0 and line_nbr=0) %( and cell_nbr<2) %) 
+          %apply;setvar%with;fatheraccess%and;%dag_cell.father.access;%end;var: %dag_cell.father.access;
+          %apply;setvar%with;motheraccess%and;%dag_cell.mother.access;%end;
         %end;
       %end;
-    
   %end;
-%else;
-  %let;father_fn;%father.first_name;%in;
-  %let;father_sn;%father.surname;%in;
-  %let;father_access;%father.access;%in;
-  %let;mother_fn;%mother.first_name;%in;
-  %let;mother_sn;%mother.surname;%in;
-  %let;mother_access;%mother.access;%in;
 %end;
+%let;father_access;%if(dtree=1)%get_var.fatheraccess;%else;father.access;%end;%in;
+%let;mother_access;%if(dtree=1)%get_var.motheraccess;%else;mother.access;%end;%in;
+<br>let: %father_access;
 <div class="d-flex justify-content-around">
-  %if;(e.m="D")
+  %if;(dtree=1)
     <div>
-      %if;(has_parents and father_sn!="?" and father_fn!="?")
-       <a href="%prefix_no_pmod;m=D;t=V;%father_access;%nn;
-          %foreach;env_binding;%nn;
-          %if;(not (env.key="p" or env.key="n" or env.key="oc" or env.key="m" or env.key="t"))%nn;
-            %env.key;=%env.val;;%end;%nn;
-          %end;"
-        title="[*descendants tree] [of] %father_fn; %father_sn; ([*father/mother]0)">[*father/mother]0</a>
+      %if;(father_access!="")
+       <a href="%prefix_no_pmod;&%father_access;&%nn;
+          %foreach;env_binding;%if;(not (env.key="p" or env.key="n" or env.key="oc" and env.key="m" and env.key="t"))%env.key;=%env.val;&%end;%end;"
+        title="%apply;a_of_b%with;[*descendants tree]%and;%if;(dtree="1")[father/mother]0%else;%father.first_name; %father_surname; ([father/mother]0)%end;%end;">[*father/mother]0</a>
       %end;
     </div>
   %end;
@@ -199,15 +191,15 @@
     %end;
     </div>
   %end;
-  %if;(e.m="D")
+  %if;(dtree=1)
     <div>
-      %if;(has_parents and mother_sn!="?" and mother_fn!="?")
-        <a href="%prefix_no_pmod;m=D&t=V&%mother_access;%nn;
+      %if;(mother_access!="")
+        <a href="%prefix_no_pmod;&%mother_access;&%nn;
           %foreach;env_binding;%nn;
             %if;(not (env.key="p" or env.key="n" or env.key="oc" or env.key="m" or env.key="t"))%nn;
             %env.key;=%env.val;;%end;%nn;
           %end;"
-          title="[*descendants tree] [of] %mother_fn; %mother_sn; ([*father/mother]1)">[*father/mother]1</a>
+          title="%apply;a_of_b%with;[*descendants tree]%and;%if;(dtree="1")[father/mother]1%else;%mother.first_name; %motHer_surname; ([father/mother]1)%end;%end;">[*father/mother]1</a>
       %end;
     </div>
   %end;
