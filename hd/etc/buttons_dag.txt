@@ -145,7 +145,7 @@
   %foreach;dag_line;
       %foreach;dag_cell;
         %if;(dag_cell.index>=0 and line_nbr=0) %( and cell_nbr<2) %) 
-          %apply;setvar%with;fatheraccess%and;%dag_cell.father.access;%end;var: %dag_cell.father.access;
+          %apply;setvar%with;fatheraccess%and;%dag_cell.father.access;%end;
           %apply;setvar%with;motheraccess%and;%dag_cell.mother.access;%end;
         %end;
       %end;
@@ -153,7 +153,6 @@
 %end;
 %let;father_access;%if(dtree=1)%get_var.fatheraccess;%else;father.access;%end;%in;
 %let;mother_access;%if(dtree=1)%get_var.motheraccess;%else;mother.access;%end;%in;
-<br>let: %father_access;
 <div class="d-flex justify-content-around">
   %if;(dtree=1)
     <div>

@@ -20,7 +20,7 @@ and ghost_id
 
 type align = LeftA | CenterA | RightA
 type ('a, 'b) table_data =
-    TDitem of 'a
+    TDitem of iper * 'a
   | TDtext of iper * string
   | TDhr of align
   | TDbar of 'b option
@@ -29,7 +29,7 @@ type ('a, 'b) html_table_line = (int * align * ('a, 'b) table_data) array
 type ('a, 'b) html_table = ('a, 'b) html_table_line array
 
 val html_table_struct :
-  ('a node -> 'b) -> ('a node -> 'c) -> ('a node -> bool) -> 'a dag ->
+  ('a node -> iper) -> ('a node -> 'b) -> ('a node -> 'c) -> ('a node -> bool) -> 'a dag ->
     idag table -> (int * align * ('b, 'c) table_data) array array
 
 val table_of_dag :

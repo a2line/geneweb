@@ -1216,7 +1216,7 @@ let make_tree_hts conf base gv p =
                 bd td_prop txt
             else txt
           in
-          2 * ncol - 1, CenterA, TDitem txt
+          2 * ncol - 1, CenterA, TDitem ((get_iper p), txt)
       | None -> 1, LeftA, TDnothing
     in
     td :: tdl
@@ -1235,8 +1235,8 @@ let make_tree_hts conf base gv p =
             let td =
               let fam = foi base ifam in
               let ncol = if v > 1 then fam_nb_column 0 (v - 1) fam else 1 in
+              let sp = pget conf base (Gutil.spouse (get_iper p) fam) in
               let s =
-                let sp = pget conf base (Gutil.spouse (get_iper p) fam) in
                 let txt = person_title_text conf base sp in
                 let txt = reference conf base sp txt in
                 let txt =
@@ -1255,7 +1255,7 @@ let make_tree_hts conf base gv p =
                     bd td_prop s
                 else s
               in
-              2 * ncol - 1, CenterA, TDitem s
+              2 * ncol - 1, CenterA, TDitem ((get_iper sp), s)
             in
             loop (td :: tdl) (i + 1)
         in
