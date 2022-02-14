@@ -85,6 +85,8 @@ let p = w_base begin fun conf base -> match Util.p_getenv conf.env "v" with
 let ps = w_base @@ fun conf base ->
     V7_place.print_all_places_surnames conf base ; true
 
+let rlm = w_base @@ fun conf base -> V7_relationDisplay.print_multi conf base ; true
+
 let s = w_base @@ fun conf base -> V7_searchName.print conf base
     Request.specify Request.unknown; true
 
@@ -119,6 +121,7 @@ let _ =
     ; "MOD_DATA_OK", aux md_ok
     ; "P", aux p
     ; "PS", aux ps
+    ; "RLM", aux rlm
     ; "S", aux s
     ; "TP", aux tp
     ]
