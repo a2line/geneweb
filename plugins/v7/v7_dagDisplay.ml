@@ -1331,7 +1331,6 @@ let print_slices_menu_or_dag_page conf base page_title hts next_txt =
         ("vars", Vvars (ref []));
         ("dag", Vlazy (Lazy.from_fun table_pre_dim))]
     in
-    let _ = Printf.eprintf "Interp gen dag, v7\n" in
     V7_interp.gen_interp false conf "dag"
       {Templ.eval_var = eval_var conf base env page_title next_txt;
        Templ.eval_transl = (fun _ -> Templ.eval_transl conf);
@@ -1342,7 +1341,6 @@ let print_slices_menu_or_dag_page conf base page_title hts next_txt =
 
 let make_and_print_dag conf base elem_txt vbar_txt invert set spl page_title
     next_txt =
-  let _ = Printf.eprintf "Make and print dag, v7\n" in
   let d = Dag.make_dag conf base set in
   let hts = make_tree_hts conf base elem_txt vbar_txt invert set spl d in
   print_slices_menu_or_dag_page conf base page_title hts next_txt
