@@ -1588,7 +1588,7 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses images marriages =
   let txt = if ir > 0 then only ^ "<br>" ^ txt else txt in
   (* ajouter un marqueur ici si enfants et on ne continue pas !!   *)
   let continue = only_anc = [] || ifaml <> [] in
-  let br = if images then "<br>" else "" in
+  let br = if images then "" else "<br>" in
   let txt = if (not continue && descendants) then txt ^ br ^ "+" else txt in
   let lx = if lx > -1 then lx else -1 in
   let tdal =
