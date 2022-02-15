@@ -1417,10 +1417,10 @@ let td_hbar x1 xn =
 (* regular cell, centered, with text as content (may contain |<br>) *)
 let td_cell cols align text ip =
     match align with 
-    | "center" -> [cols, CenterA, TDtext (ip, text)]
-    | "right" -> [cols, RightA, TDtext (ip, text)]
-    | "left" -> [cols, LeftA, TDtext (ip, text)]
-    | _ -> [0, CenterA, TDtext (ip, text)]
+    | "center" -> [cols, CenterA, TDitem (ip, text)]
+    | "right" -> [cols, RightA, TDitem (ip, text)]
+    | "left" -> [cols, LeftA, TDitem (ip, text)]
+    | _ -> [0, CenterA, TDitem (ip, text)]
 
 (* tdal is   (int   *    list      ) list           *)
 (*           (lastx      list of td) list of rows   *)
