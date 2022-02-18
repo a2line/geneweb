@@ -622,7 +622,7 @@ let treat_request =
                 begin match p_getenv conf.env "t" with
                     Some "P" -> ("fn", n) :: conf.env
                   | Some "N" -> ("sn", n) :: conf.env
-                  | _ -> ("v", n) :: conf.env
+                  | _ -> conf.env
                 end
               | None -> conf.env
             in

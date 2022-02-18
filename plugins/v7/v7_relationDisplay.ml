@@ -14,13 +14,14 @@ open V7_dag
 open V7_dag2html
 open V7_dagDisplay
 open V7_perso
+open V7_relationLink
 
 module Dag = V7_dag
 module Dag2html = V7_dag2html
 module DagDisplay = V7_dagDisplay
 module Perso = V7_perso
+module RelationLink = V7_relationLink
 module DateDisplay = Geneweb.DateDisplay
-module RelationLink = Geneweb.RelationLink
 module Util = Geneweb.Util
 
 let dag_of_ind_dag_list indl =
@@ -160,25 +161,19 @@ let print_shortest_path conf base p1 p2 =
                  (cftransl conf "no known relationship link between %s and %s"
                     [s1; s2]));
             Output.print_string conf "<br>\n";
-            begin
-              Output.print_string conf "<p>\n";
-              begin
-                Output.print_string conf "<span>";
-                begin
-                  Output.printf conf "<a href=\"%s&m=R&%s\">" (commd conf)
-                    (acces conf base p1);
-                  Output.print_string conf
-                    (Utf8.capitalize_fst
-                       (transl_nth conf "try another/relationship computing"
-                          0));
-                  Output.print_string conf "</a>"
-                end;
-                Output.printf conf " %s.\n"
-                  (transl_nth conf "try another/relationship computing" 1);
-                Output.print_string conf "</span>"
-              end;
-              Output.print_string conf "</p>\n"
-            end
+            Output.print_string conf "<p>\n";
+            Output.print_string conf "<span>";
+            Output.printf conf "<a href=\"%s&m=R&%s\">" (commd conf)
+              (acces conf base p1);
+            Output.print_string conf
+              (Utf8.capitalize_fst
+                 (transl_nth conf "try another/relationship computing"
+                    0));
+            Output.print_string conf "</a>";
+            Output.printf conf " %s.\n"
+                (transl_nth conf "try another/relationship computing" 1);
+            Output.print_string conf "</span>";
+            Output.print_string conf "</p>\n";
           end
         else
           begin
@@ -191,7 +186,7 @@ let print_shortest_path conf base p1 p2 =
             title false;
             Output.print_string conf "</h1>\n";
             Hutil.print_link_to_welcome conf true;
-            !V7_interp.templ "buttons_rel" conf base
+            !V7_interp.templ ~no_headers:true "buttons_rel" conf base
               (Gwdb.empty_person base Gwdb.dummy_iper);
             Output.print_string conf
             ((Utf8.capitalize_fst (transl conf "no more")) ^ " " ^
@@ -200,7 +195,8 @@ let print_shortest_path conf base p1 p2 =
             Output.print_string conf (transl conf "and");
             Output.printf conf " %s.\n" s2;
           end;
-        Hutil.trailer conf
+      Hutil.trailer conf
+
 let parents_label conf base info =
   function
     1 -> transl conf "the parents"
@@ -883,7 +879,7 @@ let print_main_relationship conf base long p1 p2 rel =
   in
   Hutil.header conf title;
   Hutil.print_link_to_welcome conf true;
-  !V7_interp.templ "buttons_rel" conf base
+  !V7_interp.templ ~no_headers:true "buttons_rel" conf base
     (Gwdb.empty_person base Gwdb.dummy_iper);
   begin match p_getenv conf.env "spouse" with
     Some "on" -> conf.senv <- conf.senv @ ["spouse", "on"]
