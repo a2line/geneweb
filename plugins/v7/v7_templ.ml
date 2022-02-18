@@ -235,6 +235,11 @@ and eval_simple_variable conf =
   | "image_prefix" -> Util.image_prefix conf
   | "lang" -> conf.lang
   | "left" -> conf.left
+  | "link_next" ->
+      begin match Util.p_getenv conf.env "link_next" with
+      | Some vv -> vv
+      | None -> ""
+      end
   | "nl" -> "\n"
   | "nn" -> ""
   | "plugins" -> (List.fold_left (fun s p -> (Filename.basename p) ^ "," ^ s) "" conf.plugins)

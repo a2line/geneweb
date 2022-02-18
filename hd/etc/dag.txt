@@ -101,6 +101,7 @@
 %( TODO how to write ind name on navigation link? %dag_cell.index; seems empty?! %)
 %end;
 %define;nav_parents() %( inspiré de buttons_dag %)
+%( dag_cell a besoin d'un foreach;dag_line;+foreach;dag_cell; pour être opérationnel! %)
 %if;(dag_cell.index>=0)
 <div class="d-flex justify-content-around">
   <div>

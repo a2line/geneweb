@@ -15,6 +15,7 @@
     %apply;min%with;%if;(b.max_desc_tree!="")%b.max_desc_tree;%end;
                %and;%if;(b.max_desc_level!="")%b.max_desc_level;%end;
                %and;%static_max_desc_level;%end;
+  %else;%expr(10)
   %end;
 %in;
 %let;maxv;%if;(maxlev<10 or maxlev<evarv+5)%expr(maxlev+1)
