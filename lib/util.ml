@@ -842,7 +842,7 @@ let reference_flags with_id conf base p s =
       ["<a href=\""; commd conf; acces conf base p;
        if with_id then "\" id=\"i" else "";
        if with_id then string_of_iper iper else "";
-       "\">"; s; "</a>"]
+       "\" class=\"normal_anchor\">"; s; "</a>"]
 
 let reference = reference_flags true
 

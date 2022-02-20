@@ -97,55 +97,7 @@
     </form>
   %end;
 %end;
-%define;ind(xx)
 %( TODO how to write ind name on navigation link? %dag_cell.index; seems empty?! %)
-%end;
-%define;nav_parents() %( inspiré de buttons_dag %)
-%( dag_cell a besoin d'un foreach;dag_line;+foreach;dag_cell; pour être opérationnel! %)
-%if;(dag_cell.index>=0)
-<div class="d-flex justify-content-around">
-  <div>
-    %if;(dag_cell.father.access!="")
-     <a href="%prefix_no_pmod;%dag_cell.father.access;&%nn;
-        %foreach;env_binding;%nn;
-        %if;(not (env.key="p" or env.key="n" or env.key="oc"))%nn;
-          %env.key;=%env.val;&%end;%nn;
-        %end;"
-      title="[*descendants tree] [of] [*father/mother]0">[*father/mother]0</a>
-    %end;
-  </div>
-  <div>
-    %if;dag_cell.has_prev_sibling;
-      <a href="%prefix;%dag_cell.prev_sibling.access;&%nn;
-        %foreach;env_binding;%nn;
-          %if;(not (env.key="p" or env.key="n" or env.key="oc"))%nn;
-            %env.key;=%env.val;&%end;%nn;
-        %end;" class="mx-1"
-        title="%[*descendants tree] [of] [sibling/siblings]0">&lt;</a>
-    %end;
-    [*siblings]
-    %if;dag_cell.has_next_sibling;
-      <a href="%prefix;%dag_cell.next_sibling.access;&%nn;
-        %foreach;env_binding;%nn;
-          %if;(not (env.key="p" or env.key="n" or env.key="oc"))%nn;
-            %env.key;=%env.val;&%end;%nn;
-        %end;" class="mx-1"
-        title="[*descendants tree] [of] [sibling/siblings]0">&gt;</a>
-    %end;
-  </div>
-  <div>
-    %if;(dag_cell.mother.access!="")
-      <a href="%prefix;%dag_cell.mother.access;&%nn;
-        %foreach;env_binding;%nn;
-        %if;(not (env.key="p" or env.key="n" or env.key="oc"))%nn;
-          %env.key;=%env.val;&%end;%nn;
-        %end;"
-        title="[*descendants tree] [of] [*father/mother]1">[*father/mother]1</a>
-    %end;
-  </div>
-</div>
-%end;
-%end;
 %if;(e.slices!="on")
   %if;(link_next!="" and not cancel_links)
     %include;buttons_rel
@@ -187,16 +139,6 @@
     %end;
     </pre>
   %else;
-    %( gros hack pour extraire parents/siblings de la racine %)
-    %foreach;dag_line; 
-      %foreach;dag_cell;
-        %if;(line_nbr=0 and (cell_nbr=0 or cell_nbr=1))
-          <tr align="left">
-            <td colspan=100>%apply;nav_parents()</td>
-          </tr>
-        %end;
-      %end;
-    %end;
     <table id="dag" class="mx-auto">
     %foreach;dag_line;
       <tr align="left">
@@ -212,7 +154,7 @@
         %elseif;dag_cell.is_bar;
           %if;(dag_cell.bar_link != "" and not cancel_links and e.em!="R")
              %( added em!=R here condition because first button_rel is static and does the same %)
-            <a href="%dag_cell.bar_link;%if;(e.im=0)&im=0%end;" title="[*navigate on tree] [with] %apply;ind%with;%dag_cell.index;%end;">│</a>%nn;
+            <a href="%dag_cell.bar_link;%if;(e.im=0)&im=0%end;" title="[*navigate on tree]">│</a>%nn;
           %else;│%end;
         %elseif;(dag_cell.text != "")%dag_cell.text;
         %elseif;(dag_cell.item != "")
@@ -224,18 +166,18 @@
                 class="stretched-link"
                 title="[*navigation] on tree [with] this individual" style="line-height:1rem"></a>
           %end;
-          <div class="d-flex-row flex-column justify-content-between%if;(dag_cell.item!="") mt-1 mx-1%end;">%dag_cell.item;</div>
+          <div class="d-flex-row flex-column justify-content-between%if;(dag_cell.item!="") mx-1%end;">%dag_cell.item;</div>
           %if;(plugin.v7 and line_nbr!=0 and dag_cell.index!="-1")
             </div>
           %end;
         %else;
           %( TODO : trouver une condition pour un hr stylisé pour les conjoints %)
           %if;dag_cell.is_hr_left;
-            <hr%if;(line_nbr=1) style="border-top: 1px dashed red;"%end; class="%left;"%/>%nn;
+            <hr class="%left;"%/>%nn;
           %elseif;dag_cell.is_hr_right;
-            <hr%if;(line_nbr=1) style="border-top: 1px dashed red;"%end; class="%right;">%nn;
+            <hr class="%right;">%nn;
           %else;
-            <hr%if;(line_nbr=1) style="border-top: 1px dashed red;"%end; class="full"%/>%nn;
+            <hr class="full"%/>%nn;
           %end;
         %end;
         </td>
