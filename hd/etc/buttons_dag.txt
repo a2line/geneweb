@@ -36,11 +36,11 @@
   %foreach;dag_line;
       %foreach;dag_cell;
         %if;(line_nbr=0)
-          %if;(e.t="T" or (e.t="TV" and cell_nbr<2))
-          %apply;setvar%with;fatheraccess%and;%dag_cell.father.access;%end;
-          %apply;setvar%with;motheraccess%and;%dag_cell.mother.access;%end;
-          %apply;setvar%with;prevsiblingaccess%and;%if;dag_cell.has_prev_sibling;%dag_cell.prev_sibling.access;%else;%end;%end;
-          %apply;setvar%with;nextsiblingaccess%and;%if;dag_cell.has_next_sibling;%dag_cell.next_sibling.access;%else;%end;%end;
+          %if;(e.t="T" or (e.t="TV" and cell_nbr<2)) %( a bit hackish to capture index of root person %)
+            %if;(dag_cell.index!="")%apply;setvar%with;fatheraccess%and;%dag_cell.father.access;%end;%end;
+            %if;(dag_cell.index!="")%apply;setvar%with;motheraccess%and;%dag_cell.mother.access;%end;%end;
+            %if;(dag_cell.index!="")%apply;setvar%with;prevsiblingaccess%and;%if;dag_cell.has_prev_sibling;%dag_cell.prev_sibling.access;%else;%end;%end;%end;
+            %if;(dag_cell.index!="")%apply;setvar%with;nextsiblingaccess%and;%if;dag_cell.has_next_sibling;%dag_cell.next_sibling.access;%else;%end;%end;%end;
           %end;
         %end;
       %end;
