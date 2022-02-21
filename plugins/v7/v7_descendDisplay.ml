@@ -1244,7 +1244,7 @@ let make_tree_hts conf base gv p =
                   else txt
                 in
                 let txt = if spouses then txt else "" in
-                (if auth && marriages && spouses then "&amp;" ^ (DateDisplay.short_marriage_date_text conf base fam p sp)
+                (if auth && marriages && spouses then "&amp;" ^ (V7_date.short_family_dates_text conf base true fam)
                  else if spouses then "&amp;" else "") ^ "&nbsp;" ^ txt ^
                   (if spouses then DagDisplay.image_txt conf base sp else "")
               in
@@ -1637,7 +1637,7 @@ and f_pos conf base ifam ifam_nbr only_one first last p x0 v ir2 tdal only_anc s
   let txt = get_text conf base sp ((kids <> []) && spouses && images) in
   let br_sp = if (Util.has_image conf base sp) && images then "" else "<br>" in 
   let fam = foi base ifam in
-  let marr_d = if marriages then DateDisplay.short_marriage_date_text conf base fam p sp else "" in
+  let marr_d = if marriages then V7_date.short_family_dates_text conf base true fam else "" in
   let m_txt = (* families are scanned in reverse order *)
   let f_nbr = string_of_int ifam_nbr in
     "<span class=\"text-nowrap\">" ^
@@ -1718,8 +1718,7 @@ let correct_spouses tdal =
             else
               regroup ([(nc2, a2, t2); (nc3, a3, t3)] @ row) ([(nc1, a1, t1)] @ new_row)
           else
-            regroup ([(nc2, a2, t2); (nc3, a3, t3)] @ row) ([(nc1, a1, t1)] @ new_row)
-          
+             regroup ([(nc2, a2, t2); (nc3, a3, t3)] @ row) ([(nc1, a1, t1)] @ new_row)
       | _ -> regroup ([(nc2, a2, t2); (nc3, a3, t3)] @ row) ([(nc1, a1, t1)] @ new_row)
       end
     | _ -> List.rev ((List.rev row) @ new_row)
