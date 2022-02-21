@@ -36,18 +36,28 @@
   %foreach;dag_line;
       %foreach;dag_cell;
         %if;(line_nbr=0)
-          %if;(e.t="T" or (e.t="TV" and cell_nbr<2)) %( a bit hackish to capture index of root person %)
-            %if;(dag_cell.index!="")%apply;setvar%with;fatheraccess%and;%dag_cell.father.access;%end;%end;
-            %if;(dag_cell.index!="")%apply;setvar%with;motheraccess%and;%dag_cell.mother.access;%end;%end;
-            %if;(dag_cell.index!="")%apply;setvar%with;prevsiblingaccess%and;%if;dag_cell.has_prev_sibling;%dag_cell.prev_sibling.access;%else;%end;%end;%end;
-            %if;(dag_cell.index!="")%apply;setvar%with;nextsiblingaccess%and;%if;dag_cell.has_next_sibling;%dag_cell.next_sibling.access;%else;%end;%end;%end;
+          %if;(e.t="T" or (e.t="TV" and cell_nbr<2 and dag_cell.index!="")) %( last condition allows to capture index of root individual %)
+            %apply;setvar%with;fatheraccess%and;%dag_cell.father.access;%end;
+            %apply;setvar%with;motheraccess%and;%dag_cell.mother.access;%end;
+            %apply;setvar%with;prevsiblingaccess%and;%if;dag_cell.has_prev_sibling;%dag_cell.prev_sibling.access;%else;%end;%end;
+           %apply;setvar%with;nextsiblingaccess%and;%if;dag_cell.has_next_sibling;%dag_cell.next_sibling.access;%else;%end;%end;
           %end;
         %end;
       %end;
   %end;
+%else;
+  %foreach;father.child;
+    %if;is_sibling_before;
+      %apply;setvar%with;prevsiblingaccess%and;%child.access;%end;
+      %apply;setvar%with;prevsiblingname%and;%child.first_name; %child.surname;%end;
+    %elseif;is_sibling_after;
+      %apply;setvar%with;nextsiblingaccess%and;%child.access;%end;
+      %apply;setvar%with;nextsiblingname%and;%child.first_name; %child.surname;%end;
+    %end;
+  %end;
 %end;
-%let;father_access;%if(dtree=1)%get_var.fatheraccess;%else;father.access;%end;%in;
-%let;mother_access;%if(dtree=1)%get_var.motheraccess;%else;mother.access;%end;%in;
+%let;father_access;%if(dtree=1)%get_var.fatheraccess;%else;%father.access;%end;%in;
+%let;mother_access;%if(dtree=1)%get_var.motheraccess;%else;%mother.access;%end;%in;
 %let;prev_sibling_access;%get_var.prevsiblingaccess;%in;
 %let;next_sibling_access;%get_var.nextsiblingaccess;%in;
 %if;(e.m="A" or e.m="D")
@@ -74,65 +84,29 @@
     <div class="d-flex flex-column mr-1">
       <div class="d-flex flex-nowrap justify-content-center">
         <div class="border rounded mr-1">
-          <a role="button" class="btn btn-sm btn-outline-%if;(father_access="" or dtree!=1)dark disabled%else;primary%end; border-0" href="%prefix_no_pmod;&%father_access;&%nn;
+          <a role="button" class="btn btn-sm btn-outline-%if;(father_access="")dark disabled%else;primary%end; border-0" href="%prefix_base_password;&%father_access;&%nn;
             %foreach;env_binding;%if;(not (env.key="p" or env.key="n" or env.key="oc" or env.key="i" or env.key="v"))%env.key;=%env.val;&%end;%end;v=%expr(e.v+1)"
             title="[*navigation] %if;(dtree="1")[father/mother]0[:]&#013;%father_access;&#013;v=%expr(e.v+1)%else;%father.first_name; %father_surname; ([father/mother]0)%end;">%nn;
             <i class="fas fa-arrow-turn-up fa-flip-horizontal fa-sm mr-2"></i>[*father/mother]0%nn;
           </a>
         </div>
         <div class="border rounded">
-          <a role="button" class="btn btn-sm btn-outline-%if;(mother_access="" or dtree!=1)dark disabled%else;primary%end; border-0" href="%prefix_no_pmod;&%mother_access;&%nn;
+          <a role="button" class="btn btn-sm btn-outline-%if;(mother_access="")dark disabled%else;primary%end; border-0" href="%prefix_base_password;&%mother_access;&%nn;
             %foreach;env_binding;%if;(not (env.key="p" or env.key="n" or env.key="oc" or env.key="i" or env.key="v"))%env.key;=%env.val;&%end;%end;v=%expr(e.v+1)"
             title="[*navigation] %if;(dtree="1")[father/mother]1[:]&#013;%mother_access;&#013;v=%expr(e.v+1)%else;%mother.first_name; %motHer_surname; ([father/mother]1)%end;">%nn;
             [*father/mother]1<i class="fas fa-arrow-turn-up fa-sm ml-2"></i></a>
         </div>
       </div>
       <div class="border rounded mt-1">
-        %if;(e.m="D")
-          <div class="d-flex justify-content-between">
-            <a class="btn btn-sm btn-outline-%if;(prev_sibling_access="")dark disabled%else;primary%end; border-0 text-nowrap" href="%prefix;%prev_sibling_access;&%nn;
-              %foreach;env_binding;%nn;
-                %if;(not (env.key="p" or env.key="n" or env.key="oc" or env.key="i"))%env.key;=%env.val;&%end;%nn;
-              %end;"
-              title="[*previous sibling]2[:] %prev_sibling_access;"><i class="fas fa-angle-left"></i></a>
-            <span class="px-0">[*siblings]</span>
-            <a class="btn btn-sm btn-outline-%if;(next_sibling_access="")dark disabled%else;primary%end; border-0 text-nowrap" href="%prefix;%next_sibling_access;&%nn;
-              %foreach;env_binding;%nn;
-                %if;(not (env.key="p" or env.key="n" or env.key="oc" or env.key="i"))%env.key;=%env.val;&%end;%nn;
-              %end;"
-              title="[*next sibling]2[:] %next_sibling_access;"><i class="fas fa-angle-right"></i></a>
-          </div>
-        %end;
-        %( TODO : même comportement que m=D pour la navigation fratrie <>, ajouter navigation parents également ?! %)
-        %if;(e.m="A")
-          <div class="d-flex justify-content-between">
-            %if;has_siblings;
-              %foreach;father.child;
-                %if;is_sibling_before;
-                  <a href="%prefix;%child.access;;%nn;
-                    %foreach;env_binding;%nn;
-                      %if;(not (env.key="p" or env.key="n" or env.key="oc"))%nn;
-                        %env.key;=%env.val;;%end;%nn;
-                      %end;" class="mx-1%if;(child.access="") disabled%end;"
-                      title="[*ascendants tree] [of] %child.first_name; %child.surname;"><i class="fas fa-angle-left"></i></a>
-                %end;
-              %end;
-                [*siblings]
-              %foreach;father.child;
-                %if;is_sibling_after;
-                  <a href="%prefix;%child.access;;%nn;
-                    %foreach;env_binding;%nn;
-                      %if;(not (env.key="p" or env.key="n" or env.key="oc"))%nn;
-                        %env.key;=%env.val;;%end;%nn;
-                      %end;" class="mx-1%if;(child.access="") disabled%end;"
-                      title="[*ascendants tree] [of] %child.first_name; %child.surname;"><i class="fas fa-angle-right"></i></a>
-                %end;
-              %end;
-            %else;
-              todo disable siblings
-            %end;
-          </div>
-        %end;
+        <div class="d-flex justify-content-between">
+          <a class="btn btn-sm btn-outline-%if;(prev_sibling_access="" or "%" in prev_sibling_access)dark disabled%else;primary%end; border-0" href="%prefix_base_password;%prev_sibling_access;&%nn;
+            %foreach;env_binding;%if;(not (env.key="p" or env.key="n" or env.key="oc" or env.key="i"))%env.key;=%env.val;&%end;%end;"
+            title="[*previous sibling]2[:] %if;(dtree=1)%prev_sibling_access;%else;%get_var.prevsiblingname;%end;"><i class="fas fa-angle-left"></i></a>
+          <span class="px-0">[*siblings]</span>
+          <a class="btn btn-sm btn-outline-%if;(next_sibling_access="" or "%" in next_sibling_access)dark disabled%else;primary%end; border-0" href="%prefix_base_password;%next_sibling_access;&%nn;
+            %foreach;env_binding;%if;(not (env.key="p" or env.key="n" or env.key="oc" or env.key="i"))%env.key;=%env.val;&%end;%end;"
+            title="[*next sibling]2[:] %if;(dtree=1)%next_sibling_access;%else;%get_var.nextsiblingname;%end;"><i class="fas fa-angle-right"></i></a>
+        </div>
       </div>
     </div>
     <div>
