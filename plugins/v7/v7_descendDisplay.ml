@@ -1649,7 +1649,7 @@ and f_pos conf base ifam ifam_nbr only_one first last p x0 v ir2 tdal only_anc s
   let txt = txt ^ (if kids <> [] then br_sp else "") in
   let txt = if spouses then m_txt ^ txt else m_txt in
   let txt = if kids <> [] then txt ^ "|" else txt in
-  let flag = if kids <> [] then "spouse_no_d" else "spouse" in
+  let flag = (string_of_ifam ifam) ^ (if kids <> [] then "-spouse_no_d" else "-spouse") in
   let lx = lastx tdal ir2 in
   let lx = if lx > -1 then lx else -1 in
   let tdal =
@@ -1703,10 +1703,23 @@ let correct_spouses tdal =
     match row with
     | (nc1, a1, t1) :: (nc2, a2, t2) :: (nc3, a3, t3) :: row ->
       begin match t1, t2, t3 with
-      | TDitem (_, _, "spouse_no_d"), TDnothing, TDitem (_, _, "spouse") ->
-          regroup ([(nc3, a3, t3); (nc2, a2, t2)] @ row) ([(nc1, a1, t1)] @ new_row)
-      | TDitem (_, _, "spouse"), TDnothing, TDitem (_, _, "spouse_no_d") ->
-          regroup ([(nc1, a1, t1); (nc3, a3, t3)] @ row) ([(nc2, a2, t2)] @ new_row)
+      | TDitem (_, _, f1), TDnothing, TDitem (_, _, f3) ->
+          let f11 = String.split_on_char '-' f1 in
+          let f31 = String.split_on_char '-' f3 in
+          if List.length f11 = 2 && List.length f31 = 2 then
+            let fam1 = List.nth f11 0 in
+            let fl1 = List.nth f11 1 in
+            let fam3 = List.nth f31 0 in
+            let fl3 = List.nth f31 1 in
+            if fam1 = fam3 && fl1 = "spouse_no_d" && fl3 = "spouse" then
+              regroup ([(nc3, a3, t3); (nc2, a2, t2)] @ row) ([(nc1, a1, t1)] @ new_row)
+            else if fam1 = fam3 && fl1 = "spouse" && fl3 = "spouse_no_d" then
+              regroup ([(nc1, a1, t1); (nc3, a3, t3)] @ row) ([(nc2, a2, t2)] @ new_row)
+            else
+              regroup ([(nc2, a2, t2); (nc3, a3, t3)] @ row) ([(nc1, a1, t1)] @ new_row)
+          else
+            regroup ([(nc2, a2, t2); (nc3, a3, t3)] @ row) ([(nc1, a1, t1)] @ new_row)
+          
       | _ -> regroup ([(nc2, a2, t2); (nc3, a3, t3)] @ row) ([(nc1, a1, t1)] @ new_row)
       end
     | _ -> List.rev ((List.rev row) @ new_row)
