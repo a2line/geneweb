@@ -114,7 +114,7 @@ let print_table conf hts =
         end;
         Output.print_string conf ">";
         begin match td with
-          TDitem (ip, s) -> Output.print_string conf s
+          TDitem (ip, s, t) -> Output.print_string conf s
         | TDtext (ip, s) -> Output.print_string conf s
         | TDnothing -> Output.print_string conf "&nbsp;"
         | TDbar None -> Output.print_string conf "|"
@@ -315,7 +315,7 @@ let gen_compute_columns_sizes size_fun hts ncol =
                 if colspan = curr_colspan then
                   let len =
                     match td with
-                      TDitem (ip, s) -> size_fun s
+                      TDitem (ip, s, t) -> size_fun s
                     | TDtext (ip, s) -> size_fun s
                     | _ -> 1
                   in
@@ -435,8 +435,8 @@ let table_strip_troublemakers hts =
   for i = 0 to Array.length hts - 1 do
     for j = 0 to Array.length hts.(i) - 1 do
       match hts.(i).(j) with
-        colspan, align, TDitem (ip, s) ->
-          hts.(i).(j) <- colspan, align, TDitem (ip, (strip_troublemakers s))
+        colspan, align, TDitem (ip, s, t) ->
+          hts.(i).(j) <- colspan, align, TDitem (ip, (strip_troublemakers s), "")
       | _ -> ()
     done
   done
@@ -547,7 +547,7 @@ let print_table_pre conf hts =
             let (colspan, _, td) = hts.(i).(j) in
             let stra =
               match td with
-                TDitem (ip, s) ->
+                TDitem (ip, s, t) ->
                   let sz =
                     let rec loop sz k =
                       if k = 0 then sz
@@ -1014,7 +1014,7 @@ and eval_dag_cell_var conf base env (colspan, align, td) =
   | ["is_nothing"] -> VVbool (td = TDnothing)
   | ["item"] ->
       begin match td with
-        TDitem (ip, s) -> VVstring s
+        TDitem (ip, s, t) -> VVstring s
       | _ -> VVstring ""
       end
   | ["text"] ->
@@ -1024,7 +1024,7 @@ and eval_dag_cell_var conf base env (colspan, align, td) =
       end
   | ["index"] ->
       begin match td with
-      | TDitem (ip, _) | TDtext (ip, _) -> VVstring (string_of_iper ip)
+      | TDitem (ip, _, _) | TDtext (ip, _) -> VVstring (string_of_iper ip)
       | _ -> VVstring ""
       end
   | ["access"] ->
@@ -1034,7 +1034,7 @@ and eval_dag_cell_var conf base env (colspan, align, td) =
       end
   | ["father"; "access"] ->
       begin match td with
-      | TDitem (ip, _) | TDtext (ip, _) ->
+      | TDitem (ip, _, _) | TDtext (ip, _) ->
         begin match get_parents (poi base ip) with
         | Some ifam ->
             let cpl = foi base ifam in
@@ -1045,7 +1045,7 @@ and eval_dag_cell_var conf base env (colspan, align, td) =
       end
   | ["mother"; "access"] ->
       begin match td with
-      | TDitem (ip, _) | TDtext (ip, _) ->
+      | TDitem (ip, _, _) | TDtext (ip, _) ->
         begin match get_parents (poi base ip) with
         | Some ifam ->
             let cpl = foi base ifam in
@@ -1056,7 +1056,7 @@ and eval_dag_cell_var conf base env (colspan, align, td) =
       end
   | ["has_next_sibling"] ->
       begin match td with
-      | TDitem (ip, _) | TDtext (ip, _) ->
+      | TDitem (ip, _, _) | TDtext (ip, _) ->
         begin match get_parents (poi base ip) with
         | Some ifam ->
             let sib = (get_children (foi base ifam)) in (* array *)
@@ -1070,7 +1070,7 @@ and eval_dag_cell_var conf base env (colspan, align, td) =
       end
   | ["has_prev_sibling"] ->
       begin match td with
-      | TDitem (ip, _) | TDtext (ip, _) ->
+      | TDitem (ip, _, _) | TDtext (ip, _) ->
         begin match get_parents (poi base ip) with
         | Some ifam ->
             let sib = (get_children (foi base ifam)) in (* array *)
@@ -1084,7 +1084,7 @@ and eval_dag_cell_var conf base env (colspan, align, td) =
       end
   | ["next_sibling"; "access"] ->
       begin match td with
-      | TDitem (ip, _) | TDtext (ip, _) ->
+      | TDitem (ip, _, _) | TDtext (ip, _) ->
         begin match get_parents (poi base ip) with
         | Some ifam ->
             let sib = (get_children (foi base ifam)) in (* array *)
@@ -1102,7 +1102,7 @@ and eval_dag_cell_var conf base env (colspan, align, td) =
       end
   | ["prev_sibling"; "access"] ->
       begin match td with
-      | TDitem (ip, _) | TDtext (ip, _) ->
+      | TDitem (ip, _, _) | TDtext (ip, _) ->
         begin match get_parents (poi base ip) with
         | Some ifam ->
             let sib = (get_children (foi base ifam)) in (* array *)
@@ -1260,7 +1260,7 @@ and print_foreach_dag_line_pre conf base hts print_ast env al =
           let (colspan, _, td) = hts.(i).(j) in
           let stra =
             match td with
-            | TDitem (ip, s) ->
+            | TDitem (ip, s, t) ->
                 let sz =
                   let rec loop sz k =
                     if k = 0 then sz else loop (sz + colsz.(col+k-1)) (k - 1)

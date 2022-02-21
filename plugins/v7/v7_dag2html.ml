@@ -34,7 +34,7 @@ let new_ghost_id = let i = ref 0 in fun () -> incr i; ghost_id_of_int !i
 
 type align = LeftA | CenterA | RightA
 type ('a, 'b) table_data =
-    TDitem of iper * 'a
+    TDitem of iper * 'a * string
   | TDtext of iper * string
   | TDhr of align
   | TDbar of 'b option
@@ -51,7 +51,7 @@ let html_table_struct indi_ip indi_txt vbar_txt phony d t =
   in
   let elem_txt =
     function
-      Elem e -> TDitem (indi_ip d.dag.(int_of_idag e), indi_txt d.dag.(int_of_idag e))
+      Elem e -> TDitem (indi_ip d.dag.(int_of_idag e), indi_txt d.dag.(int_of_idag e), "")
     | Ghost _ -> TDbar None
     | Nothing -> TDnothing
   in

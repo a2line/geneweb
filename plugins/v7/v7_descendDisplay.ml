@@ -1216,7 +1216,7 @@ let make_tree_hts conf base gv p =
                 bd td_prop txt
             else txt
           in
-          2 * ncol - 1, CenterA, TDitem ((get_iper p), txt)
+          2 * ncol - 1, CenterA, TDitem ((get_iper p), txt, "")
       | None -> 1, LeftA, TDnothing
     in
     td :: tdl
@@ -1255,7 +1255,7 @@ let make_tree_hts conf base gv p =
                     bd td_prop s
                 else s
               in
-              2 * ncol - 1, CenterA, TDitem ((get_iper sp), s)
+              2 * ncol - 1, CenterA, TDitem ((get_iper sp), s, "spouse_x")
             in
             loop (td :: tdl) (i + 1)
         in
@@ -1415,12 +1415,12 @@ let td_hbar x1 xn =
   | _ -> [1, LeftA, TDhr LeftA] @ [(xn - x1 - 1), CenterA, TDhr CenterA] @ [1, RightA, TDhr RightA]
 
 (* regular cell, centered, with text as content (may contain |<br>) *)
-let td_cell cols align text ip =
+let td_cell cols align text ip flags =
     match align with 
-    | "center" -> [cols, CenterA, TDitem (ip, text)]
-    | "right" -> [cols, RightA, TDitem (ip, text)]
-    | "left" -> [cols, LeftA, TDitem (ip, text)]
-    | _ -> [0, CenterA, TDitem (ip, text)]
+    | "center" -> [cols, CenterA, TDitem (ip, text, flags)]
+    | "right" -> [cols, RightA, TDitem (ip, text, flags)]
+    | "left" -> [cols, LeftA, TDitem (ip, text, flags)]
+    | _ -> [0, CenterA, TDitem (ip, text, flags)]
 
 (* tdal is   (int   *    list      ) list           *)
 (*           (lastx      list of td) list of rows   *)
@@ -1592,7 +1592,7 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses images marriages =
   let txt = if (not continue && descendants) then txt ^ br ^ "+" else txt in
   let lx = if lx > -1 then lx else -1 in
   let tdal =
-    tdal_add tdal ir ((td_fill lx (x - 1)) @ (td_cell 1 "center" txt (get_iper p))) x
+    tdal_add tdal ir ((td_fill lx (x - 1)) @ (td_cell 1 "center" txt (get_iper p) "")) x
   in
   (* row 2: Hbar over spouses *)
   (*
@@ -1649,11 +1649,12 @@ and f_pos conf base ifam ifam_nbr only_one first last p x0 v ir2 tdal only_anc s
   let txt = txt ^ (if kids <> [] then br_sp else "") in
   let txt = if spouses then m_txt ^ txt else m_txt in
   let txt = if kids <> [] then txt ^ "|" else txt in
+  let flag = if kids <> [] then "spouse_no_d" else "spouse" in
   let lx = lastx tdal ir2 in
   let lx = if lx > -1 then lx else -1 in
   let tdal =
     if true then
-      tdal_add tdal ir2 ((td_fill lx (x - 1)) @ (td_cell 1 "center" txt (get_iper sp))) x
+      tdal_add tdal ir2 ((td_fill lx (x - 1)) @ (td_cell 1 "center" txt (get_iper sp) flag)) x
     else
       tdal
   in
@@ -1694,6 +1695,54 @@ let init_tdal gv =
     | _ -> loop ((0, []) :: (0, []) :: (0, []) :: (0, []) :: tdal) (v-1)
   in
   loop [] gv
+
+(* bring back spouses together *)
+(* Spouse_no_d, TDnothing, Spouse becomes TDnothing, Spouse_no_d, Spouse *)
+let correct_spouses tdal =
+  let rec regroup row new_row =
+    match row with
+    | (nc1, a1, t1) :: (nc2, a2, t2) :: (nc3, a3, t3) :: row ->
+      begin match t1, t2, t3 with
+      | TDitem (_, _, "spouse_no_d"), TDnothing, TDitem (_, _, "spouse") ->
+          regroup ([(nc3, a3, t3); (nc2, a2, t2)] @ row) ([(nc1, a1, t1)] @ new_row)
+      | TDitem (_, _, "spouse"), TDnothing, TDitem (_, _, "spouse_no_d") ->
+          regroup ([(nc1, a1, t1); (nc3, a3, t3)] @ row) ([(nc2, a2, t2)] @ new_row)
+      | _ -> regroup ([(nc2, a2, t2); (nc3, a3, t3)] @ row) ([(nc1, a1, t1)] @ new_row)
+      end
+    | _ -> List.rev ((List.rev row) @ new_row)
+  in
+  let tdal =
+    let rec loop tdal new_tdal =
+      match tdal with
+      | [] -> new_tdal
+      | row :: tdal -> loop tdal ((regroup row []) :: new_tdal)
+    in loop tdal []
+  in
+  (List.rev tdal)
+
+
+(* expand cell size if possible *)
+let expand_cell tdal =
+  let rec expand row new_row =
+    match row with
+    | (nc1, a1, t1) :: (nc2, a2, t2) :: (nc3, a3, t3) :: row ->
+      begin match t1, t2, t3 with
+      | TDnothing, TDitem _, TDnothing ->
+          if nc1 > 2 && nc3 > 2 then 
+               expand ([((nc2+2), a2, t2); ((nc3-1), a3, t3)] @ row) ([((nc1-1), a1, t1)] @ new_row)
+          else expand ([(nc2, a2, t2); (nc3, a3, t3)] @ row) ([(nc1, a1, t1)] @ new_row)
+      | _ ->   expand ([(nc2, a2, t2); (nc3, a3, t3)] @ row) ([(nc1, a1, t1)] @ new_row)
+      end
+    | _ -> List.rev ((List.rev row) @ new_row)
+  in
+  let tdal =
+    let rec loop tdal new_tdal =
+      match tdal with
+      | [] -> new_tdal
+      | row :: tdal -> loop tdal ((expand row []) :: new_tdal)
+    in loop tdal []
+  in
+  (List.rev tdal)
 
 (* remove x entry *)
 let clean_rows tdal =
@@ -1773,6 +1822,9 @@ let make_vaucher_tree_hts conf base gv p =
   let (tdal, _) = p_pos conf base p 0 gv 0 tdal only_anc spouses images marriages in
   let tdal = complete_rows tdal in
   let tdal = clean_rows tdal in
+  let tdal = expand_cell tdal in
+  let tdal = expand_cell tdal in
+  let tdal = correct_spouses tdal in
   let tdal = manage_vbars tdal in
   let hts0 = List.fold_left (fun acc row -> (Array.of_list row) :: acc) [] tdal in
   let hts = Array.of_list (List.rev hts0) in
