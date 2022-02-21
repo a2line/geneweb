@@ -812,10 +812,10 @@ let print_wid_hei conf fname =
 let print_copyright conf =
   Util.include_template conf [] "copyr"
     (fun () ->
-      Output.print_string conf "<hr style=\"margin:0\">\n";
-      Output.print_string conf "<div style=\"font-size: 80%\">\n";
+      Output.print_string conf "<hr class=\"m-0\">\n";
+      Output.print_string conf "<div class=\"small\">\n";
       Output.print_string conf "<em>";
-      Output.print_string conf "Copyright (c) 1998-2007 INRIA - GeneWeb " ;
+      Output.print_string conf "©INRIA 1998-2022 - GeneWeb " ;
       Output.print_string conf Version.txt;
       Output.print_string conf "</em>";
       Output.print_string conf "</div>\n";

@@ -706,7 +706,7 @@ let print_several_possible_surnames x conf base (_, homonymes) =
   Util.wprint_in_columns conf (fun (ord, _, _) -> ord)
     (fun (_, txt, sn) -> Output.print_string conf (access txt sn)) list;
   Output.print_string conf "<p>\n";
-  Output.print_string conf "<em style=\"font-size:80%%\">\n";
+  Output.print_string conf "<em class=\"small\">\n";
   Output.printf conf "%s " (Utf8.capitalize_fst (transl conf "click"));
   Output.printf conf "<a href=\"%sm=N&o=i&v=%s\">%s</a>\n" (commd conf)
     (if List.length homonymes = 1 then Mutil.encode x ^ "&t=A"

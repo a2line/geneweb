@@ -361,7 +361,7 @@ let prev_next_1_text conf base info pb nb =
     match pb, nb with
       None, None -> s
     | _ ->
-        s ^ "<span style=\"font-size:80%\">" ^ string_of_int info.c1 ^
+        s ^ "<span class=\"small\">" ^ string_of_int info.c1 ^
         "</span>"
   in
   match nb with
@@ -383,7 +383,7 @@ let prev_next_2_text conf base info pb nb =
     match pb, nb with
       None, None -> s
     | _ ->
-        s ^ "<span style=\"font-size:80%\">" ^ string_of_int info.c2 ^
+        s ^ "<span class=\"small\">" ^ string_of_int info.c2 ^
         "</span>"
   in
   match nb with

@@ -120,7 +120,7 @@ let print_table conf hts =
         | TDbar None -> Output.print_string conf "|"
         | TDbar (Some s) ->
             Output.printf conf
-              "<a style=\"text-decoration:none\" href=\"%s\">|</a>" s
+              "<a class=\"text-decoration-none\" href=\"%s\">|</a>" s
         | TDhr align ->
             match align with
               LeftA ->
@@ -608,7 +608,7 @@ let print_table_pre conf hts =
                     None | Some "" -> "|"
                   | Some s ->
                       Printf.sprintf
-                        "<a style=\"text-decoration:none\" href=\"%s\">|</a>"
+                        "<a class=\"text-decoration-none\" href=\"%s\">|</a>"
                         s
                 in
                 let len = displayed_length s in
@@ -1174,7 +1174,7 @@ and print_foreach_dag_cell_pre hts print_ast env al =
               | None | Some "" -> "|"
               | Some s ->
                 Printf.sprintf
-                  "<a style=\"text-decoration:none\" href=\"%s\">|</a>" s
+                  "<a class=\"text-decoration-none\" href=\"%s\">|</a>" s
             in
             let len = displayed_length s in
             String.make ((sz - len) / 2) ' ' ^ s ^

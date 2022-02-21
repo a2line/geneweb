@@ -1579,10 +1579,10 @@ let rec p_pos conf base p x0 v ir tdal only_anc spouses images marriages =
   in  
   let txt = get_text conf base p ((ifaml <> []) && spouses && images) in
   let only =
-     Printf.sprintf "<a href=\"%sm=D&t=TV%s%s%s%s%s%s\" %s title=\"%s\">&nbsp;│&nbsp;</a>"
+     Printf.sprintf "<a href=\"%sm=D&t=TV%s%s%s%s%s%s\" %s title=\"%s\">│</a>"
      (commd conf) vv pz_index pp_index ("&oi=" ^ (string_of_iper (get_iper p)))
      (if spouses then "" else "&sp=0") (if images then "" else "&im=0")
-     ("class=\"normal_anchor mx-3\"")
+     ("class=\"normal_anchor px-3 btn-outline-primary border-0\"")
      (Utf8.capitalize_fst (Util.transl conf "limit tree to ancestors and siblings"))
   in
   let txt = if ir > 0 then only ^ "<br>" ^ txt else txt in
