@@ -4454,10 +4454,10 @@ tr: %s üzerinde %s kaydetmeden derlendi
     compute all marriages
 co: include tutti i cumpagni
 de: Lebenspartner mit einschließen
-en: include spouses
+en: compute all marriages
 es: incluir todos los cónyuges
 fi: sisällytä puolisot
-fr: inclure tous les conjoints
+fr: calculer pour toutes les relations
 it: includere tutti i coniugi
 nl: inbegrepen alle partners
 no: inkluder ektefeller
@@ -7258,7 +7258,7 @@ eo: prapraavo
 fr: arrière-arrière-grands-parents
 
     cousin.4.0
-fr: a great-great-grandfather/a great-great-grandmother/a great-great-grandparent
+en: a great-great-grandfather/a great-great-grandmother/a great-great-grandparent
 fr: un arrière-arrière-grand-père/une arrière-arrière-grand-mère/un arrière-arrière-grand-parent
 
     cousins.4.0
