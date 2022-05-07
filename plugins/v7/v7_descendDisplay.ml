@@ -1382,7 +1382,7 @@ let print_aboville conf base max_level p =
 let desmenu_print = !V7_interp.templ "desmenu"
 
 (* new descendant tree algorithm *)
-(* based on the work of Jean Vaucher (1942-2021) *)
+(* based on the work of Jean Vaucher (U of Montreal) *)
 (* - see issue #414 for comments and details *)
 
 (* *****************************************************************
