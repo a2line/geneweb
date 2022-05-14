@@ -1183,7 +1183,7 @@
       %end;
       <br%/>
       %if;(is_dead and computable_death_age)[*age at death][:] %apply;curr_age()%end;
-      %if;(not is_dead and computable_age)[*age][:] %apply;curr_age();%end;
+      %if;(not is_dead and computable_age)[*age][:] %apply;curr_age()%end;
     </p>
   </div>
   %apply;timeline()
