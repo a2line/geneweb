@@ -128,7 +128,12 @@ let rec print_descend_upto conf base cnt_t iplist splist max_cnt
                            (Array.length (get_family p)) >= 1 && (show_path && lev >= 2 || lev = 2) &&
                            ((List.length children) > 0) && (Cousins.has_desc_lev conf base lev sp)
                         then
-                          Output.printf conf "%s %s %s%s\n"
+                          Output.printf conf "%s %s %s %s%s\n"
+                            (if lev = 2 then
+                              ((Utf8.capitalize_fst (transl_nth conf "child/children" 
+                                (if (List.length children) > 1 then 1 else 0))) ^ " " ^
+                               (transl conf "of"))
+                             else "")
                             (person_title_text conf base p) (Util.transl conf "with")
                             (person_title_text conf base sp) (Util.transl conf ":") ;
                         print_descend_upto conf base cnt_t iplist splist max_cnt
