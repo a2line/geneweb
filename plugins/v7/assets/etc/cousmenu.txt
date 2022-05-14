@@ -74,7 +74,7 @@
    <td%if;(vvv>0) colspan="%expr(vvv+1)"%end; %if;(vvv=0)style="width:%expr(100/lll)%%"%end; class="table-%if;(vvv=0)info%elseif;(vvv %2 = 1)primary%else;danger%end;" >
      <div class="%if;(vvv>=0)border-right %(border-bottom %)border-%if;(i=0)success%elseif;(vvv%2=1)primary%else;danger%end;%end;  d-flex flex-column   justify-content-between">
        <div class="font-weight-bold" style="height:%;"><sup>vvv</sup>/<sub>0</sub></div>
-       <a role="button" href="%prefix_base_password;&%access;&m=C&v1=vvv&v2=0" 
+       <a role="button" href="%prefix;&%access;&m=C&v1=vvv&v2=0"
         class="btn btn-light ddd w-100"%if;(vvv<5) style="height:120px;"%end;
          data-toggle="tooltip" data-html="true" title="%apply;cousin_lex_tt(vvv,0)">
          %if;(vvv=0)<span class="badge badge-success">1</span>%incr_count;<br>%end;ttt%nn;
@@ -118,7 +118,7 @@
 %define;link_cousin(vvv,www,ttt,sss)
   %let;cousins_vvv_www_float;%if;plugin.v7;%cousins.vvv.www;%end;%in;
   %let;cousins_vvv_www;%expr(cousins_vvv_www_float/.1)%in;
-  <a role="button" href="%prefix_base_password;%access;&m=C&v1=vvv&v2=www" data-toggle="tooltip" data-html="true" title="sss" class="btn btn-light %if;(cousins_vvv_www!="" and cousins_vvv_www=0) disabled%end; w-100" %if;(www-vvv<=10) style="height:120px;"%end;>
+  <a role="button" href="%prefix;%access;&m=C&v1=vvv&v2=www" data-toggle="tooltip" data-html="true" title="sss" class="btn btn-light %if;(cousins_vvv_www!="" and cousins_vvv_www=0) disabled%end; w-100" %if;(www-vvv<=10) style="height:120px;"%end;>
     <span class="badge badge-%if;(vvv=0)info%elseif;(vvv%2=1)primary%else;danger%end;">%cousins_vvv_www;</span>%nn;
     %if;(plugin.v7 and "." in cousins_vvv_www_float)
       %let;couspaths_vvv_www;%cousins.vvv.www.paths;%in;
