@@ -154,7 +154,7 @@
                    %elseif;(env.key!="")&%env.key=%env.val;%end;%nn;
                  %end;%nn;
                  %( ajout des variables par défaut du tableau asc. pour sortir du tableau par couple qui n'en a quasi pas %)
-                 %if;(url=couple_table)&num=on&birth=on&birth_place=on&marr=on&marr_date=on&marr_place=on&child=on&death=on&death_place=on&age=on&occu=on&gen=on&repeat=on&ns=on%end;"
+                 %if;(url=couple_table)&num=on&birth=on&birth_place=on&marr=on&marr_date=on&marr_place=on&child=on&death=on&death_place=on&age=on&occu=on&gen=1&repeat=on&ns=1%end;"
         title="[*visualize/show/hide/summary]1 [table] %if;(evar.t="Y")[ancestors]%else;[by couple]%end;">%nn;
           <i class="fa fa-restroom fa-lg fa-fw%if;(evar.t="Y") text-danger%end;" aria-hidden="true"></i>
       </a>

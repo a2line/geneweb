@@ -1,6 +1,6 @@
 <!-- $Id: buttons_dag.txt v7.xx exp 03/02/2022 16:40:26 $ -->
 <!-- Copyright (c) 1998-2022 INRIA -->
-%( Boutons de configurations et d’options pour les arbres descendants et DAG %)
+%( Boutons de configurations et d’options pour les arbres et DAG %)
 %define;urlv(x,y)
   %urlv.x.y;
 %end;
@@ -40,7 +40,7 @@
             %apply;setvar%with;fatheraccess%and;%dag_cell.father.access;%end;
             %apply;setvar%with;motheraccess%and;%dag_cell.mother.access;%end;
             %apply;setvar%with;prevsiblingaccess%and;%if;dag_cell.has_prev_sibling;%dag_cell.prev_sibling.access;%else;%end;%end;
-           %apply;setvar%with;nextsiblingaccess%and;%if;dag_cell.has_next_sibling;%dag_cell.next_sibling.access;%else;%end;%end;
+            %apply;setvar%with;nextsiblingaccess%and;%if;dag_cell.has_next_sibling;%dag_cell.next_sibling.access;%else;%end;%end;
           %end;
         %end;
       %end;
@@ -85,15 +85,15 @@
       <div class="d-flex flex-nowrap justify-content-center">
         <div class="border rounded mr-1">
           <a role="button" class="btn btn-sm btn-outline-%if;(father_access="")dark disabled%else;primary%end; border-0" href="%prefix_base_password;&%father_access;&%nn;
-            %foreach;env_binding;%if;(not (env.key="p" or env.key="n" or env.key="oc" or env.key="i" or env.key="v"))%env.key;=%env.val;&%end;%end;v=%expr(e.v+1)"
+            %foreach;env_binding;%if;(not (env.key="p" or env.key="n" or env.key="oc" or env.key="i" or env.key="v"))%env.key;=%env.val;&%end;%end;v=%if;(e.m="D")%expr(e.v+1)%else;%e.v;%end;"
             title="[*navigation] %if;(dtree="1")[father/mother]0[:]&#013;%father_access;&#013;v=%expr(e.v+1)%else;%father.first_name; %father_surname; ([father/mother]0)%end;">%nn;
             <i class="fas fa-arrow-turn-up fa-flip-horizontal fa-sm mr-2"></i>[*father/mother]0%nn;
           </a>
         </div>
         <div class="border rounded">
           <a role="button" class="btn btn-sm btn-outline-%if;(mother_access="")dark disabled%else;primary%end; border-0" href="%prefix_base_password;&%mother_access;&%nn;
-            %foreach;env_binding;%if;(not (env.key="p" or env.key="n" or env.key="oc" or env.key="i" or env.key="v"))%env.key;=%env.val;&%end;%end;v=%expr(e.v+1)"
-            title="[*navigation] %if;(dtree="1")[father/mother]1[:]&#013;%mother_access;&#013;v=%expr(e.v+1)%else;%mother.first_name; %motHer_surname; ([father/mother]1)%end;">%nn;
+            %foreach;env_binding;%if;(not (env.key="p" or env.key="n" or env.key="oc" or env.key="i" or env.key="v"))%env.key;=%env.val;&%end;%end;v=%if;(e.m="D")%expr(e.v+1)%else;%e.v;%end;"
+            title="[*navigation] %if;(dtree="1")[father/mother]1[:]&#013;%mother_access;&#013;v=%expr(e.v+1)%else;%mother.first_name; %mother_surname; ([father/mother]1)%end;">%nn;
             [*father/mother]1<i class="fas fa-arrow-turn-up fa-sm ml-2"></i></a>
         </div>
       </div>
