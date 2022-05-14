@@ -87,7 +87,7 @@ let rec print_descend_upto conf base cnt_t iplist splist max_cnt
     begin
       if print then Output.print_string conf "<ul>\n";
       let (cnt_t, iplist, splist) =
-        List.fold_left
+        List.fold_left (* replaced List.iter by List.fold_left to accumulate counts *)
           (fun (cnt_t, iplist, splist) (ip, ia_asex, rev_br) ->
             let p = pget conf base ip in
             (* détecter l'époux de p, parent des enfants qui seront listés *)
@@ -98,13 +98,6 @@ let rec print_descend_upto conf base cnt_t iplist splist max_cnt
             in
             (* if more than one spouse, this will be split on multiple lines *)
             (* we ignore the case where two spouses, but only one with descendants! *)
-            let with_sp =
-              if (Array.length (get_family p)) >= 1 && print then
-                let sp = get_spouse base ip (get_family p).(0) in
-                Printf.sprintf " %s %s"
-                (Util.transl conf "with") (person_title_text conf base sp)
-              else ""
-            in
             let br = List.rev ((ip, get_sex p) :: rev_br) in
             let is_valid_rel = Cousins.br_inter_is_empty ini_br br in
             if is_valid_rel && (List.length iplist) < max_cnt && Cousins.has_desc_lev conf base lev p
@@ -116,18 +109,9 @@ let rec print_descend_upto conf base cnt_t iplist splist max_cnt
                     if lev = 1 then
                       begin
                         give_access conf base ia_asex ini_p ini_br p br print_sosa;
+                        (* Mark with ** implex children *)
                         Output.printf conf (if List.mem ip iplist then " **" else "");
                       end
-                    else
-                      let s =
-                        let s = person_title_text conf base p in
-                        transl_a_of_gr_eq_gen_lev conf
-                          (transl_nth conf "child/children" 1)
-                        s s
-                      in
-                      if not show_path then
-                        Output.printf conf "%s%s%s%s\n" (Utf8.capitalize_fst (Util.translate_eval s)) with_sp
-                          (Util.transl conf ":") (if with_sp = "" then "<br>" else "")
                   end;
                   (* the function children_of returns *all* the children of ip *)
                   let (cnt_t, iplist, splist) =
@@ -140,10 +124,9 @@ let rec print_descend_upto conf base cnt_t iplist splist max_cnt
                             (Cousins.children_of_fam base ifam)
                         in
                         let sp = get_spouse base ip ifam in
-                        if print && lev >= 2 && ((Array.length (get_family p)) > 1 &&
-                           ((List.length children) > 0) &&
-                           (Cousins.has_desc_lev conf base lev sp) ||
-                           show_path)
+                        if print &&
+                           (Array.length (get_family p)) >= 1 && (show_path && lev >= 2 || lev = 2) &&
+                           ((List.length children) > 0) && (Cousins.has_desc_lev conf base lev sp)
                         then
                           Output.printf conf "%s %s %s%s\n"
                             (person_title_text conf base p) (Util.transl conf "with")
