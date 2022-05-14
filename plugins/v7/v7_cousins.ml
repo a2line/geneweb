@@ -294,7 +294,7 @@ let print_cousins conf base p lev1 lev2 =
   Output.print_string conf "<div>\n";
   Output.print_string conf "<p>\n";
   let cnt = (List.length iplist) in
-  let cnt_sp = (List.length iplist) in
+  let cnt_sp = (List.length splist) in
   if cnt >= max_cnt then Output.print_string conf "etc...\n"
   else
     begin
