@@ -176,16 +176,7 @@ let print_cousins_side_of conf base cnt_t iplist splist max_cnt a ini_p ini_br l
   let sib = Cousins.siblings conf base (get_iper a) in
   if List.exists (Cousins.sibling_has_desc_lev conf base lev2) sib then
     begin
-      let sib = List.map (fun (ip, ia_asex) -> ip, ia_asex, []) sib in
-      let iplist0 = iplist in
-      let (_, iplist1, _) =
-        if print then (* check if there are some cousins *)
-          print_descend_upto conf base cnt_t iplist splist max_cnt ini_p ini_br
-            lev2 sib false print_sosa
-        else (cnt_t, iplist, splist)
-      in
-      let has_cousins = iplist1 > iplist0 in
-      if lev1 > 1 && print && has_cousins then
+      if lev1 > 1 && print then
         begin
           Output.print_string conf "<li>\n";
           Output.printf conf "%s%s\n"
@@ -195,11 +186,10 @@ let print_cousins_side_of conf base cnt_t iplist splist max_cnt a ini_p ini_br l
                      a]))
             (Util.transl conf ":")
         end;
+      let sib = List.map (fun (ip, ia_asex) -> ip, ia_asex, []) sib in
       let (cnt_t, iplist, splist) =
-        if has_cousins then
           print_descend_upto conf base cnt_t iplist splist max_cnt ini_p ini_br
             lev2 sib print print_sosa
-        else (cnt_t, iplist, splist)
       in
       if lev1 > 1 && print then Output.print_string conf "</li>\n";
       (true, cnt_t, iplist, splist)
