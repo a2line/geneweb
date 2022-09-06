@@ -491,6 +491,9 @@ let clean_html_tags s l =
     (fun s html_tag -> Str.global_replace (Str.regexp html_tag) "&nbsp;" s) s
     l
 
+let clean_comment_tag s =
+    Str.global_replace (Str.regexp "<!--.*-->") "&nbsp;" s
+
 let hidden_env conf =
   List.iter
     (fun (k, v) ->
@@ -1208,6 +1211,7 @@ let open_templ_fname conf fname =
 
 let open_templ conf fname = Opt.map fst (open_templ_fname conf fname)
 
+(* include_template does not interpret some functions %env.val; *)
 let include_template conf env fname failure =
   match open_etc_file fname with
   | Some (ic, fname) ->
@@ -2231,11 +2235,15 @@ let default_image_name base p =
   default_image_name_of_key (p_first_name base p) (p_surname base p)
     (get_occ p)
 
-let auto_image_file conf base p =
+let auto_image_file ?(saved=false) conf base p =
   let s = default_image_name base p in
-  let f = Filename.concat (base_path ["images"] conf.bname) s in
-  if Sys.file_exists (f ^ ".gif") then Some (f ^ ".gif")
-  else if Sys.file_exists (f ^ ".jpg") then Some (f ^ ".jpg")
+  let dir =
+      if saved then Filename.concat (base_path ["images"] conf.bname) "saved"
+      else (base_path ["images"] conf.bname)
+  in
+  let f = Filename.concat dir s in
+  if Sys.file_exists (f ^ ".jpg") then Some (f ^ ".jpg")
+  else if Sys.file_exists (f ^ ".gif") then Some (f ^ ".gif")
   else if Sys.file_exists (f ^ ".png") then Some (f ^ ".png")
   else None
 

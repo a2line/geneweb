@@ -15,6 +15,83 @@ let has_children base u =
        let des = foi base ifam in Array.length (get_children des) > 0)
     (get_family u)
 
+(* For carrousel ************************************ *)
+let keydir conf base p =
+  let k = default_image_name base p in
+  let f = String.concat Filename.dir_sep
+    [(base_path ["src"] conf.bname); "images"; k]
+  in
+  try if Sys.is_directory f then Some f else None
+  with Sys_error _ -> None
+
+let keydir_old conf base p =
+  let k = default_image_name base p in
+  let f = String.concat Filename.dir_sep
+    [(base_path ["src"] conf.bname); "images"; k ; "saved" ]
+  in
+  try if Sys.is_directory f then Some f else None
+  with Sys_error _ -> None
+
+let get_keydir_img_notes conf base p fname =
+  let k = default_image_name base p in
+  let fname =
+    String.concat Filename.dir_sep
+      [(base_path ["src"] conf.bname); "images"; k ; fname ^ ".txt" ]
+  in
+  let s = if Sys.file_exists fname then
+    let ic = Secure.open_in fname in
+    let s = really_input_string ic (in_channel_length ic) in
+    close_in ic; s
+    else ""
+  in s
+
+let out_keydir_img_notes conf base p fname s =
+  let k = default_image_name base p in
+  let fname =
+    String.concat Filename.dir_sep
+      [(base_path ["src"] conf.bname); "images";  k ; fname ^ ".txt" ]
+  in
+  try
+    let oc = Secure.open_out fname in
+    output_string oc s;
+    close_out oc;
+  with Sys_error _ -> ()
+
+let get_keydir_old conf base p =
+  match keydir_old conf base p with
+    Some f ->
+      Array.fold_right (fun f1 l ->
+        if f1.[0] <> '.' && Filename.extension f1 <> ".txt" &&
+          ( Filename.extension f1 = ".jpg" ||
+            Filename.extension f1 = ".gif" ||
+            Filename.extension f1 = ".png" )
+        then
+          (* vérifier ici le type des images autorisées  *)
+          ( f1 :: l ) else l)
+          (Sys.readdir f) []
+  | None -> []
+
+let get_keydir conf base p =
+  match keydir conf base p with
+    Some f ->
+      Array.fold_right (fun f1 l ->
+        if f1.[0] <> '.' && Filename.extension f1 <> ".txt" &&
+          ( Filename.extension f1 = ".jpg" ||
+            Filename.extension f1 = ".gif" ||
+            Filename.extension f1 = ".png" )
+        then
+          (* vérifier ici le type des images autorisées  *)
+          ( f1 :: l ) else l)
+          (Sys.readdir f) []
+  | None -> []
+
+let has_keydir conf base p =
+  if authorized_age conf base p then
+    keydir conf base p <> None
+  else false
+
+(* end carrousel ************************************ *)
+
 let string_of_marriage_text conf base fam =
   let marriage = Adef.od_of_cdate (get_marriage fam) in
   let marriage_place = sou base (get_marriage_place fam) in
@@ -144,249 +221,6 @@ let nobility_titles_list conf base p =
        | _ -> (t_nth, t_name, t_ident, [t_place], t_dates) :: l)
     titles []
 
-(* Optimisation de find_sosa_aux :                                           *)
-(* - ajout d'un cache pour conserver les descendants du sosa que l'on calcul *)
-(* - on sauvegarde la dernière génération où l'on a arrêté le calcul pour    *)
-(*   ne pas reprendre le calcul depuis la racine                             *)
-
-(* Type pour ne pas créer à chaque fois un tableau tstab et mark *)
-type sosa_t =
-  { tstab : (iper, int) Gwdb.Marker.t;
-    mark : (iper, bool) Gwdb.Marker.t;
-    mutable last_zil : (iper * Sosa.t) list;
-    sosa_ht : (iper, (Sosa.t * Gwdb.person) option) Hashtbl.t }
-
-let init_sosa_t conf base sosa_ref =
-  try
-    let tstab = Util.create_topological_sort conf base in
-    let mark = Gwdb.iper_marker (Gwdb.ipers base) false in
-    let last_zil = [get_iper sosa_ref, Sosa.one] in
-    let sosa_ht = Hashtbl.create 5003 in
-    Hashtbl.add sosa_ht (get_iper sosa_ref) (Some (Sosa.one, sosa_ref)) ;
-    Some {tstab = tstab; mark = mark; last_zil = last_zil; sosa_ht = sosa_ht}
-  with Consang.TopologicalSortError _ -> None
-
-let find_sosa_aux conf base a p t_sosa =
-  let cache = ref [] in
-  let has_ignore = ref false in
-  let ht_add ht k v new_sosa =
-    match try Hashtbl.find ht k with Not_found -> v with
-      Some (z, _) -> if not (Sosa.gt new_sosa z) then Hashtbl.replace ht k v
-    | _ -> ()
-  in
-  let rec gene_find =
-    function
-      [] -> Left []
-    | (ip, z) :: zil ->
-        let _ = cache := (ip, z) :: !cache in
-        if ip = get_iper a then Right z
-        else if Gwdb.Marker.get t_sosa.mark ip then gene_find zil
-        else
-          begin
-            Gwdb.Marker.set t_sosa.mark ip true;
-            if Gwdb.Marker.get t_sosa.tstab (get_iper a)
-               <= Gwdb.Marker.get t_sosa.tstab ip
-            then
-              let _ = has_ignore := true in gene_find zil
-            else
-              let asc = pget conf base ip in
-              match get_parents asc with
-                Some ifam ->
-                  let cpl = foi base ifam in
-                  let z = Sosa.twice z in
-                  begin match gene_find zil with
-                    Left zil ->
-                      Left
-                        ((get_father cpl, z) ::
-                         (get_mother cpl, Sosa.inc z 1) :: zil)
-                  | Right z -> Right z
-                  end
-              | None -> gene_find zil
-          end
-  in
-  let rec find zil =
-    match
-      try gene_find zil with
-        Invalid_argument msg when msg = "index out of bounds" ->
-          Update.delete_topological_sort conf base; Left []
-    with
-      Left [] ->
-        let _ =
-          List.iter
-            (fun (ip, _) -> Gwdb.Marker.set t_sosa.mark ip false)
-            !cache
-        in
-        None
-    | Left zil ->
-        let _ =
-          if !has_ignore then ()
-          else
-            begin
-              List.iter
-                (fun (ip, z) -> ht_add t_sosa.sosa_ht ip (Some (z, p)) z) zil;
-              t_sosa.last_zil <- zil
-            end
-        in
-        find zil
-    | Right z ->
-        let _ =
-          List.iter
-            (fun (ip, _) -> Gwdb.Marker.set t_sosa.mark ip false)
-            !cache
-        in
-        Some (z, p)
-  in
-  find t_sosa.last_zil
-
-let find_sosa conf base a sosa_ref t_sosa =
-  match sosa_ref with
-    Some p ->
-      if get_iper a = get_iper p then Some (Sosa.one, p)
-      else
-        let u = pget conf base (get_iper a) in
-        if has_children base u then
-          try Hashtbl.find t_sosa.sosa_ht (get_iper a) with
-            Not_found -> find_sosa_aux conf base a p t_sosa
-        else None
-  | None -> None
-
-(* [Type]: (iper, Sosa.t) Hashtbl.t *)
-let sosa_ht = Hashtbl.create 5003
-
-(* ************************************************************************ *)
-(*  [Fonc] build_sosa_tree_ht : config -> base -> person -> unit            *)
-(** [Description] : Construit à partir d'une personne la base, la
-      liste de tous ses ancêtres directs et la stocke dans une hashtbl. La
-      clé de la table est l'iper de la personne et on lui associe son numéro
-      de sosa. Les sosa multiples ne sont représentés qu'une seule fois par
-      leur plus petit numéro sosa.
-    [Args] :
-      - conf : configuration de la base
-      - base : base de donnée
-    [Retour] :
-      - unit
-    [Rem] : Exporté en clair hors de ce module.                             *)
-(* ************************************************************************ *)
-let build_sosa_tree_ht conf base person =
-  let () = load_ascends_array base in
-  let () = load_couples_array base in
-  let nb_persons = nb_of_persons base in
-  let mark = Gwdb.iper_marker (Gwdb.ipers base) false in
-  (* Tableau qui va socker au fur et à mesure les ancêtres du person. *)
-  (* Attention, on créé un tableau de la longueur de la base + 1 car on *)
-  (* commence à l'indice 1 !                                            *)
-  let sosa_accu =
-    Array.make (nb_persons + 1) (Sosa.zero, dummy_iper)
-  in
-  let () = Array.set sosa_accu 1 (Sosa.one, get_iper person) in
-  let rec loop i len =
-    if i > nb_persons then ()
-    else
-      let (sosa_num, ip) = Array.get sosa_accu i in
-      (* Si la personne courante n'a pas de numéro de sosa, alors il n'y *)
-      (* a plus d'ancêtres car ils ont été ajoutés par ordre croissant.  *)
-      if Sosa.eq sosa_num Sosa.zero then ()
-      else
-        begin
-          Hashtbl.add sosa_ht ip sosa_num;
-          let asc = pget conf base ip in
-          (* Ajoute les nouveaux ascendants au tableau des ancêtres. *)
-          match get_parents asc with
-            Some ifam ->
-              let cpl = foi base ifam in
-              let z = Sosa.twice sosa_num in
-              let len =
-                if not @@ Gwdb.Marker.get mark (get_father cpl) then
-                  begin
-                    Array.set sosa_accu (len + 1) (z, get_father cpl);
-                    Gwdb.Marker.set mark (get_father cpl) true;
-                    len + 1
-                  end
-                else len
-              in
-              let len =
-                if not @@ Gwdb.Marker.get mark (get_mother cpl) then
-                  begin
-                    Array.set sosa_accu (len + 1) (Sosa.inc z 1, get_mother cpl);
-                    Gwdb.Marker.set mark (get_mother cpl) true ;
-                    len + 1
-                  end
-                else len
-              in
-              loop (i + 1) len
-          | None -> loop (i + 1) len
-        end
-  in
-  loop 1 1
-
-(* ************************************************************************ *)
-(*  [Fonc] build_sosa_ht : config -> base -> unit                           *)
-(** [Description] : Fait appel à la construction de la
-      liste de tous les ancêtres directs de la souche de l'arbre
-    [Args] :
-      - conf : configuration de la base
-      - base : base de donnée
-    [Retour] :
-      - unit
-    [Rem] : Exporté en clair hors de ce module.                             *)
-(* ************************************************************************ *)
-let build_sosa_ht conf base =
-  match Util.find_sosa_ref conf base with
-    Some sosa_ref -> build_sosa_tree_ht conf base sosa_ref
-  | None -> ()
-
-(* ******************************************************************** *)
-(*  [Fonc] next_sosa : Sosa.t -> Sosa.t               *)
-(** [Description] : Recherche le sosa suivant
-    [Args] :
-      - s    : sosa
-    [Retour] :
-      - Sosa.t : retourne Sosa.zero s'il n'y a pas de sosa suivant      *)
-(* ******************************************************************** *)
-let next_sosa s =
-  (* La clé de la table est l'iper de la personne et on lui associe son numéro
-    de sosa. On inverse pour trier sur les sosa *)
-  let sosa_list = Hashtbl.fold (fun k v acc -> (v, k) :: acc) sosa_ht [] in
-  let sosa_list = List.sort (fun (s1, _) (s2, _) -> Sosa.compare s1 s2) sosa_list in
-  let rec find_n x lst = match lst with
-    | [] -> (Sosa.zero, dummy_iper)
-    | (so, _) :: tl ->
-        if (Sosa.eq so x) then
-          if tl = [] then (Sosa.zero, dummy_iper) else List.hd tl
-        else find_n x tl
-  in
-  let (so, ip) = find_n s sosa_list in
-  (so, ip)
-
-let prev_sosa s =
-  let sosa_list = Hashtbl.fold (fun k v acc -> (v, k) :: acc) sosa_ht [] in
-  let sosa_list = List.sort (fun (s1, _) (s2, _) -> Sosa.compare s1 s2) sosa_list in
-  let sosa_list = List.rev sosa_list in
-  let rec find_n x lst = match lst with
-    | [] -> (Sosa.zero, dummy_iper)
-    | (so, _) :: tl ->
-        if (Sosa.eq so x) then
-          if tl = [] then (Sosa.zero, dummy_iper) else List.hd tl
-        else find_n x tl
-  in
-  let (so, ip) = find_n s sosa_list in
-  (so, ip)
-
-
-
-(* ******************************************************************** *)
-(*  [Fonc] get_sosa_person : config -> person -> Sosa.t          *)
-(** [Description] : Recherche si la personne passée en argument a un
-                    numéro de sosa.
-    [Args] :
-      - p    : personne dont on cherche si elle a un numéro sosa
-    [Retour] :
-      - Sosa.t : retourne Sosa.zero si la personne n'a pas de numéro de
-                sosa, ou retourne son numéro de sosa sinon
-    [Rem] : Exporté en clair hors de ce module.                         *)
-(* ******************************************************************** *)
-let get_sosa_person p =
-  try Hashtbl.find sosa_ht (get_iper p) with Not_found -> Sosa.zero
 
 (* ********************************************************************** *)
 (*  [Fonc] has_history : config -> string -> bool                         *)
@@ -406,79 +240,6 @@ let has_history conf base p p_auth =
   let person_file = HistoryDiff.history_file fn sn occ in
   p_auth && Sys.file_exists (HistoryDiff.history_path conf person_file)
 
-(* ******************************************************************** *)
-(*  [Fonc] get_single_sosa : config -> base -> person -> Sosa.t          *)
-(** [Description] : Recherche si la personne passée en argument a un
-                    numéro de sosa.
-    [Args] :
-    - conf : configuration de la base
-    - base : base de donnée
-    - p    : personne dont on cherche si elle a un numéro sosa
-      [Retour] :
-    - Sosa.t : retourne Sosa.zero si la personne n'a pas de numéro de
-                sosa, ou retourne son numéro de sosa sinon
-      [Rem] : Exporté en clair hors de ce module.                         *)
-(* ******************************************************************** *)
-let get_single_sosa conf base p =
-  match Util.find_sosa_ref conf base with
-  | None -> Sosa.zero
-  | Some p_sosa as sosa_ref ->
-    match init_sosa_t conf base p_sosa with
-    | None -> Sosa.zero
-    | Some t_sosa ->
-      match find_sosa conf base p sosa_ref t_sosa with
-      | Some (z, _) -> z
-      | None -> Sosa.zero
-
-(* ************************************************************************ *)
-(*  [Fonc] print_sosa : config -> base -> person -> bool -> unit            *)
-(** [Description] : Affiche le picto sosa ainsi que le lien de calcul de
-      relation entre la personne et le sosa 1 (si l'option cancel_link
-      n'est pas activée).
-    [Args] :
-      - conf : configuration de la base
-      - base : base de donnée
-      - p    : la personne que l'on veut afficher
-      - link : ce booléen permet d'afficher ou non le lien sur le picto
-               sosa. Il n'est pas nécessaire de mettre le lien si on a
-               déjà affiché cette personne.
-    [Retour] :
-      - unit
-    [Rem] : Exporté en clair hors de ce module.                             *)
-(* ************************************************************************ *)
-let print_sosa conf base p link =
-  let sosa_num = get_sosa_person p in
-  if Sosa.gt sosa_num Sosa.zero then
-    match Util.find_sosa_ref conf base with
-      Some ref ->
-        if not link then ()
-        else
-          begin let sosa_link =
-            let i1 = string_of_iper (get_iper p) in
-            let i2 = string_of_iper (get_iper ref) in
-            let b2 = Sosa.to_string sosa_num in
-            "m=RL&i1=" ^ i1 ^ "&i2=" ^ i2 ^ "&b1=1&b2=" ^ b2
-          in
-            Output.printf conf "<a href=\"%s%s\" style=\"text-decoration:none\">"
-              (commd conf) sosa_link
-          end;
-        let title =
-          if is_hide_names conf ref && not (authorized_age conf base ref) then
-            ""
-          else
-            let direct_ancestor =
-              Name.strip_c (p_first_name base ref) '"' ^ " " ^
-              Name.strip_c (p_surname base ref) '"'
-            in
-            Printf.sprintf (fcapitale (ftransl conf "direct ancestor of %s"))
-              direct_ancestor ^
-            Printf.sprintf ", Sosa: %s"
-              (Sosa.to_string_sep (transl conf "(thousand separator)") sosa_num)
-        in
-        Output.printf conf "<img src=\"%s/sosa.png\" alt=\"sosa\" title=\"%s\"/> "
-          (image_prefix conf) title;
-        if not link then () else Output.print_string conf "</a> "
-    | None -> ()
 
 (* ************************************************************************ *)
 (*  [Fonc] get_death_text : config -> person -> bool -> string      *)
@@ -697,6 +458,47 @@ let max_ancestor_level conf base ip max_lev =
   loop 0 ip; !x
 
 let default_max_cousin_lev = 5
+
+let get_descendants_at_level base p lev2 =
+  match lev2 with
+  | 0 -> []
+  | n ->
+    let rec loop acc lev fam =
+      Array.fold_left
+      (fun acc ifam ->
+        let children = Array.to_list (get_children (foi base ifam)) in
+        List.fold_left
+        (fun acc ch ->
+          if lev < n then
+            loop acc (lev + 1) (get_family (poi base ch))
+          else
+            if not (List.mem ifam acc) then
+              ifam :: acc
+            else acc
+        ) acc children
+      ) acc fam
+    in
+    loop [] 1 (get_family p)
+
+let count_cousins conf base p lev1 lev2 =
+  match (lev1, lev2) with
+  | (0, 0) -> (1, 0, 0) (* self *)
+  | (0, lev2) -> (* descendants *)
+    let ifam_l = get_descendants_at_level base p lev2 in
+    let (cnt, cnt_sp) = List.fold_left (fun (cnt, cnt_sp) ifam ->
+        (cnt + Array.length (get_children (foi base ifam)),
+        cnt_sp + 1)) (0, 0) ifam_l
+    in
+    (cnt, cnt, cnt_sp)
+  | (_, _) ->
+    let max_cnt =
+      try int_of_string (List.assoc "max_cousins" conf.base_env) with
+        Not_found | Failure _ -> CousinsPrintOrCount.default_max_cnt
+    in
+    let () = SosaMain.build_sosa_ht conf base in
+    let (cnt_t, iplist, splist) =
+      CousinsPrintOrCount.print_cousins_lev conf base max_cnt p lev1 lev2 false SosaMain.print_sosa
+    in ((List.length iplist), cnt_t, (List.length iplist))
 
 let max_cousin_level conf base p =
   let max_lev =
@@ -1565,12 +1367,13 @@ type 'a env =
   | Vrel of relation * person option
   | Vbool of bool
   | Vint of int
+  | Vvars of (string * string) list ref
   | Vgpl of generation_person list
   | Vnldb of (Gwdb.iper, Gwdb.ifam) Def.NLDB.t
   | Vstring of string
   | Vsosa_ref of person option
   | Vsosa of (iper * (Sosa.t * person) option) list ref
-  | Vt_sosa of sosa_t option
+  | Vt_sosa of SosaMain.sosa_t option
   | Vtitle of person * title_item
   | Vevent of person * event_item
   | Vlazyp of string option ref
@@ -1637,7 +1440,7 @@ let get_sosa conf base env r p =
         match get_env "sosa_ref" env with
           Vsosa_ref v ->
             begin match get_env "t_sosa" env with
-              | Vt_sosa (Some t_sosa) -> find_sosa conf base p v t_sosa
+              | Vt_sosa (Some t_sosa) -> SosaMain.find_sosa conf base p v t_sosa
               | _ -> None
             end
         | _ -> None
@@ -1825,6 +1628,14 @@ and eval_simple_bool_var conf base env =
           m_auth && sou base (get_fsources fam) <> ""
       | _ -> false
       end
+  | "has_keydir" ->
+      begin match Util.find_person_in_env conf base "" with
+      | Some p ->
+          if authorized_age conf base p then
+            keydir conf base p <> None
+          else false
+      | _ -> false
+      end
   | "has_marriage_note" ->
       begin match get_env "fam" env with
         Vfam (_, fam, _, m_auth) ->
@@ -1836,6 +1647,15 @@ and eval_simple_bool_var conf base env =
         Vfam (_, fam, _, m_auth) ->
           m_auth && sou base (get_marriage_src fam) <> ""
       | _ -> raise Not_found
+      end
+  | "has_old_image" ->
+      begin match Util.find_person_in_env conf base "" with
+      | Some p ->
+          begin match auto_image_file ~saved:true conf base p with
+            Some _s -> true
+          | _ -> false
+          end
+      | _ -> false
       end
   | "has_relation_her" ->
       begin match get_env "rel" env with
@@ -1902,7 +1722,7 @@ and eval_simple_bool_var conf base env =
         let v = Mutil.encode v in
         let s = SrcfileDisplay.source_file_name conf v in Sys.file_exists s
       else raise Not_found
-and eval_simple_str_var conf base env (_, p_auth) =
+and eval_simple_str_var conf base env (p, p_auth) =
   function
     "alias" ->
       begin match get_env "alias" env with
@@ -1930,6 +1750,16 @@ and eval_simple_str_var conf base env (_, p_auth) =
   | "count2" ->
       begin match get_env "count2" env with
         Vcnt c -> string_of_int !c
+      | _ -> ""
+      end
+  | "count3" ->
+      begin match get_env "count3" env with
+        Vcnt c -> string_of_int !c
+      | _ -> ""
+      end
+  | "desc_cnt" ->
+      begin match get_env "desc_cnt" env with
+        Vint c -> string_of_int c
       | _ -> ""
       end
   | "divorce_date" ->
@@ -2010,7 +1840,13 @@ and eval_simple_str_var conf base env (_, p_auth) =
         Vfam (_, fam, _, _) -> sou base (get_fsources fam)
       | _ -> ""
       end
-  | "incr_count" ->
+  | "idigest" -> default_image_name base p
+  | "img_cnt" ->
+      begin match get_env "img_cnt" env with
+        Vint c -> string_of_int c
+      | _ -> ""
+      end
+ | "incr_count" ->
       begin match get_env "count" env with
         Vcnt c -> incr c; ""
       | _ -> ""
@@ -2023,6 +1859,36 @@ and eval_simple_str_var conf base env (_, p_auth) =
   | "incr_count2" ->
       begin match get_env "count2" env with
         Vcnt c -> incr c; ""
+      | _ -> ""
+      end
+  | "incr_count3" ->
+      begin match get_env "count3" env with
+        Vcnt c -> incr c; ""
+      | _ -> ""
+      end
+  | "keydir_img" ->
+      begin match get_env "keydir_img" env with
+        Vstring s -> s
+      | _ -> ""
+      end
+  | "keydir_img_key" ->
+      begin match get_env "keydir_img" env with
+        Vstring s -> (Mutil.tr '+' ' ' (Mutil.encode s))
+      | _ -> ""
+      end
+  | "keydir_img_old" ->
+      begin match get_env "keydir_img_old" env with
+        Vstring s -> s
+      | _ -> ""
+      end
+  | "keydir_img_old_key" ->
+      begin match get_env "keydir_img_old" env with
+        Vstring s -> (Mutil.tr '+' ' ' (Mutil.encode s))
+      | _ -> ""
+      end
+  | "keydir_notes" ->
+      begin match get_env "keydir_img" env with
+        Vstring s -> (Filename.remove_extension s) ^ ".txt"
       | _ -> ""
       end
   | "lazy_force" ->
@@ -2050,6 +1916,18 @@ and eval_simple_str_var conf base env (_, p_auth) =
             Vfam (_, fam, _, m_auth) ->
               if m_auth then
                 Util.string_of_place conf (sou base (get_marriage_place fam))
+              else ""
+          | _ -> raise Not_found
+      end
+  | "marriage_place_raw" ->
+      begin match get_env "fam" env with
+        Vfam (_, fam, _, m_auth) when mode_local env ->
+          if m_auth then sou base (get_marriage_place fam)
+          else ""
+      | _ ->
+          match get_env "fam_link" env with
+            Vfam (_, fam, _, m_auth) ->
+              if m_auth then sou base (get_marriage_place fam)
               else ""
           | _ -> raise Not_found
       end
@@ -2197,6 +2075,11 @@ and eval_simple_str_var conf base env (_, p_auth) =
         Vcnt c -> c := 0; ""
       | _ -> ""
       end
+  | "reset_count3" ->
+      begin match get_env "count3" env with
+        Vcnt c -> c := 0; ""
+      | _ -> ""
+      end
   | "reset_desc_level" ->
       let flevt_save =
         match get_env "desc_level_table_save" env with
@@ -2222,6 +2105,7 @@ and eval_simple_str_var conf base env (_, p_auth) =
         Vstring s -> s
       | _ -> raise Not_found
       end
+  | "X" -> Filename.dir_sep
   | s ->
       let rec loop =
         function
@@ -2410,6 +2294,7 @@ and eval_compound_var conf base env (a, _ as ep) loc =
       end
   | "number_of_descendants" :: sl ->
       (* FIXME: what is the difference with number_of_descendants_at_level??? *)
+      (* -> Gwdb.Marker.get m ip <= i rather than = i *)
       begin match get_env "level" env with
         Vint i ->
           begin match get_env "desc_level_table" env with
@@ -2448,6 +2333,22 @@ and eval_compound_var conf base env (a, _ as ep) loc =
           eval_person_field_var conf base env ep loc sl
       | _ -> raise Not_found
       end
+  | ["person_index"] ->
+      begin match find_person_in_env conf base "" with
+      | Some p -> VVstring (Gwdb.string_of_iper (get_iper p))
+      | None -> raise Not_found
+      end
+  | ["person_index"; x] ->
+      let find_person =
+        match x with
+        | "e" -> find_person_in_env_pref
+        | s -> find_person_in_env
+      in
+      let s = if x = "x" then "" else x in
+      begin match find_person conf base s with
+      | Some p -> VVstring (Gwdb.string_of_iper (get_iper p))
+      | None -> raise Not_found
+      end
   | "prev_item" :: sl ->
       begin match get_env "prev_item" env with
         Vslistlm ell -> eval_item_field_var ell sl
@@ -2476,6 +2377,32 @@ and eval_compound_var conf base env (a, _ as ep) loc =
         if is_hidden (fst ep) then raise Not_found
         else eval_person_field_var conf base env ep loc sl
       (* else raise Not_found *)
+  | ["set_count"; n; v] ->
+    begin match n with
+    | "1" | "2" | "3" ->
+      begin match get_env ("count" ^ n) env with
+      | Vcnt c -> c := int_of_string v; VVstring ""
+      | _ -> raise Not_found
+      end
+    | _ -> raise Not_found
+    end
+  | ["get_var"; name;] ->
+      begin match get_env ("vars") env with
+      | Vvars lv ->
+          let vv = try List.assoc name !lv
+          with Not_found -> raise Not_found
+          in
+          VVstring vv
+      | _ -> VVstring ("%get_var;" ^ name ^ "?")
+      end
+  | ["set_var"; name; value] ->
+      begin match get_env ("vars") env with
+      | Vvars lv ->
+          if List.mem_assoc name !lv
+          then lv := List.remove_assoc name !lv;
+          lv := (name, value) :: !lv; VVstring ""
+      | _ -> raise Not_found
+      end
   | "svar" :: i :: sl ->
       (* http://localhost:2317/HenriT_w?m=DAG&p1=henri&n1=duchmol&s1=243&s2=245
          access to sosa si=n of a person pi ni
@@ -2533,6 +2460,15 @@ and eval_compound_var conf base env (a, _ as ep) loc =
         let np_auth = authorized_age conf base np in
         eval_person_field_var conf base env (np, np_auth) loc sl
       | _ -> raise Not_found
+      end
+  | ["random"; "init"] -> Random.self_init (); VVstring ""
+  | ["random"; "bits"] ->
+      begin try VVstring (string_of_int (Random.bits ())) with
+        Failure _ | Invalid_argument _ -> raise Not_found
+      end
+  | ["random"; s] ->
+      begin try VVstring (string_of_int (Random.int (int_of_string s))) with
+        Failure _ | Invalid_argument _ -> raise Not_found
       end
   | "related" :: sl ->
       begin match get_env "rel" env with
@@ -2860,6 +2796,19 @@ and eval_person_field_var conf base env (p, p_auth as ep) loc =
           end
       | _ -> VVstring ""
       end
+  | ["cousins"; l1; l2] ->
+      let l1 = int_of_string l1 in
+      let l2 = int_of_string l2 in
+      let (cnt, cnt_t, _cnt_sp) = count_cousins conf base p l1 l2 in
+      if cnt = cnt_t then
+        VVstring (string_of_int cnt)
+      else
+        VVstring ((string_of_int cnt) ^ ".")
+  | ["cousins"; l1; l2; "paths"] ->
+      let l1 = int_of_string l1 in
+      let l2 = int_of_string l2 in
+      let (cnt, cnt_t, _cnt_sp) = count_cousins conf base p l1 l2 in
+      VVstring (string_of_int (cnt_t - cnt))
   | "cremated_date" :: sl ->
       begin match get_burial p with
         Cremated cod when p_auth ->
@@ -2963,7 +2912,7 @@ and eval_person_field_var conf base env (p, p_auth as ep) loc =
           VVstring s
       | _ -> raise Not_found
       end
-  | "marriage_date" :: sl ->
+  | ("marriage_date"|"marriage") :: sl ->
       begin match get_env "fam" env with
         Vfam (_, fam, _, true) ->
           begin match Adef.od_of_cdate (get_marriage fam) with
@@ -3010,7 +2959,7 @@ and eval_person_field_var conf base env (p, p_auth as ep) loc =
       | Vsosa x ->
           begin match get_sosa conf base env x p with
           | Some (n, _) ->
-              begin match next_sosa n with
+              begin match SosaMain.next_sosa n with
               | (so, ip) ->
                 if so = Sosa.zero then VVstring ""
                 else
@@ -3027,7 +2976,7 @@ and eval_person_field_var conf base env (p, p_auth as ep) loc =
       | Vsosa x ->
           begin match get_sosa conf base env x p with
           | Some (n, _) ->
-              begin match prev_sosa n with
+              begin match SosaMain.prev_sosa n with
               | (so, ip) ->
                 if Sosa.eq so Sosa.zero then VVstring ""
                 else
@@ -3088,6 +3037,12 @@ and eval_date_field_var conf d =
           VVstring (string_of_int (Calendar.sdn_of_julian dmy))
       | _ -> VVstring ""
       end
+  | ["gregorian_day"] ->
+      begin match d with
+        Dgreg (dmy, _) ->
+          VVstring (string_of_int (Calendar.sdn_of_gregorian dmy))
+      | _ -> VVstring ""
+      end
   | ["month"] ->
       begin match d with
         Dgreg (dmy, _) -> VVstring (DateDisplay.month_text dmy)
@@ -3118,6 +3073,11 @@ and eval_date_field_var conf d =
           end
       | _ -> VVstring ""
       end
+  | ["date_s"] ->
+    begin match d with
+      | Dgreg (dmy, _) -> VVstring (DateDisplay.prec_year_text conf dmy)
+      | _ -> VVstring ""
+    end
   | [] ->
     VVstring (DateDisplay.string_of_date_aux ~link:false conf ~sep:"&#010;  " d)
   | _ -> raise Not_found
@@ -3253,6 +3213,15 @@ and eval_event_field_var conf base env (p, p_auth)
         true, Some d -> eval_date_field_var conf d sl
       | _ -> VVstring ""
       end
+  | ["date_s"] ->
+    begin match p_auth, Adef.od_of_cdate date with
+      | true, Some d ->
+        begin match d with
+          | Dgreg (dmy, _) -> VVstring (DateDisplay.prec_year_text conf dmy)
+          | _ -> VVstring ""
+        end
+      | _ -> VVstring ""
+    end
   | "spouse" :: sl ->
       begin match isp with
         Some isp ->
@@ -3673,13 +3642,16 @@ and eval_str_person_field conf base env (p, p_auth as ep) =
       | _ -> ""
       end
   | "auto_image_file_name" ->
-      begin match auto_image_file conf base p with
+      begin match Util.auto_image_file conf base p with
         Some s when p_auth -> s
       | _ -> ""
       end
   | "bname_prefix" -> Util.commd conf
   | "birth_place" ->
       if p_auth then Util.string_of_place conf (sou base (get_birth_place p))
+      else ""
+  | "birth_place_raw" ->
+      if p_auth then sou base (get_birth_place p)
       else ""
   | "birth_note" ->
       let env = ['i', (fun () -> Util.default_image_name base p)] in
@@ -3693,6 +3665,9 @@ and eval_str_person_field conf base env (p, p_auth as ep) =
       if p_auth then
         Util.string_of_place conf (sou base (get_baptism_place p))
       else ""
+  | "baptism_place_raw" ->
+      if p_auth then sou base (get_baptism_place p)
+      else ""
   | "baptism_note" ->
       let env = ['i', (fun () -> Util.default_image_name base p)] in
       get_note_source conf base env p_auth conf.no_note
@@ -3703,6 +3678,9 @@ and eval_str_person_field conf base env (p, p_auth as ep) =
         (sou base (get_baptism_src p))
   | "burial_place" ->
       if p_auth then Util.string_of_place conf (sou base (get_burial_place p))
+      else ""
+  | "burial_place_raw" ->
+      if p_auth then sou base (get_burial_place p)
       else ""
   | "burial_note" ->
       let env = ['i', (fun () -> Util.default_image_name base p)] in
@@ -3732,6 +3710,9 @@ and eval_str_person_field conf base env (p, p_auth as ep) =
   | "cremation_place" ->
       if p_auth then Util.string_of_place conf (sou base (get_burial_place p))
       else ""
+  | "cremation_place_raw" ->
+      if p_auth then sou base (get_burial_place p)
+      else ""
   | "dates" -> if p_auth then DateDisplay.short_dates_text conf base p else ""
   | "death_age" ->
       if p_auth then
@@ -3749,6 +3730,9 @@ and eval_str_person_field conf base env (p, p_auth as ep) =
       else ""
   | "death_place" ->
       if p_auth then Util.string_of_place conf (sou base (get_death_place p))
+      else ""
+  | "death_place_raw" ->
+      if p_auth then sou base (get_death_place p)
       else ""
   | "death_note" ->
       let env = ['i', (fun () -> Util.default_image_name base p)] in
@@ -3799,6 +3783,55 @@ and eval_str_person_field conf base env (p, p_auth as ep) =
         Vbool _ -> ""
       | _ -> string_of_iper (get_iper p)
       end
+  | "keydir" -> default_image_name base p
+  | "keydir_img_nbr" ->
+    string_of_int (List.length (get_keydir conf base p))
+  | "keydir_old_img_nbr" ->
+      string_of_int
+        (List.length (get_keydir_old conf base p))
+  | "keydir_img_notes" ->
+      begin match get_env "keydir_img" env with
+        Vstring f ->
+          let ext = Filename.extension f in
+          let fname = Filename.chop_suffix f ext in
+          get_keydir_img_notes conf base p fname
+      | _ -> raise Not_found
+      end
+  | "keydir_img_src" ->
+      begin match get_env "keydir_img" env with
+        Vstring f ->
+          begin
+            let ext = Filename.extension f in
+            let fname = Filename.chop_suffix f ext in
+            let n = get_keydir_img_notes conf base p fname in
+            match (String.index_opt n '\n') with
+              Some i ->
+                let s1 = if (String.length n) > i then (String.sub n (i + 1)
+                  (String.length n - i - 1)) else ""
+                in
+                begin
+                  match (String.index_opt s1 '\n') with
+                    Some j -> String.sub s1 0 j
+                  | None -> ""
+                end
+            | None -> ""
+          end
+      | _ -> raise Not_found
+      end
+  | "keydir_img_title" ->
+      begin match get_env "keydir_img" env with
+        Vstring f ->
+          begin
+            let ext = Filename.extension f in
+            let fname = Filename.chop_suffix f ext in
+            let n = get_keydir_img_notes conf base p fname in
+            match (String.index_opt n '\n') with
+              Some i ->
+                String.sub n 0 i
+            | None -> ""
+          end
+      | _ -> raise Not_found
+      end
   | "mark_descendants" ->
       begin match get_env "desc_mark" env with
         Vdmark r ->
@@ -3838,6 +3871,10 @@ and eval_str_person_field conf base env (p, p_auth as ep) =
           else ""
       | _ -> raise Not_found
       end
+  | "marriage_places" ->
+    List.fold_left
+      (fun acc ifam -> acc ^ (sou base (get_marriage_place (foi base ifam))) ^ "|")
+    "|" (Array.to_list (get_family p))
   | "mother_age_at_birth" -> string_of_parent_age conf base ep get_mother
   | "misc_names" ->
       if p_auth then
@@ -3953,10 +3990,6 @@ and eval_str_person_field conf base env (p, p_auth as ep) =
           end
       | _ -> raise Not_found
       end
-  | "psources" ->
-      let env = ['i', (fun () -> Util.default_image_name base p)] in
-      get_note_source conf base env p_auth false
-        (sou base (get_psources p))
   | "slash_burial_date" ->
       begin match get_burial p with
         Buried cod ->
@@ -4012,6 +4045,16 @@ and eval_str_person_field conf base env (p, p_auth as ep) =
         true, Some d -> DateDisplay.string_slash_of_date conf d
       | _ -> ""
       end
+  | "portrait" ->
+      begin match auto_image_file ~saved:false conf base p with
+        Some s when p_auth -> Filename.basename s
+      | _ -> ""
+      end
+  | "portrait_saved" -> (* TODO might have a different extension *)
+      begin match auto_image_file ~saved:true conf base p with
+        Some s when p_auth -> Filename.basename s
+      | _ -> ""
+      end
   | "prev_fam_father" ->
       begin match get_env "prev_fam" env with
         Vfam (_, _, (ifath, _, _), _) ->
@@ -4029,6 +4072,10 @@ and eval_str_person_field conf base env (p, p_auth as ep) =
           string_of_iper imoth
       | _ -> raise Not_found
       end
+  | "psources" ->
+      let env = ['i', (fun () -> Util.default_image_name base p)] in
+      get_note_source conf base env p_auth false
+        (sou base (get_psources p))
   | "public_name" ->
       if not p_auth && is_hide_names conf p then ""
       else sou base (get_public_name p)
@@ -4121,9 +4168,21 @@ and eval_family_field_var conf base env
           let ep = make_ep conf base ifath in
           eval_person_field_var conf base env ep loc sl
       end
-  | "marriage_date" :: sl ->
+  | ["date_s"] | ["dates"] -> VVstring (DateDisplay.short_family_dates_text conf base true fam)
+  | ["sep_date_s"] | ["sep_dates"] -> VVstring (DateDisplay.short_family_dates_text conf base false fam)
+  | "marriage_date" :: sl | "marriage" :: sl ->
       begin match Adef.od_of_cdate (get_marriage fam) with
         Some d when m_auth -> eval_date_field_var conf d sl
+      | _ -> VVstring ""
+      end
+  | "divorce_date" :: sl | "divorce" :: sl ->
+      begin match get_divorce fam with
+      | Divorced d ->
+          let d = Adef.od_of_cdate d in
+          begin match d with
+          | Some d when m_auth -> eval_date_field_var conf d sl
+          | _ -> VVstring ""
+          end
       | _ -> VVstring ""
       end
   | "mother" :: sl ->
@@ -4220,7 +4279,7 @@ let eval_transl conf base env upp s c =
           "n" ->
             (* replaced by %apply;nth([...],sex) *)
             begin match get_env "p" env with
-              Vind p -> 1 - index_of_sex (get_sex p)
+              Vind p -> index_of_sex (get_sex p)
             | _ -> 2
             end
         | "s" ->
@@ -4260,8 +4319,8 @@ let eval_transl conf base env upp s c =
             end
         | _ -> assert false
       in
-      let r = Util.translate_eval (Util.transl_nth conf s n) in
-      if upp then Utf8.capitalize_fst r else r
+      let c = string_of_int n in
+      Templ.eval_transl_lexicon conf upp s c
   | _ -> Templ.eval_transl conf upp s c
 
 let print_foreach conf base print_ast eval_expr =
@@ -4403,6 +4462,7 @@ let print_foreach conf base print_ast eval_expr =
     | "cousin_level" -> print_foreach_level "max_cous_level" env al ep
     | "cremation_witness" -> print_foreach_cremation_witness env al ep
     | "death_witness" -> print_foreach_death_witness env al ep
+    | "descendant" -> print_foreach_descendant env al ep
     | "descendant_level" -> print_foreach_descendant_level env al ep
     | "event" -> print_foreach_event env al ep
     | "event_witness" -> print_foreach_event_witness env al ep
@@ -4410,6 +4470,13 @@ let print_foreach conf base print_ast eval_expr =
         print_foreach_event_witness_relation env al ep
     | "family" -> print_foreach_family env al ini_ep ep
     | "first_name_alias" -> print_foreach_first_name_alias env al ep
+    | "img_in_keydir" -> print_foreach_img_in_keydir env al ep
+    | "img_in_keydir_old" ->
+        begin match ep with
+        | (p, _) ->
+            print_foreach_img_in_keydir_old env ep al
+              (get_keydir_old conf base p)
+        end
     | "nobility_title" -> print_foreach_nobility_title env al ep
     | "parent" -> print_foreach_parent env al ep
     | "qualifier" -> print_foreach_qualifier env al ep
@@ -4739,6 +4806,33 @@ let print_foreach conf base print_ast eval_expr =
           else loop events
     in
     loop (events_list conf base p)
+  and print_foreach_descendant env al (p, _) =
+    let lev =
+      match get_env "level" env with
+      | Vint lev -> lev
+      | _ -> 0
+    in
+    let ifam_l = get_descendants_at_level base p lev in
+    let ip_l = List.flatten (List.fold_left
+        (fun acc ifam ->
+          Array.to_list (get_children (foi base ifam)) :: acc
+        ) [] ifam_l)
+    in
+    let rec loop i ip_l =
+      match ip_l with
+      | [] -> ()
+      | ip :: ip_l ->
+          let ep = (poi base ip), true in
+          let env =
+            ("descendant", Vind (poi base ip))
+            :: ("desc_cnt", Vint i)
+            :: ("first", Vbool (i=0))
+            :: ("last", Vbool (ip_l=[] ))
+            :: env
+          in
+          List.iter (print_ast env ep) al; loop (succ i) ip_l
+    in
+    loop 0 ip_l
   and print_foreach_descendant_level env al ep =
     let max_level =
       match get_env "max_desc_level" env with
@@ -5190,6 +5284,31 @@ let print_foreach conf base print_ast eval_expr =
            let env = ("fam", Vfam (ifam, fam, cpl, true)) :: env in
            List.iter (print_ast env ep) al)
       list
+  and print_foreach_img_in_keydir env al (p, p_auth as ep) =
+    if not p_auth && is_hide_names conf p then ()
+    else
+      let list = get_keydir conf base p in
+      let rec loop first cnt =
+        function
+          a :: l ->
+            let env = ("keydir_img", Vstring a) :: env in
+            let env = ("first", Vbool first) :: env in
+            let env = ("last", Vbool (l = [])) :: env in
+            let env = ("img_cnt", Vint cnt) ::  env in
+            List.iter (print_ast env ep) al; loop false (cnt + 1) l
+        | [] -> ()
+      in
+      loop true 1 list
+  and print_foreach_img_in_keydir_old env (p, p_auth as ep) al list =
+    let rec loop cnt =
+      function
+        a :: l ->
+          let env = ("keydir_img_old", Vstring a) :: env in
+          let env = ("img_cnt", Vint cnt) :: env in
+          List.iter (print_ast env ep) al; loop (cnt + 1) l
+      | [] -> ()
+    in
+    loop 1 list
   in
   print_foreach
 
@@ -5242,7 +5361,10 @@ let eval_predefined_apply conf env f vl =
   | "clean_html_tags", [s] ->
       (* On supprime surtout les balises qui peuvent casser la mise en page. *)
       Util.clean_html_tags s
-        ["<br */?>"; "</?p>"; "</?div>"; "</?span>"; "</?pre>"]
+        ["<br */?>"; "</?p>"; "</?div>"; "</?span>"; "</?pre>"; "<!--.*-->" ]
+  | "clean_comment_tag", [s] ->
+      (* On supprime les commentaires <!-- xxx --> *)
+      Util.clean_comment_tag s
   | _ -> raise Not_found
 
 let gen_interp_templ ?(no_headers = false) menu title templ_fname conf base p =
@@ -5255,10 +5377,10 @@ let gen_interp_templ ?(no_headers = false) menu title templ_fname conf base p =
   in
   let env =
     let sosa_ref = Util.find_sosa_ref conf base in
-    if sosa_ref <> None then build_sosa_ht conf base ;
+    if sosa_ref <> None then SosaMain.build_sosa_ht conf base ;
     let t_sosa =
       match sosa_ref with
-      | Some p -> init_sosa_t conf base p
+      | Some p -> SosaMain.init_sosa_t conf base p
       | _ -> None
     in
     let desc_level_table_l =
@@ -5308,6 +5430,8 @@ let gen_interp_templ ?(no_headers = false) menu title templ_fname conf base p =
      ("count", Vcnt (ref 0));
      ("count1", Vcnt (ref 0));
      ("count2", Vcnt (ref 0));
+     ("count3", Vcnt (ref 0));
+     ("vars", Vvars (ref []));
      ("list", Vslist (ref SortedList.empty));
      ("listb", Vslist (ref SortedList.empty));
      ("listc", Vslist (ref SortedList.empty));

@@ -14,9 +14,14 @@ let suburb_aux sub nosub s =
         match
           let rec loop b i =
             if i = len then None
-            else match String.unsafe_get s i with
-              | ' ' -> loop b (i + 1)
-              | '-' when not b -> loop true (i + 1)
+            else match Char.code s.[i] with
+              | 0x20 -> loop b (i + 1)
+              | 0x2D when not b -> loop true (i + 1) (* hyphen *)
+              (* handle en and em dash as well *)
+              | 0xE2 when Char.code s.[i+1] = 0x80 && 
+                         (Char.code s.[i+2] = 0x93 ||
+                          Char.code  s.[i+2] = 0x94) &&
+                          not b -> loop true (i + 3)
               | _ -> if b then Some i else None
           in loop false (i + 1)
         with
@@ -72,7 +77,7 @@ let compare_places s1 s2 =
 
 (* [String.length s > 0] is always true because we already tested [is_empty_string].
    If it is not true, then the base should be cleaned. *)
-let fold_place_long inverted s =
+let fold_place_long_aux inverted s =
   let len = String.length s in
   (* Trimm spaces after ',' and build reverse String.split_on_char ',' *)
   let rec loop iend list i ibeg =
@@ -106,6 +111,13 @@ let fold_place_long inverted s =
     else loop len [] 0 0
   in
   if inverted then List.rev list else list
+
+let fold_place_long inverted s =
+  fold_place_long_aux inverted s
+
+let fold_place_long_2 inverted s =
+  let list = fold_place_long_aux inverted s in
+  (s, list)
 
 let fold_place_short inverted s =
   if inverted

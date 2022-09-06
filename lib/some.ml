@@ -136,6 +136,12 @@ let print_alphabetic_to_branch conf x =
   Output.print_string conf "</table>";
   Output.print_string conf "<br>\n"
 
+let match_fnames word str x =
+  if word then
+    let rexp = Str.regexp (".*\\b" ^ x ^ "\\b.*") in
+    Str.string_match rexp str 0
+  else Mutil.contains str x
+
 let persons_of_fsname conf base base_strings_of_fsname find proj x =
   (* list of strings index corresponding to the crushed lower first name
      or surname "x" *)
@@ -192,7 +198,7 @@ let print_elem conf base is_surname (p, xl) =
     (fun first x ->
        let iper = get_iper x in
        if not first then Output.print_string conf "</li>\n<li>\n  ";
-       Perso.print_sosa conf base x true;
+       SosaMain.print_sosa conf base x true;
        Output.printf conf "<a href=\"%s%s\" id=\"i%s\">" (commd conf)
          (acces conf base x) (string_of_iper iper);
        if is_surname then
@@ -219,6 +225,39 @@ let name_unaccent s =
       let (t, j) = Name.unaccent_utf_8 false s i in copy j (Buff.mstore len t)
   in
   copy 0 0
+
+(* la fonction Util.include_template n'interprète pas %env.val; *)
+let buttons_fnames conf base =
+  Perso.interp_templ ~no_headers:true "buttons_fnames" conf base
+    (Gwdb.empty_person base Gwdb.dummy_iper)
+(*
+let buttons_fnames conf base =
+  !Templ_interp.templ ~no_headers:true "buttons_fnames" conf base
+    (Gwdb.empty_person base Gwdb.dummy_iper)
+*)
+
+let print_other_list conf _base list =
+  let s_title = Printf.sprintf "%s" (Utf8.capitalize (transl conf "see also")) in
+  let s_colon = Printf.sprintf "%s" (transl conf ":") in
+  Output.printf conf "<span>%s%s</span>\n" s_title s_colon;
+  Mutil.list_iter_first (fun first (fn, c) ->
+      Output.printf conf "%s<a href=\"%sm=P&v=%s&other=on\">%s</a> (%d)"
+        (if first then "" else ", ") (commd conf) (Mutil.encode fn) fn c)
+    list
+
+let other_fnames conf base x =
+  match Alln.select_names conf base false "" max_int with
+  | (Alln.Result list, _len) ->
+    let exact = p_getenv conf.env "t" = Some "A" in
+    let word = p_getenv conf.env "word" = Some "on" in
+    let x = if exact then x else Name.lower x in
+    List.fold_left
+      (fun l (_k, str, c) ->
+         let strl = if exact then str else Name.lower str in
+         if (match_fnames word strl x && strl <> x)
+         then (str, c) :: l else l)
+      [] list
+  | (Alln.Specify _l, _len) -> [] (* TODO is [] ok? *)
 
 let first_name_print_list conf base x1 xl liste =
   let liste =
@@ -257,9 +296,19 @@ let first_name_print_list conf base x1 xl liste =
   in
   Hutil.header conf title;
   Hutil.print_link_to_welcome conf true;
+  buttons_fnames conf base;
   (* Si on est dans un calcul de parenté, on affiche *)
   (* l'aide sur la sélection d'un individu.          *)
   Util.print_tips_relationship conf;
+  let other = p_getenv conf.env "other" = Some "on" in
+  if other then
+    let listo =
+        List.fold_left (fun l x ->
+            (other_fnames conf base x) :: l) [] (StrSet.elements xl)
+    in
+    let listo = List.flatten listo |> List.sort_uniq compare in
+    if listo <> [] then print_other_list conf base listo else ()
+  else ();
   let list =
     List.map
       (fun (sn, ipl) ->
@@ -272,13 +321,14 @@ let first_name_print_list conf base x1 xl liste =
     (fun (_, txt, ipl) -> print_elem conf base true (txt, ipl)) list;
   Hutil.trailer conf
 
-let select_first_name conf n list =
+let select_first_name conf base n list =
   let title _ =
     Output.printf conf "%s \"%s\" : %s"
       (Utf8.capitalize_fst (transl_nth conf "first name/first names" 0)) n
       (transl conf "specify")
   in
   Hutil.header conf title;
+  buttons_fnames conf base;
   Output.print_string conf "<ul>";
   List.iter
     (fun (sstr, (strl, _)) ->
@@ -348,7 +398,7 @@ let first_name_print conf base x =
   in
   let list = List.fold_right merge_insert list [] in
   (* Construction de la table des sosa de la base *)
-  let () = Perso.build_sosa_ht conf base in
+  let () = SosaMain.build_sosa_ht conf base in
   match list with
     [] -> first_name_not_found conf x
   | [_, (strl, iperl)] ->
@@ -363,7 +413,7 @@ let first_name_print conf base x =
           pl []
       in
       first_name_print_list conf base x strl pl
-  | _ -> select_first_name conf x list
+  | _ -> select_first_name conf base x list
 
 let has_children_with_that_name conf base des name =
   let compare_name n1 n2 =
@@ -443,7 +493,7 @@ let print_branch conf base psn name =
           else Util.reference_noid conf base p
         else (fun s -> s)
       in
-      Perso.print_sosa conf base p with_link;
+      SosaMain.print_sosa conf base p with_link;
       Output.printf conf "<%s>%s</%s>%s\n"
         hl
         (render p
@@ -626,10 +676,11 @@ let print_several_possible_surnames x conf base (_, homonymes) =
   let access txt sn =
     geneweb_link conf ("m=N&v=" ^ Mutil.encode sn ^ "&t=N") txt
   in
+  buttons_fnames conf base;
   Util.wprint_in_columns conf (fun (ord, _, _) -> ord)
     (fun (_, txt, sn) -> Output.print_string conf (access txt sn)) list;
   Output.print_string conf "<p>\n";
-  Output.print_string conf "<em style=\"font-size:80%%\">\n";
+  Output.print_string conf "<em class=\"small\">\n";
   Output.printf conf "%s " (Utf8.capitalize_fst (transl conf "click"));
   Output.printf conf "<a href=\"%sm=N&o=i&v=%s\">%s</a>\n" (commd conf)
     (if List.length homonymes = 1 then Mutil.encode x ^ "&t=A"
@@ -780,7 +831,7 @@ let surname_print conf base not_found_fun x =
   in
   let iperl = PerSet.elements iperl in
   (* Construction de la table des sosa de la base *)
-  let () = Perso.build_sosa_ht conf base in
+  let () = SosaMain.build_sosa_ht conf base in
   match p_getenv conf.env "o" with
     Some "i" ->
       let pl =
@@ -895,7 +946,7 @@ let search_surname_print conf base not_found_fun x =
   in
   let iperl = PerSet.elements iperl in
   (* Construction de la table des sosa de la base *)
-  let () = Perso.build_sosa_ht conf base in
+  let () = SosaMain.build_sosa_ht conf base in
   match p_getenv conf.env "o" with
     Some "i" ->
       let pl =
@@ -966,7 +1017,7 @@ let search_first_name_print conf base x =
   in
   let list = List.fold_right merge_insert list [] in
   (* Construction de la table des sosa de la base *)
-  let () = Perso.build_sosa_ht conf base in
+  let () = SosaMain.build_sosa_ht conf base in
   match list with
     [] -> first_name_not_found conf x
   | [_, (strl, iperl)] ->
@@ -981,4 +1032,4 @@ let search_first_name_print conf base x =
           pl []
       in
       first_name_print_list conf base x strl pl
-  | _ -> select_first_name conf x list
+  | _ -> select_first_name conf base x list

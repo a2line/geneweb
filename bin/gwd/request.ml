@@ -111,11 +111,11 @@ let specify conf base n pl =
   Util.print_tips_relationship conf;
   Output.print_string conf "<ul>\n";
   (* Construction de la table des sosa de la base *)
-  let () = Perso.build_sosa_ht conf base in
+  let () = SosaMain.build_sosa_ht conf base in
   List.iter
     (fun (p, tl) ->
        Output.print_string conf "<li>\n";
-       Perso.print_sosa conf base p true;
+       SosaMain.print_sosa conf base p true;
        begin match tl with
            [] ->
            Output.printf conf "\n%s" (referenced_person_title_text conf base p)
@@ -424,6 +424,9 @@ let treat_request =
       | None -> []
       | Some list -> String.split_on_char ',' list
     in
+    let plugins =
+      List.map (fun p -> Mutil.strip_heading_and_trailing_spaces p) plugins
+    in
     if List.mem "*" plugins then
       List.iter (fun (_ , fn) -> fn conf base) !GwdPlugin.se
     else
@@ -462,7 +465,7 @@ let treat_request =
                 | _ -> person_selected conf base p
             end
         | "A" ->
-          Perso.print_ascend |> w_person |> w_base
+          w_base @@ w_person @@ AscendDisplay.print
         | "ADD_FAM" ->
           w_wizard @@ w_base @@ UpdateFam.print_add
         | "ADD_FAM_OK" ->
@@ -528,6 +531,18 @@ let treat_request =
           w_wizard @@ w_base @@ UpdateInd.print_del
         | "DEL_IND_OK" ->
           w_wizard @@ w_base @@ w_lock @@ UpdateIndOk.print_del
+        | "DOC" ->
+          w_base @@ fun conf base ->
+            begin match Util.p_getenv conf.env "s" with
+            | Some f ->
+                begin
+                  if Filename.check_suffix f ".txt" then
+                    let f = Filename.chop_suffix f ".txt" in
+                    SrcfileDisplay.print_source conf base f
+                  else ImageDisplay.print_source_image conf f
+                end
+            | None -> incorrect_request conf base
+            end
         | "F" ->
           w_base @@ w_person @@ Perso.interp_templ "family"
         | "H" ->
@@ -555,6 +570,8 @@ let treat_request =
           w_wizard @@ w_base @@ w_lock @@ UpdateFamOk.print_inv
         | "KILL_ANC" ->
           w_wizard @@ w_base @@ w_lock @@ MergeIndDisplay.print_kill_ancestors
+        | "L" -> w_base @@ fun conf base ->
+              Perso.interp_templ "list" conf base (Gwdb.empty_person base Gwdb.dummy_iper)
         | "LB" when conf.wizard || conf.friend ->
           w_base @@ BirthDeathDisplay.print_birth
         | "LD" when conf.wizard || conf.friend ->
@@ -680,6 +697,8 @@ let treat_request =
           w_base @@ BirthDeathDisplay.print_population_pyramid
         | "PS" ->
           w_base @@ PlaceDisplay.print_all_places_surnames
+        | "PPS" ->
+          w_base @@ Place_v7.print_all_places_surnames
         | "R" ->
           w_base @@ w_person @@ relation_print
         | "REQUEST" ->
@@ -702,6 +721,17 @@ let treat_request =
           w_base @@ fun conf _ -> BirthDeathDisplay.print_statistics conf
         | "CHANGE_WIZ_VIS" ->
           w_wizard @@ w_base @@ w_lock @@ WiznotesDisplay.change_wizard_visibility
+        | "TP" ->
+          w_base @@ fun conf base ->
+            begin match Util.p_getenv conf.env "v" with
+            | Some f ->
+              begin match Util.find_person_in_env conf base "" with
+              | Some p -> Perso.interp_templ ("tp_" ^ f) conf base p
+              | _ -> Perso.interp_templ ("tp0_" ^ f) conf base
+                       (Gwdb.empty_person base Gwdb.dummy_iper)
+              end
+            | None -> incorrect_request conf base
+            end
         | "TT" ->
           w_base @@ TitleDisplay.print
         | "U" ->

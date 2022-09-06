@@ -39,6 +39,7 @@ val get_referer : config -> string
 
 val no_html_tags : string -> string
 val clean_html_tags : string -> string list -> string
+val clean_comment_tag : string -> string
 
 (** Prints HTTP response headers with giving content type (default : {i text/html}) on the socket. *)
 val html : ?content_type:string -> config -> unit
@@ -433,7 +434,7 @@ val default_image_name : base -> person -> string
 
 (** Searchs personal image (portrait) inside the base directory by looking up its default name
     and tryig to deduce its extension. Returns path to the image if found. *)
-val auto_image_file : config -> base -> person -> string option
+val auto_image_file : ?saved:bool -> config -> base -> person -> string option
 
 (** Trims and remplaces all non-printable characters by spaces in the given string. *)
 val only_printable : string -> string
