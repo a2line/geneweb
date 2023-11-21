@@ -151,3 +151,16 @@ let to_string_sep_base sep base x =
   let len = List.length digits in
   let slen = String.length sep in
   let s = Bytes.create
+
+  (len + ((len - 1) / 3 * slen)) in
+  let _ =
+    List.fold_left
+      (fun (i, j) d ->
+        Bytes.set s j (Char.chr (code_of_digit d));
+        if i < len - 1 && (len - 1 - i) mod 3 = 0 then (
+          String.blit sep 0 s (j + 1) slen;
+          (i + 1, j + 1 + slen))
+        else (i + 1, j + 1))
+      (0, 0) digits
+  in
+  Bytes.unsafe_to_string s
