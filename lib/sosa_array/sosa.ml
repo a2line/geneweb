@@ -10,7 +10,7 @@ let one = 1L
 let of_int i =
   if i < 0 then invalid_arg "Sosa.of_int"
   else if i = 0 then zero
-  else if i < base then [| Int64.of_int i |] |> Array.map Int64.of_int32 |> Array.map Int64.of_int32
+  else if i < base then [| Int64.of_int i |] |> Array.map Int64.of_int
   else Int64.add (Int64.of_int (i mod Int64.to_int base)) (Int64.shift_left (Int64.of_int (i / Int64.to_int base)) 32)
 
 let to_int x =
