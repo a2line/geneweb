@@ -10,7 +10,7 @@ let one = 1L
 let of_int i =
   if i < 0 then invalid_arg "Sosa.of_int"
   else if i = 0 then zero
-  else if i < base then [| Int64.of_int i |]
+  else if i < base then [| Int64.of_int i |] |> Array.map Int64.of_int
   else Int64.add (Int64.of_int (i mod Int64.to_int base)) (Int64.shift_left (Int64.of_int (i / Int64.to_int base)) 32)
 
 let to_int x =
@@ -152,15 +152,15 @@ let to_string_sep_base sep base x =
   let slen = String.length sep in
   let s = Bytes.create
 
-  (len + ((len - 1) / 3 * slen)) in
-  let _ =
-    List.fold_left
-      (fun (i, j) d ->
-        Bytes.set s j (Char.chr (code_of_digit d));
-        if i < len - 1 && (len - 1 - i) mod 3 = 0 then (
-          String.blit sep 0 s (j + 1) slen;
-          (i + 1, j + 1 + slen))
-        else (i + 1, j + 1))
-      (0, 0) digits
-  in
-  Bytes.unsafe_to_string s
+(len + ((len - 1) / 3 * slen)) in
+let _ =
+  List.fold_left
+    (fun (i, j) d ->
+      Bytes.set s j (Char.chr (code_of_digit d));
+      if i < len - 1 && (len - 1 - i) mod 3 = 0 then (
+        String.blit sep 0 s (j + 1) slen;
+        (i + 1, j + 1 + slen))
+      else (i + 1, j + 1))
+    (0, 0) digits
+in
+Bytes.unsafe_to_string s
