@@ -4,7 +4,8 @@ type t = int64 array
 
 let base = 0x100000000L
 
-let max_mul_base = max_int / base
+let max_mul_base = Int64.div max_int base
+
 
 let zero = [||]
 let one = [| 1 |]
