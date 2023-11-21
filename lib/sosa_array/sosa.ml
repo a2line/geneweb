@@ -1,9 +1,11 @@
 (* Copyright (c) 1998-2007 INRIA *)
 
-type t = int array
+type t = int64 array
 
-let base = 0x1000000
+let base = 0x100000000L
+
 let max_mul_base = max_int / base
+
 let zero = [||]
 let one = [| 1 |]
 
@@ -13,11 +15,11 @@ let of_int i =
   else if i < base then [| i |]
   else [| i mod base; i / base |]
 
-let to_int = function
-  | [||] -> 0
-  | [| i |] -> i
-  | [| m; d |] -> (d * base) + m
-  | _ -> assert false
+let of_int i =
+  if i < 0 then invalid_arg "Sosa.of_int"
+  else if i = 0 then zero
+  else if i < base then [| i |]
+  else [| i mod base; i / base |]
 
 let eq x y = x = y
 
@@ -126,7 +128,7 @@ let mul0 x n =
       let rec loop i r =
         if i = Array.length x then if r = 0 then [] else [ r ]
         else
-          let d = (x.(i) * n) + r in
+          let d = x.(i) * n + r in
           (d mod base) :: loop (i + 1) (d / base)
       in
       loop 0 0
