@@ -1871,6 +1871,10 @@ ru: участие
 sv: medlemskap
 tr: üyelik
 
+    add to the graph
+en: add %tto the graphe
+fr: ajouter %tau graphe
+
     adoptive father/adoptive mother/adoptive parents
 af: aangenome vader/angenome moeder/aangenome ouers
 bg: осиновител/осиновителка/осиновители
@@ -4421,6 +4425,10 @@ no: sivilregistrator/sivile registerførere
 pt: escrivão civil/escrivão civil
 sv: civila register/civila register
 
+    clear cache
+en: clean the cache
+fr: effacer le cache
+
     clear filters
 co: squassà tutti i filtri
 de: alle Filter löschen
@@ -6918,6 +6926,10 @@ fr: arbre de descendance
 pt: árvore de descendentes
 sv: träd av ättlingar
 tr: nesil ağacı
+
+    description
+en: description
+fr: description
 
     died
 af: oorlede

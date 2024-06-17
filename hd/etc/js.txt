@@ -207,3 +207,63 @@ $.fn.tooltip.Constructor.Default.whiteList['dt'] = [];
 $.fn.tooltip.Constructor.Default.whiteList['dd'] = [];
 </script>
 %end;
+<script>
+$(document).ready(() => {
+  updateButtons();
+});
+
+function saveIndParams() {
+  const ind = getIndParams();
+  ind.self = $('button[data-self]').data('self');
+  const storedInds = JSON.parse(localStorage.getItem('inds')) || [];
+  if (storedInds.some(item => item.p === ind.p && item.n === ind.n && item.oc === ind.oc && item.i === ind.i)) {
+    alert('Individual already added!');
+    return;
+  }
+  storedInds.push(ind);
+  localStorage.setItem('inds', JSON.stringify(storedInds));
+  $('#description').val('');
+  updateButtons();
+}
+
+function getIndParams() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const i = urlParams.get('i');
+  const p = urlParams.get('p');
+  const n = urlParams.get('n');
+  const oc = urlParams.get('oc') || '';
+  const t = $('#description').val();
+  return { p, n, oc, i, t };
+}
+
+function clearCache() {
+  localStorage.clear();
+  $('#graphButtons').addClass('d-none');
+}
+
+function updateButtons() {
+  const storedInds = JSON.parse(localStorage.getItem('inds')) || [];
+  let url = '?m=RLM';
+  let tt = '';
+  let n = 1;
+
+  storedInds.forEach((ind) => {
+    if (ind.i) { url += `&i${n}=${ind.i}`; } else {
+      url += `&p${n}=${ind.p.replace(/ /g, '+')}&n${n}=${ind.n.replace(/ /g, '+')}`;
+      if (ind.oc) { url += `&oc${n}=${ind.oc}`; }
+    }
+    if (ind.t) { url += `&t${n}=${encodeURIComponent(ind.t)}`; }
+    const tooltipLine = `${n}. ${ind.self} ${ind.i ? `(i=${ind.i}` : ''}${ind.p ? `(${ind.p}` : ''}${ind.n ? `/${ind.n}` : ''}${ind.oc && !ind.i ? `/${ind.oc}` : ''}${ind.t ? ` ${ind.t}` : ''})`;
+    tt += `${tooltipLine}\n`;
+    n++;
+  });
+
+  if (storedInds.length > 1) {
+    $('#generateGraphButton').attr('href', url).attr('title', tt);
+    $('#graphButtons').removeClass('d-none');
+  } else {
+    $('#graphButtons').addClass('d-none');
+  }
+}
+
+</script>

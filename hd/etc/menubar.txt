@@ -22,6 +22,9 @@
     <input type="hidden" name="nnn" value="%xxx;">
   %end;
 %end;
+%define;addgraph(xxx)
+  [*add to the graph:::xxx]
+%end;
 %if;(not cancel_links)
   <nav class="navbar sticky-top navbar-light bg-white justify-content-center navbar-expand-md pt-0 px-0%sp;
     %if;("MOD" in e.m or (e.ip!="" and "ADD" in e.m))mt-5%else;mt-1 mt-md-0%end;">
@@ -402,6 +405,22 @@
                 <div class="dropdown-divider"></div>
                 <a class="dropdown-item" href="%prefix;%access;&m=C&t=AN"><span class="fa fa-cake-candles fa-fw mr-2"></span>[*family birthday]</a>
               %end;
+              <!-- Relationship graph builder -->
+              <div class="dropdown-divider"></div>
+              <span class="dropdown-header">[*multi relations graph]</span>
+              <input type="text" id="description" class="form-control my-0 mx-4" style="width:84%%" placeholder="[*description]" title="&t=…"></input>
+              <button class="dropdown-item mt-1" onclick="saveIndParams()"
+                title="%apply;addgraph%with;%self; %end;" data-self="%self; %dates_notag;">
+                <i class="fa fa-save fa-fw mr-2"></i>%apply;addgraph("")
+              </button>
+              <div class="btn-group d-none" role="group" aria-label="Relationship graph actions" id="graphButtons">
+                <a class="dropdown-item" class="px-0" id="generateGraphButton">
+                  <i class="fa fa-share-alt fa-fw px-0 mr-2 "></i>[*visualize/show/hide/summary]1 le graphe
+                </a>
+                <button class="dropdown-item" onclick="clearCache()" title="[*clear cache]">
+                  <i class="fa fa-trash-can fa-fw px-0 mr-2 text-danger"></i>
+                </button>
+              </div>
             </div>
           </li>
           %( SND_IMAGE_C carrousel button %)
