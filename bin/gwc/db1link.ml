@@ -1638,6 +1638,18 @@ let output_command_line bdir =
   Printf.fprintf oc "\n";
   close_out oc
 
+let filtered_set_warning base =
+  fun x ->
+    let should_filter =
+      match x with
+      | UndefinedSex p ->
+          let full_name = Gutil.designation base p in
+          String.length full_name > 0 && '0' <= full_name.[0] && full_name.[0] <= '9'
+      | _ -> false
+    in
+    if not should_filter then
+      set_warning base x
+
 (** Link .gwo files and create a database. *)
 let link next_family_fun bdir =
   let tmp_dir = Filename.concat "gw_tmp" bdir in
@@ -1706,7 +1718,7 @@ let link next_family_fun bdir =
   let base = make_base bdir gen per_index_ic per_ic in
   Hashtbl.clear gen.g_patch_p;
   if !do_check && gen.g_pcnt > 0 then (
-    Check.check_base base (set_error base gen) (set_warning base) ignore;
+    Check.check_base base (set_error base gen) (filtered_set_warning base) ignore;
     if !pr_stats then Stats.(print_stats base @@ stat_base base));
   Mutil.remove_dir tmp_dir;
   if not gen.g_errored then (
