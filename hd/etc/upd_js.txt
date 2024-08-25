@@ -1,3 +1,51 @@
+<script src="%etc_prefix;js/evilunichar.js"></script>
+
+<script>
+function populateFields() {
+  $('div[id*="e_src"], div[id*="occu"]').each(function() {
+    const value = $(this).data('value');
+    $(this).find('textarea').val(value);
+    $(this).find('input').val(value);
+  });
+}
+
+function toggleInputVisibility() {
+  $('textarea[id*="e_src"], textarea[id*="occu"]').each(function() {
+    const input = $('#' + $(this).attr('id').replace('textarea', 'input'));
+    const label = $('#' + $(this).attr('id').replace('textarea', 'label'));
+    if ($(this).val() === '') {
+      $(this).addClass('d-none');
+      label.attr('for', input.attr('id'));
+      input.removeClass('d-none');
+      input.val('');
+      addClearButtonToInputs();
+    }
+  });
+}
+
+function synchronizeValues() {
+  $('div[id*="e_src"], div[id*="occu"]').each(function() {
+    const textarea = $(this).find('textarea');
+    const input = $(this).find('input');
+
+    if (textarea.is(':visible')) {
+      input.val(textarea.val());
+    } else {
+      textarea.val(input.val());
+    }
+  });
+}
+
+$(document).ready(function() {
+  populateFields();
+  toggleInputVisibility();
+  addClearButtonToInputs();
+  $('form').on('submit', synchronizeValues);
+});
+
+$('textarea[id*="e_src"], textarea[id*="occu"]').on('input', toggleInputVisibility);
+</script>
+
 %( Input datalists and function to populate all datalists %)
 %define;dl(xx)%if;(b.datalist_xx=1)<datalist id="datalist_xx"></datalist>%end;%nn;%end;
 %apply;dl("fnames")
@@ -111,7 +159,6 @@ function openBook(value, book) {
 datalists.forEach(list => populateDatalist(list.id, list.file, list.book));
 
 document.addEventListener('DOMContentLoaded', () => {
-    addClearButtonToInputs();
     setupInputClickListeners();
 });
 
@@ -251,3 +298,4 @@ function changeCalendar(e,v,m,c) {
 }
 -->
 </script>
+

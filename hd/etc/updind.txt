@@ -487,14 +487,11 @@
          <textarea class="form-control" name="e_notexcnt" id="e_notexcnt" rows="1" placeholder="[*note/notes]1" %l_on1s;>%event.e_note;</textarea>
       </div>
     </div>
-    <div class="row">
-      <label for="e_srcxcnt" class="col-2 col-form-label">[*source/sources]0</label>
+    <div class="row" id="e_srcxcnt" data-value="%event.e_src;">
+      <label for="e_srcxcnt%if;(event.e_src="")_input%else;_textarea%end;" class="col-2 col-form-label">[*source/sources]0</label>
       <div class="col-10">
-        %if;(event.e_src!="")
-          <textarea class="form-control" name="e_srcxcnt" id="e_srcxcnt" rows="1" placeholder="[*source/sources]0" %l_on1s;>%event.e_src;</textarea>
-        %else;
-          <input class="form-control" name="e_srcxcnt" id="e_srcxcnt" placeholder="[*source/sources]0" value="%event.e_src;"datalist_sources;>
-        %end;
+        <input type="text" class="form-control%if;(event.e_src!="") d-none%end;" name="e_srcxcnt" id="e_srcxcnt_input" placeholder="[*source/sources]0"%datalist_sources;>
+        <textarea class="form-control%if;(event.e_src="") d-none%end;" name="e_srcxcnt" id="e_srcxcnt_textarea" rows="1" placeholder="[*source/sources]0" %l_on1s;></textarea>
       </div>
     </div>
     %if;has_witness;
@@ -583,14 +580,11 @@
          <textarea class="form-control" name="e_notexcnt" id="e_notexcnt" rows="1" placeholder="[*note/notes]1" %l_on1s;>%event.e_note;</textarea>
       </div>
     </div>
-    <div class="row">
-      <label for="e_srcxcnt" class="col-sm-2 col-form-label">[*source/sources]0</label>
-      <div class="col-sm-10">
-        %if;(event.e_src!="")
-          <textarea class="form-control" name="e_srcxcnt" id="e_srcxcnt" rows="1" placeholder="[*source/sources]0" %l_on1s;>%event.e_src;</textarea>
-        %else;
-          <input class="form-control" name="e_srcxcnt" id="e_srcxcnt" placeholder="[*source/sources]0" value="%event.e_src;"%datalist_sources;>
-        %end;
+    <div class="row" id="e_srcxcnt" data-value="%event.e_src;">
+      <label for="e_srcxcnt%if;(event.e_src="")_input%else;_textarea%end;" class="col-2 col-form-label">[*source/sources]0</label>
+      <div class="col-10">
+        <input type="text" class="form-control%if;(event.e_src!="") d-none%end;" name="e_srcxcnt" id="e_srcxcnt_input" placeholder="[*source/sources]0"%datalist_sources;>
+        <textarea class="form-control%if;(event.e_src="") d-none%end;" name="e_srcxcnt" id="e_srcxcnt_textarea" row="1" placeholder="[*source/sources]0" %l_on1s;></textarea>
       </div>
     </div>
     %if;has_witness;
@@ -920,23 +914,17 @@
         %end;
       </div>
       <div class="form-group row">
-        <label for="occu" class="col-sm-2 col-form-label">[*occupation/occupations]1</label>
-        <div class="col-sm-8">
-          %if;(occupation!="")
-            <textarea class="form-control" name="occu" rows="1" id="occu" placeholder="[*occupation/occupations]1" %l_on1s;>%occupation;</textarea>
-          %else;
-            <input class="form-control" name="occu" id="occu" placeholder="[*occupation/occupations]1" value="%occupation;"%datalist_occupations;>
-          %end;
+        <label id="occu_label" for="occu%if;(occupation="")_input%else;_textarea%end;" class="col-sm-2 col-form-label">[*occupation/occupations]1</label>
+        <div class="col-sm-8" id="occu" data-value="%occupation;">
+          <input type="text" class="form-control%if;(occupation!="") d-none%end;" name="occu" id="occu_input" placeholder="[*occupation/occupations]1"%datalist_occupations;>
+          <textarea class="form-control%if;(occupation="") d-none%end;" name="occu" rows="1" id="occu_textarea" placeholder="[*occupation/occupations]1" %l_on1s;></textarea>
         </div>
       </div>
-      <div class="row">
-        <label for="src" class="col-sm-2 col-form-label">[*source/sources]0</label>
+      <div class="row" id="src" data-value="%sources;">
+        <label id="src_label" for="src%if;(sources="")_input%else;_textarea%end;" class="col-sm-2 col-form-label">[*source/sources]0</label>
         <div class="col-sm-8">
-          %if;(sources!="")
-            <textarea class="form-control" name="src" rows="1" id="src" placeholder="[*source/sources]0" %l_on1s;>%sources;</textarea>
-          %else;
-            <input class="form-control" name="src" id="src" placeholder="[*source/sources]0" value="%sources;"%datalist_sources;>
-          %end;
+          <input type="text" class="form-control%if;(sources!="") d-none%end;" name="src" id="src_input" placeholder="[*source/sources]0"%datalist_sources;>
+          <textarea class="form-control%if;(sources="") d-none%end;" name="src" rows="1" id="src_textarea" placeholder="[*source/sources]0" %l_on1s;></textarea>
         </div>
         <button type="submit" class="btn btn-primary btn-sm col-2" title="[*validate/delete]0">
           <i class="fa fa-share fa-rotate-180 mx-1" aria-hidden="true"></i>

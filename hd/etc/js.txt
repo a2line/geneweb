@@ -225,53 +225,78 @@ document.addEventListener("DOMContentLoaded", function () {
 function addClearButtonToInputs() {
     const elements = document.querySelectorAll('input[type="text"], input[type="search"]:not([id="n"]):not([id="p"]), textarea:not(#notes_comments)');
     elements.forEach(element => {
-        // Create wrapper div
-        const wrapper = document.createElement('div');
-        wrapper.style.position = 'relative';
-        wrapper.style.display = 'inline-block';
-        wrapper.style.width = '100%';
-        element.parentNode.insertBefore(wrapper, element);
-        wrapper.appendChild(element);
-
-        // Remove padding-right from input element
-        element.style.paddingRight = '30px';
-
-        const clearButton = document.createElement('i');
+        // Ignore hidden input elements
+        if (element.classList.contains('d-none')) {
+            return;
+        }
+        // Check if the clear button already exists
+        let wrapper = element.closest('div[style*="position: relative"]');
+        let clearButton = wrapper ? wrapper.querySelector('.fas.fa-xmark') : null;
+        if (clearButton) {
+            return;
+        }
+        // Create wrapper div if it doesn't exist
+        if (!wrapper) {
+            wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+            wrapper.style.display = 'inline-block';
+            wrapper.style.width = '100%';
+            element.parentNode.insertBefore(wrapper, element);
+            wrapper.appendChild(element);
+        }
+        if (!element.name.includes('date')) {
+          element.style.paddingRight = '25px';
+        }
+        if (element.tagName.toLowerCase() === 'textarea') {
+            element.style.overflow = 'visible';
+        }
+        clearButton = document.createElement('i');
         clearButton.className = 'fas fa-xmark';
         clearButton.style.position = 'absolute';
-        clearButton.style.right = element.tagName.toLowerCase() === 'input' && element.getAttribute('list') ? '10px' : '10px';
+        clearButton.style.right = '10px';
         clearButton.style.top = element.tagName.toLowerCase() === 'textarea' ? '10px' : '50%';
         clearButton.style.transform = element.tagName.toLowerCase() === 'textarea' ? 'none' : 'translateY(-50%)';
         clearButton.style.cursor = 'pointer';
-        clearButton.style.display = 'none';
+        clearButton.style.display = 'block';
         clearButton.style.color = '#667fc9';
         clearButton.style.fontSize = '1em';
+        clearButton.style.zIndex = '2';
         clearButton.title = '[*clear input]';
-
         wrapper.appendChild(clearButton);
-        
-        function toggleClearButton() {
+        window.toggleClearButton = function () {
             clearButton.style.display = element.value ? 'block' : 'none';
         }
-        
         element.addEventListener('input', toggleClearButton);
         toggleClearButton();
-
         clearButton.addEventListener('mouseenter', () => {
             clearButton.style.color = '#335599';
         });
-
         clearButton.addEventListener('mouseleave', () => {
             clearButton.style.color = '#667fc9';
         });
-
         clearButton.addEventListener('click', (e) => {
             e.preventDefault();
             element.value = '';
+            if (element.nextElementSibling && element.nextElementSibling.classList.contains('editable-div')) {
+                element.nextElementSibling.innerText = '';
+            }
             toggleClearButton();
             element.focus();
             element.dispatchEvent(new Event('input', { bubbles: true }));
         });
+        // Add event listener to handle visibility changes
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+              if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    if (element.classList.contains('d-none')) {
+                        clearButton.style.display = 'none';
+                    } else {
+                        toggleClearButton();
+                    }
+                }
+            });
+        });
+        observer.observe(element, { attributes: true });
     });
 }
 </script>

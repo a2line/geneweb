@@ -49,10 +49,27 @@
 .z-index1 {
   z-index:1;
 }
+
+/* Highlight invisible caracters */
+.hl-evilunichar {
+  background-color: #ffd54f;
+  border-radius: 2px;
+}
+
+.hl-nbsp {
+  background-color: #ffe2e2;
+  border-radius: 2px;
+}
+
+.editable-div {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
 /* Light grey background color highlight for the toolbar characters.txt */
-  .ch .hl {
-    background-color: #f0f0f0;
-  }
+.ch .hl {
+    background-color: #ffe2e2;
+}
 
 .dropdown-menu-transl {
   -webkit-transform: translate(-16%, 0) !important;
