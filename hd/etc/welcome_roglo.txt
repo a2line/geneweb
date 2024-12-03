@@ -1,0 +1,46 @@
+%define;help(lang)
+  <a role="button" class="btn btn-outline-success mt-2" href="%prefix;m=NOTES;f=Roglo:help_lang;">
+    <i class="fa fa-question fa-fw mr-1"></i>[*help]</a>
+%end;
+%define;msg_lang_link(xx,yy)
+  %if;(b.yy_xx != "")
+    %if;(b.yy_lnk != "")<a role="button" class="btn btn-outline-success mr-1" href="%b.yy_lnk;"> Charte%end;
+    %if;(b.yy_not != "")<a role="button" class="btn btn-outline-success mr-1" href="%prefix;m=NOTES;f=%b.yy_not;">%end;
+    %b.yy_xx
+    %if;(b.yy_lnk != "" or b.yy_not != "")</a>%end;
+  %else;
+    %if;(b.yy != "")
+      %if;(b.yy_not != "")<a role="button" class="btn btn-outline-success mr-1" href="%prefix;m=NOTES;f=%b.yy_not;">%end;
+      %if;(b.yy_lnk != "")<a role="button" class="btn btn-outline-success mr-1" href="%b.yy_lnk;">%end;
+      %b.yy
+      %if;(b.yy_lnk != "" or b.yy_not != "")</a>%end;
+    %end;
+  %end;
+%end;
+%(      <a href="https://asso.roglo.eu/page/419445-s-inscrire-comme-ami"
+        class="btn btn-outline-%if;friend;primary%elseif;wizard;success%else;dark%end; text-nowrap mt-1" 
+        role="button">
+[
+en: Obtain a Friend access code
+fr: Obtenir un code d'accès Ami
+]</a>
+      <a href="https://asso.roglo.eu/membres/profil"
+        class="btn btn-outline-%if;friend;primary%elseif;wizard;success%else;dark%end; text-nowrap mt-1" 
+        role="button">
+[
+en: My account with Assoc. Roglo
+fr: Mon compte Assoc. Roglo
+]</a>
+%apply;help(lang)%) 
+
+
+
+%( Plugins %)
+  %if;(wizard and plugins!="" and b.plugins!="")
+    <div class="d-flex flex-column flex-lg-row justify-content-lg-center mt-2 mt-lg-4">
+      <div class="h4 align-self-lg-center mr-lg-2">
+          [*plugins][:]
+          <span class="small">%plugins;</span>
+      </div>
+    </div>
+  %end;
