@@ -33,17 +33,40 @@
   %random.init;
   %random.xxx;
 %end;
+%define;notes_title(lang)
+  %if;(b.base_notes_title_lang!="")%b.base_notes_title_lang;
+  %elseif;(b.base_notes_title!="")%b.base_notes_title;
+  %else;[*base notes]
+  %end;
+%end;
 %define;book_button(xxx,yyy,zzz)
   <a role="button" class="btn btn-outline-success mr-1 d-flex align-items-center"
     href="%prefix;m=MOD_DATA&data=xxx" title="[*modify] %apply;book_of%with;[yyy]1%end;%sp;
       ([wizard/wizards/friend/friends/exterior]0)">
-    <i class="fa fa-zzz fa-fw mr-1"></i>
-    <span class="text-nowrap">[*yyy]1</span>
+    <i class="fa fa-zzz fa-fw"></i>
+    <span class="text-nowrap ml-2">[*yyy]1</span>
   </a>
 %end;
-  <div class="d-flex flex-column flex-md-row justify-content-lg-center mt-lg-3">
-    <div class="d-none d-lg-block col-md-3 order-md-1"></div>
-    <div class="col-xs-12 col-md-3 order-md-3 ml-md-2 px-0">
+%( !!ONLY HTML! can't call %apply of %define in the include in welcome at last! TODO:REMOVE ME! %)
+%if;(b.roglo=1)
+%include;welcome_roglo
+%end;
+
+  <div class="d-flex flex-column flex-md-row justify-content-lg-around mt-lg-3">
+    <div class="col-md-3 order-md-1 align-self-center">
+      <div class="d-flex justify-content-end">
+      %if;(b.roglo=1)
+        <img src="%images_prefix;logo-roglo.png" alt="logo Roglo">
+      %elseif;(b.welcome_logo!="")
+        <img src="%prefix;m=IM;s=%b.welcome_logo;"
+           style="%if;(b.welcome_logo_style!="")%b.welcome_logo_style;%end;"
+           alt="logo">
+      %else;
+        <img src="%images_prefix;gwlogo.png" alt="logo GeneWeb">
+      %end;
+      </div>
+    </div>
+    <div class="col-xs-12 col-md-3 order-md-3 ml-md-2 px-0 mt-xs-2 mt-lg-0  align-self-center">
       <div class="d-flex flex-column">
         %if;(cgi and (not wizard or not friend))
           <form class="form-inline" method="post" action="%action;">
@@ -92,18 +115,25 @@
       </div>
     </div>
     <div class="bg-white my-0 order-md-2 flex-fill text-lg-center align-self-md-center">
-      %if;(b.welcome_logo!="")
-        <img src="%prefix;m=IM;s=%b.welcome_logo;"
-           style="%if;(b.welcome_logo_style!="")%b.welcome_logo_style;%end;"
-           alt="MyBase" title="MyBase">
-      %else;
-        <img src="%images_prefix;gwlogo.png" alt="GeneWeb" title="GeneWeb">
-      %end;
       <h1 class="font-weight-bolder">%apply;capitalize%with;[database]%end; %base.name;</h1>
       %if;(b.visitor_access!="no" or wizard or friend)
         <div class="d-flex justify-content-center">
-          <span class="h2 font-weight-light">%base.real_nb_persons; %nn;
-            %if;(base.real_nb_persons="0" or base.real_nb_persons="1")[person/persons]0%else;[person/persons]1%end;</span>
+          <span class="%nn;
+%if;(b.roglo=1)
+  h6 font-weight-bold">%nn;
+[
+en: contains
+fr: contient
+]
+ %base.real_nb_persons; %nn;
+[
+en: individuals, all connected through familial relationships
+fr: individus, tous reliés par des liens familiaux
+]
+%else;
+  h4 font-weight-lighter">%base.real_nb_persons; %if;(base.real_nb_persons="0" or base.real_nb_persons="1")[person/persons]0%else;[person/persons]1%end;
+%end;</span>
+
           %if;(base.real_nb_persons!="0")
             <a class="align-self-center" href="%prefix;i=%apply;get_random(nb_persons.v)"
               title="[*random individual]"><i class="fa-solid fa-dice ml-2 mb-2"></i></a>
@@ -156,10 +186,10 @@ fr: Les <strong>droits des magiciens</strong> sont actuellement <strong>suspendu
                   <a role="button" href="%prefix;m=N&tri=F"
                     title="[*frequency] [surname/surnames]1, [sort by/date begin/alphabetic order/nb individuals/nb events]0 [sort by/date begin/alphabetic order/nb individuals/nb events]3"><i class="fa fa-arrow-down-wide-short fa-fw"></i></a>
                 </div>
+                %let;txt;, [public name], [alias]%if;browsing_with_sosa_ref;, [n° Sosa]%end; [or] [first name/first names]2 [surname/surnames]0%in;
                 <label for="surname" class="sr-only col-form-label col-sm-2">[*surname/surnames]0</label>
                 <input type="search" id="surname" class="form-control form-control-lg"
-                  name="n" placeholder="[*surname/surnames]0, [public name], [alias]%if;browsing_with_sosa_ref;, [n° Sosa]%end;"
-                  title="[*search/case sensitive]0 [surname/surnames]0, [public name], [alias]%if;browsing_with_sosa_ref;, [n° Sosa]%end;" autofocus tabindex="1">
+                  name="n" placeholder="[*surname/surnames]0 %txt;" title="[*search/case sensitive]0 [surname/surnames]0 %txt;" autofocus tabindex="1">
               </div>
               <div class="d-flex mt-2">
                 <div class="btn-group-vertical mr-2">
@@ -177,8 +207,8 @@ fr: Les <strong>droits des magiciens</strong> sont actuellement <strong>suspendu
             </div>
             %( TODO grey if inputs empty %)
             <button class="btn btn-outline-primary align-self-center ml-2" type="submit">
-              <i class="fa fa-magnifying-glass fa-fw fa-2x mt-1"></i><br>
-              [*search/case sensitive]0<br>[person/persons]0
+              <i class="fa fa-magnifying-glass fa-fw fa-2x my-1"></i>
+              <div class="mt-2">[*search/case sensitive]0</div>
             </button>
           </div>
         </form>
@@ -193,7 +223,7 @@ fr: Les <strong>droits des magiciens</strong> sont actuellement <strong>suspendu
                     href="%prefix;m=TT" title="[*all the titles]"><i class="fa fa-list-ul fa-fw"></i></a>
                   <label for="titles" class="sr-only col-form-label col-sm-2">[*title/titles]0</label>
                   <input type="search" class="form-control border-top-0 border-right-0 border-left-0"
-                    name="t" id="titles" placeholder="[*title/titles]0" %(maxlength="200"%) tabindex="3">
+                    name="t" id="titles" placeholder="[*title/titles]0" tabindex="3">
                 </div>
                 <div class="d-flex mt-2">
                   <a class="mr-2 align-self-center" role="button"
@@ -202,7 +232,7 @@ fr: Les <strong>droits des magiciens</strong> sont actuellement <strong>suspendu
                   class="sr-only col-form-label col-sm-2" >[*estate]0</label>
               <input type="search"
                   class="form-control border-top-0 border-right-0 border-left-0"
-                name="p" id="estates" placeholder="[*estate]0" %(maxlength="200"%) tabindex="4">
+                name="p" id="estates" placeholder="[*estate]0" tabindex="4">
                 </div>
               </div>
               <button class="btn btn-outline-primary btn-sm align-self-center ml-2 px-0 py-3" type="submit"
@@ -224,11 +254,8 @@ fr: Les <strong>droits des magiciens</strong> sont actuellement <strong>suspendu
           </a>
         %end;
         %if;base.has_notes;
-          <a role="button" class="btn btn-outline-primary mr-1"
-           href="%prefix;m=NOTES">
-            %if;(b.base_notes_title="")
-              <i class="far fa-file-lines fa-fw mr-1" aria-hidden="true"></i>[*base notes]
-            %else;%b.base_notes_title;%end;
+          <a role="button" class="btn btn-outline-primary mr-1" href="%prefix;m=NOTES">%nn;
+            <i class="far fa-file-lines fa-fw mr-1" aria-hidden="true"></i>%apply;notes_title(lang)
           </a>
         %end;
         %if;has_misc_notes;
