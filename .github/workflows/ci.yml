@@ -1,5 +1,6 @@
 name: build
 on:
+  workflow_dispatch:
   pull_request:
     branches:
       - master
@@ -12,36 +13,39 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - macos-13
-          - ubuntu-latest
-          - windows-latest
-        ocaml-compiler:
-          - 4.08.x
+        os: [macos-13, macos-latest, ubuntu-latest, windows-latest]
+        ocaml-compiler: [4.08.x, 5.2.x, 5.3.x]
         include:
           - os: windows-latest
-            ocaml-compiler: 4.14.x
-          - os: ubuntu-latest
-            ocaml-compiler: 5.1.x
-          - os: macos-latest
-            ocaml-compiler: 5.1.x
+            ocaml-compiler: [4.14.x]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Cache Opam dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.opam
+          key: ${{ runner.os }}-${{ matrix.ocaml-compiler }}-opam-cache
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.ocaml-compiler }}-
+
       - name: Setup Ocaml ${{ matrix.ocaml-compiler }}
         uses: ocaml/setup-ocaml@v2
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
+
       - name: Setup GeneWeb dependencies + ocamlformat
         run: |
           opam pin add . -y --no-action
-          opam depext -y geneweb
           opam install -y ./*.opam --deps-only --with-test
-          opam pin ocamlformat 0.24.1
-      - name: Make ocamlformat > build/distrib
+
+      - name: Build Geneweb
         run: |
           opam exec -- ocaml ./configure.ml
-          opam exec -- make fmt distrib
+          opam exec -- make distrib
+
       - name: Make CI tests
         run: opam exec -- make ci
 
