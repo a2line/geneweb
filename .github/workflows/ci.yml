@@ -22,7 +22,6 @@ on:
       - '.ocamlformat-ignore'
       - 'geneweb.iss'
       - 'geneweb.opam.template'
-      - '.github/workflows/docker.yml'
   push:
     branches:
       - master
@@ -44,7 +43,6 @@ on:
       - '.ocamlformat-ignore'
       - 'geneweb.iss'
       - 'geneweb.opam.template'
-      - '.github/workflows/docker.yml'
 
 env:
   OPAMYES: true
@@ -65,6 +63,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Cache Opam dependencies
         uses: actions/cache@v4
@@ -101,6 +101,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Cache Opam dependencies
         uses: actions/cache@v4
