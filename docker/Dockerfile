@@ -1,7 +1,7 @@
 ###############################################################################
-#                                                      STAGE 1: Build geneweb
+#                                                      STAGE 1: Build Geneweb
 ###############################################################################
-FROM ocaml/opam:debian-12-ocaml-4.14 AS builder
+FROM ocaml/opam:debian-ocaml-4.14-nnp AS builder
 ENV OPAMYES=yes
 
 # Install required packages for build
@@ -12,22 +12,28 @@ USER root
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update -q \  
     && apt install -yq --no-install-recommends \
-        libgmp-dev=2:6.* \
+        m4 \
+        libgmp-dev \
+        libpcre3-dev \
         libipc-system-simple-perl=1.* \
-        libstring-shellquote-perl=1.* \
-        perl=5.*
-
+        xdot \
+        zlib1g-dev \
+        perl=5.*\
+        
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+RUN ln -sf /usr/bin/opam-2.3 /usr/bin/opam
+RUN opam --version
 # Set up geneweb package and dependencies
 USER opam
-RUN git clone https://github.com/geneweb/geneweb.git ./geneweb \
-    && opam init --disable-sandboxing && opam update
-WORKDIR /home/opam/geneweb
-RUN opam pin add geneweb.dev . --no-action && opam depext geneweb 
+RUN git clone https://github.com/geneweb/geneweb.git ./geneweb
 
-# Build geneweb
-RUN opam install geneweb --deps-only \
-    && eval "$(opam env)" \
-    && ocaml ./configure.ml --release && make clean distrib
+WORKDIR /home/opam/geneweb
+
+# Build Geneweb
+#RUN opam pin add geneweb.dev . --no-action
+RUN eval "$(opam env)" && opam install . --deps-only && opam install ancient \
+    && ocaml ./configure.ml --sosa-zarith --release && make distrib
 
 ###############################################################################
 #                                       STAGE 2: Export build via blank image
