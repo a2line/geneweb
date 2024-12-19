@@ -9,7 +9,7 @@ USER root
 # Ignore the apt warning here as apt-get does not allow wildcarding versions
 # hadolint ignore=DL3027
 RUN export DEBIAN_FRONTEND=noninteractive \
-    && apt-get update -q \  
+    && apt-get update -q \
     && apt install -yq --no-install-recommends \
         m4 \
         libgmp-dev \
@@ -17,8 +17,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
         libipc-system-simple-perl=1.* \
         xdot \
         zlib1g-dev \
-        perl=5.*\
-RUN ln -sf /usr/bin/opam-2.3 /usr/bin/opam
+    && ln -sf /usr/bin/opam-2.3 /usr/bin/opam
 USER opam
 RUN git clone https://github.com/geneweb/geneweb.git ./geneweb
 WORKDIR /home/opam/geneweb
