@@ -56,7 +56,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -77,6 +77,10 @@ jobs:
             org.opencontainers.image.description=Genealogy Software
             maintainer=${{ github.repository_owner }}
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        if: github.ref == 'refs/heads/master'
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
@@ -84,10 +88,6 @@ jobs:
           driver-opts: |
             network=host
             image=moby/buildkit:latest
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        if: github.ref == 'refs/heads/master'
 
       - name: Login to GitHub Container Registry
         if: ${{ env.PUSH_IMAGE == 'true' }}
@@ -116,8 +116,11 @@ jobs:
           push: ${{ env.PUSH_IMAGE }}
           tags: ${{ steps.docker-meta.outputs.tags }}
           labels: ${{ steps.docker-meta.outputs.labels }}
-          cache-from: type=gha,scope=${{ github.ref_name }}
-          cache-to: type=gha,scope=${{ github.ref_name }},mode=max
+          cache-from: ${{ env.CACHE_FROM }}
+          cache-to: ${{ env.CACHE_TO }}
           build-args: |
             BUILDKIT_INLINE_CACHE=1
+            BUILDKIT_PROGRESS=plain
+            DOCKER_BUILDKIT=1
+            COMPOSE_DOCKER_CLI_BUILD=1
             FAST_BUILD=${{ github.ref != 'refs/heads/master' && '1' || '0' }}
