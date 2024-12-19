@@ -21,8 +21,11 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 USER opam
 RUN git clone https://github.com/geneweb/geneweb.git ./geneweb
 WORKDIR /home/opam/geneweb
-RUN eval "$(opam env)" && opam install . --deps-only && opam install ancient \
-    && ocaml ./configure.ml --sosa-zarith --release && make distrib
+RUN eval "$(opam env)" \
+    && opam install ancient uri yojson zarith \
+    && opam install . --deps-only \
+    && ocaml ./configure.ml --sosa-zarith --release \
+    && make distrib
 
 ###############################################################################
 #                                       STAGE 2: Export build via blank image

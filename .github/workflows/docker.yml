@@ -56,6 +56,7 @@ jobs:
       contents: read
       packages: write
     strategy:
+      fail-fast: false
       matrix:
         include:
           - arch: amd64
@@ -63,7 +64,10 @@ jobs:
           - arch: arm64
             platform: linux/arm64
             use_arm_runner: true
-    
+            base_image: raspios_lite_arm64:latest
+            cpu: cortex-a53
+            cpu_info: cpuinfo/raspberrypi_4b
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -90,8 +94,9 @@ jobs:
         with:
           base_image: raspios_lite_arm64:latest
           cpu: cortex-a53
-          cpu_info: raspberrypi_4b
+          cpu_info:  cpuinfo/raspberrypi_4b
           commands: |
+            export OPAMFETCH="curl --http1.1"
             echo "Setting up ARM environment for Docker build"
 
       - name: Set up Docker Buildx
