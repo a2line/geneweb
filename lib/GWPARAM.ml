@@ -9,6 +9,7 @@ let errors_undef = ref []
 let errors_other = ref []
 let set_vars = ref []
 let gwd_cmd = ref ""
+let reorg = ref false
 
 type syslog_level =
   [ `LOG_ALERT
@@ -173,6 +174,14 @@ let bpath = ref Default.bpath
 let output_error = ref Default.output_error
 let p_auth = ref Default.p_auth
 let syslog = ref Default.syslog
+
+let d_portraits_d bname =
+  String.concat Filename.dir_sep [Secure.base_dir (); "images"; bname]
+let portraits_d = ref d_portraits_d
+
+let d_images_d bname =
+  String.concat Filename.dir_sep [Secure.base_dir (); "src"; bname; "images"]
+let images_d = ref d_images_d
 
 (** [wrap_output conf title content]
     Plugins defining a page content but not a complete UI

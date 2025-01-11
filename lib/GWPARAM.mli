@@ -3,6 +3,7 @@ val errors_undef : string list ref
 val errors_other : string list ref
 val set_vars : string list ref
 val gwd_cmd : string ref
+val reorg : bool ref
 
 type syslog_level =
   [ `LOG_EMERG  (** A panic condition. *)
@@ -37,6 +38,9 @@ val base_path : (string list -> string -> string) ref
 
 val bpath : (string -> string) ref
 (** Same as {!val:base_path}, but without the prefix (avoid unecessary empty list). *)
+
+val portraits_d : (string -> string) ref
+val images_d : (string -> string) ref
 
 val output_error :
   (?headers:string list ->
