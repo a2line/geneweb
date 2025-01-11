@@ -556,11 +556,15 @@ let treat_request =
         | "HIST_SEARCH" ->
           w_base @@ History.print_search
         | "IM_C" ->
-          w_base @@ ImageCarrousel.print_c ~saved:false
+          w_base @@ ImageCarrousel.print_c ~saved:false ~portrait:true
         | "IM_C_S" ->
-          w_base @@ ImageCarrousel.print_c ~saved:true
+          w_base @@ ImageCarrousel.print_c ~saved:true ~portrait:true
+        | "FIM_C" ->
+          w_base @@ ImageCarrousel.print_c ~saved:false ~portrait:false
         | "IM" ->
           w_base @@ ImageDisplay.print
+        | "FIM" ->
+          w_base @@ ImageDisplay.print_blason
         | "IMH" ->
           w_base @@ fun conf _ -> ImageDisplay.print_html conf
         | "INV_FAM" ->
@@ -717,14 +721,17 @@ let treat_request =
 
         | "RESET_IMAGE_C_OK" ->
           w_base @@ ImageCarrousel.print_main_c
-
+        |"BLASON_MOVE_TO_ANC" -> w_base @@ ImageCarrousel.print_main_c
+        |"BLASON_STOP" -> w_base @@ ImageCarrousel.print_main_c
+        |"PORTRAIT_TO_BLASON" -> w_base @@ ImageCarrousel.print_main_c
+        |"IMAGE_TO_BLASON" -> w_base @@ ImageCarrousel.print_main_c
         | "RL" ->
           w_base @@ RelationLink.print
         | "RLM" ->
           w_base @@ RelationDisplay.print_multi
         | "S" ->
           w_base @@ fun conf base -> SearchName.print conf base specify unknown
-
+          
         | "SND_IMAGE" -> w_wizard @@w_lock @@ w_base @@ ImageCarrousel.print
         | "SND_IMAGE_OK" ->
            w_wizard @@ w_lock @@ w_base @@ ImageCarrousel.print_send_ok

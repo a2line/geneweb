@@ -1699,7 +1699,7 @@ let extract_multipart boundary str =
   let str = (str : Adef.encoded_string :> string) in
   let rec skip_nl i =
     if i < String.length str && str.[i] = '\r' then skip_nl (i + 1)
-    else if i < String.length str && str.[i] = '\n' then i + 1
+    else if i < String.length str && str.[i] = '\n' then skip_nl (i + 1)
     else i
   in
   let next_line i =
@@ -1720,7 +1720,7 @@ let extract_multipart boundary str =
         let s = String.lowercase_ascii s |> Adef.encoded in
         let env = Util.create_env s in
         match Util.p_getenv env "name", Util.p_getenv env "filename" with
-          Some var, Some filename ->
+        | Some var, Some filename ->
             let var = strip_quotes var in
             let filename = strip_quotes filename in
             let i = skip_nl i in
@@ -1744,11 +1744,23 @@ let extract_multipart boundary str =
             :: loop i1
         | Some var, None ->
             let var = strip_quotes var in
-            let (s, i) = next_line i in
-            if s = "" then
-              let (s, i) = next_line i in
-              (var, Adef.encoded s) :: loop i
-            else loop i
+            let i = skip_nl i in
+            let i1 =
+              let rec loop i =
+                if i < String.length str then
+                  if i > String.length boundary &&
+                     String.sub str (i - String.length boundary)
+                       (String.length boundary) =
+                       boundary
+                  then
+                    i - String.length boundary
+                  else loop (i + 1)
+                else i
+              in
+              loop i
+            in
+            let v = String.sub str i (i1 - i) |> String.trim in
+            (var, Adef.encoded v) :: loop i
         | _ -> loop i
       else if s = boundary ^ "--" then []
       else loop i
