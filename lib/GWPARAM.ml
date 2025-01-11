@@ -280,6 +280,15 @@ end
 type my_fun_2 = string -> string
 type my_fun_3 = string -> string -> string
 
+(** TODO: perhaps need support of reorg for these two added function in BLASON *)
+let d_portraits_d bname =
+  String.concat Filename.dir_sep [Secure.base_dir (); "images"; bname]
+let portraits_d = ref d_portraits_d
+
+let d_images_d bname =
+  String.concat Filename.dir_sep [Secure.base_dir (); "src"; bname; "images"]
+let images_d = ref d_images_d
+
 let config = ref (Legacy.config : my_fun_2)
 let cnt_d = ref (Legacy.cnt_d : my_fun_2)
 let adm_file = ref (Legacy.adm_file : my_fun_2)
