@@ -47,6 +47,11 @@ on:
 env:
   OPAMYES: true
 
+permissions:
+  actions: write
+  contents: read
+  pull-requests: write
+
 jobs:
   build_v2:
     runs-on: ${{ matrix.os }}
@@ -88,6 +93,7 @@ jobs:
 
       - name: Install Geneweb dependencies
         run: opam install . --deps-only
+        timeout-minutes: 15
 
       - name: "Build Geneweb: make build distrib"
         run: |
@@ -146,6 +152,7 @@ jobs:
       - name: Install Geneweb dependencies
         if: ${{ env.FMT_CI != 'true' }}
         run: opam install . --deps-only
+        timeout-minutes: 15
 
       - name: Install Geneweb dependencies with test
         if: ${{ env.FMT_CI == 'true' }}
