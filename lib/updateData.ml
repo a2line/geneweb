@@ -425,7 +425,7 @@ let update_person_list conf base new_input list nb_pers max_updates =
              let sp =
                Futil.map_person_ps (fun ip -> ip) (fun istr -> sou base istr) np
              in
-             Image.rename_portrait conf base op
+             Image.rename_portrait_and_blason conf base op
                (sp.first_name, sp.surname, sp.occ));
             patch_person base np.key_index np;
             if test_family then
