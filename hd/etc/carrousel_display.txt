@@ -62,7 +62,7 @@
                 </div>
               </div>
             %end;
-            %if;has_carrousel;
+            %if;(carrousel_img_nbr>0)
               %foreach;img_in_carrousel;%incr_count;
                 <div class="carousel-item%if;(not has_portrait and not has_blason and is_first) active%end;">
                   %if;("http" in url_in_env)

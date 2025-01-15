@@ -88,7 +88,8 @@ val get_portrait :
     - [Some src] with [src] the url or path of [p]'s portrait.
 *)
 
-val get_old_portrait : config -> base -> person -> [> `Path of string | `Url of string ] option
+val get_old_portrait :
+  config -> base -> person -> [> `Path of string | `Url of string ] option
 
 val get_blason_aux :
   config ->
@@ -102,8 +103,20 @@ val get_blason_aux :
     - [Some src] with [src] the url or path of [p]'s blason.
 *)
 
-val get_blason : config -> base -> person -> bool -> [> `Path of string | `Url of string ] option
-val get_old_blason : config -> base -> person -> bool -> [> `Path of string | `Url of string ] option
+val get_blason :
+  config ->
+  base ->
+  person ->
+  bool ->
+  [> `Path of string | `Url of string ] option
+
+val get_old_blason :
+  config ->
+  base ->
+  person ->
+  bool ->
+  [> `Path of string | `Url of string ] option
+
 val get_portrait_name : config -> base -> person -> string
 val get_old_portrait_name : config -> base -> person -> string
 val get_blason_name : config -> base -> person -> string
@@ -125,7 +138,6 @@ val get_blason_owner : config -> base -> person -> iper option
     - [None] if we do not find blason owner.
     - [Some fa_iper] with [fa_iper] the owner [p]'s blason.
 *)
-
 
 (* -- Carrousel -- *)
 
