@@ -17213,9 +17213,9 @@ sv: medan du stannar på detta verktyg
 tr: bu araç üzerinde kalırken
 zh: 在此工具上停留时
 
-    stopped using the coat of arms of
-en: stopped using the coat of arms of/this individual stopped using his ancestor coat of arms
-fr: a arrêté d’utiliser le blason de/cet individu a arrêté d’utiliser le blason de son ancêtre
+    stop using the coat of arms of
+en: stop using the coat of arms of/this individual stopped using his ancestor coat of arms
+fr: arrêter d’utiliser le blason de/cet individu a arrêté d’utiliser le blason de son ancêtre
 
     store image
 co: a fiura selezziunata serà piazzata in

@@ -245,7 +245,8 @@
             <a role="button" href="%prefix;m=RESET_IMAGE_C_OK&i=%index;&mode=portraits&file_name=%portrait;&idigest=%idigest;"
               title="[*restore portrait saved]">
               <i class="fa fa-retweet fa-rotate-90 fa-fw text-success"></i>%nn;</a>
-            <strong><samp class="text-truncate">%saved_portraits_store;%X;</samp></strong><samp>%portrait_saved_name;</samp>
+            %if;has_old_portrait_url;<strong><samp class="text-truncate">%saved_portraits_store;%X;</samp></strong>%portrait_saved_name;%else;
+            <strong><samp class="text-truncate">%saved_portraits_store;%X;</samp></strong><samp>%portrait_url;%end;</samp>
             <a role="button" class="ml-auto col-1"
               href="%prefix;m=DEL_IMAGE_C_OK&i=%index;&mode=portraits&idigest=%idigest;&delete=on&file_name=%portrait_saved_name;"
               data-toggle="tooltip" data-html="true" data-placement="left"
@@ -299,7 +300,7 @@
         </div>
       %elseif;has_blason_stop;
         <div class="d-flex mt-1">
-          <span>%self; [stopped using the coat of arms of]0 <a href="%prefix;%blason_owner.access;">%blason_owner;</a></span>%nn;
+          <span>%self; [stop using the coat of arms of]1 <a href="%prefix;%blason_owner.access;">%blason_owner;</a></span>%nn;
           <a role="button" class="ml-auto col-1" href="%prefix;m=DEL_IMAGE_C_OK&i=%index;&mode=blasons&fdigest=%idigest;&file_name=%blason_stop_name;"
             data-toggle="tooltip" data-html="true" data-placement="left">
             <i class="far fa-trash-can text-warning"></i>%nn;</a>
@@ -313,7 +314,7 @@
               src="%blason_url;" width="185px">'>
             <i class="far fa-file-image fa-fw text-primary"></i></a>
           <span>[*use coat of arms of]0%sp;<a href="%prefix;%blason_owner.access;">%blason_owner;</a></span>
-          <a role="button" class="ml-auto" href="%prefix;m=BLASON_STOP&i=%index;&mode=blasons" title="[stopped using the coat of arms of]1"
+          <a role="button" class="ml-auto" href="%prefix;m=BLASON_STOP&i=%index;&mode=blasons" title="[stop using the coat of arms of]0 %blason_owner;"
             data-toggle="tooltip" data-html="true" data-placement="left">
             <i class="fa-solid fa-xmark fa-fw fa-xl text-danger"></i></a>
         </div>
@@ -358,7 +359,7 @@
               href="%if;(url_in_env!="")%url_in_env;%else;%prefix;m=IM_C&i=%index;&s=%carrousel_img;%end;"
               target="_blank" rel="noopener" data-toggle="tooltip" data-html="true" data-placement="left"
               title='<strong><i class="fas fa-images fa-xs mr-1"></i>[*see] [image/images]0</strong><br>
-                <span class="small">%carrousel_img;</span><br>
+                <span class="small">%carrousel_img_raw;</span><br>
                 <img class="rounded my-1"
                   src="%if;(url_in_env!="")%url_in_env;%else;%prefix;m=IM_C&i=%index;&s=%carrousel_img;%end;"
                   width="185px">'>
@@ -377,7 +378,7 @@
                  %if;(carrousel_img_note="")[*add note]%else;[*modify note]%end;</strong>
                  <br><span class="small"><br>%carrousel_img_note;</span>'>
               <i class="far fa-file-lines fa-fw"></i></a>
-            <samp class="text-truncate ml-1" title="%images_store;%X;%carrousel;%X;%carrousel_img;">%carrousel_img;</samp>
+            <samp class="text-truncate ml-1" title="%images_store;%X;%carrousel;%X;%carrousel_img_raw;">%carrousel_img_raw;</samp>
             <div class="ml-auto">
               <a role="button"
                 href="%prefix;m=DEL_IMAGE_C_OK&i=%index;&mode=carrousel&idigest=%idigest;&file_name=%carrousel_img;"
@@ -397,7 +398,7 @@
         <div class="d-flex align-items-center">
           <i class="fa fa-folder-open fa-lg text-warning mx-2" aria-hidden="true"></i>
           <strong><samp class="text-truncate" title="%images_store;%X;%carrousel;%X;saved%X;">%images_store%X;%carrousel;%X;saved%X;</samp></strong>
-          <div class="ml-auto">(%carrousel_old_img_nbr; %if;(carrousel_old_img_nbr>1)[image/images]1%else;[image/images]0%end;)</div>
+          <div class="ml-auto">(%carrousel_old_img_nbr;)</div>
         </div>
         %foreach;img_in_carrousel_old;
           <div class="d-flex mt-1">
@@ -405,7 +406,7 @@
               href="%if;(url_in_env!="")%url_in_env;%else;%prefix;m=IM_C_S&i=%index;&s=%carrousel_img;%end;"
               target="_blank" rel="noopener" data-toggle="tooltip" data-html="true" data-placement="left"
               title='<strong><i class="fas fa-images fa-xs mr-1"></i>[*see] [saved images]0</strong><br>
-                <span class="small">%carrousel_img;</span><br>
+                <span class="small">%carrousel_img_raw;</span><br>
                 <img class="rounded my-1"
                   src="%if;(url_in_env!="")%url_in_env;%else;%prefix;m=IM_C_S&i=%index;&s=%carrousel_img;%end;"
                   width="185px">'>
@@ -416,7 +417,7 @@
               <i class="fa fa-retweet fa-rotate-90 fa-fw text-success"></i></a>
             <a href="%prefix;m=IMAGE_TO_BLASON&i=%index;&file_name=%carrousel_img;"
             title="[*copy image to blason]"><i class="fa-solid fa-user-shield text-success"></i></a>
-            <samp class="text-truncate ml-1" title="%images_store;%X;saved%X;%carrousel_img;">%carrousel_img;</samp>
+            <samp class="text-truncate ml-1" title="%images_store;%X;saved%X;%carrousel_img_raw;">%carrousel_img_raw;</samp>
             <a role="button" class="ml-auto"
                 href="%prefix;m=DEL_IMAGE_C_OK&i=%index%nn;
                   &idigest=%idigest;&mode=carrousel&delete=on&file_name=%carrousel_img;"%sp;

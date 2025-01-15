@@ -292,9 +292,10 @@ let get_old_portrait conf base p = get_portrait_aux conf base p true
 let get_portrait_name_aux conf base p saved =
   let name = default_image_filename_aux "portraits" base p saved in
   let f = Filename.concat (portrait_folder conf) name in
+  Printf.eprintf "Get_portrait_name: %s, %s\n" name f;
   match find_img_opt f with
-  | Some (`Path p) -> Filename.basename p
-  | Some (`Url _u) -> name ^ ".url"
+  | Some (`Path p) -> (Printf.eprintf "Path %s/n" p; Filename.basename p)
+  | Some (`Url u) -> (Printf.eprintf "Url %s/n" u; (Filename.basename name) ^ ".url")
   | None -> ""
 
 let get_portrait_name conf base p = get_portrait_name_aux conf base p false
