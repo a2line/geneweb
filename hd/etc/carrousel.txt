@@ -20,7 +20,7 @@
   carrousel is “on” if we are dealing with “others” images %)
 %random.init;
 %define;alert_header()
-  %if;("http" in portrait or "http" in portrait_saved)
+  %if;("http" in portrait or "http" in old_portrait)
     WARNING
   %elseif;(e.mode="carrousel")
     %if;(e.em="SND_IMAGE_C_OK")[*image received]%if;(e.notes!="") [with note]%end;
@@ -43,7 +43,7 @@
   %end;
 %end;
 %define;alert_content()
-  %if;("http" in portrait or "http" in portrait_saved)
+  %if;("http" in portrait or "http" in old_portrait)
     Update image field with <a href="%prefix;m=MOD_IND;i=%index;">MOD_IND</a>
   %elseif;(e.mode="note")
     <strong>></strong> %images_store;%X;%e.file_name_2;
@@ -61,9 +61,9 @@
   %elseif;(e.mode="portraits")<samp>
     %if;(e.em="SND_IMAGE_C_OK")%portraits_store;%X;%portrait_name;
     %elseif;(e.em="DEL_IMAGE_C_OK")
-      %if;(e.delete="on")%saved_portraits_store;%X;%e.file_name;%else;%nn;
+      %if;(e.delete="on")%old_portraits_store;%X;%e.file_name;%else;%nn;
         %( attention, %portrait_name; may be gone!! %)
-        %portraits_store;%X;%e.file_name; <strong>></strong> %saved_portraits_store;%X;%e.file_name;%nn;
+        %portraits_store;%X;%e.file_name; <strong>></strong> %old_portraits_store;%X;%e.file_name;%nn;
       %end;%nn;
     %elseif;(e.em="RESET_IMAGE_C_OK")%portraits_store;%X;%carrousel;%X;saved%X;%e.file_name; <strong><></strong> %portraits_store;%X;%carrousel;%X;%e.file_name;%nn;
     %else;bad command %e.em; (%e.mode;)%end;
@@ -74,9 +74,9 @@
     %elseif;(e.em="DEL_IMAGE_C_OK")
       %if;(e.delete="on")%portraits_store;%X;saved%X;%e.file_name;%else;%nn;
         %( attention, %blason_name; may be gone!! %)
-        %portraits_store;%X;%e.file_name; <strong>></strong> %saved_portraits_store;%X;%e.file_name;%nn;
+        %portraits_store;%X;%e.file_name; <strong>></strong> %old_portraits_store;%X;%e.file_name;%nn;
       %end;%nn;
-    %elseif;(e.em="RESET_IMAGE_C_OK")%saved_portraits_store;%X;%e.file_name; <strong><></strong> %portraits_store;%X;%e.file_name;%nn;
+    %elseif;(e.em="RESET_IMAGE_C_OK")%old_portraits_store;%X;%e.file_name; <strong><></strong> %portraits_store;%X;%e.file_name;%nn;
     %else;bad command %e.em; %e.mode;%end;
     </samp>
   %else;
@@ -84,7 +84,7 @@
   %end;
 %end;
 %define;alert_color()
-  %if;("http" in portrait or "http" in portrait_saved)danger
+  %if;("http" in portrait or "http" in old_portrait)danger
   %elseif;(e.mode="note")primary
   %elseif;(e.em="SND_IMAGE_C_OK" or e.em="RESET_IMAGE_C_OK")success
   %elseif;(e.em="DEL_IMAGE_C_OK" and e.delete="on")danger
@@ -96,7 +96,7 @@
   %else;images%X;%base.name;%nn;
   %end;%nn;
 %in;
-%let;saved_portraits_store;
+%let;old_portraits_store;
   %if;reorg;%base.name;.gwb%X;documents%X;portraits%X;saved%nn;
   %else;images%X;%base.name;%X;saved%nn;
   %end;%nn;
@@ -237,21 +237,21 @@
         %if;has_old_portrait;
           <div class="d-flex mt-1">
             <a role="button" 
-              href="%portrait_saved_url;" target="_blank" rel="noopener"%sp;
+              href="%old_portrait_url;" target="_blank" rel="noopener"%sp;
               data-toggle="tooltip" data-html="true" data-placement="left"
-              title='<strong>[*see portrait]</strong><br><span class="small">%portrait_saved</span><br>
-                <img class="rounded my-1" src="%portrait_saved_url;" width="185px">'>
+              title='<strong>[*see portrait]</strong><br><span class="small">%old_portrait;</span><br>
+                <img class="rounded my-1" src="%old_portrait_url;" width="185px">'>
               <i class="far fa-file-image fa-fw text-primary"></i></a>
             <a role="button" href="%prefix;m=RESET_IMAGE_C_OK&i=%index;&mode=portraits&file_name=%portrait;&idigest=%idigest;"
               title="[*restore portrait saved]">
               <i class="fa fa-retweet fa-rotate-90 fa-fw text-success"></i>%nn;</a>
-            %if;has_old_portrait_url;<strong><samp class="text-truncate">%saved_portraits_store;%X;</samp></strong>%portrait_saved_name;%else;
-            <strong><samp class="text-truncate">%saved_portraits_store;%X;</samp></strong><samp>%portrait_url;%end;</samp>
+            %if;has_old_portrait_url;<strong><samp class="text-truncate">%old_portraits_store;%X;</samp></strong>%old_portrait_name;%else;
+            <strong><samp class="text-truncate">%old_portraits_store;%X;</samp></strong><samp>%portrait_url;%end;</samp>
             <a role="button" class="ml-auto col-1"
-              href="%prefix;m=DEL_IMAGE_C_OK&i=%index;&mode=portraits&idigest=%idigest;&delete=on&file_name=%portrait_saved_name;"
+              href="%prefix;m=DEL_IMAGE_C_OK&i=%index;&mode=portraits&idigest=%idigest;&delete=on&file_name=%old_portrait_name;"
               data-toggle="tooltip" data-html="true" data-placement="left"
-              title='<i class="far fa-trash-can text-danger mr-1"></i><strong>[*delete saved portrait]0</strong><br><span class="small">%portrait_saved;</span><br>
-                <img class="rounded my-1" src="%portrait_saved_url;" width="185px">'>
+              title='<i class="far fa-trash-can text-danger mr-1"></i><strong>[*delete saved portrait]0</strong><br><span class="small">%old_portrait;</span><br>
+                <img class="rounded my-1" src="%old_portrait_url;" width="185px">'>
               <i class="far fa-trash-can text-danger"></i></a>
           </div>
         %end;
@@ -321,20 +321,20 @@
       %end;
       %if;has_old_blason;
         <div class="d-flex mt-1">
-          <a role="button" href="%blason_saved_url;"
+          <a role="button" href="%old_blason_url;"
             target="_blank" rel="noopener"
             data-toggle="tooltip" data-html="true" data-placement="left"
             title='<strong>[*see coat of arms]</strong><br><span class="small">%blason;</span><br>
-              <img class="rounded my-1" width="185px" src="%blason_saved_url;">'>
+              <img class="rounded my-1" width="185px" src="%old_blason_url;">'>
             <i class="far fa-file-image fa-fw text-primary"></i></a>
           <a role="button" href="%prefix;m=RESET_IMAGE_C_OK&i=%index;&mode=blasons&file_name=%portrait;&fdigest=%idigest;"
             title="[*restore coat of arms saved]">
             <i class="fa fa-retweet fa-rotate-90 fa-fw text-success"></i>%nn;</a>
-          <strong><samp class="text-truncate">%saved_portraits_store;%X;</samp></strong><samp>%blason_saved_name;</samp>
-          <a role="button" class="ml-auto col-1" href="%prefix;m=DEL_IMAGE_C_OK&i=%index;&mode=blasons&delete=on&fdigest=%idigest;&file_name=%blason_saved_name;"
+          <strong><samp class="text-truncate">%old_portraits_store;%X;</samp></strong><samp>%old_blason_name;</samp>
+          <a role="button" class="ml-auto col-1" href="%prefix;m=DEL_IMAGE_C_OK&i=%index;&mode=blasons&delete=on&fdigest=%idigest;&file_name=%old_blason_name;"
             data-toggle="tooltip" data-html="true" data-placement="left"%sp;
-            title='<strong>[*delete saved coat of arms]0</strong><br><span class="small">%blason_saved;</span><br>
-              <img class="rounded my-1" src="%blason_saved_url;" width="185px">'>
+            title='<strong>[*delete saved coat of arms]0</strong><br><span class="small">%old_blason;</span><br>
+              <img class="rounded my-1" src="%old_blason_url;" width="185px">'>
             <i class="far fa-trash-can text-danger"></i></a>
         </div>
       %end;

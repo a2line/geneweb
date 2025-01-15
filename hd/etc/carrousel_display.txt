@@ -81,7 +81,6 @@
                     <span><strong>[*source/sources]0[:] </strong>%carrousel_img_src;</span>%end;
                     %if;(carrousel_img_note!="")<br>
                     <span><strong>[*note/notes]0[:] </strong>%carrousel_img_note;</span>%end;
-                    
                   </div>
                 </div>
               %end;

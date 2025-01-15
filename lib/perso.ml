@@ -3749,7 +3749,7 @@ and eval_str_person_field conf base env ((p, p_auth) as ep) = function
       match Image.get_portrait conf base p with
       | Some src -> Image.src_to_string src |> str_val
       | None -> null_val)
-  | "image_saved" | "portrait_saved" -> (
+  | "old_image" | "old_portrait" -> (
       match Image.get_old_portrait conf base p with
       | Some (`Path s) -> str_val s
       | Some (`Url u) -> str_val u
@@ -3769,11 +3769,10 @@ and eval_str_person_field conf base env ((p, p_auth) as ep) = function
       string_of_blason_extra_small_size conf base ep |> str_val
   | "image_url" | "portrait_url" ->
       string_of_image_url conf base ep false false |> safe_val
-  | "image_saved_url" | "portrait_saved_url" ->
+  | "old_image_url" | "old_portrait_url" ->
       string_of_image_url conf base ep false true |> safe_val
   | "blason_url" -> string_of_blason_url conf base ep false false |> safe_val
-  | "blason_saved_url" ->
-      string_of_blason_url conf base ep false true |> safe_val
+  | "old_blason_url" -> string_of_blason_url conf base ep false true |> safe_val
   | "index" -> (
       match get_env "p_link" env with
       | Vbool _ -> null_val
@@ -3785,7 +3784,7 @@ and eval_str_person_field conf base env ((p, p_auth) as ep) = function
   | "carrousel_img_nbr" ->
       string_of_int (List.length (Image.get_carrousel_imgs conf base p))
       |> str_val
-  | "carrousel_old_img_nbr" | "carrousel_img_saved_nbr" ->
+  | "carrousel_old_img_nbr" ->
       string_of_int (List.length (Image.get_carrousel_old_imgs conf base p))
       |> str_val
   | "carrousel_img_note" -> (
@@ -3801,7 +3800,7 @@ and eval_str_person_field conf base env ((p, p_auth) as ep) = function
       | Some (`Path p) when Filename.extension p = ".stop" -> null_val
       | Some src -> Image.src_to_string src |> str_val
       | None -> null_val)
-  | "blason_saved" | "old_blason" -> (
+  | "old_blason" -> (
       match Image.get_old_blason conf base p false with
       | Some (`Path p) when Filename.extension p = ".stop" -> null_val
       | Some src -> Image.src_to_string src |> str_val
@@ -3813,10 +3812,8 @@ and eval_str_person_field conf base env ((p, p_auth) as ep) = function
       | None -> null_val)
   | "portrait_name" -> str_val (Image.get_portrait_name conf base p)
   | "blason_name" -> str_val (Image.get_blason_name conf base p)
-  | "portrait_saved_name" | "old_portrait_name" ->
-      str_val (Image.get_old_portrait_name conf base p)
-  | "blason_saved_name" | "old_blason_name" ->
-      str_val (Image.get_old_blason_name conf base p)
+  | "old_portrait_name" -> str_val (Image.get_old_portrait_name conf base p)
+  | "old_blason_name" -> str_val (Image.get_old_blason_name conf base p)
   | "blason_stop_name" ->
       str_val (Image.default_image_filename "blasons" base p ^ ".stop")
   | "X" -> str_val Filename.dir_sep (* end carrousel functions *)
