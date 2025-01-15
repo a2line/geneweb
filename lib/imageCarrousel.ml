@@ -169,7 +169,7 @@ let clean_saved_portrait file =
   let file = Filename.remove_extension file in
   Array.iter
     (fun ext -> Mutil.rm (file ^ ext))
-    Image.authorized_image_file_extension
+    Image.ext_list_2
 
 let get_extension conf saved fname =
   let f =
@@ -190,7 +190,7 @@ let print_confirm_c conf base save_m report =
   match Util.p_getint conf.env "i" with
   | Some ip ->
       let p = poi base (Gwdb.iper_of_string (string_of_int ip)) in
-      let digest = Image.default_portrait_filename base p in
+      let digest = Image.default_image_filename "portraits" base p in
       let new_env =
         List.fold_left
           (fun accu (k, v) ->
@@ -247,7 +247,7 @@ let print_send_image conf base p =
       Output.print_sstring conf (Format.sprintf ".%d " (get_occ p));
       Output.print_string conf (Util.escape_html (p_surname base p)))
   in
-  let digest = Image.default_portrait_filename base p in
+  let digest = Image.default_image_filename "portraits" base p in
   Hutil.header conf title;
   Output.printf conf
     "<form method=\"post\" action=\"%s\" enctype=\"multipart/form-data\">\n"
@@ -324,7 +324,7 @@ let effective_send_ok conf base p file =
             error_too_big_image conf base p (String.length content) len
         | _ -> (typ, content))
   in
-  let fname = Image.default_portrait_filename base p in
+  let fname = Image.default_image_filename "portraits" base p in
   let dir = !GWPARAM.images_d conf.bname in
   File.create_dir ~parent:true dir;
   let fname =
@@ -345,7 +345,7 @@ let print_send_ok conf base =
     with Failure _ -> incorrect conf "print send ok"
   in
   let p = poi base ip in
-  let digest = Image.default_portrait_filename base p in
+  let digest = Image.default_image_filename "portraits" base p in
   if (digest :> string) = Mutil.decode (raw_get conf "idigest") then
     raw_get conf "file" |> Adef.as_string |> effective_send_ok conf base p
   else Update.error_digest conf
@@ -407,7 +407,7 @@ let effective_send_c_ok conf base p file file_name =
           | _ -> (typ, content))
     else (GIF, content (* we dont care which type, content = "" *))
   in
-  let fname = Image.default_portrait_filename base p in
+  let fname = Image.default_image_filename "portraits" base p in
   let dir =
     if mode = "portraits" then !GWPARAM.portraits_d conf.bname
     else Filename.concat (!GWPARAM.images_d conf.bname) fname
@@ -423,7 +423,7 @@ let effective_send_c_ok conf base p file file_name =
         if move_file_to_save portrait dir = 0 then
           incorrect conf "effective send (portrait)"
     | Some (`Url url) -> (
-        let fname = Image.default_portrait_filename base p in
+        let fname = Image.default_image_filename "portraits" base p in
         let dir = Filename.concat dir "saved" in
         File.create_dir ~parent:true dir;
         let fname = Filename.concat dir fname ^ ".url" in
@@ -521,7 +521,7 @@ let print_deleted conf base p =
   Hutil.trailer conf
 
 let effective_delete_ok conf base p =
-  let fname = Image.default_portrait_filename base p in
+  let fname = Image.default_image_filename "portraits" base p in
   let ext = get_extension conf false fname in
   let dir = !GWPARAM.portraits_d conf.bname in
   if move_file_to_save (fname ^ ext) dir = 0 then
@@ -553,7 +553,7 @@ let print_del conf base =
 (* if delete=on permanently deletes the file in old folder *)
 
 let effective_delete_c_ok conf base p =
-  let fname = Image.default_portrait_filename base p in
+  let fname = Image.default_image_filename "portraits" base p in
   let file_name =
     try List.assoc "file_name" conf.env with Not_found -> Adef.encoded ""
   in
@@ -590,7 +590,7 @@ let effective_reset_c_ok conf base p =
   let mode =
     try (List.assoc "mode" conf.env :> string) with Not_found -> "portraits"
   in
-  let keydir = Image.default_portrait_filename base p in
+  let keydir = Image.default_image_filename "portraits" base p in
   let file_name =
     try List.assoc "file_name" conf.env with Not_found -> Adef.encoded ""
   in
@@ -642,7 +642,7 @@ let print_main_c conf base =
           match Util.p_getenv conf.env "i" with
           | Some ip -> (
               let p = poi base (Gwdb.iper_of_string ip) in
-              let digest = Image.default_portrait_filename base p in
+              let digest = Image.default_image_filename "portraits" base p in
               let conf, report =
                 match Util.p_getenv conf.env "m" with
                 | Some "SND_IMAGE_C_OK" ->
@@ -729,7 +729,7 @@ let print conf base =
 let print_c ?(saved = false) conf base =
   match (Util.p_getenv conf.env "s", Util.find_person_in_env conf base "") with
   | Some f, Some p ->
-      let k = Image.default_portrait_filename base p in
+      let k = Image.default_image_filename "portraits" base p in
       let f = Filename.concat k f in
       ImageDisplay.print_source conf (if saved then insert_saved f else f)
   | Some f, _ -> ImageDisplay.print_source conf f

@@ -73,8 +73,8 @@ let full_image_path mode conf base p saved =
 
 let path_of_filename conf fname =
   let fname1 = Filename.concat (!GWPARAM.images_d conf.bname) fname in
-  if Sys.file_exists fname1 then `Path fname1
-  else `Path (Util.search_in_assets (Filename.concat "images" fname))
+  if Sys.file_exists fname1 then fname1
+  else (Util.search_in_assets (Filename.concat "images" fname))
 
 let png_size ic =
   let magic = really_input_string ic 4 in

@@ -21,9 +21,6 @@ val parse_src_with_size_info :
   [< `Src_with_size_info of string ] ->
   ([> `Path of string | `Url of string ] * (int * int), string) result
 
-val source_filename : config -> string -> string
-(** Returns path to the image file with the giving name in directory {i src/}. *)
-
 (* TODO this should be removed *)
 val default_image_filename : string -> base -> person -> string
 (** [default_image_filename mode base p] is the default filename of [p]'s portrait or blason. Without it's file extension.
@@ -36,7 +33,7 @@ val size_from_path : string -> (int * int, unit) result
     - Ok (width, height) of the file.
 It works by opening the file and reading magic numbers *)
 
-val path_of_filename : config -> string -> [> `Path of string ]
+val path_of_filename : config -> string -> string
 (** [path_of_filename fname] search for image {i images/fname} inside the base and assets directories.
     Return the path to found file or [fname] if file isn't found.  *)
 
