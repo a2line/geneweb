@@ -48,9 +48,6 @@ type syslog_level =
 
 (* S: Move it to gwd_lib?  *)
 
-val portraits_d : (string -> string) ref
-val images_d : (string -> string) ref
-
 val output_error :
   (?headers:string list ->
   ?content:Adef.safe_string ->
