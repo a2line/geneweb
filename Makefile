@@ -128,6 +128,7 @@ endif
 	cp $(BUILD_DISTRIB_DIR)gwd/gwd.exe $(DISTRIB_DIR)/gw/gwd$(EXT)
 	cp $(BUILD_DISTRIB_DIR)gwdiff/gwdiff.exe $(DISTRIB_DIR)/gw/gwdiff$(EXT)
 	cp $(BUILD_DISTRIB_DIR)gwu/gwu.exe $(DISTRIB_DIR)/gw/gwu$(EXT)
+	cp $(BUILD_DISTRIB_DIR)insee/insee.exe $(DISTRIB_DIR)/gw/insee$(EXT)
 	cp $(BUILD_DISTRIB_DIR)robot/robot.exe $(DISTRIB_DIR)/gw/robot$(EXT)
 	cp $(BUILD_DISTRIB_DIR)setup/setup.exe $(DISTRIB_DIR)/gw/gwsetup$(EXT)
 	cp $(BUILD_DISTRIB_DIR)update_nldb/update_nldb.exe $(DISTRIB_DIR)/gw/update_nldb$(EXT)

@@ -1,0 +1,11 @@
+(executable
+  (name insee)
+  (public_name geneweb.insee)
+  (modules insee)
+  (libraries 
+    unix 
+    str 
+    %%%GWDB_PKG%%% 
+    %%%SOSA_PKG%%% 
+    geneweb)
+)
