@@ -2,10 +2,11 @@
   (name insee)
   (public_name geneweb.insee)
   (modules insee)
-  (libraries 
-    unix 
-    str 
-    %%%GWDB_PKG%%% 
-    %%%SOSA_PKG%%% 
+  (libraries
+    unix
+    str
+    uutf
+    %%%GWDB_PKG%%%
+    %%%SOSA_PKG%%%
     geneweb)
 )
