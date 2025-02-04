@@ -14,24 +14,21 @@ let exported_with_birth = ref 0
 let exported_with_death = ref 0
 let exported_nodate = ref 0
 
-let my_uppercase2 s =
-  (* Split on both straight and curved apostrophes *)
-  let split_apostrophes s =
-    let parts = String.split_on_char '\'' s in
-    (* Split on straight apostrophe *)
-    List.fold_left
-      (fun acc part ->
-        acc @ String.split_on_char '’' part (* Split on curved apostrophe *))
-      [] parts
-  in
-  let s = split_apostrophes s in
-  (* Use straight apostrophe for consistency in output *)
-  String.concat (String.make 1 '\'')
-    (List.map (fun e -> String.uppercase_ascii (Name.lower e)) s)
+(* UTF-8 handling functions *)
+let utf8_of_string s =
+  let b = Buffer.create (String.length s) in
+  String.iter
+    (fun c ->
+      (* Convert each character to its UTF-8 representation *)
+      let u = Uchar.of_char c in
+      Uutf.Buffer.add_utf_8 b u)
+    s;
+  Buffer.contents b
 
-let my_uppercase s =
-  let s = String.split_on_char '-' s in
-  String.concat (String.make 1 '-') (List.map (fun e -> my_uppercase2 e) s)
+(* UTF-8 aware printf that ensures proper encoding of output *)
+let safe_printf fmt =
+  let k _ = flush stdout in
+  Printf.kfprintf k stdout fmt
 
 let is_living p = match get_death p with NotDead -> true | _ -> false
 let has_date_info b_date d_date = b_date <> None || d_date <> None
@@ -112,16 +109,20 @@ let name_contains_enfant s =
   with Not_found -> false
 
 let is_dummy_name name =
-  let dummy_names = [ "??"; "X"; "XX"; "XXX"; "XY"; "NNN"; "NN" ] in
-  List.mem name dummy_names
+  let dummy_names = [ "??"; "X"; "XX"; "XXX"; "XY"; "YY"; "NNN"; "NN" ] in
+  List.mem (String.uppercase_ascii name) dummy_names
+
+let normalize_for_insee s =
+  let s, _ = Name.unaccent_utf_8 false s 0 in
+  String.uppercase_ascii s
 
 let check_insee base =
+  let () = set_binary_mode_out stdout true in
   total_processed := 0;
   total_exported := 0;
   exported_with_birth := 0;
   exported_with_death := 0;
   exported_nodate := 0;
-  (* pour chaque personne *)
   Gwdb.Collection.iteri
     (fun i p ->
       incr total_processed;
@@ -138,20 +139,8 @@ let check_insee base =
             | _ -> None)
         | _ -> None
       in
-      let sn = my_uppercase (p_surname base p) in
-      let fn =
-        let fn = p_first_name base p in
-        match get_first_names_aliases p with
-        | [] -> fn
-        | first :: _ -> (
-            let fna = sou base first in
-            let re = Str.regexp_string (Str.quote fn) in
-            try
-              ignore (Str.search_forward re fna 0);
-              fna
-            with Not_found -> fn)
-      in
-      let fn = my_uppercase fn in
+      let sn = p_surname base p |> normalize_for_insee in
+      let fn = p_first_name base p |> normalize_for_insee in
       let s = match get_sex p with Male -> 1 | Female -> 2 | _ -> 0 in
       let b_place = sou base (get_birth_place p) in
       let d_place = sou base (get_death_place p) in
@@ -172,7 +161,6 @@ let check_insee base =
           | None when b_date = None && estimate_period base p -> true
           | _ -> false
         else
-          (* In the original full logic part *)
           (not (fn = "" && sn = ""))
           && (not (name_contains_enfant fn))
           && (not
@@ -188,45 +176,54 @@ let check_insee base =
           | _ -> true
       in
       match b_date with
-      | Some bd when bd.year > 1860 && check = true -> (
-          incr exported_with_birth;
-          incr total_exported;
-          match d_date with
-          | Some dd ->
-              Printf.printf "%s|%s|%d|%02d|%02d|%04d|%s|%02d|%02d|%04d|%s|%s\n"
-                sn fn s
-                (if bd.prec = Sure then bd.day else 0)
-                (if bd.prec = Sure then bd.month else 0)
-                (if bd.prec = Sure || bd.prec = About then bd.year else 0)
-                b_place
-                (if dd.prec = Sure then dd.day else 0)
-                (if dd.prec = Sure then dd.month else 0)
-                (if dd.prec = Sure || dd.prec = About then dd.year else 0)
-                d_place key
-          | None ->
-              Printf.printf "%s|%s|%d|%02d|%02d|%04d|%s|00|00|0000|%s|%s\n" sn
-                fn s
-                (if bd.prec = Sure then bd.day else 0)
-                (if bd.prec = Sure then bd.month else 0)
-                (if bd.prec = Sure || bd.prec = About then bd.year else 0)
-                b_place d_place key)
-      | _ -> (
+      | Some bd ->
+          if bd.year >= !min_birth_year && check = true then (
+            incr exported_with_birth;
+            incr total_exported;
+            match d_date with
+            | Some dd ->
+                safe_printf "%s|%s|%d|%02d|%02d|%04d|%s|%02d|%02d|%04d|%s|%s\n"
+                  sn fn s
+                  (if bd.prec = Sure || bd.prec = Maybe then bd.day else 0)
+                  (if bd.prec = Sure || bd.prec = Maybe then bd.month else 0)
+                  (if bd.prec = Sure || bd.prec = About || bd.prec = Maybe then
+                   bd.year
+                  else 0)
+                  b_place
+                  (if dd.prec = Sure || dd.prec = Maybe then dd.day else 0)
+                  (if dd.prec = Sure || dd.prec = Maybe then dd.month else 0)
+                  (if dd.prec = Sure || dd.prec = About || dd.prec = Maybe then
+                   dd.year
+                  else 0)
+                  d_place key
+            | None ->
+                safe_printf "%s|%s|%d|%02d|%02d|%04d|%s|00|00|0000|%s|%s\n" sn
+                  fn s
+                  (if bd.prec = Sure || bd.prec = Maybe then bd.day else 0)
+                  (if bd.prec = Sure || bd.prec = Maybe then bd.month else 0)
+                  (if bd.prec = Sure || bd.prec = About || bd.prec = Maybe then
+                   bd.year
+                  else 0)
+                  b_place d_place key)
+      | None -> (
           if check then
             match d_date with
             | Some dd when dd.year > 1970 ->
                 incr exported_with_death;
                 incr total_exported;
-                Printf.printf "%s|%s|%d|00|00|0000|%s|%02d|%02d|%04d|%s|%s\n" sn
+                safe_printf "%s|%s|%d|00|00|0000|%s|%02d|%02d|%04d|%s|%s\n" sn
                   fn s b_place
-                  (if dd.prec = Sure then dd.day else 0)
-                  (if dd.prec = Sure then dd.month else 0)
-                  (if dd.prec = Sure || dd.prec = About then dd.year else 0)
+                  (if dd.prec = Sure || dd.prec = Maybe then dd.day else 0)
+                  (if dd.prec = Sure || dd.prec = Maybe then dd.month else 0)
+                  (if dd.prec = Sure || dd.prec = About || dd.prec = Maybe then
+                   dd.year
+                  else 0)
                   d_place key
             | None when !nodate && (is_living p || estimate_period base p) ->
                 incr exported_nodate;
                 incr total_exported;
-                Printf.printf "%s|%s|%d|00|00|0000|%s|00|00|0000|%s|%s\n" sn fn
-                  s b_place d_place key
+                safe_printf "%s|%s|%d|00|00|0000|%s|00|00|0000|%s|%s\n" sn fn s
+                  b_place d_place key
             | _ -> ()))
     (Gwdb.persons base)
 
@@ -301,18 +298,19 @@ let () =
     Secure.set_base_dir (Filename.dirname full_path);
     let base = Gwdb.open_base full_path in
     load_strings_array base;
-    check_insee base
-  with e ->
-    Printf.eprintf "Error: %s\n" (Printexc.to_string e);
-    exit 1 (* Print statistics after processing *)
-      Printf.eprintf "\nProcessing Statistics:\n";
-    Printf.eprintf "Total individuals processed: %d\n" !total_processed;
-    Printf.eprintf "Total individuals exported: %d\n" !total_exported;
-    Printf.eprintf "  - With birth data: %d\n" !exported_with_birth;
-    Printf.eprintf "  - With death data: %d\n" !exported_with_death;
-    Printf.eprintf "  - From nodate criteria: %d\n" !exported_nodate;
-    Printf.eprintf "Export mode: %s\n"
+    check_insee base;
+    (* Print statistics here, before any potential exit *)
+    Printf.eprintf "Processing Statistics:\n%!";
+    (* Added %! to flush output *)
+    Printf.eprintf "Total individuals processed: %d\n%!" !total_processed;
+    Printf.eprintf "Total individuals exported: %d\n%!" !total_exported;
+    Printf.eprintf "  - With birth data: %d\n%!" !exported_with_birth;
+    Printf.eprintf "  - With death data: %d\n%!" !exported_with_death;
+    Printf.eprintf "  - From nodate criteria: %d\n%!" !exported_nodate;
+    Printf.eprintf "Export mode: %s\n%!"
       (if !nodate_only then "Nodate only"
       else if !nodate then "Including nodate"
-      else "Standard");
-    Printf.eprintf "\n"
+      else "Standard")
+  with e ->
+    Printf.eprintf "Error: %s\n" (Printexc.to_string e);
+    exit 1
