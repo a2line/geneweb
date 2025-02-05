@@ -54,7 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, macos-13, windows-latest]
+        os: [ubuntu-22.04, macos-13, windows-latest]
         ocaml-compiler: [4.08.1]
         include:
           - os: windows-latest
@@ -110,7 +110,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, macos-15]
-        ocaml-compiler: [4.14.2-nnp, 5.2.1]
+        ocaml-compiler: [4.14.2-nnp, 5.3.0]
 #       include:
 #         - os: windows-latest
 #           ocaml-compiler: 4.14.2
