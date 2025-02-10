@@ -1,0 +1,49 @@
+<!-- Id: js_perso.txt -->
+%(
+  This is a template file for customizing GeneWeb's JavaScript functionality.
+  To use it:
+  1. Make sure js_perso="yes" is set in your GeneWeb .gwf configuration file
+  2. Edit this or copy it to your GeneWeb "bases/etc/mybase" directory,
+     like it's can be done for header and trailer custom files.
+  3. Modify it according to your needs
+
+  Two main ways to add custom JavaScript:
+  1. Direct code that runs immediately
+  2. Code that waits for page load using runAfterPageLoad()
+
+  Below are two minimal examples showing both approaches.
+
+  Example 1: Regular JavaScript code (allows external script loading)
+  This runs immediately, as soon as the script is parsed.
+
+```
+function sayHello() {
+  console.log("Hello GeneWeb!");
+}
+sayHello();
+
+<script src="path/script.js"></script>
+```
+
+  Example 2: Defining and scheduling functions to run after page load
+
+```
+function initCustomFeature() {
+  const myButton = document.querySelector('#my-button');
+  if (myButton) {
+    myButton.addEventListener('click', handleButtonClick);
+  }
+}
+
+function handleButtonClick() {
+  console.log('Button clicked!');
+}
+
+runAfterPageLoad(initCustomFeature);
+```
+
+  You can combine these approaches: loading direct code, scheduling functions
+  for DOMContentLoaded, and calling functions from external .js files.
+
+  Add your own code below this line or remove this whole comment block.
+%)

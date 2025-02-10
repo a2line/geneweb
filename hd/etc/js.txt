@@ -731,6 +731,28 @@ function safeInitialize(fn) {
     console.error('Initialization error:', error);
   }
 }
+
+%if;(b.js_perso="yes")
+const UserJS = {
+  waitForPageLoad: [],
+  runAfterPageLoad: function(task) {
+    this.waitForPageLoad.push(task);
+  },
+  executeWaitingTasks: function() {
+    this.waitForPageLoad.forEach(task => {
+      try {
+        task();
+      } catch (e) {
+        console.error('Error in user task:', e);
+      }
+    });
+  }
+};
+
+const runAfterPageLoad = UserJS.runAfterPageLoad.bind(UserJS);
+
+%include;js_perso
+%end;
 %( Initialize on DOM Content Loaded %)
 document.addEventListener('DOMContentLoaded', () => {
 %if;is_welcome;
@@ -761,6 +783,9 @@ document.addEventListener('DOMContentLoaded', () => {
 %end;
 %if;("MOD" in e.m)
   setupAutofocusInput();
+%end;
+%if;(b.js_perso="yes")
+  UserJS.executeWaitingTasks();
 %end;
 });
 </script>
