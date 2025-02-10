@@ -242,7 +242,7 @@ let syntax_links conf wi s =
           in
           loop quot_lev (pos + 1) j (Buff.mstore len t)
       | NotesLinks.WLnone (j, none_s) ->
-          loop quot_lev pos j (Buff.mstore len none_s)
+          loop quot_lev pos (i + 1) (Buff.store len s.[i])
   in
   loop 0 1 0 0
 
