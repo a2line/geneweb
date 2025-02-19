@@ -264,7 +264,7 @@
 %end;
 
 %define;parent(xcnt,xx,psex)
-  <div class="row%if;(xcnt>1) mt-2%end;">
+  <div class="row%if;(xcnt>1) mt-3%end;">
    <label for="paxcnt_fn" class="col-sm-2 col-form-label">%nn;
      [*first name/first names]0 <span class="font-weight-bold text-uppercase">
      (%if;(xx.first_name!="" or xx.surname!="")%apply;nth_c%with;[M/F]0[M/F]1N%and;psex%end;
@@ -277,7 +277,7 @@
        <input class="form-control" type="number" name="paxcnt_occ" min="0" value="%if;(xx.occ="")0%else;%xx.occ;%end;" id="paxcnt_occ" title="[*number] (occurence)">
     </div>
   </div>
-  <div class="row">
+  <div class="row mt-2">
     <label for="paxcnt_sn" class="col-sm-2 col-form-label">[*surname/surnames]0</label>
     <div class="col-sm-8">
       <input class="form-control" type="text" name="paxcnt_sn" value="%xx.surname" id="paxcnt_sn" placeholder="[*surname/surnames]0"%datalist_snames;>
@@ -344,41 +344,43 @@
 %end;
 
 %define;insert_fevent(xcnt)
-  <div class="row mt-2">
-    <label for="ins_eventxcnt_n" class="col-form-label col-2">[*insert]</label>
-    <div class="form-inline col-10 ml-auto">
-      <div class="input-group">
-        <select class="custom-select form-control" id="ins_eventxcnt_n" name="ins_eventxcnt_n">
-          %for;i;1;11;<option>%i;</option> %end;
-        </select>
-        <div class="input-group-append">
-          <label class="btn btn-outline-primary"> [event/events]2
-            <input class="ml-1" type="checkbox" name="ins_eventxcnt" value="on">
-          </label>
-          <button type="submit" class="btn btn-outline-primary" title="[*insert::event/events]0/[event/events]1">OK</button>
-        </div>
+<div class="row mt-2">
+  <label for="ins_eventxcnt_n" class="col-form-label col-2">[*insert]</label>
+  <div class="form-inline col-10 ml-auto">
+    <div class="input-group">
+      <div class="btn-group" role="group" aria-label="add event">
+        %for;i;1;4;
+          <button type="submit" class="btn btn-outline-secondary btn-sm" name="ins_eventxcnt_n" value="%i;"
+            title="[*insert] %i; %if;(i=1)[event/events]0%else;[event/events]1%end;">%i;</button>
+        %end;
       </div>
+      <div class="input-group-append">
+        <span class="input-group-text">[event/events]1</span>
+      </div>
+      <input type="hidden" name="ins_eventxcnt" value="on">
     </div>
   </div>
+</div>
 %end;
 
 %define;insert_witness(xcnt, wcnt)
-  <div class="row mt-3 mb-1">
-    <label for="excnt_ins_witnwcnt_n" class="col-form-label col-2">[*insert]</label>
-    <div class="form-inline col-10 ml-auto">
-      <div class="input-group">
-        <select class="form-control" id="excnt_ins_witnwcnt_n" name="excnt_ins_witnwcnt_n" >
-          %for;i;1;11;<option>%i;</option> %end;
-        </select>
-        <div class="input-group-append">
-          <label class="btn btn-outline-primary"> [witness/witness/witnesses]3
-            <input class="ml-1" type="checkbox" name="excnt_ins_witnwcnt" value="on">
-          </label>
-        <button type="submit" class="btn btn-outline-primary" title="[*insert::witness/witness/witnesses]0/[witness/witness/witnesses]2">OK</button>
-        </div>
+<div class="row mt-3 mb-1">
+  <label for="excnt_ins_witnwcnt_n" class="col-form-label col-2">[*insert]</label>
+  <div class="form-inline col-10 ml-auto">
+    <div class="input-group">
+      <div class="btn-group" role="group" aria-label="add witness">
+        %for;i;1;6;
+          <button type="submit" class="btn btn-outline-secondary btn-sm" name="excnt_ins_witnwcnt_n" value="%i;"
+            title="[*insert] %i; %if;(i=1)[witness/witness/witnesses]0%else;[witness/witness/witnesses]2%end;">%i;</button>
+        %end;
       </div>
+      <div class="input-group-append">
+        <span class="input-group-text">[witness/witness/witnesses]2</span>
+      </div>
+      <input type="hidden" name="excnt_ins_witnwcnt" value="on">
     </div>
   </div>
+</div>
 %end;
 
 %define;one_witness(xcnt, wcnt)
@@ -603,15 +605,15 @@
               %if;(bvar.multi_parents="yes")%apply;insert_parent(cnt)%end;
             </div>
             %if;(cnt=2)
-              <div class="custom-control custom-checkbox mt-2 ml-3">
+              <div class="custom-control custom-checkbox mt-3 ml-3">
                 <input type="checkbox" class="custom-control-input" name="nsck" id="nsck" value="on"%if;(os=3) checked%end;>
                 <label for="nsck" class="custom-control-label">[*no sexes check]</label>
               </div>
             %end;
           %end;
-          <button type="submit" class="btn btn-primary col-1 ml-auto mr-2" title="[*validate/delete]0" aria-label="[*validate/delete]0">
+          <button type="submit" class="btn btn-outline-uprimary col-1 mt-2 ml-auto mr-4" title="[*validate/delete]0" aria-label="[*validate/delete]0">
             <span class="font-weight-bold text-uppercase sr-only">[*validate/delete]0</span>
-            <i class="fa fa-share fa-rotate-180 fa-fw ml-1" aria-hidden="true"></i>
+            OK <i class="fa fa-share fa-rotate-180 fa-fw ml-1" aria-hidden="true"></i>
           </button>
       </div>
     </div>
@@ -635,32 +637,31 @@
   </div>
 
 %define;insert_child(xcnt)
-  <label for="ins_chxcnt_n" class="col-form-label col-2">[*insert]</label>
-  <div class="form-inline col-5">
-    <div class="input-group">
-      <select class="form-control" id="ins_chxcnt_n" name="ins_chxcnt_n">
-        %for;i;1;11;<option>%i;</option>%end;
-      </select>
-      <div class="input-group-append">
-        <label class="btn btn-outline-primary"> [child/children]2
-          <input class="ml-1" type="checkbox" name="ins_chxcnt" value="on">
-        </label>
-        <button type="submit" class="btn btn-outline-primary" title="[*insert::child/children]2">OK</button>
-      </div>
+<label for="ins_chxcnt_n" class="col-form-label col-2">[*insert]</label>
+<div class="form-inline col-5">
+  <div class="input-group">
+    <div class="btn-group" role="group" aria-label="add child">
+      %for;i;1;6;
+        <button type="submit" class="btn btn-outline-secondary btn-sm" name="ins_chxcnt_n" value="%i;"
+          title="[*insert] %i; %if;(i=1)[child/children]0%else;[child/children]1%end;">%i;</button>
+      %end;
     </div>
+    <div class="input-group-append">
+      <span class="input-group-text">[child/children]1</span>
+    </div>
+    <input type="hidden" name="ins_chxcnt" value="on">
   </div>
+</div>
 %end;
 
 %define;invert_children(xcnt)
-  <div class="form-inline col-3">
-    <div class="input-group">
-      <label class="btn btn-outline-primary" title="[*invert] [child/children]0 %expr(xcnt-1) [and] xcnt"><span class="far fa-user"></span> %expr(xcnt-1) <span class="fa fa-right-left mx-2"></span> <span class="far fa-user"></span> xcnt
-        <input class="ml-2" type="checkbox" name="inv_chxcnt" value="on">
-      </label>
-      <div class="input-group-append">
-        <button type="submit" class="btn btn-outline-primary">OK</button>
-      </div>
-    </div>
+  <div class="form-inline col-2 ml-auto">
+    <button type="submit" class="btn btn-outline-secondary btn-sm" name="inv_chxcnt" value="on"
+      title="[*invert] [child/children]0 %expr(xcnt-1) [and] xcnt">%nn;
+      <i class="far fa-user"></i> %expr(xcnt-1)%nn;
+      <i class="fa fa-right-left fa-rotate-90 mx-2"></i>%nn;
+       xcnt <i class="far fa-user"></i>%nn;
+    </button>
   </div>
 %end;
 

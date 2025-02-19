@@ -1,4 +1,4 @@
-<!-- $Id: buttons.txt v7.1 11/10/2024 01:48:16 $ -->
+<!-- $Id: buttons.txt v7.1 19/02/2025 06:36:28 $ -->
 <!-- Copyright (c) 1998-2007 INRIA -->
 %( Boutons de configurations et d'options %)
 %let;l_v0;%if;(e.v!="")
@@ -142,7 +142,9 @@
           href="%prefix_base_password;%access;&m=A%nn;
                    %foreach;env_binding;
                      %if;(env.key="t")&t=%if;(e.t!="Y")Y%else;Z%end;%nn;
-                     %elseif;(env.key="v" or env.key="v0" or env.key="only" or env.key="im" or env.key="gen")&%env.key=%env.val;%end;%nn;
+                     %elseif;(env.key="v" or env.key="only" or env.key="im" or env.key="gen")&%env.key=%env.val;%end;%nn;
+                     %( TODO: quick fix dans un seul sens, préférer ajouter v0 sur le tableau par couples, changement de v0 intempestif ingérable sinon %)
+                     %if;(env.key="v0")&v0=%if;(env.val=0)1%else;%env.val;%end;%end;%nn;
                    %end;%nn;
                    %( ajout des variables par défaut du tableau asc. pour sortir du tableau par couple qui n'en a quasi pas %)
                    %if;(e.t="Y")&num=on&birth=on&birth_place=on&marr=on&marr_date=on&marr_place=on&child=on&death=on&death_place=on&age=on&occu=on&repeat=on%end;"

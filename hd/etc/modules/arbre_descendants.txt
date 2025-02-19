@@ -253,7 +253,7 @@ Person:            Child1     Child2          Child3
 %let;e_im;%if;(e.im!="")0%else;1%end;%in;
 %let;evarborder;%if;(e.border="" or e.border="0")0%else;1%end;%in;
 %let;baseindex;%index;%in;
-<h1 id="a">[*descendants tree]</h1>
+<h3 id="a">[*descendants tree]</h3>
 %include;buttons_dag
 %reset_count;
 %let;evarv;%expr(e_v+1)%in;
