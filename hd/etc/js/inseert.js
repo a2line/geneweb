@@ -220,8 +220,8 @@ const InseeTools = {
                       data.names.surname = match[2].trim();
                   }
               }
-              else if (line.includes(' Prénom')) {
-                  const match = line.match(/(Prénom.*(?:!=2|!=|=~|->\s))(.*?)$/);
+              else if (line.includes('Prénom')) {
+                  const match = line.match(/(.+?Prénom.*(?:!=|->\s))(.*?)$/);
                   if (match) {
                       data.names.firstname_changes = match[1];
                       data.names.firstname = match[2].trim();
@@ -240,8 +240,8 @@ const InseeTools = {
                       data.birth.place = match[2].trim();
                   }
               }
-              else if (line.includes(' Naissance (brut)')) {
-                  const match = line.match(/Naissance \(brut\).:.(.*?)$/);
+              else if (line.includes(' Naissance Insee')) {
+                  const match = line.match(/Naissance Insee :.(.*?)$/);
                   if (match) {
                       data.birth.place_brut = match[1];
                   }
@@ -635,12 +635,12 @@ const InseeTools = {
       // Ajoute un bandeau de warning si le prénom est déjà en prénom alias
       addAliasWarningBanner: function() {
           if (!document.getElementById('alias-warning') && this.inseeData?.names?.firstname) {
-              
+
               const warningDiv = document.createElement('div');
               warningDiv.id = 'alias-warning';
               warningDiv.className = 'alert alert-warning mt-2 mb-1';
-              warningDiv.innerHTML = `<i class="fa fa-triangle-exclamation text-danger mr-1"></i> 
-                                     Prénom « ${this.inseeData.names.firstname} » ignoré car 
+              warningDiv.innerHTML = `<i class="fa fa-triangle-exclamation text-danger mr-1"></i>
+                                     Prénom « ${this.inseeData.names.firstname} » ignoré car
                                      déjà renseigné comme premier prénom alias.`;
 
               const inseeDataDiv = document.querySelector('.insee-data');
@@ -985,10 +985,11 @@ const InseeTools = {
       },
 
       createRawDataInfo: function(data) {
-          const birthPlaceBrutLine = data.birth.place_brut
-              ? `<div class="col-12">Lieu naissance Insee : <span class="user-select-all">${data.birth.place_brut}</span></div>`
+          const birthPlaceBrut = data.birth.place_brut
+              ? `<br><span class="user-select-all">${data.birth.place_brut}</span>`
               : '';
-
+          const birthPlaceBrutTxt = data.birth.place_brut
+          ? `<br><span class="user-select-none text-muted">  Lieu brut</span>` : '';
           const displayDiv = document.createElement('div');
           displayDiv.className = 'insee-blacklist bg-light p-3 mb-2 border rounded';
 
@@ -997,8 +998,8 @@ const InseeTools = {
               const classes = [];
 
               // N'appliquer user-select-all que si les valeurs sont différentes ET selectable=true
-              if (selectable && !isSame) classes.push('user-select-all text-success');
-              if (isSame) classes.push('text-muted');
+              if (selectable) classes.push('user-select-all');
+              classes.push(isSame ? 'text-muted' : 'text-success');
 
               const classAttr = classes.length ? `class="${classes.join(' ')}"` : '';
               return `<span ${classAttr}>${resultValue || ''}</span>`;
@@ -1012,7 +1013,7 @@ const InseeTools = {
               </h4>
 
        <div class="d-flex flex-wrap text-monospace">
-            <div class="d-flex align-self-center mr-2 mr-lg-4">
+            <div class="d-flex align-self-center align-self-lg-start mr-2 mr-lg-4">
                 <div class="pr-4">
                     <span class="text-muted">${data.title.todo_fn || ''}</span><br>
                     ${getResultSpan(data.title.todo_fn, data.title.result_fn, true)}
@@ -1027,10 +1028,12 @@ const InseeTools = {
                   <div class="pr-2">
                       <span class="text-muted">${data.title.todo_bd || ''}</span><br>
                       ${getResultSpan(data.title.todo_bd, data.title.result_bd, false)}
+                      ${birthPlaceBrutTxt}
                   </div>
                   <div class="flex-grow-1">
                       <span class="text-muted">${data.title.todo_bp || ''}</span><br>
                       ${getResultSpan(data.title.todo_bp, data.title.result_bp, true)}
+                      ${birthPlaceBrut}
                   </div>
               </div>
               <div class="d-flex">
@@ -1045,7 +1048,7 @@ const InseeTools = {
               </div>
           </div>
         </div>
-              ${birthPlaceBrutLine}
+
             </div>
           `;
 
