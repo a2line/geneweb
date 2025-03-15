@@ -3,9 +3,17 @@
 const FIELD_IDS = {
     surname: { displayId: 'surname-line', inputId: 'surname' },
     firstname: { displayId: 'firstname-line', inputId: 'first_name' },
-    'birth-date': { displayId: 'birth-date-line', inputPrefix: 'e_date' },
+    'birth-date': {
+        displayId: 'birth-date-line',
+        inputPrefix: 'e_date',
+        isDate: true
+    },
     'birth-place': { displayId: 'birth-place-line', inputPrefix: 'e_place' },
-    'death-date': { displayId: 'death-date-line', inputPrefix: 'e_date' },
+    'death-date': {
+        displayId: 'death-date-line',
+        inputPrefix: 'e_date',
+        isDate: true
+    },
     'death-place': { displayId: 'death-place-line', inputPrefix: 'e_place' },
     'death-source': { displayId: 'death-source-line', inputPrefix: 'e_src' }
 };
@@ -26,17 +34,104 @@ const InseeTools = {
   // Results page handler - captures INSEE data when a link is clicked
   results: {
       init: function() {
-        // Store reference to results object
-        const self = this;
-        document.addEventListener('click', function(event) {
-            if (event.target.closest('a[href*="m=S&edit=1"]')) {
-                const link = event.target.closest('a');
-                const key = link.textContent;
-                const inseeData = self.captureMatchData(link);
-                console.log('Captured data:', inseeData);  // Debug
-                InseeTools.storage.save(key, inseeData);
-            }
-        });
+          // Store reference to results object
+          const self = this;
+
+          // Ajouter les boutons toggle une seule fois sur la page RESULT
+          if (window.location.href.includes('f=RESULT')) {
+              this.addToggleButtons();
+          }
+
+          document.addEventListener('click', function(event) {
+              // Traitement des liens
+              if (event.target.closest('a[href*="m=S&edit=1"]')) {
+                  const link = event.target.closest('a');
+                  const key = link.textContent;
+                  const inseeData = self.captureMatchData(link);
+                  console.log('Captured data:', inseeData);
+                  InseeTools.storage.save(key, inseeData);
+
+                  // Automatiquement marquer comme traité quand on clique sur le lien
+                  const paragraph = link.closest('p.ins-block');
+                  if (paragraph) {
+                      paragraph.classList.add('ins-off');
+                      const btn = paragraph.querySelector('.ins-btn');
+                      if (btn) btn.innerHTML = '<i class="fa fa-xmark"></i>';
+                  }
+              }
+
+              // Gestion des boutons toggle
+              if (event.target.closest('.ins-btn')) {
+                  event.preventDefault();
+                  event.stopPropagation();
+
+                  const btn = event.target.closest('.ins-btn');
+                  const paragraph = btn.parentElement;
+
+                  paragraph.classList.toggle('ins-off');
+                  btn.innerHTML = paragraph.classList.contains('ins-off') ?
+                      '<i class="fa fa-xmark"></i>' :
+                      '<i class="fa fa-chevron-left"></i>';
+              }
+          });
+      },
+
+      addToggleButtons: function() {
+          // Style unique et minimal
+          const style = document.createElement('style');
+          style.textContent = `
+              .ins-btn {
+                  position: absolute;
+                  left: -30px;
+                  height: 100%;
+                  display: flex;
+                  align-items: center;
+                  background: #f8f9fa;
+                  border: 1px solid #dee2e6;
+                  cursor: pointer;
+                  padding: 0 5px;
+              }
+              .ins-block {
+                  position: relative;
+                  margin-left: 5px;
+              }
+              .ins-off {
+                  background-color: #f8f9fa;
+              }
+              .ins-off a {
+                  color: #6c757d;
+                  pointer-events: none;
+                  text-decoration: none;
+              }
+          `;
+          document.head.appendChild(style);
+
+          // Traitement des paragraphes contenant IdInsee
+          const paragraphs = Array.from(document.querySelectorAll('p'))
+              .filter(p => p.textContent.includes('IdInsee'));
+
+          paragraphs.forEach(p => {
+              p.classList.add('ins-block');
+
+              // Créer le bouton sans saut de ligne
+              const btn = document.createElement('button');
+              btn.className = 'ins-btn';
+              btn.innerHTML = '<i class="fa fa-chevron-left"></i>';
+
+              // Important: insérer le bouton sans créer de saut de ligne
+              if (p.firstChild) {
+                  // Si le premier enfant est un nœud texte, ajuster directement
+                  if (p.firstChild.nodeType === Node.TEXT_NODE) {
+                      const textContent = p.firstChild.textContent;
+                      if (textContent.startsWith('\n')) {
+                          p.firstChild.textContent = textContent.trimStart();
+                      }
+                  }
+                  p.insertBefore(btn, p.firstChild);
+              } else {
+                  p.appendChild(btn);
+              }
+          });
       },
 
       captureMatchData: function(linkElement) {
@@ -80,10 +175,14 @@ const InseeTools = {
 
       parseDataBlock: function(block) {
           const data = {
-              title: { todonom: '', todo: '', resultnom: '', result: '', resultori: '', score: '' },
+              title: {
+                  todo_fn: '', todo_sn: '', todo_bd: '', todo_bp: '', todo_dd: '', todo_dp: '',
+                  result_fn: '', result_sn: '', result_bd: '', result_bp: '', result_dd: '', result_dp: '',
+                  score: ''
+              },
               blacklist: { idinsee: '', gwkey: '', todokey: '' },
               names: { surname_changes:'', surname: '', firstname_changes:'', firstname: '' },
-              birth: { date_changes: '', day: '', month: '', year: '', place_changes: '', place: '' },
+              birth: { date_changes: '', day: '', month: '', year: '', place_changes: '', place: '', place_brut: '' },
               death: { date_changes: '', day: '', month: '', year: '', place_changes: '', place: '' },
               source: ''
           };
@@ -96,15 +195,22 @@ const InseeTools = {
           const gwkeyMatch = lines[1].match(/>([^<]+)<\/a>|^([^<]+)$/);
           data.blacklist.gwkey = gwkeyMatch ? (gwkeyMatch[1] || gwkeyMatch[2]) : '';
 
-          const todokeyMatch = lines[2].match(/^((.*?\|.*?)\|.*?\|(.*))$/);
-          data.blacklist.todokey = todokeyMatch ? todokeyMatch[1] : '';
-          data.title.todonom = todokeyMatch ? todokeyMatch[2] : '';
-          data.title.todo = todokeyMatch ? todokeyMatch[3] : '';
+          const todoMatch = lines[2].match(/^((.*)\|(.*)\|.\|(.*)\|(.*)\|(.*)\|(.*))$/);
+          data.blacklist.todokey = todoMatch ? todoMatch[1] : '';
+          data.title.todo_sn = todoMatch ? todoMatch[2] : '';
+          data.title.todo_fn = todoMatch ? todoMatch[3] : '';
+          data.title.todo_bd = todoMatch ? todoMatch[4] : '';
+          data.title.todo_bp = todoMatch ? todoMatch[5] : '';
+          data.title.todo_dd = todoMatch ? todoMatch[6] : '';
+          data.title.todo_dp = todoMatch ? todoMatch[7] : '';
 
-        const resultMatch = lines[3].match(/^(.*\|.*)\|.\|(.*\|.*\|.*\|.*)\|(.*\|.*\|.*\|.*)\|/);
-          data.title.resultnom = resultMatch ? resultMatch[1] : '';
-          data.title.result = resultMatch ? resultMatch[2] : '';
-          data.title.resultori = resultMatch ? resultMatch[3] : '';
+        const resultMatch = lines[3].match(/^(.*)\|(.*)\|.\|(.*)\|(.*)\|(.*)\|(.*)\|.*\|.*\|.*\|.*\|.*$/);
+          data.title.result_sn = resultMatch ? resultMatch[1] : '';
+          data.title.result_fn = resultMatch ? resultMatch[2] : '';
+          data.title.result_bd = resultMatch ? resultMatch[3] : '';
+          data.title.result_bp = resultMatch ? resultMatch[4] : '';
+          data.title.result_dd = resultMatch ? resultMatch[5] : '';
+          data.title.result_dp = resultMatch ? resultMatch[6] : '';
 
           for (const line of lines.slice(3)) {
               if (line.includes('Nom')) {
@@ -124,7 +230,7 @@ const InseeTools = {
               else if (line.includes(' Date naissance')) {
                   const match = line.match(/(Date naissance.*)(\d{2})\/(\d{2})\/(\d{4})$/);
                   if (match) {
-                      [, data.birth.date_changes, data.birth.day, data.birth.monosmonth, data.birth.year] = match;
+                      [, data.birth.date_changes, data.birth.day, data.birth.month, data.birth.year] = match;
                   }
               }
               else if (line.includes(' Lieu naissance')) {
@@ -132,6 +238,12 @@ const InseeTools = {
                   if (match) {
                       data.birth.place_changes = match[1];
                       data.birth.place = match[2].trim();
+                  }
+              }
+              else if (line.includes(' Naissance (brut)')) {
+                  const match = line.match(/Naissance \(brut\).:.(.*?)$/);
+                  if (match) {
+                      data.birth.place_brut = match[1];
                   }
               }
               else if (line.includes(' Date décès')) {
@@ -164,7 +276,7 @@ const InseeTools = {
           const modLink = document.querySelector('#mod_ind');
           if (modLink) {
               const urlParams = new URLSearchParams(window.location.search);
-              const personKey = urlParams.get('n');
+              const personKey = urlParams.get('pn');
               if (personKey) {
                   const baseHref = modLink.getAttribute('href');
                   const newHref = baseHref + '&key=' + encodeURIComponent(personKey);
@@ -186,6 +298,177 @@ const InseeTools = {
             this.createDataDisplay(inseeData);
             this.setupFieldFilling(inseeData);
           }
+      },
+
+      // Fonction de vérification pour les prénoms alias
+      checkFirstNameAliasConflict: function() {
+          if (!this.inseeData) return false;
+
+          const aliasField = document.getElementById('first_name_alias0');
+          if (!aliasField || !aliasField.value) return false;
+
+          // Normalisation simple: minuscules et suppression des accents
+          const normalizedAlias = aliasField.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          const normalizedInsee = this.inseeData.names.firstname.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+          return normalizedAlias === normalizedInsee;
+      },
+
+      processField: function(fieldType, onlyEmpty = false, event = null) {
+          // Verify INSEE data exists first
+          if (!this.inseeData) {
+              console.warn('No INSEE data available');
+              return false;
+          }
+
+          // Récupérer les valeurs selon le type de champ
+          let value, targetId, isDate = false;
+
+          // Vérifier le type de champ
+          const fieldConfig = FIELD_IDS[fieldType];
+          if (!fieldConfig) {
+              console.warn('No field configuration for:', fieldType);
+              return false;
+          }
+
+          // Récupérer les informations selon le type de champ
+          if (fieldType === 'firstname') {
+              // Check if names data exists
+              if (!this.inseeData.names || !this.inseeData.names.firstname) {
+                  console.log(`Missing data: firstname`);
+                  return false;
+              }
+
+              // Vérifier si le prénom existe comme premier prénom alias
+              if (this.checkFirstNameAliasConflict()) {
+                 this.addAliasWarningBanner();
+                 return true;
+              }
+              value = this.inseeData.names.firstname;
+              targetId = 'first_name';
+          }
+          else if (fieldType === 'surname') {
+              // Check if names data exists
+              if (!this.inseeData.names || !this.inseeData.names.surname) {
+                  console.log(`Missing data: surname`);
+                  return false;
+              }
+
+              value = this.inseeData.names.surname;
+              targetId = 'surname';
+          }
+          else if (fieldType.endsWith('-date')) {
+              // Traitement spécial pour les dates
+              isDate = true;
+              const dateType = fieldType.split('-')[0]; // 'birth' ou 'death'
+
+              // Check if date data exists
+              if (!this.inseeData[dateType]) {
+                  console.log(`Missing data: ${dateType}`);
+                  return false;
+              }
+
+              const eventFields = this.findEventFields(dateType, true);
+
+              if (!eventFields?.eventNum) {
+                  console.warn('Could not find event number for', dateType);
+                  return false;
+              }
+
+              // Appeler handleDateFields directement
+              return this.handleDateFields(
+                  `e_date${eventFields.eventNum}`,
+                  this.inseeData[dateType],
+                  fieldType,
+                  onlyEmpty
+              );
+          }
+          else if (fieldType === 'birth-place') {
+              // Check if birth data exists
+              if (!this.inseeData.birth || !this.inseeData.birth.place) {
+                  console.log(`Missing data: birth place`);
+                  return false;
+              }
+
+              value = this.inseeData.birth.place;
+              const eventFields = this.findEventFields('birth', true);
+              if (!eventFields?.eventNum) {
+                  console.warn('Could not find event number for birth');
+                  return false;
+              }
+              targetId = `e_place${eventFields.eventNum}`;
+          }
+          else if (fieldType === 'death-place') {
+              // Check if death data exists
+              if (!this.inseeData.death || !this.inseeData.death.place) {
+                  console.log(`Missing data: death place`);
+                  return false;
+              }
+
+              value = this.inseeData.death.place;
+              const eventFields = this.findEventFields('death', true);
+              if (!eventFields?.eventNum) {
+                  console.warn('Could not find event number for death');
+                  return false;
+              }
+              targetId = `e_place${eventFields.eventNum}`;
+          }
+          else if (fieldType === 'death-source') {
+              // Check if source exists
+              if (!this.inseeData.source) {
+                  console.log(`Missing data: death source`);
+                  return false;
+              }
+
+              value = this.inseeData.source;
+              const eventFields = this.findEventFields('death', true);
+              if (!eventFields?.eventNum) {
+                  console.warn('Could not find event number for death source');
+                  return false;
+              }
+              targetId = `e_src${eventFields.eventNum}`;
+          }
+
+          // Si on n'a pas pu déterminer l'ID cible ou la valeur
+          if (!targetId || !value) {
+              console.warn('Could not determine target ID or value for:', fieldType);
+              return false;
+          }
+
+          // Récupérer l'élément
+          const field = document.getElementById(targetId);
+          if (!field) {
+              console.warn('Field not found:', targetId);
+              return false;
+          }
+
+          // Vérifier si on doit remplir ce champ
+          if (onlyEmpty && field.value) {
+              console.log(`Field ${targetId} not empty, skipping`);
+              return false;
+          }
+
+          // Appliquer la valeur avec traitement spécial si nécessaire
+          if (fieldType === 'death-source') {
+              if (field.value && !field.value.includes('Insee')) {
+                  field.value = field.value + ' ; ' + value;
+              } else {
+                  field.value = value;
+              }
+          } else {
+              field.value = this.handleNameCase(value, targetId);
+
+              // Donner le focus au champ prénom (fonctionnalité existante)
+              if (fieldType === 'firstname') {
+                  field.focus();
+                  field.selectionStart = field.selectionEnd = field.value.length;
+              }
+          }
+
+          // Mettre à jour l'indicateur visuel
+          this.updateVisualFeedback(fieldType);
+
+          return true;
       },
 
       // Find all relevant fields under a section (birth/death)
@@ -303,11 +586,11 @@ const InseeTools = {
       },
 
       handleDateFields: function(prefix, date, type, onlyEmpty) {
-          const dateFields = {
-              dd: document.getElementById(`${prefix}_dd`),
-              mm: document.getElementById(`${prefix}_mm`),
-              yyyy: document.getElementById(`${prefix}_yyyy`)
-          };
+           const dateFields = {
+                dd: document.querySelector(`input[name="${prefix}_dd"]`),
+                mm: document.querySelector(`input[name="${prefix}_mm"]`),
+                yyyy: document.querySelector(`input[name="${prefix}_yyyy"]`)
+            };
 
           const dateValues = {
               dd: date.day,
@@ -338,56 +621,72 @@ const InseeTools = {
       },
 
       handleField: function(id, value, type, onlyEmpty) {
+          // Cas spécial: prénom ignoré mais marqué comme validé
+          if (type === 'firstname' && this.checkFirstNameAliasConflict()) {
+              console.log('Prénom ignoré lors du remplissage automatique, marqué comme validé');
+              this.updateVisualFeedback(type);
+              return;
+          }
           if (value && (!onlyEmpty || !document.getElementById(id)?.value)) {
               this.handleDataReplacement(id, value, type);
           }
       },
 
+      // Ajoute un bandeau de warning si le prénom est déjà en prénom alias
+      addAliasWarningBanner: function() {
+          if (!document.getElementById('alias-warning') && this.inseeData?.names?.firstname) {
+              
+              const warningDiv = document.createElement('div');
+              warningDiv.id = 'alias-warning';
+              warningDiv.className = 'alert alert-warning mt-2 mb-1';
+              warningDiv.innerHTML = `<i class="fa fa-triangle-exclamation text-danger mr-1"></i> 
+                                     Prénom « ${this.inseeData.names.firstname} » ignoré car 
+                                     déjà renseigné comme premier prénom alias.`;
+
+              const inseeDataDiv = document.querySelector('.insee-data');
+              if (inseeDataDiv) {
+                  inseeDataDiv.after(warningDiv);
+              }
+
+              this.updateVisualFeedback('firstname');
+          }
+      },
+
       fillFields: function(onlyEmpty = false) {
-          console.log('Starting fillFields, onlyEmpty:', onlyEmpty);
           if (!this.inseeData) {
               console.warn('No INSEE data available');
               return;
           }
 
-          // Identity fields
-          this.handleField('first_name', this.inseeData.names.firstname, 'firstname', onlyEmpty);
-          this.handleField('surname', this.inseeData.names.surname, 'surname', onlyEmpty);
+          this.setDeathStatus();
 
-          // Birth fields
-          const birthFields = this.findEventFields('birth');
-          if (birthFields?.validate()) {
-          this.handleDateFields(
-              `e_date${birthFields.eventNum}`,
-              this.inseeData.birth,
-              'birth-date',
-              onlyEmpty
-          );
-          this.handleField(`e_place${birthFields.eventNum}`, this.inseeData.birth.place, 'birth-place');
-      }
+          // Traiter chaque type de champ avec la fonction centralisée
+          const fieldTypes = [
+              'firstname', 'surname',
+              'birth-date', 'birth-place',
+              'death-date', 'death-place', 'death-source'
+          ];
 
-          // Death fields similaires
-          const deathFields = this.findEventFields('death');
-              if (deathFields?.validate()) {
-                  this.handleDateFields(
-                      `e_date${deathFields.eventNum}`,
-                      this.inseeData.death,
-                      'death-date',
-                      onlyEmpty
-                  );
-                  this.handleField(`e_place${deathFields.eventNum}`, this.inseeData.death.place, 'death-place');
-                  this.handleField(`e_src${deathFields.eventNum}`, this.inseeData.source, 'death-source');
+          let fieldsUpdated = 0;
+
+          fieldTypes.forEach(fieldType => {
+              if (this.processField(fieldType, onlyEmpty, null)) {
+                  fieldsUpdated++;
               }
+          });
+
+          console.log(`Updated ${fieldsUpdated} out of ${fieldTypes.length} fields`);
+
+          this.checkAllValidated();
+          return fieldsUpdated;
       },
 
       fillEmptyFields: function() {
-          this.setDeathStatus();
           this.fillFields(true);
           this.updateButtonStates('empty');
       },
 
       fillAllFields: function() {
-          this.setDeathStatus();
           this.fillFields(false);
           this.updateButtonStates('all');
       },
@@ -412,7 +711,7 @@ const InseeTools = {
           // Pour les noms de famille
           if (fieldId === 'surname') {
               const currentValue = field.value;
-              // Si le champ est vide ou en majuscules, on garde la casse originale
+              // Si le champ est vide ou déjà en majuscules, on conserve les majuscules
               if (!currentValue || currentValue === currentValue.toUpperCase()) {
                   return value;
               }
@@ -420,16 +719,13 @@ const InseeTools = {
               return value.toLowerCase().replace(/(?:^|\s)\S/g, c => c.toUpperCase());
           }
 
-          // Pour les prénoms et autres champs avec texte
-          if (fieldId === 'first_name' || field.value.length > 4) {
-              const currentValue = field.value;
-              const isCapitalized = /^[A-Z][a-z]/.test(currentValue);
-              if (isCapitalized) {
-                  // Si le champ existant utilise déjà la casse mixte
-                  return value.toLowerCase().replace(/(?:^|\s|-)\S/g, c => c.toUpperCase());
-              }
+          // Pour les prénoms : toujours mettre en forme avec majuscules initiales
+          if (fieldId === 'first_name') {
+              // Convertit en minuscules puis met en majuscule après chaque espace ou tiret
+              return value.toLowerCase().replace(/(?:^|\s|-)\S/g, c => c.toUpperCase());
           }
 
+          // Pour tous les autres champs, aucun traitement
           return value;
       },
 
@@ -455,6 +751,14 @@ const InseeTools = {
               return;
           }
 
+          // Cas spécial: ne pas remplacer le prénom si le même existe comme premier prénom alias
+          // mais marquer tout de même la ligne prénom validée
+          if (fieldType === 'firstname' && this.checkFirstNameAliasConflict()) {
+              console.log('Prénom ignoré car existe déjà comme prénom alias, marqué comme validé');
+              this.updateVisualFeedback(fieldType);
+              return;
+          }
+
           // Traitement du champ
           if (fieldType === 'death-source') {
               if (field.value && !field.value.includes('Insee')) {
@@ -464,109 +768,121 @@ const InseeTools = {
               }
               this.updateVisualFeedback(fieldType);
           } else if (fieldType.endsWith('-date')) {
-              // Pour les dates, on ne met à jour l'UI que si tous les champs sont remplis
+              // Pour les dates on doit manipuler les trois champs séparément (jour, mois, année)
               const eventNum = targetId.match(/\d+/)?.[0];
-              if (eventNum) {
-                  const prefix = targetId.split('_').slice(0, -1).join('_');
-                  const dateFields = {
-                      dd: document.getElementById(`${prefix}_dd`),
-                      mm: document.getElementById(`${prefix}_mm`),
-                      yyyy: document.getElementById(`${prefix}_yyyy`)
-                  };
+              if (!eventNum) {
+                  console.warn('Event number not found in targetId:', targetId);
+                  return;
+              }
 
-                  field.value = value;
+              // Construire les IDs corrects pour les champs de date
+              const basePrefix = `e_date${eventNum}`;
+              const dateFields = {
+                  dd: document.getElementById(`${basePrefix}_dd`),
+                  mm: document.getElementById(`${basePrefix}_mm`),
+                  yyyy: document.getElementById(`${basePrefix}_yyyy`)
+              };
 
-                  // Vérifier si la date est complète et correspond aux données INSEE
-                  const dateType = fieldType.startsWith('birth') ? 'birth' : 'death';
-                  const dateValues = {
-                      dd: this.inseeData[dateType].day,
-                      mm: this.inseeData[dateType].month,
-                      yyyy: this.inseeData[dateType].year
-                  };
+              // Vérifier que tous les champs existent
+              if (!dateFields.dd || !dateFields.mm || !dateFields.yyyy) {
+                  console.warn('Date fields not found:', dateFields);
+                  return;
+              }
 
-                  const isComplete = Object.values(dateFields).every(f => f && f.value);
-                  const isMatching = Object.entries(dateFields).every(([part, f]) =>
-                      f && f.value === dateValues[part]
-                  );
+              // Extraire les valeurs de date depuis l'objet INSEE
+              const dateType = fieldType.startsWith('birth') ? 'birth' : 'death';
+              const dateValues = {
+                  dd: this.inseeData[dateType].day,
+                  mm: this.inseeData[dateType].month,
+                  yyyy: this.inseeData[dateType].year
+              };
 
-                  if (isComplete && isMatching) {
-                      this.updateVisualFeedback(fieldType);
+              // Remplir chaque champ individuellement
+              let anyFieldUpdated = false;
+              Object.entries(dateFields).forEach(([part, field]) => {
+                  if (field && dateValues[part]) {
+                      const newValue = dateValues[part];
+                      if (field.value !== newValue) {
+                          field.value = newValue;
+                          anyFieldUpdated = true;
+                      }
                   }
+              });
+
+              // Mettre à jour la rétroaction visuelle si au moins un champ a été mis à jour
+              if (anyFieldUpdated) {
+                  this.updateVisualFeedback(fieldType);
               }
           } else {
+              console.log(`Capitalisation pour ${fieldType}:`, value, '→', this.handleNameCase(value, targetId));
               field.value = this.handleNameCase(value, targetId);
               this.updateVisualFeedback(fieldType);
-          }
 
-          this.checkAllValidated();
+              // Ajout du focus automatique pour le champ prénom
+              if (fieldType === 'firstname') {
+                  // Donner le focus au champ prénom
+                  field.focus();
+                  // Placer le curseur à la fin du texte
+                  field.selectionStart = field.selectionEnd = field.value.length;
+              }
+          }
       },
 
       updateVisualFeedback: function(fieldType) {
-          const fieldConfig = FIELD_IDS[fieldType];
-          if (fieldConfig) {
-              const line = document.getElementById(fieldConfig.displayId);
-              if (line) {
-                  // Update icon
-                  const icon = line.querySelector('.check-icon-container i');
-                  if (icon) {
-                      icon.className = 'fa fa-check mr-1 text-success';
-                  }
-                  // Update value selection
-                  const valueSpan = line.querySelector('.replacement-value');
-                  if (valueSpan) {
-                      valueSpan.classList.remove('user-select-all');
-                      valueSpan.classList.add('user-select-none');
-                      valueSpan.style.cursor = 'default';
-                      valueSpan.removeAttribute('title');
-                  }
-              }
-          }
-      },
+    const fieldConfig = FIELD_IDS[fieldType];
+    if (fieldConfig) {
+        const line = document.getElementById(fieldConfig.displayId);
+        if (line) {
+            // Update icon
+            const icon = line.querySelector('.check-icon-container i');
+            if (icon) {
+                icon.className = 'fa fa-check mr-1 text-success';
+            }
+            // Update value selection
+            const valueSpan = line.querySelector('.replacement-value');
+            if (valueSpan) {
+                valueSpan.classList.remove('user-select-all');
+                valueSpan.classList.add('user-select-none');
+                valueSpan.style.cursor = 'default';
+                valueSpan.removeAttribute('title');
+            }
+
+            window.setTimeout(() => this.checkAllValidated(), 50);
+        }
+    }
+},
 
       // Setup click handlers for data replacement
       setupDataReplacementHandlers: function() {
-          document.querySelectorAll('.replacement-value').forEach(span => {
-              span.addEventListener('click', (e) => {
-                  const fieldType = e.target.dataset.fieldType;
-                  const fieldConfig = FIELD_IDS[fieldType];
+    document.querySelectorAll('.replacement-value').forEach(span => {
+        span.addEventListener('click', (e) => {
+            const fieldType = e.target.dataset.fieldType;
 
-                  if (!fieldConfig) {
-                      console.warn('No field configuration for:', fieldType);
-                      return;
-                  }
-
-                  // Déterminer l'ID du champ cible
-                  let targetId;
-                  if (fieldConfig.inputId) {
-                      targetId = fieldConfig.inputId;
-                  } else if (fieldConfig.inputPrefix) {
-                      const eventFields = this.findEventFields(fieldType.split('-')[0], true);
-                      if (eventFields?.eventNum) {
-                          targetId = `${fieldConfig.inputPrefix}${eventFields.eventNum}`;
-                      }
-                  }
-
-                  if (!targetId) {
-                      console.warn('Could not determine target ID for:', fieldType);
-                      return;
-                  }
-
-                  const value = e.target.textContent;
-                  this.handleDataReplacement(targetId, value, fieldType);
-              });
-          });
-      },
+            // Traiter le champ avec la fonction centralisée
+            // Passer l'événement pour permettre l'affichage du tooltip
+            this.processField(fieldType, false, e);
+        });
+    });
+},
 
       checkAllValidated: function() {
+          // Récupérer toutes les icônes de validation (sauf celle du titre)
           const allLines = document.querySelectorAll('.data-line .check-icon-container i');
-          const allChecked = Array.from(allLines).slice(1).every(icon =>
+
+          // Ne pas inclure la première ligne (titre) dans la vérification
+          const fieldIcons = Array.from(allLines).slice(1);
+
+          // Vérifier si toutes les icônes de champ ont la classe fa-check
+          const allChecked = fieldIcons.every(icon =>
               icon.classList.contains('fa-check')
           );
 
+          // Si tous les champs sont validés, mettre à jour l'icône du titre
           if (allChecked) {
               const titleIcon = document.querySelector('.data-line:first-child .check-icon-container i');
               if (titleIcon && !titleIcon.classList.contains('fa-check')) {
                   titleIcon.className = 'fa fa-check fa-xl text-success';
+                  this.updateButtonStates('all');
               }
           }
       },
@@ -669,22 +985,68 @@ const InseeTools = {
       },
 
       createRawDataInfo: function(data) {
+          const birthPlaceBrutLine = data.birth.place_brut
+              ? `<div class="col-12">Lieu naissance Insee : <span class="user-select-all">${data.birth.place_brut}</span></div>`
+              : '';
+
           const displayDiv = document.createElement('div');
           displayDiv.className = 'insee-blacklist bg-light p-3 mb-2 border rounded';
 
+          const getResultSpan = (todoValue, resultValue, selectable = false) => {
+              const isSame = todoValue === resultValue && todoValue !== '';
+              const classes = [];
+
+              // N'appliquer user-select-all que si les valeurs sont différentes ET selectable=true
+              if (selectable && !isSame) classes.push('user-select-all text-success');
+              if (isSame) classes.push('text-muted');
+
+              const classAttr = classes.length ? `class="${classes.join(' ')}"` : '';
+              return `<span ${classAttr}>${resultValue || ''}</span>`;
+          };
+
           displayDiv.innerHTML = `
-              <div class="d-flex">
+              <h4 class="mb-3">
+                <span class="user-select-none">Données de référence </span>
+                <span class="user-select-all">${data.blacklist.gwkey}</span>
+                <span class="user-select-none"> – Score ${data.title.score}</span>
+              </h4>
+
+       <div class="d-flex flex-wrap text-monospace">
+            <div class="d-flex align-self-center mr-2 mr-lg-4">
+                <div class="pr-4">
+                    <span class="text-muted">${data.title.todo_fn || ''}</span><br>
+                    ${getResultSpan(data.title.todo_fn, data.title.result_fn, true)}
+                </div>
+                <div>
+                    <span class="text-muted">${data.title.todo_sn || ''}</span><br>
+                    ${getResultSpan(data.title.todo_sn, data.title.result_sn, true)}
+                </div>
+            </div>
+            <div class="flex-grow-1 d-lg-flex">
+              <div class="d-flex mb-2 mb-lg-0 mr-2 mr-lg-4">
+                  <div class="pr-2">
+                      <span class="text-muted">${data.title.todo_bd || ''}</span><br>
+                      ${getResultSpan(data.title.todo_bd, data.title.result_bd, false)}
+                  </div>
                   <div class="flex-grow-1">
-                      <h4 class="mb-3"><span class="user-select-none ">Données de référence : </span>${data.blacklist.gwkey}</h4>
-                      <div class="pl-2">
-                          <div class="col">${data.title.todonom}</div>
-                          <div class="col">${data.title.resultnom}</div>
-                          <div class="col">${data.title.todo}</div>
-                          <div class="col">${data.title.result}</div>
-                          <div class="col">(Codes Insee communes originaux ${data.title.resultori} — Score ${data.title.score})</div>
-                      </div>
+                      <span class="text-muted">${data.title.todo_bp || ''}</span><br>
+                      ${getResultSpan(data.title.todo_bp, data.title.result_bp, true)}
                   </div>
               </div>
+              <div class="d-flex">
+                  <div class="pr-2">
+                      <span class="text-muted">${data.title.todo_dd || ''}</span><br>
+                      ${getResultSpan(data.title.todo_dd, data.title.result_dd, false)}
+                  </div>
+                  <div class="flex-grow-1">
+                      <span class="text-muted">${data.title.todo_dp || ''}</span><br>
+                      ${getResultSpan(data.title.todo_dp, data.title.result_dp, true)}
+                  </div>
+              </div>
+          </div>
+        </div>
+              ${birthPlaceBrutLine}
+            </div>
           `;
 
           return displayDiv;
@@ -694,7 +1056,7 @@ const InseeTools = {
           const rawdataDiv = this.createRawDataInfo(data);
 
           const displayDiv = document.createElement('div');
-          displayDiv.className = 'insee-data bg-light p-3 mt-2 mb-3 border rounded';
+          displayDiv.className = 'insee-data bg-light p-3 my-2 border rounded';
 
           const header = `
               <div class="data-line">
