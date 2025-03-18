@@ -53,24 +53,18 @@ jobs:
       matrix:
         include:
           # v2 builds (legacy environments)
-          - os: windows-latest
-            ocaml-compiler: 4.08.1
-            setup-version: v2
-
-          - os: windows-latest
-            ocaml-compiler: 4.14.2
-            setup-version: v2
 
           # v3 builds (newer environments)
-          - os: windows-latest
-            ocaml-compiler: 4.08.1
-            setup-version: v3
 
           - os: windows-latest
-            ocaml-compiler: 4.14.2
+            ocaml-compiler: 5.3.0
             setup-version: v3
 
-          - os: windows-latest
+          - os: ubuntu-latest
+            ocaml-compiler: 5.3.0
+            setup-version: v3
+
+          - os: macOS-latest
             ocaml-compiler: 5.3.0
             setup-version: v3
 
@@ -122,8 +116,8 @@ jobs:
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
 
-      - name: Pin camlp5 master
-        run: opam pin add camlp5 https://github.com/camlp5/camlp5.git#master
+      - name: Pin camlp5 master/not-ocamlfind master
+        run: opam pin add camlp5 https://github.com/camlp5/camlp5.git#master && opam pin add not-ocamlfind https://github.com/chetmurthy/not-ocamlfind.git#master
 
       - name: Install Geneweb dependencies
         run: opam install . --deps-only ${{ env.FMT_CI == 'true' && '--with-test' || '' }}
