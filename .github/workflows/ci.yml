@@ -51,40 +51,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-24.04, macos-15, windows-latest]
+        ocaml-compiler: [4.14.2, 5.3.0]
+        setup-version: [v3]
         include:
-          # v2 builds (legacy environments)
           - os: ubuntu-22.04
             ocaml-compiler: 4.08.1
             setup-version: v2
-
           - os: macos-13
             ocaml-compiler: 4.08.1
             setup-version: v2
-
           - os: windows-latest
             ocaml-compiler: 4.08.1
             setup-version: v2
-
-          - os: windows-latest
-            ocaml-compiler: 4.14.2
-            setup-version: v2
-
-          # v3 builds (newer environments)
-          - os: ubuntu-24.04
-            ocaml-compiler: 4.14.2
-            setup-version: v3
-
-          - os: ubuntu-24.04
-            ocaml-compiler: 5.3.0
-            setup-version: v3
-
-          - os: macos-15
-            ocaml-compiler: 4.14.2
-            setup-version: v3
-
-          - os: macos-15
-            ocaml-compiler: 5.3.0
-            setup-version: v3
 
     outputs:
       total_matrix_jobs: ${{ strategy.job-total || 0 }}
@@ -127,12 +106,18 @@ jobs:
         uses: ocaml/setup-ocaml@v2
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
-
+          
       - name: Setup Ocaml with v3
         if: matrix.setup-version == 'v3'
         uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
+
+      - name: Pin camlp5 and not-ocamlfind without installing
+        if: matrix.setup-version == 'v3'
+        run: |
+          opam pin add --no-action camlp5 https://github.com/camlp5/camlp5.git
+          opam pin add --no-action not-ocamlfind https://github.com/chetmurthy/not-ocamlfind.git
 
       - name: Install Geneweb dependencies
         run: opam install . --deps-only ${{ env.FMT_CI == 'true' && '--with-test' || '' }}
