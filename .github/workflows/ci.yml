@@ -134,6 +134,63 @@ jobs:
       - name: Build Geneweb
         run: opam exec -- make ${{ env.FMT_CI == 'true' && 'fmt ci' || 'build' }} distrib
 
+      - name: Find Camlp5 source directory
+        if: always()
+        run: |
+          echo "=== OPAM SWITCH INFO ==="
+          opam config var root
+          opam config var switch
+          opam config var camlp5:source
+          echo "=== DIRECTORY STRUCTURE ==="
+          dir "D:\a\geneweb\geneweb\_opam" /b /a
+          if exist "D:\a\geneweb\geneweb\_opam\.opam-switch" (
+            dir "D:\a\geneweb\geneweb\_opam\.opam-switch" /b /a
+          ) else (
+            echo ".opam-switch directory not found"
+          )
+          echo "Searching for camlp5 sources..."
+          where /r "D:\a\geneweb\geneweb\_opam" camlp5.opam
+        shell: cmd
+        continue-on-error: true
+
+      - name: List Camlp5 config directory
+        if: always()
+        run: |
+          echo "=== CAMLP5 CONFIG DIRECTORY LISTING ==="
+          dir "D:\a\geneweb\geneweb\_opam\.opam-switch\sources\camlp5\config" /b /a
+          echo "====================================="
+        shell: cmd
+        continue-on-error: true
+
+      - name: Display contents of Camlp5 config files
+        if: always()
+        run: |
+          echo "=== CONTENTS OF CAMLP5 CONFIG FILES ==="
+          for /f "tokens=*" %%f in ('dir "D:\a\geneweb\geneweb\_opam\.opam-switch\sources\camlp5\config" /b /a') do (
+            echo "--- FILE: %%f ---"
+            type "D:\a\geneweb\geneweb\_opam\.opam-switch\sources\camlp5\config\%%f"
+            echo ""
+          )
+          echo "====================================="
+        shell: cmd
+        continue-on-error: true
+
+      - name: Archive Camlp5 config directory
+        if: always()
+        run: |
+          mkdir -p camlp5-config
+          xcopy /E /I /H /Y "D:\a\geneweb\geneweb\_opam\.opam-switch\sources\camlp5\config" "camlp5-config\"
+        shell: cmd
+        continue-on-error: true
+
+      - name: Upload Camlp5 config directory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: camlp5-config
+          path: camlp5-config/
+          retention-days: 3
+
       - name: Capture Camlp5 META file
         if: always()
         run: |
