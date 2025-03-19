@@ -11,26 +11,36 @@
   1. Direct code that runs immediately
   2. Code that waits for page load using runAfterPageLoad()
 %)
-%if;((e.m="MOD_IND" and e.key!="") or (e.m="NOTES" and "RESULT" in e.f) or (e.m="S" and e.edit=1))
+%if;(("MOD_IND" in e.m) or (e.m="NOTES" and "RESULT" in e.f) or (e.m="S" and e.edit=1))
     // Load the InseeTools script and initialize the appropriate module
     runAfterPageLoad(() => {
-        // Create and load the script
-        const script = document.createElement('script');
-        script.src = "%etc_prefix;js/inseert.js?" + Date.now();
-        
-        // Set up the onload handler
-        script.onload = () => {
-            // Initialize the appropriate module based on the current page
-            if (window.location.href.includes('f=RESULT')) {
-                InseeTools.results.init();
-            } else if (window.location.href.includes('edit=1')) {
-                InseeTools.individual.init();
-            } else if (window.location.href.includes('m=MOD_IND')) {
-                InseeTools.form.init();
-            }
-        };
-        
-        // Add the script to the document
-        document.body.appendChild(script);
+          const shouldLoadInseeTools = (() => {
+              if (window.location.href.includes('f=RESULT') || 
+                  window.location.href.includes('edit=1')) {
+                  return true;
+              }
+              if (document.querySelector('form[id="updind"]')) {
+                  const selfElement = document.querySelector('#self[data-key]');
+                  const key = selfElement?.getAttribute('data-key') || '';
+                  const data = localStorage.getItem(key);
+                  return data !== null;
+              }
+              return false;
+          })();
+          if (shouldLoadInseeTools) {
+              const script = document.createElement('script');
+              script.src = "%etc_prefix;js/inseert.js?" + Date.now();
+              script.onload = () => {
+                  // Initialize the appropriate module based on the current page
+                  if (window.location.href.includes('f=RESULT')) {
+                      InseeTools.results.init();
+                  } else if (window.location.href.includes('edit=1')) {
+                      InseeTools.individual.init();
+                  } else if (document.querySelector('form[id="updind"]')) {
+                      InseeTools.form.init();
+                  }
+              };
+              document.body.appendChild(script);
+          }
     });
 %end;

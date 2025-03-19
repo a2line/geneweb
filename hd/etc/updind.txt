@@ -711,7 +711,7 @@
   %apply;insert_witness(xcnt, "0", "evt_name")
 %end;
 %let;l_on1s;onkeydown="if (event.keyCode == 13) if (!event.shiftKey) javascript:document.upd.submit()"%in;
-<form name="upd" method="post" action="%action;">
+<form name="upd" id="updind" method="post" action="%action;">
   <div class="row">
     %apply;nav()
   </div>

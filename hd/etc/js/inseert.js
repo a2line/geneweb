@@ -275,13 +275,7 @@ const InseeTools = {
       init: function() {
           const modLink = document.querySelector('#mod_ind');
           if (modLink) {
-              const urlParams = new URLSearchParams(window.location.search);
-              const personKey = urlParams.get('pn');
-              if (personKey) {
-                  const baseHref = modLink.getAttribute('href');
-                  const newHref = baseHref + '&key=' + encodeURIComponent(personKey);
-                  window.location.href = newHref;
-              }
+              window.location.href = modLink.getAttribute('href');
           }
       }
   },
@@ -289,15 +283,29 @@ const InseeTools = {
   // Form page handler - displays stored INSEE data and enables corrections
   form: {
       init: function() {
-          const urlParams = new URLSearchParams(window.location.search);
-          const key = urlParams.get('key');
-          const inseeData = InseeTools.storage.load(key);
-
-          if (key && inseeData) {
-            console.log('Loaded data:', inseeData); // Debug
-            this.createDataDisplay(inseeData);
-            this.setupFieldFilling(inseeData);
+          const selfElement = document.querySelector('#self[data-key]');
+          if (!selfElement) {
+              console.log('No #self element with data-key found');
+              return;
           }
+          
+          const key = selfElement.getAttribute('data-key');
+          if (!key) {
+              console.log('Empty data-key attribute');
+              return;
+          }
+          
+          // Check if this key exists in localStorage
+          const inseeData = InseeTools.storage.load(key);
+          if (!inseeData) {
+              console.log('No data found in storage for key:', key);
+              return;
+          }
+          
+          // If we got here, we have valid data to display
+          console.log('Loaded data for:', key);
+          this.createDataDisplay(inseeData);
+          this.setupFieldFilling(inseeData);
       },
 
       // Fonction de vérification pour les prénoms alias

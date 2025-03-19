@@ -140,7 +140,7 @@
           %end;
           %( SELF button %)
           <li class="nav-item">
-            <a class="nav-link %if;(e.m="")active bg-light%end;" id="self"
+            <a class="nav-link %if;(e.m="")active bg-light%end;" id="self" data-index="%self.index;" data-key="%first_name;.%occ; %surname;%(%key;%)"
               href="%prefix;%access;" title="%first_name;%if;(occ!=0).%occ%end; %surname;">%nn;
               <span class="fa fa-user-large fa-fw %sexcolor;" aria-hidden="true"></span>
               <span class="sr-only">%first_name;%if;(occ!=0).%occ%end; %surname;</span></a>
