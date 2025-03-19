@@ -116,8 +116,10 @@ jobs:
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
 
-      - name: Pin camlp5 master/not-ocamlfind master
-        run: opam pin add camlp5 https://github.com/camlp5/camlp5.git#master && opam pin add not-ocamlfind https://github.com/chetmurthy/not-ocamlfind.git#master
+      - name: Pin camlp5 and not-ocamlfind without installing
+        run: |
+          opam pin add --no-action camlp5 https://github.com/camlp5/camlp5.git#master
+          opam pin add --no-action not-ocamlfind https://github.com/chetmurthy/not-ocamlfind.git#master
 
       - name: Install Geneweb dependencies
         run: opam install . --deps-only ${{ env.FMT_CI == 'true' && '--with-test' || '' }}
