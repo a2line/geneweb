@@ -57,16 +57,8 @@ jobs:
           # v3 builds (newer environments)
 
           - os: windows-latest
-            ocaml-compiler: 5.3.0
-            setup-version: v3
-
-          - os: ubuntu-latest
-            ocaml-compiler: 5.3.0
-            setup-version: v3
-
-          - os: macOS-latest
-            ocaml-compiler: 5.3.0
-            setup-version: v3
+            ocaml-compiler: 4.14.2
+            setup-version: v2
 
     outputs:
       total_matrix_jobs: ${{ strategy.job-total || 0 }}
@@ -116,11 +108,6 @@ jobs:
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
 
-      - name: Pin camlp5 and not-ocamlfind without installing
-        run: |
-          opam pin add --no-action camlp5 https://github.com/camlp5/camlp5.git#master
-          opam pin add --no-action not-ocamlfind https://github.com/chetmurthy/not-ocamlfind.git#master
-
       - name: Install Geneweb dependencies
         run: opam install . --deps-only ${{ env.FMT_CI == 'true' && '--with-test' || '' }}
 
@@ -141,12 +128,12 @@ jobs:
           echo                     CAMLP5 CONFIG FILES
           echo ===============================================================
 
-          if exist "D:\a\geneweb\geneweb\_opam\.opam-switch\build\camlp5.8.03.02\config" (
-            for /f "tokens=*" %%f in ('dir "D:\a\geneweb\geneweb\_opam\.opam-switch\build\camlp5.8.03.02\config" /b /a') do (
+          if exist "D:\a\geneweb\geneweb\_opam\.opam-switch\build\camlp5.8.00.03\config" (
+            for /f "tokens=*" %%f in ('dir "D:\a\geneweb\geneweb\_opam\.opam-switch\build\camlp5.8.00.03\config" /b /a') do (
               echo ==================================================================
               echo   FILE: %%f
               echo ==================================================================
-              type "D:\a\geneweb\geneweb\_opam\.opam-switch\build\camlp5.8.03.02\config\%%f"
+              type "D:\a\geneweb\geneweb\_opam\.opam-switch\build\camlp5.8.00.03\config\%%f"
               echo.
             )
           ) else (
