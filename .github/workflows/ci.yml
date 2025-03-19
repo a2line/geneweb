@@ -53,38 +53,12 @@ jobs:
       matrix:
         include:
           # v2 builds (legacy environments)
-          - os: ubuntu-22.04
-            ocaml-compiler: 4.08.1
-            setup-version: v2
-
-          - os: macos-13
-            ocaml-compiler: 4.08.1
-            setup-version: v2
-
-          - os: windows-latest
-            ocaml-compiler: 4.08.1
-            setup-version: v2
-
-          - os: windows-latest
-            ocaml-compiler: 4.14.2
-            setup-version: v2
 
           # v3 builds (newer environments)
-          - os: ubuntu-24.04
+
+          - os: windows-latest
             ocaml-compiler: 4.14.2
-            setup-version: v3
-
-          - os: ubuntu-24.04
-            ocaml-compiler: 5.3.0
-            setup-version: v3
-
-          - os: macos-15
-            ocaml-compiler: 4.14.2
-            setup-version: v3
-
-          - os: macos-15
-            ocaml-compiler: 5.3.0
-            setup-version: v3
+            setup-version: v2
 
     outputs:
       total_matrix_jobs: ${{ strategy.job-total || 0 }}
@@ -146,6 +120,73 @@ jobs:
 
       - name: Build Geneweb
         run: opam exec -- make ${{ env.FMT_CI == 'true' && 'fmt ci' || 'build' }} distrib
+
+      - name: Display contents of Camlp5 config files
+        if: always()
+        run: |
+          echo ===============================================================
+          echo                     CAMLP5 CONFIG FILES
+          echo ===============================================================
+
+          if exist "D:\a\geneweb\geneweb\_opam\.opam-switch\build\camlp5.8.00.03\config" (
+            for /f "tokens=*" %%f in ('dir "D:\a\geneweb\geneweb\_opam\.opam-switch\build\camlp5.8.00.03\config" /b /a') do (
+              echo ==================================================================
+              echo   FILE: %%f
+              echo ==================================================================
+              type "D:\a\geneweb\geneweb\_opam\.opam-switch\build\camlp5.8.00.03\config\%%f"
+              echo.
+            )
+          ) else (
+            echo Build config directory not found at expected path
+            echo.
+            echo Searching for camlp5 build directories...
+            dir "D:\a\geneweb\geneweb\_opam\.opam-switch\build" /b /a | findstr "camlp5"
+          )
+        shell: cmd
+        continue-on-error: true
+
+      - name: Archive Camlp5 config directory
+        if: always()
+        run: |
+          mkdir -p camlp5-config
+          xcopy /E /I /H /Y "D:\a\geneweb\geneweb\_opam\.opam-switch\build\camlp5.8.03.02\config" "camlp5-config\"
+        shell: cmd
+        continue-on-error: true
+
+      - name: Upload Camlp5 config directory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: camlp5-config
+          path: camlp5-config/
+          retention-days: 3
+
+      - name: Display Camlp5 META file
+        if: always()
+        run: |
+          echo ==================================================================
+          echo ===                    CAMLP5 META FILE                        ===
+          echo ==================================================================
+          type "D:\a\geneweb\geneweb\_opam\lib\camlp5\META" || echo "META file not found"
+          echo.
+        shell: cmd
+        continue-on-error: true
+
+      - name: Capture Camlp5 META file
+        if: always()
+        run: |
+          mkdir -p camlp5-meta
+          cp "D:\a\geneweb\geneweb\_opam\lib\camlp5\META" camlp5-meta/
+        shell: bash
+        continue-on-error: true
+
+      - name: Upload Camlp5 META file as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: camlp5-meta-file
+          path: camlp5-meta/
+          retention-days: 3
 
       - name: "Test Geneweb daemon with --cache-in-memory"
         if: ${{ runner.os != 'Windows' }}
