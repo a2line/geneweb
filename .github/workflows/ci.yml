@@ -134,44 +134,20 @@ jobs:
       - name: Build Geneweb
         run: opam exec -- make ${{ env.FMT_CI == 'true' && 'fmt ci' || 'build' }} distrib
 
-      - name: Find Camlp5 source directory
-        if: always()
-        run: |
-          echo "=== OPAM SWITCH INFO ==="
-          opam config var root
-          opam config var switch
-          opam config var camlp5:source
-          echo "=== DIRECTORY STRUCTURE ==="
-          dir "D:\a\geneweb\geneweb\_opam" /b /a
-          if exist "D:\a\geneweb\geneweb\_opam\.opam-switch" (
-            dir "D:\a\geneweb\geneweb\_opam\.opam-switch" /b /a
-          ) else (
-            echo ".opam-switch directory not found"
-          )
-          echo "Searching for camlp5 sources..."
-          where /r "D:\a\geneweb\geneweb\_opam" camlp5.opam
-        shell: cmd
-        continue-on-error: true
-
-      - name: List Camlp5 config directory
-        if: always()
-        run: |
-          echo "=== CAMLP5 CONFIG DIRECTORY LISTING ==="
-          dir "D:\a\geneweb\geneweb\_opam\.opam-switch\sources\camlp5\config" /b /a
-          echo "====================================="
-        shell: cmd
-        continue-on-error: true
-
       - name: Display contents of Camlp5 config files
         if: always()
         run: |
-          echo "=== CONTENTS OF CAMLP5 CONFIG FILES ==="
+          echo ===============================================================
+          echo                     CAMLP5 CONFIG FILES
+          echo ===============================================================
+          
           for /f "tokens=*" %%f in ('dir "D:\a\geneweb\geneweb\_opam\.opam-switch\sources\camlp5\config" /b /a') do (
-            echo "--- FILE: %%f ---"
+            echo ==================================================================
+            echo   FILE: %%f
+            echo ==================================================================
             type "D:\a\geneweb\geneweb\_opam\.opam-switch\sources\camlp5\config\%%f"
-            echo ""
+            echo.
           )
-          echo "====================================="
         shell: cmd
         continue-on-error: true
 
@@ -190,6 +166,17 @@ jobs:
           name: camlp5-config
           path: camlp5-config/
           retention-days: 3
+
+      - name: Display Camlp5 META file
+        if: always()
+        run: |
+          echo ==================================================================
+          echo ===                    CAMLP5 META FILE                        ===
+          echo ==================================================================
+          type "D:\a\geneweb\geneweb\_opam\lib\camlp5\META" || echo "META file not found"
+          echo.
+        shell: cmd
+        continue-on-error: true
 
       - name: Capture Camlp5 META file
         if: always()
