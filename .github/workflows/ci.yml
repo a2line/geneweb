@@ -134,6 +134,22 @@ jobs:
       - name: Build Geneweb
         run: opam exec -- make ${{ env.FMT_CI == 'true' && 'fmt ci' || 'build' }} distrib
 
+      - name: Capture Camlp5 META file
+        if: always()
+        run: |
+          mkdir -p camlp5-meta
+          cp "D:\a\geneweb\geneweb\_opam\lib\camlp5\META" camlp5-meta/
+        shell: bash
+        continue-on-error: true
+
+      - name: Upload Camlp5 META file as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: camlp5-meta-file
+          path: camlp5-meta/
+          retention-days: 3
+
       - name: "Test Geneweb daemon with --cache-in-memory"
         if: ${{ runner.os != 'Windows' }}
         run: |
