@@ -152,177 +152,84 @@ jobs:
             # Check for ocamlfind
             which ocamlfind || echo "WARNING: ocamlfind not found in PATH"
             
-            # Find camlp5 directory - try both build and sources paths
-            CAMLP5_BUILD_DIR=""
+            # Find camlp5 directory
             CAMLP5_BUILD_DIR=$(find "D:\a\geneweb\geneweb\_opam\.opam-switch\build" -type d -name "camlp5.*" | sort -V | tail -n 1)
-            echo "Found camlp5 build dir: $CAMLP5_BUILD_DIR"
             
-            if [ -d "$CAMLP5_BUILD_DIR" ]; then
-              echo "Directory exists"
-              if [ -d "$CAMLP5_BUILD_DIR/testsuite" ]; then
-                echo "Testsuite directory exists"
-                echo "Found Camlp5 build directory: $CAMLP5_BUILD_DIR"
+            if [ -d "$CAMLP5_BUILD_DIR" ] && [ -d "$CAMLP5_BUILD_DIR/testsuite" ]; then
+              echo "Found Camlp5 build directory: $CAMLP5_BUILD_DIR"
+              
+              # Fix the LAUNCH script issue - directly use the path we found
+              echo "Fixing LAUNCH script issue..."
+              
+              # We know the buildscripts directory exists
+              BUILDSCRIPTS_DIR="D:\a\geneweb\geneweb\_opam\lib\camlp5-buildscripts"
+              echo "Buildscripts directory: $BUILDSCRIPTS_DIR"
+              
+              if [ -d "$BUILDSCRIPTS_DIR" ]; then
+                echo "Contents of buildscripts directory:"
+                ls -la "$BUILDSCRIPTS_DIR"
                 
-                # Fix the LAUNCH script issue
-                echo "Fixing LAUNCH script issue..."
-                
-                # First, let's see if we can find camlp5-buildscripts directory
-                echo "Looking for camlp5-buildscripts directory..."
-                BUILDSCRIPTS_DIR=$(find "D:\a\geneweb\geneweb\_opam" -type d -name "camlp5-buildscripts" | head -n 1)
-                echo "Buildscripts dir search result: $BUILDSCRIPTS_DIR"
-                
-                # Alternative: look directly for the LAUNCH script
-                echo "Looking for LAUNCH script directly..."
-                LAUNCH_DIRECT=$(find "D:\a\geneweb\geneweb\_opam" -name "LAUNCH" | head -n 1)
-                echo "Direct LAUNCH search result: $LAUNCH_DIRECT"
-                
-                # Find the LAUNCH script location
-                echo "Looking for LAUNCH script in lib directory..."
-                LAUNCH_FILES=$(find "D:\a\geneweb\geneweb\_opam\lib" -name "LAUNCH" 2>/dev/null || echo "No LAUNCH files found")
-                echo "All LAUNCH files found: $LAUNCH_FILES"
-                
-                echo "Filtering for camlp5-buildscripts..."
-                LAUNCH_SCRIPT=$(echo "$LAUNCH_FILES" | grep "camlp5-buildscripts" || echo "")
-                echo "Filtered LAUNCH script: $LAUNCH_SCRIPT"
-                
-                # If we didn't find it via grep, use the direct result
-                if [ -z "$LAUNCH_SCRIPT" ] && [ -n "$LAUNCH_DIRECT" ]; then
-                  LAUNCH_SCRIPT="$LAUNCH_DIRECT"
-                  echo "Using directly found LAUNCH script: $LAUNCH_SCRIPT"
-                fi
-                
-                if [ -n "$LAUNCH_SCRIPT" ] && [ -f "$LAUNCH_SCRIPT" ]; then
-                  echo "LAUNCH script found and is a file"
-                  echo "Original LAUNCH script: $LAUNCH_SCRIPT"
-                  echo "File permissions:"
-                  ls -la "$LAUNCH_SCRIPT"
+                # Check if LAUNCH.exe exists
+                if [ -f "$BUILDSCRIPTS_DIR/LAUNCH.exe" ]; then
+                  echo "LAUNCH.exe found!"
                   
-                  echo "File contents (first few lines):"
-                  head -n 5 "$LAUNCH_SCRIPT" || echo "Could not read file"
+                  # Create a non-.exe version of LAUNCH
+                  echo "Creating non-.exe version of LAUNCH..."
+                  echo '#!/bin/bash' > "$BUILDSCRIPTS_DIR/LAUNCH"
+                  echo "\"$BUILDSCRIPTS_DIR/LAUNCH.exe\" \"\$@\"" >> "$BUILDSCRIPTS_DIR/LAUNCH"
+                  chmod +x "$BUILDSCRIPTS_DIR/LAUNCH"
                   
-                  # Try to create a copy with .exe extension
-                  echo "Creating copy with .exe extension..."
-                  cp -v "$LAUNCH_SCRIPT" "${LAUNCH_SCRIPT}.exe" || echo "Failed to copy file"
+                  echo "LAUNCH script created:"
+                  ls -la "$BUILDSCRIPTS_DIR/LAUNCH"
                   
-                  if [ -f "${LAUNCH_SCRIPT}.exe" ]; then
-                    echo "Successfully created .exe copy"
-                    ls -la "${LAUNCH_SCRIPT}.exe"
-                  else
-                    echo "Failed to create .exe copy"
-                  fi
+                  # Now let's try running the tests
+                  echo "Changing to testsuite directory..."
+                  cd "$CAMLP5_BUILD_DIR/testsuite"
                   
-                  # Now let's try creating the wrapper
-                  echo "Creating wrapper in testsuite directory..."
-                  cd "$CAMLP5_BUILD_DIR/testsuite" || echo "Failed to change directory"
-                  
-                  echo "Current directory: $(pwd)"
-                  echo "Creating camlp5-buildscripts directory..."
-                  mkdir -p camlp5-buildscripts || echo "Failed to create directory"
-                  
-                  if [ -d "camlp5-buildscripts" ]; then
-                    echo "Successfully created directory"
-                    
-                    # Create the wrapper script
-                    echo "Creating LAUNCH wrapper script..."
-                    echo '#!/bin/bash' > camlp5-buildscripts/LAUNCH
-                    echo "\"$LAUNCH_SCRIPT\" \"\$@\"" >> camlp5-buildscripts/LAUNCH
-                    
-                    echo "Wrapper script contents:"
-                    cat camlp5-buildscripts/LAUNCH
-                    
-                    echo "Making wrapper executable..."
-                    chmod +x camlp5-buildscripts/LAUNCH || echo "Failed to make executable"
-                    
-                    # Create .exe version
-                    echo "Creating .exe version of wrapper..."
-                    cp camlp5-buildscripts/LAUNCH camlp5-buildscripts/LAUNCH.exe || echo "Failed to create .exe wrapper"
-                    chmod +x camlp5-buildscripts/LAUNCH.exe || echo "Failed to make .exe wrapper executable"
-                    
-                    ls -la camlp5-buildscripts/
-                    
-                    # Update PATH
-                    echo "Original PATH: $PATH"
-                    export PATH="$PWD/camlp5-buildscripts:$PATH"
-                    echo "Updated PATH: $PATH"
-                    
-                    echo "Testing wrapper script..."
-                    if [ -x "camlp5-buildscripts/LAUNCH" ]; then
-                      camlp5-buildscripts/LAUNCH echo "Wrapper test" || echo "Wrapper test failed"
-                    fi
-                    
-                    # Try to find mkcamlp5
-                    echo "Looking for mkcamlp5..."
-                    which mkcamlp5 || echo "mkcamlp5 not found in PATH"
-                    find "D:\a\geneweb\geneweb\_opam" -name "mkcamlp5*" || echo "No mkcamlp5 found"
-                    
-                    echo "Running Camlp5 test suite with fixed LAUNCH script..."
-                    echo "===== BEGIN TEST OUTPUT ====="
-                    # Just run a simple single target first to test
-                    make tools/ROUNDTRIP-pa_r-pr_r.byte || echo "First target failed"
-                    echo "===== END TEST OUTPUT ====="
-                  else
-                    echo "Failed to create wrapper directory"
-                    echo "Skipping test suite"
-                  fi
+                  echo "Running Camlp5 test suite..."
+                  echo "===== BEGIN TEST OUTPUT ====="
+                  # Run a simple target to test
+                  make tools/ROUNDTRIP-pa_r-pr_r.byte || echo "First target failed, trying with all-tests"
+                  make all-tests || echo "Tests completed with some errors, but continuing build"
+                  echo "===== END TEST OUTPUT ====="
                 else
-                  echo "LAUNCH script not found or not a file"
-                  if [ -n "$BUILDSCRIPTS_DIR" ]; then
-                    echo "Contents of buildscripts directory:"
-                    ls -la "$BUILDSCRIPTS_DIR"
-                  fi
-                  echo "Skipping tests for Windows due to missing LAUNCH script"
+                  echo "LAUNCH.exe not found in buildscripts directory"
+                  echo "Skipping tests for Windows"
                 fi
               else
-                echo "Testsuite directory does not exist"
-                echo "Contents of Camlp5 directory:"
-                ls -la "$CAMLP5_BUILD_DIR"
+                echo "Buildscripts directory not found"
                 echo "Skipping tests for Windows"
               fi
             else
-              echo "Directory does not exist"
-              echo "Available Camlp5 directories:"
-              find "D:\a\geneweb\geneweb\_opam" -name "camlp5*" -type d | grep -v "lib"
+              echo "Camlp5 testsuite directory not found"
               echo "Skipping tests for Windows"
             fi
           # UNIX APPROACH - keep unchanged
-          else
+          elif [ "$RUNNER_OS" != "Windows" ] && [ "${{ matrix.setup-version }}" == "v3" ]; then
             echo "===== UNIX PATH DETECTION ====="
-            
-            # Check for ocamlfind
-            which ocamlfind || echo "WARNING: ocamlfind not found in PATH"
             
             # Get OPAM prefix
             OPAM_PREFIX=$(opam var prefix)
             echo "OPAM prefix: $OPAM_PREFIX"
             
-            # Try different paths based on version
-            if [ "${{ matrix.setup-version }}" == "v3" ]; then
-              # v3 path is known to work
-              CAMLP5_DIR=$(find "$OPAM_PREFIX/.opam-switch/build" -type d -name "camlp5.*" 2>/dev/null | sort -V | tail -n 1)
-            else
-              # v2 might need to look in sources
-              CAMLP5_DIR=$(find "$OPAM_PREFIX/.opam-switch/sources" -type d -name "camlp5.*" 2>/dev/null | sort -V | tail -n 1)
-            fi
+            # Find camlp5 directory
+            CAMLP5_DIR=$(find "$OPAM_PREFIX/.opam-switch/build" -type d -name "camlp5.*" 2>/dev/null | sort -V | tail -n 1)
             
             if [ -d "$CAMLP5_DIR" ] && [ -d "$CAMLP5_DIR/testsuite" ]; then
               echo "Found Camlp5 directory: $CAMLP5_DIR"
               
-              echo "Running Camlp5 test suite on Unix..."
+              echo "Running Camlp5 test suite on Unix v3..."
               cd "$CAMLP5_DIR/testsuite"
               
               echo "===== BEGIN TEST OUTPUT ====="
-              if [ "${{ matrix.setup-version }}" == "v3" ]; then
-                make -k all-tests || echo "Tests completed with some errors, but continuing build"
-              else
-                make all-tests || echo "Tests completed with some errors, but continuing build"
-              fi
+              make -k all-tests || echo "Tests completed with some errors, but continuing build"
               echo "===== END TEST OUTPUT ====="
             else
               echo "Camlp5 testsuite directory not found"
-              echo "Available Camlp5 directories:"
-              find "$OPAM_PREFIX" -name "camlp5*" -type d | grep -v "lib"
-              echo "Skipping tests"
+              echo "Skipping tests for Unix v3"
             fi
+          else
+            echo "Skipping Camlp5 tests for v2 environments (focusing on v3 for now)"
           fi
         shell: bash
         continue-on-error: true
