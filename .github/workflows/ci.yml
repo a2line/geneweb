@@ -118,6 +118,7 @@ jobs:
         run: |
           opam pin add --no-action camlp5 https://github.com/camlp5/camlp5.git
           opam pin add --no-action not-ocamlfind https://github.com/chetmurthy/not-ocamlfind.git
+          opam install pcre2
 
       - name: Install Geneweb dependencies
         run: opam install . --deps-only ${{ env.FMT_CI == 'true' && '--with-test' || '' }}
@@ -215,7 +216,7 @@ jobs:
                 fi
                 
                 echo "===== BEGIN TEST OUTPUT ====="
-                make -k all-tests || echo "Tests completed with some errors, but continuing build"
+                make all-tests || echo "Tests completed with some errors, but continuing build"
                 echo "===== END TEST OUTPUT ====="
               else
                 echo "Testsuite subdirectory exists: NO"
@@ -300,7 +301,7 @@ jobs:
                 fi
                 
                 echo "===== BEGIN TEST OUTPUT ====="
-                make -k all-tests || echo "Tests completed with some errors, but continuing build"
+                make all-tests || echo "Tests completed with some errors, but continuing build"
                 echo "===== END TEST OUTPUT ====="
               else
                 echo "Testsuite subdirectory exists: NO"
