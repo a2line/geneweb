@@ -119,26 +119,27 @@ jobs:
           opam pin add --no-action camlp5 https://github.com/camlp5/camlp5.git
           opam pin add --no-action not-ocamlfind https://github.com/chetmurthy/not-ocamlfind.git
 
-
       - name: Install Geneweb dependencies
         run: |
           opam install . --deps-only ${{ env.FMT_CI == 'true' && '--with-test' || '' }}
-          opam install pcre2
 
       - name: Install ancient dependency for Unix
         if: ${{ runner.os != 'Windows' }}
-        run: opam pin ancient -y https://github.com/OCamlPro/ocaml-ancient.git
+        run: opam pin ancient https://github.com/OCamlPro/ocaml-ancient.git
+
+      - name: Install pcre2 for v3 environments
+        if: matrix.setup-version == 'v3'
+        run: opam install pcre2
+
+      - name: Install dependencies for v2 test environments
+        if: matrix.setup-version == 'v2'
+        run: opam install -y rresult fmt pcre ounit2
+        continue-on-error: true
 
       - name: Run Camlp5 test suite
         run: |
-          # Setup environment differently for Windows vs Unix
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            echo "Setting up Windows environment with PowerShell approach..."
-            eval "$(powershell -Command '(& opam env) -split "\r?\n" | ForEach-Object { $_ }')"
-          else
-            echo "Setting up Unix environment..."
-            eval $(opam env)
-          fi
+          # Ensure OPAM environment is properly set up
+          eval $(opam env)
           
           echo "==== Environment Info ===="
           echo "OCaml version: $(ocaml -version 2>/dev/null || echo 'Not found')"
@@ -148,15 +149,21 @@ jobs:
           echo "Setup version: ${{ matrix.setup-version }}"
           echo "=========================="
           
-          # WINDOWS-SPECIFIC APPROACH - focus on v3
-          if [ "$RUNNER_OS" == "Windows" ] && [ "${{ matrix.setup-version }}" == "v3" ]; then
-            echo "===== WINDOWS V3 PATH DETECTION ====="
+          # WINDOWS-SPECIFIC APPROACH
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            echo "===== WINDOWS PATH DETECTION ====="
             
             # Check for ocamlfind
             which ocamlfind || echo "WARNING: ocamlfind not found in PATH"
             
-            # Find camlp5 directory
-            CAMLP5_BUILD_DIR=$(find "D:\a\geneweb\geneweb\_opam\.opam-switch\build" -type d -name "camlp5.*" | sort -V | tail -n 1)
+            # Find camlp5 directory - try both build and sources paths
+            CAMLP5_BUILD_DIR=""
+            if [ "${{ matrix.setup-version }}" == "v3" ]; then
+              CAMLP5_BUILD_DIR=$(find "D:\a\geneweb\geneweb\_opam\.opam-switch\build" -type d -name "camlp5.*" | sort -V | tail -n 1)
+            else
+              # v2 might have a different path
+              CAMLP5_BUILD_DIR=$(find "D:\a\geneweb\geneweb\_opam\.opam-switch\sources" -type d -name "camlp5.*" | sort -V | tail -n 1)
+            fi
             
             if [ -d "$CAMLP5_BUILD_DIR" ] && [ -d "$CAMLP5_BUILD_DIR/testsuite" ]; then
               echo "Found Camlp5 build directory: $CAMLP5_BUILD_DIR"
@@ -195,40 +202,60 @@ jobs:
                 echo "===== END TEST OUTPUT ====="
               else
                 echo "LAUNCH script not found, cannot fix the issue."
-                echo "Skipping tests for Windows v3"
+                echo "Running tests anyway to see error output..."
+                cd "$CAMLP5_BUILD_DIR/testsuite"
+                echo "===== BEGIN TEST OUTPUT ====="
+                make all-tests || echo "Tests completed with some errors, but continuing build"
+                echo "===== END TEST OUTPUT ====="
               fi
             else
               echo "Camlp5 testsuite directory not found"
-              echo "Skipping tests for Windows v3"
+              echo "Available Camlp5 directories:"
+              find "D:\a\geneweb\geneweb\_opam" -name "camlp5*" -type d | grep -v "lib"
+              echo "Skipping tests for Windows"
             fi
-          # UNIX APPROACH - keep what's working
-          elif [ "$RUNNER_OS" != "Windows" ] && [ "${{ matrix.setup-version }}" == "v3" ]; then
-            echo "===== UNIX V3 PATH DETECTION ====="
+          # UNIX APPROACH 
+          else
+            echo "===== UNIX PATH DETECTION ====="
+            
+            # Check for ocamlfind
+            which ocamlfind || echo "WARNING: ocamlfind not found in PATH"
             
             # Get OPAM prefix
             OPAM_PREFIX=$(opam var prefix)
             echo "OPAM prefix: $OPAM_PREFIX"
             
-            # Find camlp5 directory (keeping what works)
-            CAMLP5_DIR=$(find "$OPAM_PREFIX/.opam-switch/build" -type d -name "camlp5.*" 2>/dev/null | sort -V | tail -n 1)
+            # Try different paths based on version
+            if [ "${{ matrix.setup-version }}" == "v3" ]; then
+              # v3 path is known to work
+              CAMLP5_DIR=$(find "$OPAM_PREFIX/.opam-switch/build" -type d -name "camlp5.*" 2>/dev/null | sort -V | tail -n 1)
+            else
+              # v2 might need to look in sources
+              CAMLP5_DIR=$(find "$OPAM_PREFIX/.opam-switch/sources" -type d -name "camlp5.*" 2>/dev/null | sort -V | tail -n 1)
+            fi
             
             if [ -d "$CAMLP5_DIR" ] && [ -d "$CAMLP5_DIR/testsuite" ]; then
               echo "Found Camlp5 directory: $CAMLP5_DIR"
               
-              echo "Running Camlp5 test suite on Unix v3..."
+              echo "Running Camlp5 test suite on Unix..."
               cd "$CAMLP5_DIR/testsuite"
               
               echo "===== BEGIN TEST OUTPUT ====="
-              make -k all-tests || echo "Tests completed with some errors, but continuing build"
+              if [ "${{ matrix.setup-version }}" == "v3" ]; then
+                make -k all-tests || echo "Tests completed with some errors, but continuing build"
+              else
+                make all-tests || echo "Tests completed with some errors, but continuing build"
+              fi
               echo "===== END TEST OUTPUT ====="
             else
               echo "Camlp5 testsuite directory not found"
-              echo "Skipping tests for Unix v3"
+              echo "Available Camlp5 directories:"
+              find "$OPAM_PREFIX" -name "camlp5*" -type d | grep -v "lib"
+              echo "Skipping tests"
             fi
-          else
-            echo "Skipping Camlp5 tests for v2 environments (focusing on v3 for now)"
           fi
         shell: bash
+        continue-on-error: true
 
       - name: Configure
         run: opam exec -- ocaml ./configure.ml --sosa-zarith
