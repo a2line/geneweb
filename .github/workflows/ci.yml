@@ -140,6 +140,17 @@ jobs:
           echo "Setup version: ${{ matrix.setup-version }}"
           echo "=========================="
           
+          # Install required Perl modules for Camlp5 testsuite
+          echo "Installing required Perl modules for Camlp5 testsuite..."
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y libstring-shellquote-perl libipc-system-simple-perl
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            yes | cpan install "IPC::System::Simple" "String::ShellQuote"
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+            yes | cpan install "IPC::System::Simple" "String::ShellQuote"
+          fi
+          
           # Fix PATH for Windows v2
           if [ "$RUNNER_OS" == "Windows" ] && [ "${{ matrix.setup-version }}" == "v2" ]; then
             echo "Setting up Windows v2 environment specifics..."
