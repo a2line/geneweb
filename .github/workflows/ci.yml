@@ -128,30 +128,57 @@ jobs:
 
       - name: Run Camlp5 test suite
         run: |
-          # Different path resolution for Windows vs Unix-like systems
+          # Ensure OPAM environment is properly set up
+          eval $(opam env)
+          
+          # Check if ocamlfind is available
+          which ocamlfind || { echo "ocamlfind not found in PATH!"; exit 1; }
+          
+          # Find camlp5 build directory with more reliable methods
           if [ "$RUNNER_OS" == "Windows" ]; then
-            # Windows path (using cmd with bash)
-            CAMLP5_BUILD_DIR=$(find "D:\a\geneweb\geneweb\_opam\.opam-switch\build" -type d -name "camlp5.*" | sort -V | tail -n 1)
+            # First try the expected location for v3
+            if [ -d "$OPAM_SWITCH_PREFIX/.opam-switch/build" ]; then
+              CAMLP5_DIR=$(find "$OPAM_SWITCH_PREFIX/.opam-switch/build" -type d -name "camlp5.*" | sort -V | tail -n 1)
+            fi
+            
+            # If not found, check v2 location
+            if [ -z "$CAMLP5_DIR" ] || [ ! -d "$CAMLP5_DIR" ]; then
+              # For v2, it might be in a different location
+              CAMLP5_DIR=$(find "$OPAM_SWITCH_PREFIX" -type d -name "camlp5.*" | grep -v "\.opam-switch" | sort -V | tail -n 1)
+            fi
           else
-            # Unix-like path
-            CAMLP5_BUILD_DIR=$(find $OPAM_SWITCH_PREFIX/.opam-switch/build -type d -name "camlp5.*" | sort -V | tail -n 1)
+            # Unix systems - get OPAM prefix and construct path
+            OPAM_PREFIX=$(opam var prefix)
+            CAMLP5_DIR=$(find "$OPAM_PREFIX/.opam-switch/build" -type d -name "camlp5.*" 2>/dev/null | sort -V | tail -n 1)
+            
+            # If not found, try alternative locations
+            if [ -z "$CAMLP5_DIR" ] || [ ! -d "$CAMLP5_DIR" ]; then
+              CAMLP5_DIR=$(find "$OPAM_PREFIX" -type d -name "camlp5.*" | grep -v "\.opam-switch" | sort -V | tail -n 1)
+            fi
           fi
           
-          if [ -d "$CAMLP5_BUILD_DIR" ]; then
-            echo "Found Camlp5 build directory: $CAMLP5_BUILD_DIR"
+          # Check if we found the directory
+          if [ -d "$CAMLP5_DIR" ] && [ -d "$CAMLP5_DIR/testsuite" ]; then
+            echo "Found Camlp5 directory: $CAMLP5_DIR"
             echo "Running Camlp5 test suite..."
-            make -C "$CAMLP5_BUILD_DIR/testsuite" -k all-tests
+            cd "$CAMLP5_DIR/testsuite"
+            
+            # Export PATH to ensure ocamlfind is available
+            export PATH="$OPAM_SWITCH_PREFIX/bin:$PATH"
+            
+            # Run tests with proper environment
+            make -k all-tests
           else
-            echo "Could not find Camlp5 build directory"
+            echo "Could not find Camlp5 testsuite directory"
+            echo "Available directories:"
             if [ "$RUNNER_OS" == "Windows" ]; then
-              find "D:\a\geneweb\geneweb\_opam\.opam-switch\build" -type d | grep -i camlp5
+              find "$OPAM_SWITCH_PREFIX" -name "camlp5*" -type d | sort
             else
-              find $OPAM_SWITCH_PREFIX/.opam-switch/build -type d | grep -i camlp5
+              find "$(opam var prefix)" -name "camlp5*" -type d | sort
             fi
             exit 1
           fi
         shell: bash
-
 
       - name: Configure
         run: opam exec -- ocaml ./configure.ml --sosa-zarith
