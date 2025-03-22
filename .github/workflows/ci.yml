@@ -126,6 +126,33 @@ jobs:
         if: ${{ runner.os != 'Windows' }}
         run: opam pin ancient -y https://github.com/OCamlPro/ocaml-ancient.git
 
+      - name: Run Camlp5 test suite
+        run: |
+          # Different path resolution for Windows vs Unix-like systems
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            # Windows path (using cmd with bash)
+            CAMLP5_BUILD_DIR=$(find "D:\a\geneweb\geneweb\_opam\.opam-switch\build" -type d -name "camlp5.*" | sort -V | tail -n 1)
+          else
+            # Unix-like path
+            CAMLP5_BUILD_DIR=$(find $OPAM_SWITCH_PREFIX/.opam-switch/build -type d -name "camlp5.*" | sort -V | tail -n 1)
+          fi
+          
+          if [ -d "$CAMLP5_BUILD_DIR" ]; then
+            echo "Found Camlp5 build directory: $CAMLP5_BUILD_DIR"
+            echo "Running Camlp5 test suite..."
+            make -C "$CAMLP5_BUILD_DIR/testsuite" -k all-tests
+          else
+            echo "Could not find Camlp5 build directory"
+            if [ "$RUNNER_OS" == "Windows" ]; then
+              find "D:\a\geneweb\geneweb\_opam\.opam-switch\build" -type d | grep -i camlp5
+            else
+              find $OPAM_SWITCH_PREFIX/.opam-switch/build -type d | grep -i camlp5
+            fi
+            exit 1
+          fi
+        shell: bash
+
+
       - name: Configure
         run: opam exec -- ocaml ./configure.ml --sosa-zarith
 
