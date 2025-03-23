@@ -118,6 +118,7 @@ jobs:
         run: |
           opam pin add --no-action camlp5 https://github.com/camlp5/camlp5.git
           opam pin add --no-action not-ocamlfind https://github.com/chetmurthy/not-ocamlfind.git
+          opam pin add --no-action camlp5-buildscripts https://github.com/camlp5/camlp5-buildscripts.git
 
       - name: Install Geneweb dependencies
         run: |
