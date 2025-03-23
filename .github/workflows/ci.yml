@@ -116,7 +116,7 @@ jobs:
       - name: Pin camlp5 and not-ocamlfind without installing
         if: matrix.setup-version == 'v3'
         run: |
-          opam pin add --no-action ocamlfind https://github.com/chutmurthy/ocamlfind.git
+          opam pin add --no-action ocamlfind https://github.com/chetmurthy/ocamlfind.git
           opam pin add --no-action not-ocamlfind https://github.com/chetmurthy/not-ocamlfind.git
           opam pin add --no-action camlp5-buildscripts https://github.com/camlp5/camlp5-buildscripts.git
           opam pin add --no-action camlp5 https://github.com/camlp5/camlp5.git
@@ -138,12 +138,7 @@ jobs:
         if: matrix.setup-version == 'v3'
         run: |
           eval $(opam env)
-          echo "OPAM var prefix: $(opam var prefix)"
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            OPAM_PREFIX="D:/a/geneweb/geneweb/_opam"
-          else
-            OPAM_PREFIX=$(opam var prefix)
-          fi
+          OPAM_PREFIX=$(opam var prefix)
           BUILD_PATH="$OPAM_PREFIX/.opam-switch/build"
           BUILDSCRIPTS_DIR="$OPAM_PREFIX/lib/camlp5-buildscripts"
           which ocamlfind || echo "WARNING: ocamlfind not found in PATH"
