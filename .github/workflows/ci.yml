@@ -128,52 +128,13 @@ jobs:
         if: ${{ runner.os != 'Windows' }}
         run: opam pin ancient https://github.com/OCamlPro/ocaml-ancient.git
 
-      - name: Run Camlp5 test suite on Unix V3
-        if: runner.os != 'Windows' && matrix.setup-version == 'v3'
-        run: |
-          # Ensure OPAM environment is properly set up
-          eval $(opam env)
-          
-          echo "==== Environment Info ===="
-          echo "OCaml version: $(ocaml -version)"
-          echo "OPAM version: $(opam --version)"
-          echo "OPAM switch: $(opam switch show)"
-          echo "=========================="
-          
-          echo "===== UNIX V3 PATH DETECTION ====="
-          
-          # Get OPAM prefix
-          OPAM_PREFIX=$(opam var prefix)
-          echo "OPAM prefix: $OPAM_PREFIX"
-          
-          # Find camlp5 directory
-          CAMLP5_DIR=$(find "$OPAM_PREFIX/.opam-switch/build" -type d -name "camlp5.*" 2>/dev/null | sort -V | tail -n 1)
-          
-          if [ -d "$CAMLP5_DIR" ] && [ -d "$CAMLP5_DIR/testsuite" ]; then
-            echo "Found Camlp5 directory: $CAMLP5_DIR"
-            
-            echo "Running Camlp5 test suite on Unix v3..."
-            cd "$CAMLP5_DIR/testsuite"
-            
-            echo "===== BEGIN TEST OUTPUT ====="
-            make -k all-tests || echo "Tests completed with some errors, but continuing build"
-            echo "===== END TEST OUTPUT ====="
-          else
-            echo "Camlp5 testsuite directory not found"
-            echo "Available Camlp5 directories:"
-            find "$OPAM_PREFIX" -name "camlp5*" -type d | grep -v "lib"
-            echo "Skipping tests for Unix v3"
-          fi
-        shell: bash
-        continue-on-error: true
-
       - name: Install dependencies for v2 test environments
         if: matrix.setup-version == 'v2'
         run: opam install pcre
         continue-on-error: true
 
-      - name: Run Camlp5 test suite on Windows V3
-        if: runner.os == 'Windows' && matrix.setup-version == 'v3'
+      - name: Run Camlp5 test suite (v3 environments)
+        if: matrix.setup-version == 'v3'
         run: |
           # Ensure OPAM environment is properly set up
           eval $(opam env)
@@ -182,47 +143,69 @@ jobs:
           echo "OCaml version: $(ocaml -version 2>/dev/null || echo 'Not found')"
           echo "OPAM version: $(opam --version)"
           echo "OPAM switch: $(opam switch show)"
+          echo "OS: $RUNNER_OS"
           echo "=========================="
           
-          # Find buildscripts directory - use a path we know works with Windows/bash
-          BUILDSCRIPTS_DIR="D:/a/geneweb/geneweb/_opam/lib/camlp5-buildscripts"
+          # Set paths based on OS
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            echo "===== WINDOWS PATH DETECTION ====="
+            OPAM_PREFIX="D:/a/geneweb/geneweb/_opam"
+            BUILD_PATH="$OPAM_PREFIX/.opam-switch/build"
+            BUILDSCRIPTS_DIR="$OPAM_PREFIX/lib/camlp5-buildscripts"
+          else
+            echo "===== UNIX PATH DETECTION ====="
+            OPAM_PREFIX=$(opam var prefix)
+            BUILD_PATH="$OPAM_PREFIX/.opam-switch/build"
+            BUILDSCRIPTS_DIR="$OPAM_PREFIX/lib/camlp5-buildscripts"
+          fi
+          
+          echo "OPAM prefix: $OPAM_PREFIX"
+          echo "Build path: $BUILD_PATH"
           echo "Buildscripts directory: $BUILDSCRIPTS_DIR"
           
-          # Create non-.exe wrapper
-          if [ -d "$BUILDSCRIPTS_DIR" ] && [ -f "$BUILDSCRIPTS_DIR/LAUNCH.exe" ]; then
-            echo "Creating LAUNCH wrapper script..."
-            echo '#!/bin/bash' > "$BUILDSCRIPTS_DIR/LAUNCH"
-            echo 'script_dir=$(dirname "$0")' >> "$BUILDSCRIPTS_DIR/LAUNCH"
-            echo '"$script_dir/LAUNCH.exe" "$@"' >> "$BUILDSCRIPTS_DIR/LAUNCH"
-            chmod +x "$BUILDSCRIPTS_DIR/LAUNCH"
-            
-            echo "Wrapper created. Contents:"
-            cat "$BUILDSCRIPTS_DIR/LAUNCH"
-            
-            # Find Camlp5 build directory
-            CAMLP5_DIR=$(find "D:/a/geneweb/geneweb/_opam/.opam-switch/build" -type d -name "camlp5.*" | sort -V | tail -n 1)
-            
-            if [ -d "$CAMLP5_DIR/testsuite" ]; then
-              echo "Running tests in $CAMLP5_DIR/testsuite"
-              cd "$CAMLP5_DIR/testsuite"
-              
-              # Show current PATH for debugging
-              echo "PATH: $PATH"
-              echo "OCAMLPATH: $OCAMLPATH"
-              
-              # Try running tests
-              echo "===== BEGIN TEST OUTPUT ====="
-              # Try a single target first
-              make tools/ROUNDTRIP-pa_r-pr_r.byte || echo "First target failed"
-              # Then try all tests
-              make all-tests || echo "Tests completed with errors"
-              echo "===== END TEST OUTPUT ====="
-            else
-              echo "Camlp5 testsuite directory not found"
-            fi
-          else
-            echo "LAUNCH.exe not found in $BUILDSCRIPTS_DIR"
+          # Check for ocamlfind
+          which ocamlfind || echo "WARNING: ocamlfind not found in PATH"
+          
+          # Find camlp5 directory
+          echo "Looking for Camlp5 build directory..."
+          CAMLP5_DIR=$(find "$BUILD_PATH" -type d -name "camlp5.*" 2>/dev/null | sort -V | tail -n 1)
+          echo "Found candidate: $CAMLP5_DIR"
+          
+          # Show buildscripts contents
+          if [ -d "$BUILDSCRIPTS_DIR" ]; then
+            echo "Contents of buildscripts directory:"
             ls -la "$BUILDSCRIPTS_DIR"
+          else
+            echo "Buildscripts directory not found"
+          fi
+          
+          if [ -d "$CAMLP5_DIR" ] && [ -d "$CAMLP5_DIR/testsuite" ]; then
+            echo "Directory exists: YES"
+            echo "Testsuite directory exists: YES"
+            echo "Found Camlp5 directory: $CAMLP5_DIR"
+            
+            echo "Running Camlp5 test suite..."
+            cd "$CAMLP5_DIR/testsuite"
+            
+            echo "Current directory: $(pwd)"
+            echo "PATH: $PATH"
+            echo "OCAMLPATH: $OCAMLPATH"
+            
+            echo "===== BEGIN TEST OUTPUT ====="
+            make -k all-tests || echo "Tests completed with some errors, but continuing build"
+            echo "===== END TEST OUTPUT ====="
+          else
+            if [ ! -d "$CAMLP5_DIR" ]; then
+              echo "Camlp5 directory not found"
+            else
+              echo "Testsuite directory not found"
+              echo "Contents of Camlp5 directory:"
+              ls -la "$CAMLP5_DIR" || echo "Failed to list directory"
+            fi
+            
+            echo "Available Camlp5 directories:"
+            find "$OPAM_PREFIX" -name "camlp5*" -type d | grep -v "lib"
+            echo "Skipping tests"
           fi
         shell: bash
         continue-on-error: true
