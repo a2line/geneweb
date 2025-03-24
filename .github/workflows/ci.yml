@@ -97,11 +97,21 @@ jobs:
 
       - name: install Perl deps
         run: |
-          set -x
-          cpan -j tools/Config.pm -T -f -i String::ShellQuote || true
-          cpan -j tools/Config.pm -T -f -i IPC::System::Simple || true
-          cpan -J
-          perl -MString::Shellquote -e 'print "String::ShellQuote installed\n"'
+          # Set up local::lib environment and capture output
+          perl -Mlocal::lib=${HOME}/perl5 -e 'print "local::lib set up in $ENV{PERL5LIB}\n"'
+          
+          # Export the environment variables 
+          eval "$(perl -Mlocal::lib=${HOME}/perl5 -e 'print "export PERL5LIB=$ENV{PERL5LIB}\nexport PERL_LOCAL_LIB_ROOT=$ENV{PERL_LOCAL_LIB_ROOT}\nexport PERL_MB_OPT=$ENV{PERL_MB_OPT}\nexport PERL_MM_OPT=$ENV{PERL_MM_OPT}\nexport PATH=$ENV{PATH}\n"')"
+          
+          # Make sure local::lib is working
+          echo "PERL5LIB is set to: $PERL5LIB"
+          
+          # Install modules with notest for speed
+          perl -MCPAN -e 'CPAN::Shell->notest("install", "String::ShellQuote")'
+          perl -MCPAN -e 'CPAN::Shell->notest("install", "IPC::System::Simple")'
+          
+          # Verify installation
+          perl -MString::ShellQuote -e 'print "String::ShellQuote installed\n"'
           perl -MIPC::System::Simple -e 'print "IPC::System::Simple installed\n"'
         shell: bash
 
