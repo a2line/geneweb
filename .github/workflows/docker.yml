@@ -48,6 +48,7 @@ env:
 jobs:
   build-amd64:
     runs-on: ubuntu-latest
+    if: false
     env:
       CACHE_FROM: type=gha,scope=docker-build-amd64
       CACHE_TO: type=gha,scope=docker-build-amd64,mode=max
@@ -109,6 +110,7 @@ jobs:
 
   build-arm64:
     runs-on: ubuntu-latest
+    if: false
     env:
       CACHE_FROM: type=gha,scope=docker-build-arm64
       CACHE_TO: type=gha,scope=docker-build-arm64,mode=max
