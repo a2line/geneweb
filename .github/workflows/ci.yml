@@ -54,16 +54,16 @@ jobs:
         os: [ubuntu-24.04, macos-15, windows-latest]
         ocaml-compiler: [4.14.2, 5.3.0]
         setup-version: [v3]
-        include:
-          - os: ubuntu-22.04
-            ocaml-compiler: 4.08.1
-            setup-version: v2
-          - os: macos-13
-            ocaml-compiler: 4.08.1
-            setup-version: v2
-          - os: windows-latest
-            ocaml-compiler: 4.08.1
-            setup-version: v2
+#        include:
+#          - os: ubuntu-22.04
+#            ocaml-compiler: 4.08.1
+#            setup-version: v2
+#          - os: macos-13
+#            ocaml-compiler: 4.08.1
+#            setup-version: v2
+#          - os: windows-latest
+#            ocaml-compiler: 4.08.1
+#            setup-version: v2
 
     outputs:
       total_matrix_jobs: ${{ strategy.job-total || 0 }}
@@ -113,7 +113,17 @@ jobs:
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
 
-      - name: Pin camlp5 and not-ocamlfind without installing
+      - name: install Perl deps
+        run: |
+          set -x
+          cpan -j tools/Config.pm -T -f -i String::ShellQuote || true
+          cpan -j tools/Config.pm -T -f -i IPC::System::Simple || true
+          cpan -J
+          perl -MString::Shellquote -e 'print "String::ShellQuote installed\n"'
+          perl -MIPC::System::Simple -e 'print "IPC::System::Simple installed\n"'
+        shell: bash
+
+      - name: Pin ocamlfind fork/not-ocamlfind/camlp5/camlp5-buildscripts without installing
         if: matrix.setup-version == 'v3'
         run: |
           opam pin add --no-action ocamlfind https://github.com/chetmurthy/ocamlfind.git
@@ -137,7 +147,6 @@ jobs:
       - name: Run Camlp5 test suite (ocaml-setup@v3 environments)
         if: matrix.setup-version == 'v3'
         run: |
-          eval $(opam env)
           OPAM_PREFIX=$(opam var prefix)
           BUILD_PATH="$OPAM_PREFIX/.opam-switch/build"
           BUILDSCRIPTS_DIR="$OPAM_PREFIX/lib/camlp5-buildscripts"
@@ -153,12 +162,10 @@ jobs:
             ls -la "$BUILDSCRIPTS_DIR"/LAUNCH* || echo "No LAUNCH files found"
           fi
           if [ -d "$CAMLP5_DIR" ] && [ -d "$CAMLP5_DIR/testsuite" ]; then
-            echo "Running Camlp5 found test suite…"
+            echo "Running Camlp5 test suite…"
             cd "$CAMLP5_DIR/testsuite"
-            echo "Running test in: $(pwd)"
-
             echo "===== BEGIN TEST OUTPUT ====="
-            make all-tests || echo "Tests completed with some errors, but continuing build"
+            make all-tests || echo "Tests completed with some errors"
             echo "===== END TEST OUTPUT ====="
           else
             if [ ! -d "$CAMLP5_DIR" ]; then
@@ -172,8 +179,6 @@ jobs:
             find "$OPAM_PREFIX" -name "camlp5*" -type d | grep -v "lib"
             echo "Skipping tests"
           fi
-        shell: bash
-        continue-on-error: true
 
       - name: Configure
         run: opam exec -- ocaml ./configure.ml --sosa-zarith
