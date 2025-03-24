@@ -83,24 +83,6 @@ jobs:
         with:
           command: start-timer
 
-      - name: Cache Opam dependencies (Unix)
-        id: cache-opam-unix
-        if: runner.os != 'Windows'
-        uses: actions/cache@v4
-        with:
-          path: ~/.opam
-          key: unix-${{ matrix.ocaml-compiler }}-${{ env.FMT_CI == 'true' && 'with-test' || 'no-test' }}-${{ matrix.setup-version }}-${{ hashFiles('*.opam') }}-cache
-          restore-keys: unix-${{ matrix.ocaml-compiler }}-${{ env.FMT_CI == 'true' && 'with-test' || 'no-test' }}-${{ matrix.setup-version }}
-
-      - name: Cache Opam dependencies (Windows)
-        id: cache-opam-windows
-        if: runner.os == 'Windows'
-        uses: actions/cache@v4
-        with:
-          path: D:\.opam
-          key: windows-${{ matrix.ocaml-compiler }}-${{ env.FMT_CI == 'true' && 'with-test' || 'no-test' }}-${{ matrix.setup-version }}-${{ hashFiles('*.opam') }}-cache
-          restore-keys: windows-${{ matrix.ocaml-compiler }}-${{ env.FMT_CI == 'true' && 'with-test' || 'no-test' }}-${{ matrix.setup-version }}
-
       - name: Setup Ocaml with v2
         if: matrix.setup-version == 'v2'
         uses: ocaml/setup-ocaml@v2
