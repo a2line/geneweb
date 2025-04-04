@@ -51,40 +51,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          # v2 builds (legacy environments)
-          - os: ubuntu-22.04
-            ocaml-compiler: 4.08.1
-            setup-version: v2
-
-          - os: macos-13
-            ocaml-compiler: 4.08.1
-            setup-version: v2
-
-          - os: windows-latest
-            ocaml-compiler: 4.08.1
-            setup-version: v2
-
-          - os: windows-latest
-            ocaml-compiler: 4.14.2
-            setup-version: v2
-
-          # v3 builds (newer environments)
-          - os: ubuntu-24.04
-            ocaml-compiler: 4.14.2
-            setup-version: v3
-
-          - os: ubuntu-24.04
-            ocaml-compiler: 5.3.0
-            setup-version: v3
-
-          - os: macos-15
-            ocaml-compiler: 4.14.2
-            setup-version: v3
-
-          - os: macos-15
-            ocaml-compiler: 5.3.0
-            setup-version: v3
+        os: [ubuntu-24.04, macos-15, windows-latest]
+        ocaml-compiler: [4.14.2, 5.3.0]
+        setup-version: [v3]
+#        include:
+#          - os: ubuntu-22.04
+#            ocaml-compiler: 4.08.1
+#            setup-version: v2
+#          - os: macos-13
+#            ocaml-compiler: 4.08.1
+#            setup-version: v2
+#          - os: windows-latest
+#            ocaml-compiler: 4.08.1
+#            setup-version: v2
 
     outputs:
       total_matrix_jobs: ${{ strategy.job-total || 0 }}
@@ -104,42 +83,33 @@ jobs:
         with:
           command: start-timer
 
-      - name: Cache Opam dependencies (Unix)
-        id: cache-opam-unix
-        if: runner.os != 'Windows'
-        uses: actions/cache@v4
-        with:
-          path: ~/.opam
-          key: unix-${{ matrix.ocaml-compiler }}-${{ env.FMT_CI == 'true' && 'with-test' || 'no-test' }}-${{ matrix.setup-version }}-${{ hashFiles('*.opam') }}-cache
-          restore-keys: unix-${{ matrix.ocaml-compiler }}-${{ env.FMT_CI == 'true' && 'with-test' || 'no-test' }}-${{ matrix.setup-version }}
-
-      - name: Cache Opam dependencies (Windows)
-        id: cache-opam-windows
-        if: runner.os == 'Windows'
-        uses: actions/cache@v4
-        with:
-          path: D:\.opam
-          key: windows-${{ matrix.ocaml-compiler }}-${{ env.FMT_CI == 'true' && 'with-test' || 'no-test' }}-${{ matrix.setup-version }}-${{ hashFiles('*.opam') }}-cache
-          restore-keys: windows-${{ matrix.ocaml-compiler }}-${{ env.FMT_CI == 'true' && 'with-test' || 'no-test' }}-${{ matrix.setup-version }}
-
       - name: Setup Ocaml with v2
         if: matrix.setup-version == 'v2'
         uses: ocaml/setup-ocaml@v2
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
-
+          
       - name: Setup Ocaml with v3
         if: matrix.setup-version == 'v3'
         uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
 
+      - name: Pin ocamlfind fork/not-ocamlfind/camlp5/camlp5-buildscripts without installing
+        if: matrix.setup-version == 'v3'
+        run: |
+          opam pin add --no-action ocamlfind https://github.com/chetmurthy/ocamlfind.git
+          opam pin add --no-action not-ocamlfind https://github.com/chetmurthy/not-ocamlfind.git
+          opam pin add --no-action camlp5-buildscripts https://github.com/camlp5/camlp5-buildscripts.git
+          opam pin add --no-action camlp5 https://github.com/camlp5/camlp5.git
+
       - name: Install Geneweb dependencies
-        run: opam install . --deps-only ${{ env.FMT_CI == 'true' && '--with-test' || '' }}
+        run: |
+          opam install . --deps-only ${{ env.FMT_CI == 'true' && '--with-test' || '' }}
 
       - name: Install ancient dependency for Unix
         if: ${{ runner.os != 'Windows' }}
-        run: opam pin ancient -y https://github.com/OCamlPro/ocaml-ancient.git
+        run: opam pin ancient https://github.com/OCamlPro/ocaml-ancient.git
 
       - name: Configure
         run: opam exec -- ocaml ./configure.ml --sosa-zarith
