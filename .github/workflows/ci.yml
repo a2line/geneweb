@@ -128,6 +128,9 @@ jobs:
         uses: ocaml/setup-ocaml@v2
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
+        env:
+          OPAMNOSANDBOX: 1
+          OPAMNOSANITIZE: 1
 
       - name: Setup Ocaml with v3
         if: matrix.setup-version == 'v3'
