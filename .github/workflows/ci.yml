@@ -137,7 +137,9 @@ jobs:
         run: opam exec -- make distrib
 
       - name: Run tests
-        run:
+        id: tests
+        shell: bash
+        run: |
           opam exec -- make ci 2>&1 | tee build-output.log
 
           set +e
