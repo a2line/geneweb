@@ -255,9 +255,9 @@ clean:
 	@echo " Done."
 .PHONY: clean
 
-ci: ## Run tests, skip known failures
-ci: | $(GENERATED_FILES_DEP) build
-	@GENEWEB_CI=on dune runtest
+ci:
+ci: | $(GENERATED_FILES_DEP)
+	@GENEWEB_CI=on dune build @runtest
 
 ocp-indent: ## Run ocp-indent (inplace edition)
 ocp-indent:

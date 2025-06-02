@@ -173,10 +173,10 @@ jobs:
           os: ${{ matrix.os }}
           ocaml-version: ${{ matrix.ocaml-compiler }}
           cache-hit: ${{ runner.os != 'Windows' && steps.cache-opam-unix.outputs.cache-hit || steps.cache-opam-windows.outputs.cache-hit }}
-          tests-total: ${{ steps.build.outputs.tests_total }}
-          tests-passed: ${{ steps.build.outputs.tests_passed }}
-          tests-failed: ${{ steps.build.outputs.tests_failed }}
-          tests-skipped: ${{ steps.build.outputs.tests_skipped }}
+          tests-total: ${{ steps.tests.outputs.tests_total }}
+          tests-passed: ${{ steps.tests.outputs.tests_passed }}
+          tests-failed: ${{ steps.tests.outputs.tests_failed }}
+          tests-skipped: ${{ steps.tests.outputs.tests_skipped }}
 
   build-results:
     needs: [build]
