@@ -221,7 +221,7 @@ opendoc: doc
 .PHONY: opendoc
 
 test: ## Run tests
-test: | $(GENERATED_FILES_DEP)
+test: | $(GENERATED_FILES_DEP) build
 	dune build @runtest
 .PHONY: test
 
@@ -256,12 +256,8 @@ clean:
 .PHONY: clean
 
 ci: ## Run tests, skip known failures
-ci:
-ifdef SKIP_BUILD
+ci: | $(GENERATED_FILES_DEP) build
 	@GENEWEB_CI=on dune runtest
-else
-	@ocaml ./configure.ml && $(MAKE) -s build && GENEWEB_CI=on dune runtest
-endif
 
 ocp-indent: ## Run ocp-indent (inplace edition)
 ocp-indent:
