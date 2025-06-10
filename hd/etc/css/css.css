@@ -1,3 +1,9 @@
+/* SVG icon */
+.icon {
+  fill: currentColor;
+  vertical-align: middle;
+}
+
 /* cousins relation table m=C */
 .toggle-button:focus {
   outline: none; /* On generation picker, hide the toggle +/- button outline+shadow */

@@ -1716,7 +1716,7 @@ let content_misc conf len misc_fname =
     | Otf fname -> (fname, "application/font-otf")
     | Other fname -> (fname, "text/plain")
     | Png fname -> (fname, "image/png")
-    | Svg fname -> (fname, "application/font-svg")
+    | Svg fname -> (fname, "image/svg+xml")
     | Ttf fname -> (fname, "application/font-ttf")
     | Woff fname -> (fname, "application/font-woff")
     | Woff2 fname -> (fname, "application/font-woff2")

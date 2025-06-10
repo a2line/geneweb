@@ -1,4 +1,8 @@
-<!-- $Id: css.txt v7.1 04/11/2023 04:28:54 $ -->
+<!-- $Id: css.txt v7.1 10/06/2025 09:16:55 $ -->
+<link rel="preload" href="%etc_prefix;icons.svg" as="image" type="image/svg+xml" crossorigin>
+%define;icon(xx,yy)
+<svg class="icon icon-xx fa-fw mr-yy" width="20" height="20" viewBox="0 0 64 64"><use href="icons.svg#icon-xx"></use></svg>%nn;
+%end;
 %( Put here only properties that uses variables %)
 %if;(e.m="MISC_NOTES")
 <style>
