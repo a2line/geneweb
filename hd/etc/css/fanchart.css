@@ -75,6 +75,12 @@
   opacity: 0.6;
 }
 
+.btn-fanchart.disabled:hover {
+  background: #f8f9fa;
+  border-color: #dee2e6;
+  color: #6c757d;
+}
+
 .btn-fanchart.btn-toggle.active {
   background: #007bff;
   border-color: #007bff;
