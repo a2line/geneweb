@@ -12,6 +12,8 @@ var standard, standard_width;
 var center_x, center_y, svg_w, svg_h;
 var max_gen_loaded; // Génération max disponible en "mémoire"
 var max_gen, max_r;
+var lieux = {};      // Objet principal des lieux : clé = nom du lieu, valeur = données
+var lieux_a = [];    // Array des lieux pour le tri et l'itération
 var sortMode = "frequency";
 var showEvents = false;
 var has_bi = false, has_ba = false, has_ma = false, has_de = false, has_bu = false;
@@ -337,6 +339,11 @@ const URLManager = {
    * @param {boolean} stayInFanchart - Rester dans le fanchart vs fiche individuelle
    */
   navigateToPerson: function(person, newTab = false, stayInFanchart = false) {
+    // Nettoyer le cache car on change de contexte
+    if (!stayInFanchart && !newTab) {
+      LocationDataBuilder.clearCache();
+    }
+
     if (!person || !person.fnk || !person.snk) {
       console.warn('URLManager: Personne invalide pour navigation', person);
       return false;
@@ -485,42 +492,65 @@ const Utils = {
 
 // ========== Module de construction des données de lieux ==========
 const LocationDataBuilder = {
-  /**
+  _locationCache: new Map(),
+  _generationCache: new Map(),
+
+  /*
    * Fonction principale qui orchestre toute la construction des données de lieux
-   * @param {number} maxGeneration - Génération maximum à considérer (optionnel, utilise max_gen par défaut)
+   * @param {number} maxGeneration - Génération maximum à considérer
    */
   buildCompleteLocationData: function(maxGeneration = null) {
     const targetGeneration = maxGeneration || max_gen;
-    console.log(`🏗️ Construction des données de lieux pour ${targetGeneration} génération(s)...`);
 
-    // Réinitialisation complète des structures globales existantes
+    // Invalider le cache de tri car les lieux ont changé
+    if (PlacesInterface.cache) {
+        PlacesInterface.cache.invalidateSort();
+    }
+
+    // Vérifier le cache de génération
+    if (this._generationCache.has(targetGeneration)) {
+      console.log(`📦 Données de lieux récupérées du cache (gen ${targetGeneration})`);
+      const cached = this._generationCache.get(targetGeneration);
+      lieux = cached.lieux;
+      lieux_a = cached.lieux_a;
+      this.restoreGlobalFlags();
+      return;
+    }
+
+    // Construction normale si pas en cache
+    console.log(`🏗️ Construction des données de lieux (${targetGeneration} générations)`);
+
     this.resetLocationData();
-
-    // Filtrer les ancêtres selon la génération maximum
     const filteredAncestors = this.filterAncestorsByGeneration(targetGeneration);
-    console.log(`📊 ${Object.keys(filteredAncestors).length} ancêtres retenus sur ${Object.keys(ancestor).length} disponibles`);
 
-    // Passe unique sur les ancêtres filtrés pour extraire les données de lieux
+    // Traitement principal
     Object.values(filteredAncestors).forEach(person => {
       this.processPersonAllLocations(person);
     });
 
-    // Construction de l'array final pour les fonctions de tri et d'affichage
+    // Construction de l'array final
     this.buildFinalLocationArray();
 
-    console.log(`✅ Analyse terminée : ${Object.keys(lieux).length} lieux trouvés, ${this.getTotalEvents()} événements`);
+    // Mettre en cache pour cette génération
+    this._generationCache.set(targetGeneration, {
+      lieux: { ...lieux },
+      lieux_a: [...lieux_a],
+      flags: this.captureGlobalFlags()
+    });
+
+    console.log(`✅ ${Object.keys(lieux).length} lieux traités`);
   },
 
   /**
    * Filtre les ancêtres selon la génération maximum
+   * Optimisé avec calcul direct des plages de Sosa
    */
   filterAncestorsByGeneration: function(maxGeneration) {
     const filteredAncestors = {};
 
-    // Calculer la plage de Sosa pour les générations à inclure
     for (let gen = 1; gen <= maxGeneration + 1; gen++) {
-      const startSosa = Math.pow(2, gen - 1);
-      const endSosa = Math.pow(2, gen) - 1;
+      const startSosa = 1 << (gen - 1);  // Décalage à gauche de bits = 2^(gen-1)
+      const endSosa = (1 << gen) - 1;    // Décalage à gauche de bits = 2^gen-1
 
       for (let sosa = startSosa; sosa <= endSosa; sosa++) {
         const key = "S" + sosa;
@@ -535,29 +565,25 @@ const LocationDataBuilder = {
 
   /**
    * Réinitialise toutes les structures de données globales
-   * Préserve la cohérence avec les variables existantes de fanchart.js
    */
   resetLocationData: function() {
-    // Structures principales (déjà déclarées globalement dans fanchart.js)
     lieux = {};
     lieux_a = [];
 
-    // Flags globaux existants (les remettre à false, ils seront recalculés)
-    has_bi = false;
-    has_ba = false;
-    has_ma = false;
-    has_de = false;
-    has_bu = false;
+    // Reset des flags globaux via Events
+    Events.types.forEach(eventType => {
+      window[Events.flagProp(eventType)] = false;
+    });
   },
 
   /**
-   * Traite tous les lieux associés à une personne donnée
-   * @param {Object} person - Objet personne de l’ancêtre
+   * Traite tous les lieux associés à une personne
    */
   processPersonAllLocations: function(person) {
     Events.types.forEach(eventType => {
-      const placeField = Events.place(eventType); // 'birth_place', etc.
-      if (person[placeField] && person[placeField].trim() !== '') {
+      const placeField = Events.place(eventType);
+
+      if (person[placeField]?.trim()) {
         this.processSingleLocation(person[placeField], eventType, person);
       }
     });
@@ -568,165 +594,192 @@ const LocationDataBuilder = {
    * @param {string} placeName - Nom du lieu brut
    * @param {string} eventType - Type d'événement (bi, ba, ma, de, bu)
    * @param {Object} person - Référence à la personne (pour de futures extensions)
+   * @returns {Object} Information sur la méthode utilisée
    */
   processSingleLocation: function(placeName, eventType, person) {
-    // Nettoyage du nom de lieu (réutilise la logique existante de fanchart.js)
+    // Nettoyage du nom de lieu
     const cleanPlaceName = placeName.replace(/^\?, /, "");
 
-    // Analyse de la structure géographique du nom de lieu
-    const locationStructure = this.analyzeLocationName(cleanPlaceName);
-
-    // Initialisation de l'entrée si première occurrence de ce lieu
+     // Initialisation de l'entrée si première occurrence de ce lieu
     if (!lieux[cleanPlaceName]) {
+      const locationStructure = this.extractLocationStructure(cleanPlaceName, eventType, person);
       lieux[cleanPlaceName] = this.createLocationEntry(cleanPlaceName, locationStructure);
     }
 
-    // Mise à jour des compteurs et flags pour ce lieu
-    this.updateLocationCounters(lieux[cleanPlaceName], eventType);
+    // Mise à jour des compteurs
+    this.updateLocationCounters(lieux[cleanPlaceName], eventType), person.sosa;
   },
 
   /**
-   * Analyse la structure géographique d'un nom de lieu
-   * Extrait les sous-lieux et précisions géographiques de manière générique
-   * @param {string} placeName - Nom du lieu à analyser
-   * @returns {Object} Structure analysée du lieu
+   * Extrait la structure du lieu
    */
-  analyzeLocationName: function(placeName) {
-    const result = {
+  extractLocationStructure: function(placeName, eventType, person) {
+    const subField = eventType + '_sub';
+    const mainField = eventType + '_main';
+
+    return {
       fullName: placeName,
-      isSubLocation: false,
-      subName: null,
-      parentLocation: null,
-      geographicPrecision: null
+      isSubLocation: !!person[subField],
+      subName: person[subField] || null,
+      parentLocation: person[mainField] || null
     };
-
-    // Première étape : extraction de la précision géographique entre parenthèses
-    // Pattern : "Nom du lieu (Précision)" -> garde "Nom du lieu" et extrait "Précision"
-    const precisionPattern = /^(.+?)\s*\(([^)]+)\)\s*$/;
-    const precisionMatch = placeName.match(precisionPattern);
-
-    let nameWithoutPrecision = placeName;
-    if (precisionMatch) {
-      nameWithoutPrecision = precisionMatch[1].trim();
-      result.geographicPrecision = precisionMatch[2].trim();
-    }
-
-    // Deuxième étape : détection des sous-lieux avec séparateurs
-    // Pattern : "Sous-lieu – Lieu principal" ou variations avec — et -
-    const subLocationPattern = /^(.+?)\s+[–—-]\s+(.+)$/;
-    const subMatch = placeName.match(subLocationPattern);
-
-    if (subMatch) {
-      result.isSubLocation = true;
-      result.subName = subMatch[1].trim();
-      result.parentLocation = subMatch[2].trim();
-    }
-
-    return result;
   },
 
   /**
-   * Crée une nouvelle entrée de lieu avec toutes les métadonnées nécessaires
+   * Crée une entrée de lieu optimisée avec les métadonnées nécessaires
    * @param {string} cleanPlaceName - Nom nettoyé du lieu
-   * @param {Object} locationStructure - Structure analysée du lieu
+   * @param {Object} locationStructure - Structure du lieu
    * @returns {Object} Entrée complète pour l'objet lieux
    */
   createLocationEntry: function(cleanPlaceName, locationStructure) {
-    const counters = {};
-    const flags = {};
+    const entry = {
+      cnt: 0,
+      c: null,
+      maxGeneration: 0,
 
-    Events.types.forEach(eventType => {
-      const eventCount = Events.count(eventType);
-      const flagProp = Events.svgPrefix(eventType);
-
-      counters[eventCount] = 0;  // birth_count: 0, baptism_count: 0, etc.
-      flags[flagProp] = false;  // n: false, b: false, etc.
-    });
-
-    return {
-      // Compteurs et flags de présence générés automatiquement
-      ...counters,
-      ...flags,
-
-      cnt: 0, // Compteur total
-
-      // Métadonnées géographiques extraites
+      // Métadonnées géographiques
       isSubLocation: locationStructure.isSubLocation,
       subName: locationStructure.subName,
       parentLocation: locationStructure.parentLocation,
-      geographicPrecision: locationStructure.geographicPrecision,
 
-      c: null, // ID CSS
-
-      // Données préparées pour le DOM futur
+      // Données DOM préparées
       domAttributes: {
         'data-place': cleanPlaceName,
         'data-is-sublocation': locationStructure.isSubLocation,
         'data-events': []
       }
     };
+
+    // Initialisation des compteurs et flags via Events
+    Events.types.forEach(eventType => {
+      entry[Events.count(eventType)] = 0;
+      entry[Events.svgPrefix(eventType)] = false;
+    });
+
+    return entry;
   },
 
   /**
-   * Met à jour les compteurs et flags pour un lieu donné
+   * Met à jour les compteurs pour un lieu donné avec tracking de la génération
    * @param {Object} locationEntry - Entrée de lieu dans l'objet lieux
    * @param {string} eventType - Type d'événement à incrémenter
    */
-  updateLocationCounters: function(locationEntry, eventType) {
-    const eventCount = Events.count(eventType);
-    const flagProp = Events.svgPrefix(eventType);
+  updateLocationCounters: function(locationEntry, eventType, sosa) {
+    const countField = Events.count(eventType);
+    const flagField = Events.svgPrefix(eventType);
 
-    // Incrément du compteur spécifique
-    locationEntry[eventCount]++;
+    // Calculer la génération depuis le Sosa
+    const generation = sosa ? Math.floor(Math.log2(sosa)) + 1 : 0;
+    locationEntry.maxGeneration = Math.max(locationEntry.maxGeneration, generation);
 
-    // Activation du flag de présence
-    locationEntry[flagProp] = true;
-
-    // Incrément du compteur total
+    // Incréments
+    locationEntry[countField]++;
     locationEntry.cnt++;
 
-    // Mise à jour des data-attributes pour le DOM futur
-    if (!locationEntry.domAttributes['data-events'].includes(eventType)) {
+    // Flags et DOM attributes
+    if (!locationEntry[flagField]) {
+      locationEntry[flagField] = true;
+      window[Events.flagProp(eventType)] = true;
       locationEntry.domAttributes['data-events'].push(eventType);
     }
   },
 
   /**
-   * Construit l'array final lieux_a et assigne les IDs CSS pour la colorisation
-   * Cette fonction transforme l'objet lieux en array utilisable par les fonctions de tri
+   * Construit l’array final lieux_a et assigne les IDs CSS pour la colorisation
+   * Transforme l’objet lieux en array utilisable par les fonctions de tri
    */
   buildFinalLocationArray: function() {
+    // Conversion en array
     lieux_a = Object.entries(lieux);
 
-    // ✅ VALIDATION POST-CRÉATION - corriger les fausses détections
-    Object.entries(lieux).forEach(([placeName, locationData]) => {
-      if (locationData.isSubLocation && locationData.parentLocation) {
-        // Vérifier si le parent existe réellement dans lieux
-        if (!lieux[locationData.parentLocation]) {
-          console.log(`❌ CORRECTION: "${placeName}" n'est pas un sous-lieu (parent "${locationData.parentLocation}" inexistant)`);
-          locationData.isSubLocation = false;
-          locationData.subName = null;
-          locationData.parentLocation = null;
-        }
-      }
-    });
-
-    // Assignation des IDs CSS
+    // Assignation des IDs et pré-calculs
     lieux_a.forEach(([placeName, locationData], index) => {
       locationData.c = "L" + index;
     });
   },
 
   /**
-   * Fonction utilitaire pour obtenir le nombre total d'événements
-   * @returns {number} Nombre total d'événements tous lieux confondus
+   * Capture l'état des flags globaux pour le cache
    */
-  getTotalEvents: function() {
-    return Object.values(lieux).reduce((total, locationData) => total + locationData.cnt, 0);
+  captureGlobalFlags: function() {
+    const flags = {};
+    Events.types.forEach(eventType => {
+      flags[Events.flagProp(eventType)] = window[Events.flagProp(eventType)];
+    });
+    return flags;
   },
 
   /**
-   * Fonction utilitaire pour colleter les statistiques par type d’événement
+   * Restaure les flags depuis le cache
+   */
+  restoreGlobalFlags: function() {
+    const cached = this._generationCache.get(max_gen);
+    if (cached?.flags) {
+      Object.entries(cached.flags).forEach(([flag, value]) => {
+        window[flag] = value;
+      });
+    }
+  },
+
+  /**
+   * Valide et corrige les relations parent-enfant
+   * @returns {Object} Rapport de validation
+   */
+  validateLocationHierarchy: function() {
+    let corrections = 0;
+    let subLocations = 0;
+    let orphans = [];
+
+    Object.entries(lieux).forEach(([placeName, locationData]) => {
+      if (locationData.isSubLocation && locationData.parentLocation) {
+        subLocations++;
+
+        // Vérifier l'existence du parent
+        if (!lieux[locationData.parentLocation]) {
+          orphans.push(placeName);
+
+          // Correction automatique
+          locationData.isSubLocation = false;
+          locationData.subName = null;
+          locationData.parentLocation = null;
+          locationData.domAttributes['data-is-sublocation'] = false;
+          corrections++;
+        }
+      }
+    });
+
+    if (orphans.length > 0) {
+      console.warn(`⚠️ Sous-lieux orphelins corrigés:`, orphans);
+    }
+
+    return {
+      corrections,
+      subLocations,
+      orphans,
+      totalLocations: Object.keys(lieux).length
+    };
+  },
+
+  /**
+   * Pré-calcule les classes CSS pour optimisation
+   */
+  precomputeCSSClasses: function(locationData, index) {
+    const classes = {
+      colorClass: `color-${(index % 12) + 1}`,
+      eventClasses: []
+    };
+
+    Events.types.forEach(eventType => {
+      if (locationData[Events.svgPrefix(eventType)]) {
+        classes.eventClasses.push(Events.cssClass(eventType));
+      }
+    });
+
+    return classes;
+  },
+
+  /**
+   * Statistiques par type d’événement
    * @returns {Object} Statistiques détaillées par type
    */
   getEventStatistics: function() {
@@ -741,165 +794,51 @@ const LocationDataBuilder = {
     });
 
     return stats;
+  },
+
+ /**
+   * Nettoie le cache (appelé lors des changements majeurs)
+   */
+  clearCache: function() {
+    this._locationCache.clear();
+    this._generationCache.clear();
+    console.log('🧹 Cache des lieux nettoyé');
   }
 };
 
 // ========== Interface du panneau des lieux ==========
 const PlacesInterface = {
-  // Cache pour les éléments DOM fréquemment utilisés (optimisation)
-  elements: {
-    panel: null,
-    placesList: null,
-    template: null,
-    summaryPlaces: null,
-    summaryEventCounts: null,
-    summaryTotal: null
+  cache: { // Cache avec invalidation sélective
+    elements: {},
+    sortedPlaces: null,
+    lastSortMode: null,
+    fragment: null, // Réutilisation du fragment DOM
+
+    invalidateSort: function() {
+      this.sortedPlaces = null;
+    }
   },
 
-  /**
-   * Initialisation du module - à appeler après LocationDataBuilder.buildCompleteLocationData()
-   * Cache les références DOM pour éviter les recherches répétées
-   */
-  initialize: function() {
-    console.log('🎨 Initialisation de l’interface des lieux…');
+ initialize: function() {
+    this.cache.elements = { // Cache des éléments critiques
+      panel: document.querySelector('.places-panel'),
+      placesList: document.querySelector('.places-list'),
+      summaryPlaces: document.querySelector('.summary-places-info'),
+      summaryEventCounts: document.querySelectorAll('.summary-event-count'),
+      summaryTotal: document.querySelector('.summary-total-events'),
+      summaryPersons: document.querySelector('.summary-persons-count')
+    };
 
-    // Mise en cache des éléments DOM critiques pour la performance
-    this.elements.panel = document.querySelector('.places-panel');
-    this.elements.placesList = document.querySelector('.places-list');
-    this.elements.summaryPlaces = document.querySelector('.summary-places-info');
-    this.elements.summaryEventCounts = document.querySelectorAll('.summary-event-count');
-    this.elements.summaryTotal = document.querySelector('.summary-total-events');
-
-    // Vérification critique : est-ce que tous les éléments existent ?
-    if (!this.elements.placesList) {
-      console.error('❌ Éléments HTML requis manquants pour l’interface des lieux');
+    if (!this.cache.elements.placesList) {
+      console.error('❌ Éléments HTML requis manquants');
       return false;
     }
 
-    // Générer l'interface complète
     this.generatePlacesList();
     this.updateSummarySection();
-    this.initializeEventListeners();
+    this.setupEventListeners();
 
-    console.log('✅ Interface des lieux initialisée');
     return true;
-  },
-
-  /**
-   * Met à jour la section de résumé avec les statistiques calculées
-   * Utilise les données de LocationDataBuilder pour éviter les recalculs
-   */
-  updateSummarySection: function() {
-    // Mise à jour du nombre de génération avec traduction
-    const generationElement = this.elements.panel.querySelector('.generation-count');
-    if (generationElement) {
-      const generationLabel = window.FC_TRANSLATIONS?.[max_gen > 1 ? 'generations' : 'generation'] || 'génération';
-      generationElement.textContent = `${max_gen} ${generationLabel}`;
-    }
-
-    // Mise à jour du nombre de lieux avec traduction
-    const placeCount = Object.keys(lieux).length;
-    const placeLabel = window.FC_TRANSLATIONS?.[placeCount > 1 ? 'places' : 'place'] || 'lieu';
-    this.elements.summaryPlaces.textContent = `${placeCount} ${placeLabel}`;
-
-    // Utilisation de nos statistiques cohérentes
-    const stats = LocationDataBuilder.getEventStatistics();
-
-    // Injection des compteurs dans l'ordre défini par Events.types
-    // Chaque compteur utilise maintenant les traductions appropriées pour les tooltips
-    Events.types.forEach((eventType, index) => {
-      const countElement = this.elements.summaryEventCounts[index];
-      if (countElement) {
-        const count = stats[eventType] || 0;
-        countElement.textContent = count;
-
-        // Enrichissement avec tooltip traduit et contextualisé
-        const eventLabel = Events.translate(eventType, count);
-        countElement.title = count > 0 ? `${count} ${eventLabel}` : `Aucun ${eventLabel.toLowerCase()}`;
-      }
-    });
-
-    // Total général avec traduction contextuelle
-    const totalEvents = Events.types.reduce((sum, eventType) => {
-      return sum + (stats[eventType] || 0);
-    }, 0);
-
-    this.elements.summaryTotal.textContent = totalEvents;
-
-    // Tooltip informatif pour le total avec traduction appropriée
-    const eventLabel = window.FC_TRANSLATIONS?.[totalEvents > 1 ? 'events' : 'event'] || 'événement';
-    this.elements.summaryTotal.title = `Total : ${totalEvents} ${eventLabel}`;
-
-    //Mise à jour du compteur de personnes
-    this.updatePersonsCounter();
-  },
-
-  updatePersonsCounter: function() {
-    const personsElement = this.elements.panel.querySelector('.summary-persons-count');
-    if (!personsElement) return;
-
-    const filteredAncestors = LocationDataBuilder.filterAncestorsByGeneration(max_gen);
-
-    // Compter les personnes uniques avec au moins un lieu
-    let personsWithPlaces = 0;
-
-    Object.values(filteredAncestors).forEach(person => {
-      let hasPlace = false;
-      Events.types.forEach(eventType => {
-        const placeField = Events.place(eventType);
-        if (person[placeField] && person[placeField].trim() !== '') {
-          hasPlace = true;
-        }
-      });
-      if (hasPlace) personsWithPlaces++;
-    });
-
-    personsElement.textContent = personsWithPlaces;
-
-    // Tooltip avec traduction
-    const personLabel = window.FC_TRANSLATIONS?.[personsWithPlaces > 1 ? 'persons' : 'person'] || 'personne';
-    personsElement.title = `${personsWithPlaces} ${personLabel} avec lieux`;
-  },
-
- /* ========== ENRICHISSEMENT DES RÉFÉRENCES DOM ==========
-   TODO: write doc */
-  enrichLocationDataWithDOMReferences: function() {
-    let enrichedCount = 0;
-    let notFoundCount = 0;
-
-    // Pour chaque lieu dans l'objet lieux
-    Object.entries(lieux).forEach(([placeName, placeData]) => {
-      // Chercher l'élément DOM avec ce data-place
-      const element = document.querySelector(`.place-content[data-place="${CSS.escape(placeName)}"]`);
-
-      if (element) {
-        // Enrichir avec les références DOM
-        placeData.domElement = element;
-
-        // Obtenir l'index depuis data-index du parent
-        const row = element.closest('.place-row');
-        if (row) {
-          placeData.visualIndex = parseInt(row.dataset.index) || 0;
-
-          // Trouver l'élément indicateur
-          const indicatorElement = row.querySelector('.place-indicators');
-          if (indicatorElement) {
-            placeData.indicatorElement = indicatorElement;
-          }
-        }
-
-        enrichedCount++;
-      } else {
-        notFoundCount++;
-        console.warn(`❌ Élément DOM non trouvé pour : "${placeName}"`);
-      }
-    });
-
-    return {
-      enriched: enrichedCount,
-      notFound: notFoundCount,
-      total: Object.keys(lieux).length
-    };
   },
 
   placeRowTemplate: function(placeName, placeData, index) {
@@ -962,138 +901,293 @@ const PlacesInterface = {
   },
 
   /**
-   * Génère la liste complète des lieux en utilisant le template
-   * Question critique : le clonage est-il vraiment plus performant que innerHTML ?
-   * Réponse : Pour <150 éléments, la différence est négligeable, mais la maintenabilité est meilleure
+   * Génèration de la liste des lieux enrichie
    */
   generatePlacesList: function() {
-    console.log('📝 Génération de la liste des lieux...');
+    const container = this.cache.elements.placesList;
+    if (!container) return;
 
-    const container = document.querySelector('.places-list');
-    if (!container) {
-      console.error("❌ Container places-list introuvable");
-      return;
-    }
+    // Utiliser le cache de tri
+    const sortedPlaces = this.getCachedSortedPlaces();
 
-    // Nettoyer le conteneur
-    container.innerHTML = "";
+    // Fragment DOM pour performance
+    const fragment = document.createDocumentFragment();
 
-    // Obtenir les lieux triés selon le mode actuel
-    const sortedPlaces = this.getSortedPlaces();
-
-    // Générer le HTML pour chaque lieu
-    let htmlBuffer = [];
     sortedPlaces.forEach(([placeName, placeData], index) => {
-      const rowHtml = this.placeRowTemplate(placeName, placeData, index);
-      htmlBuffer.push(rowHtml);
+      const row = this.createPlaceRow(placeName, placeData, index);
+
+      // Enrichissement immédiat des références DOM
+      placeData.domElement = row.querySelector('.place-content');
+      placeData.visualIndex = index;
+      placeData.indicatorElement = row.querySelector('.place-indicators');
+
+      fragment.appendChild(row);
     });
 
-    // Injecter tout le HTML d'un coup (plus performant)
-    container.innerHTML = htmlBuffer.join('');
-
-    console.log(`✅ ${sortedPlaces.length} lieux générés dans le DOM`);
-
-    // Enrichir les références DOM maintenant que le HTML existe
-    this.enrichLocationDataWithDOMReferences();
+    // Une seule manipulation DOM
+    container.innerHTML = '';
+    container.appendChild(fragment);
   },
 
   /**
-   * Crée un élément de lieu en clonant et remplissant le template
-   * @param {Array} placeData - [placeName, data] du format lieux_a
-   * @param {number} index - Index pour l'attribution des couleurs
-   * @returns {Element} Élément DOM prêt à insérer
+   * Tri avec cache intelligent
    */
-  createPlaceElement: function(placeData, index) {
-    const [placeName, data] = placeData;
-
-    // Clonage du template (deep clone pour copier tous les enfants)
-    const element = this.elements.template.cloneNode(true);
-
-    // Transformation en élément visible
-    element.className = 'place-row';
-    element.style.display = '';
-
-    // Injection des totaux
-    const eventsContainer = element.querySelector('.place-events');
-    if (eventsContainer) {
-      eventsContainer.innerHTML = this.generateEventItemsHTML(data);
+  getCachedSortedPlaces: function() {
+    if (this.cache.sortedPlaces && this.cache.lastSortMode === sortMode) {
+      return this.cache.sortedPlaces;
     }
 
-    // Injection des données de base
-    element.querySelector('.place-name').textContent = placeName;
-    element.querySelector('.place-count').textContent = data.cnt;
-
-    // Attribution de la couleur cyclique (réutilise la logique existante)
-    const colorIndex = (index % 12) + 1;
-    element.querySelector('.place-color').className = `place-color color-${colorIndex}`;
-
-    // Attribution des données pour les interactions futures
-    element.dataset.place = placeName;
-    element.dataset.index = index;
-
-    // Gestion des sous-lieux (utilise les données pré-calculées)
-    if (data.isSubLocation && sortMode === 'alphabetical') {
-      element.querySelector('.place-content').classList.add('sublocation');
-    }
-
-    return element;
-    this.enrichLocationDataWithDOMReferences();
+    this.cache.sortedPlaces = this.getSortedPlaces();
+    this.cache.lastSortMode = sortMode;
+    return this.cache.sortedPlaces;
   },
 
   /**
-   * Retourne les lieux triés selon le mode actuel
-   * Réutilise la variable globale sortMode existante pour la cohérence
+   * Tri optimisé avec support des données natives
      */
   getSortedPlaces: function() {
     if (sortMode === 'alphabetical') {
-      const main = new Map();
-      const subs = [];
+      // Utilisation directe des données natives _main pour le regroupement
+      const groups = new Map();
 
-    Object.entries(lieux).forEach(([name, data]) => {
-      if (data.isSubLocation && data.parentLocation) {
-        console.log(`SOUS-LIEU: "${name}" → parent: "${data.parentLocation}"`);
-        subs.push({ name, data });
-      } else {
-        console.log(`LIEU PRINCIPAL: "${name}"`);
-        main.set(name, { name, data, subs: [] });
-      }
-    });
-
-    // Rattacher les sous-lieux à leurs parents
-    subs.forEach(({ name, data }) => {
-      const group = main.get(data.parentLocation);
-      if (group) {
-        console.log(`✅ RATTACHEMENT: "${name}" → "${data.parentLocation}"`);
-        group.subs.push({ name, data });
-      } else {
-        console.log(`❌ PARENT INTROUVABLE: "${name}" cherche "${data.parentLocation}"`);
-        main.set(name, { name, data, subs: [] });
-      }
-    });
-
-      // Construire l'array trié avec métadonnées d'affichage
-      const sorted = [];
-      Array.from(main.values())
-        .sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }))
-        .forEach(group => {
+      Object.entries(lieux).forEach(([name, data]) => {
+        if (data.isSubLocation && data.parentLocation) {
+          // Sous-lieu : l'ajouter au groupe du parent
+          if (!groups.has(data.parentLocation)) {
+            groups.set(data.parentLocation, { main: null, subs: [] });
+          }
+          groups.get(data.parentLocation).subs.push([name, data]);
+        } else {
           // Lieu principal
-          sorted.push([group.name, group.data, { isIndented: false, displayName: group.name }]);
+          if (!groups.has(name)) {
+            groups.set(name, { main: null, subs: [] });
+          }
+          groups.get(name).main = [name, data];
+        }
+      });
 
-          // Sous-lieux indentés
+      // Construire l'array trié
+      const sorted = [];
+      Array.from(groups.entries())
+        .sort(([a], [b]) => a.localeCompare(b, 'fr', { sensitivity: 'base' }))
+        .forEach(([groupName, group]) => {
+          if (group.main) sorted.push(group.main);
           group.subs
-            .sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }))
-            .forEach(sub => {
-              sorted.push([sub.name, sub.data, { isIndented: true, displayName: sub.data.subName }]);
-            });
+            .sort(([a], [b]) => a.localeCompare(b, 'fr', { sensitivity: 'base' }))
+            .forEach(sub => sorted.push(sub));
         });
 
       return sorted;
     }
 
-    // Mode fréquence : noms complets, pas d'indentation
-    return Object.entries(lieux)
-      .sort((a, b) => b[1].cnt - a[1].cnt)
-      .map(([name, data]) => [name, data, { isIndented: false, displayName: name }]);
+    // Mode fréquence : simple tri par compteur
+    return Object.entries(lieux).sort((a, b) => b[1].cnt - a[1].cnt);
+  },
+
+  /**
+   * Création optimisée des éléments DOM
+   */
+  createPlaceRow: function(placeName, placeData, index) {
+    const row = document.createElement('div');
+    row.className = 'place-row';
+    row.dataset.index = index;
+
+    // Indicateurs d'événements
+    const indicators = document.createElement('div');
+    indicators.className = 'place-indicators';
+    indicators.id = `indic-${index}`;
+
+    // Contenu principal
+    const content = document.createElement('div');
+    content.className = 'place-content';
+    content.id = `place-${index}`;
+    content.dataset.place = placeName;
+    content.dataset.placeClass = placeData.c || '';
+    content.dataset.total = placeData.cnt || 0;
+
+    // Construction du contenu interne
+    content.innerHTML = this.buildPlaceContentHTML(placeName, placeData, index);
+
+    row.appendChild(indicators);
+    row.appendChild(content);
+
+    return row;
+  },
+
+  /**
+   * Construction optimisée du HTML interne
+   */
+  buildPlaceContentHTML: function(placeName, placeData, index) {
+    const colorIndex = (index % 12) + 1;
+    const displayName = this.getDisplayName(placeName, placeData);
+    const eventItemsHTML = this.buildEventItemsHTML(placeData);
+
+    return `
+      <div class="place-left">
+        <div class="place-color color-${colorIndex}"></div>
+        <div class="place-name">${displayName}</div>
+      </div>
+      <div class="place-right">
+        <div class="place-events">${eventItemsHTML}</div>
+        <div class="place-count">${placeData.cnt || 0}</div>
+      </div>
+    `;
+  },
+
+  /**
+   * Nom d'affichage selon le mode et les données natives
+   */
+  getDisplayName: function(placeName, placeData) {
+    if (sortMode === 'alphabetical' && placeData.isSubLocation && placeData.subName) {
+      return `<span class="sublocation-indicator">└ </span>${placeData.subName}`;
+    }
+    return placeName;
+  },
+
+  /**
+   * Construction des indicateurs d'événements
+   */
+  buildEventItemsHTML: function(placeData) {
+    return Events.types.map(eventType => {
+      const count = placeData[Events.count(eventType)] || 0;
+      const isActive = count > 0;
+
+      return `
+        <div class="event-item ${isActive ? 'active' : ''}" data-event="${eventType}">
+          <span class="event-count">${count > 1 ? count : ''}</span>
+          <span class="event-label">${Events.label(eventType)}</span>
+        </div>
+      `;
+    }).join('');
+  },
+
+  /**
+   * Mise à jour du résumé et support du survol des totaux
+   */
+  updateSummarySection: function() {
+    // Générations
+    const genElement = this.cache.elements.panel.querySelector('.generation-count');
+    if (genElement) {
+      const genLabel = window.FC_TRANSLATIONS?.[max_gen > 1 ? 'generations' : 'generation'] || 'génération';
+      genElement.textContent = `${max_gen} ${genLabel}`;
+    }
+
+    // Lieux
+    const placeCount = Object.keys(lieux).length;
+    const placeLabel = window.FC_TRANSLATIONS?.[placeCount > 1 ? 'places' : 'place'] || 'lieu';
+    this.cache.elements.summaryPlaces.textContent = `${placeCount} ${placeLabel}`;
+
+    // Statistiques par événement
+    const stats = LocationDataBuilder.getEventStatistics();
+
+    Events.types.forEach((eventType, index) => {
+      const countElement = this.cache.elements.summaryEventCounts[index];
+      if (countElement) {
+        const count = stats[eventType] || 0;
+        countElement.textContent = count;
+
+        // Préparation pour le futur surlignage NBMDS
+        const labelElement = countElement.previousElementSibling;
+        if (labelElement) {
+          labelElement.dataset.eventType = eventType;
+          labelElement.dataset.eventCount = count;
+        }
+      }
+    });
+
+    // Total
+    const totalEvents = Object.values(stats).reduce((sum, count) => sum + count, 0);
+    this.cache.elements.summaryTotal.textContent = totalEvents;
+
+    // Personnes
+    this.updatePersonsCounter();
+  },
+
+  /**
+   * Compteur de personnes
+   */
+  updatePersonsCounter: function() {
+    const personsElement = this.cache.elements.summaryPersons;
+    if (!personsElement) return;
+
+    // Utiliser le cache des ancêtres filtrés de LocationDataBuilder
+    const filteredAncestors = LocationDataBuilder.filterAncestorsByGeneration(max_gen);
+
+    let personsWithPlaces = 0;
+    Object.values(filteredAncestors).forEach(person => {
+      // Vérifier si au moins un lieu existe
+      const hasPlace = Events.types.some(eventType => {
+        const placeField = Events.place(eventType);
+        return person[placeField]?.trim();
+      });
+
+      if (hasPlace) personsWithPlaces++;
+    });
+
+    personsElement.textContent = personsWithPlaces;
+    const label = window.FC_TRANSLATIONS?.[personsWithPlaces > 1 ? 'persons' : 'person'] || 'personne';
+    personsElement.title = `${personsWithPlaces} ${label} avec lieux`;
+  },
+
+ /**
+   * Configuration des événements avec support du surlignage bidirectionnel
+   */
+  setupEventListeners: function() {
+    if (!this.cache.elements.placesList) return;
+
+    // Survol des lieux (délégation d'événements)
+    this.cache.elements.placesList.addEventListener('mouseenter', (e) => {
+      const placeContent = e.target.closest('.place-content');
+      if (placeContent) {
+        const placeName = placeContent.dataset.place;
+        const placeData = lieux[placeName];
+        if (placeData) {
+          PlacesHighlighter.highlightPlace(placeName, 'list');
+        }
+      }
+    }, true);
+
+    this.cache.elements.placesList.addEventListener('mouseleave', (e) => {
+      const placeContent = e.target.closest('.place-content');
+      if (placeContent) {
+        PlacesHighlighter.clearAllHighlights();
+      }
+    }, true);
+
+    // Clic pour navigation
+    this.cache.elements.placesList.addEventListener('click', (e) => {
+      const placeContent = e.target.closest('.place-content');
+      if (placeContent) {
+        const placeName = placeContent.dataset.place;
+        if (placeName && URLManager.navigateToPlace) {
+          const newTab = e.ctrlKey || e.metaKey;
+          URLManager.navigateToPlace(placeName, newTab);
+        }
+      }
+    });
+
+    // Préparation pour le futur surlignage des totaux NBMDS
+    this.setupEventTotalHighlights();
+  },
+
+  /**
+   * Configuration du surlignage des totaux d'événements
+   */
+  setupEventTotalHighlights: function() {
+    document.querySelectorAll('.summary-event-label').forEach(label => {
+      const eventType = label.dataset.eventType;
+      if (!eventType) return;
+
+      label.style.cursor = 'pointer';
+
+      label.addEventListener('mouseenter', () => {
+        PlacesHighlighter.highlightByEventType(eventType);
+      });
+
+      label.addEventListener('mouseleave', () => {
+        PlacesHighlighter.clearAllHighlights();
+      });
+    });
   },
 
   handlePlaceClick: function(placeName, event) {
@@ -1102,178 +1196,126 @@ const PlacesInterface = {
       const newTab = event.ctrlKey || event.metaKey;
       URLManager.navigateToPlace(placeName, newTab);
     }
-  },
-
-  /**
-   * Initialise les écouteurs d'événements de base
-   * Commencer simple, enrichir selon les besoins réels
-   */
-  initializeEventListeners: function() {
-    if (!this.elements.placesList) return;
-
-    // Écouteur pour les survols de lieux (délégation d'événements)
-    this.elements.placesList.addEventListener('mouseenter', (e) => {
-      const placeRow = e.target.closest('.place-row');
-      if (placeRow) {
-        placeRow.classList.add('hovered');
-
-        const placeContent = placeRow.querySelector('.place-content');
-        if (placeContent) {
-          const placeName = placeContent.dataset.place;
-          PlacesHighlighter.expandPlaceNameIfNeeded(placeContent, placeName, null, true);
-          PlacesHighlighter.highlightSVGSectorsForPlace(placeName, true);
-          // TODO: FIX intégration avec le highlighting SVG existant
-        }
-      }
-    }, true);
-
-    this.elements.placesList.addEventListener('mouseleave', (e) => {
-      const placeRow = e.target.closest('.place-row');
-      if (placeRow) {
-        placeRow.classList.remove('hovered');
-
-        const placeContent = placeRow.querySelector('.place-content');
-        if (placeContent) {
-          const placeName = placeContent.dataset.place;
-          PlacesHighlighter.restorePlaceNameIfNeeded(placeContent);
-          PlacesHighlighter.highlightSVGSectorsForPlace(placeName, false); // TODO: FIX ME
-        }
-      }
-    }, true);
-
-    this.elements.placesList.addEventListener('click', (e) => {
-      const placeRow = e.target.closest('.place-content');
-      if (placeRow) {
-        const placeName = placeRow.dataset.place;
-        if (placeName && URLManager.navigateToPlace) {
-          const newTab = e.ctrlKey || e.metaKey;
-          URLManager.navigateToPlace(placeName, newTab);
-        }
-      }
-    });
   }
 };
 
 // ========== Interface utilisateur pour le panneau des lieux ==========
 const PlacesPanelControls = {
-  /**
-   * Initialise les contrôles du panneau
-   * Cette méthode doit être appelée après l’initialisation de PlacesInterface
-   */
+  searchDebounceTimer: null, // Timers pour optimisation
+
   initialize: function() {
-    if (!PlacesInterface.elements.panel) {
+    if (!PlacesInterface.cache.elements.panel) {
       console.error('❌ PlacesInterface doit être initialisé avant PlacesPanelControls');
       return false;
     }
-    // Initialisation des states par défaut
+
     this.initializeDefaultStates();
-    // Configuration des event listeners modernes
     this.setupEventListeners();
     return true;
   },
 
   /**
-   * Configuration des event listeners en utilisant la délégation d'événements
+   * Configuration des listeners avec délégation
    */
   setupEventListeners: function() {
-    const panel = PlacesInterface.elements.panel;
+    const panel = PlacesInterface.cache.elements.panel;
 
-    // Délégation d'événements sur le panneau entier, centralise la gestion des clics
+    // Délégation pour tous les clics
     panel.addEventListener('click', (e) => {
-      // Identification de l'élément cliqué par ses classes CSS
+      // Fermeture du panneau
       if (e.target.matches('.panel-close')) {
         e.preventDefault();
         this.togglePanel();
       }
-      else if (e.target.matches('.sort-toggle') || e.target.closest('.sort-toggle')) {
+      // Tri
+      else if (e.target.closest('.sort-toggle')) {
         e.preventDefault();
         this.toggleSort();
       }
-      else if (e.target.matches('.events-toggle') || e.target.closest('.events-toggle')) {
+      // Événements
+      else if (e.target.closest('.events-toggle')) {
         e.preventDefault();
         this.toggleEventsDisplay();
       }
+      // Effacer recherche
       else if (e.target.matches('.search-clear')) {
         e.preventDefault();
         this.clearSearch();
       }
     });
 
-    // Event listener spécifique pour le champ de recherche
-    // L'événement 'input' est plus approprié que 'oninput' pour la réactivité
-    const searchInput = panel.querySelector('.search-input');
-    if (searchInput) {
-      searchInput.addEventListener('input', (e) => {
-        this.filterPlaces(e.target.value);
-      });
-    }
+    // Recherche avec debounce
+    this.setupSearchListener();
   },
 
   /**
-   * Configure les états par défaut des contrôles
-   * Centralise la logique d'initialisation pour éviter les incohérences
+   * Recherche optimisée avec debounce
+   */
+  setupSearchListener: function() {
+    const panel = PlacesInterface.cache.elements.panel;
+    const searchInput = panel.querySelector('.search-input');
+    if (!searchInput) return;
+
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(this.searchDebounceTimer);
+      const query = e.target.value;
+
+      // Recherche immédiate si effacement
+      if (!query) {
+        this.filterPlaces('');
+        return;
+      }
+
+      // Debounce pour les autres cas
+      this.searchDebounceTimer = setTimeout(() => {
+        this.filterPlaces(query);
+      }, 150);
+    });
+  },
+
+  /**
+   * États par défaut cohérents
    */
   initializeDefaultStates: function() {
-    // État initial du tri (cohérent avec la variable globale sortMode)
     this.updateSortButtonIcon();
 
-    // État initial des événements - NE PAS écraser si vient de l'URL
-    const panel = PlacesInterface.elements.panel;
+    const panel = PlacesInterface.cache.elements.panel;
 
+    // État des événements
     if (showEvents) {
       panel.classList.add('show-events');
       const icon = document.querySelector('.events-toggle i');
-      if (icon) {
-        icon.className = 'far fa-eye-slash';
-      }
-    } else {
-      panel.classList.remove('show-events');
-      // Icône par défaut
-      const icon = document.querySelector('.events-toggle i');
-      if (icon) {
-        icon.className = 'far fa-eye';
-      }
+      if (icon) icon.className = 'far fa-eye-slash';
     }
 
-    // Réinitialisation du champ de recherche
+    // Recherche
     const searchInput = panel.querySelector('.search-input');
     if (searchInput) searchInput.value = '';
   },
 
   /**
-   * Bascule l'affichage du panneau des lieux
-   * Fonction globale référencée par le HTML onclick="togglePlacesPanel()"
+   * Basculement du panneau
    */
   togglePanel: function() {
-    const panel = PlacesInterface.elements.panel;
-    const isCurrentlyVisible = panel.style.display !== 'none';
-
-    panel.style.display = isCurrentlyVisible ? 'none' : 'block';
-
-    // Log pour le débogage en développement
-    console.log(`📋 Panneau des lieux ${isCurrentlyVisible ? 'masqué' : 'affiché'}`);
+    const panel = PlacesInterface.cache.elements.panel;
+    const isVisible = panel.style.display !== 'none';
+    panel.style.display = isVisible ? 'none' : 'block';
   },
 
   /**
-   * Bascule le mode de tri entre fréquence et alphabétique
-   * Met à jour l'interface et régénère la liste
+   * Basculement du tri
    */
   toggleSort: function() {
-    // Modification de la variable globale
     sortMode = sortMode === 'frequency' ? 'alphabetical' : 'frequency';
 
-    // Mise à jour visuelle du bouton
+    PlacesInterface.cache.invalidateSort();
     this.updateSortButtonIcon();
-
-    // Régénération de la liste avec le nouveau tri
     PlacesInterface.generatePlacesList();
-
     URLManager.updateCurrentURL();
   },
 
   /**
-   * Met à jour l'icône du bouton de tri selon le mode actuel
-   * Centralise la logique d'affichage pour éviter les incohérences
+   * Mise à jour de l'icône de tri
    */
   updateSortButtonIcon: function() {
     const icon = document.querySelector('.sort-toggle i');
@@ -1283,63 +1325,89 @@ const PlacesPanelControls = {
         : 'fas fa-arrow-down-a-z';
     }
 
-    // Mise à jour du title pour l'accessibilité
     const button = document.querySelector('.sort-toggle');
     if (button) {
-      button.title = sortMode === 'alphabetical'
-        ? 'Trier par fréquence'
-        : 'Trier par ordre alphabétique';
+      const key = sortMode === 'alphabetical' ? 'sort_alphabetically' : 'sort_by_frequency';
+      button.title = window.FC_TRANSLATIONS?.[key] || 'Changer le tri';
     }
   },
 
   /**
-   * Bascule l'affichage détaillé des événements
-   * Active/désactive le mode d'affichage étendu du panneau
+   * Basculement de l'affichage détaillé
    */
   toggleEventsDisplay: function() {
     showEvents = !showEvents;
 
-    const panel = PlacesInterface.elements.panel;
-    const isShowingEvents = panel.classList.contains('show-events');
+    const panel = PlacesInterface.cache.elements.panel;
+    panel.classList.toggle('show-events');
 
-    // Basculement de la classe CSS qui contrôle l'affichage
-    panel.classList.toggle('show-events', !isShowingEvents);
-
-    // Mise à jour de l'icône du bouton
     const icon = document.querySelector('.events-toggle i');
     if (icon) {
-      icon.className = !isShowingEvents ? 'far fa-eye-slash' : 'far fa-eye';
+      icon.className = panel.classList.contains('show-events')
+        ? 'far fa-eye-slash'
+        : 'far fa-eye';
     }
 
     URLManager.updateCurrentURL();
   },
 
   /**
-   * Filtre la liste des lieux selon une requête de recherche
-   * @param {string} query - Terme de recherche saisi par l'utilisateur
+   * Filtrage optimisé
    */
   filterPlaces: function(query) {
-    const rows = document.querySelectorAll('.place-row');
     const normalizedQuery = query.toLowerCase().trim();
 
-    // Application du filtrage sur chaque élément de lieu
-    rows.forEach(row => {
-      const placeName = row.querySelector('.place-name').textContent.toLowerCase();
-      const shouldShow = !normalizedQuery || placeName.includes(normalizedQuery);
-      row.style.display = shouldShow ? '' : 'none';
+    requestAnimationFrame(() => {
+      const rows = document.querySelectorAll('.place-row');
+      let visibleCount = 0;
+      let totalCount = rows.length;
+
+      if (!normalizedQuery) {
+        // Réafficher tout rapidement
+        rows.forEach(row => {
+          row.style.display = '';
+        });
+        visibleCount = totalCount;
+      } else {
+        // Filtrer
+        rows.forEach(row => {
+          const nameEl = row.querySelector('.place-name');
+          const placeName = nameEl ? nameEl.textContent.toLowerCase() : '';
+          const matches = placeName.includes(normalizedQuery);
+
+          row.style.display = matches ? '' : 'none';
+          if (matches) visibleCount++;
+        });
+      }
+
+      this.updateClearButtonVisibility(normalizedQuery);
+      this.updateSearchResultsCount(visibleCount, totalCount);
     });
-
-    // Gestion de l'affichage de la croix de nettoyage
-    this.updateClearButtonVisibility(normalizedQuery);
-
-    // Statistiques de filtrage pour le débogage
-    const visibleCount = document.querySelectorAll('.place-row[style=""]').length;
-    console.log(`🔍 Filtrage: ${visibleCount} lieux affichés sur ${rows.length}`);
   },
 
   /**
-   * Gère l'affichage conditionnel du bouton de nettoyage de recherche
-   * @param {string} query - Requête de recherche actuelle
+   * Affichage du compteur de résultats
+   */
+  updateSearchResultsCount: function(visible, total) {
+    let counter = document.querySelector('.search-results-count');
+
+    if (visible < total) {
+      if (!counter) {
+        counter = document.createElement('div');
+        counter.className = 'search-results-count';
+        counter.style.cssText = 'font-size: 10px; color: #666; margin-top: 2px;';
+        const section = document.querySelector('.controls-search-section');
+        if (section) section.appendChild(counter);
+      }
+      counter.textContent = `${visible}/${total}`;
+      counter.style.display = 'block';
+    } else if (counter) {
+      counter.style.display = 'none';
+    }
+  },
+
+  /**
+   * Visibilité du bouton clear
    */
   updateClearButtonVisibility: function(query) {
     const clearBtn = document.querySelector('.search-clear');
@@ -1349,76 +1417,295 @@ const PlacesPanelControls = {
   },
 
   /**
-   * Efface la recherche et réaffiche tous les lieux
-   * Fonction globale référencée par le HTML onclick="clearSearch()"
+   * Effacement de la recherche
    */
   clearSearch: function() {
     const input = document.querySelector('.search-input');
     if (input) {
       input.value = '';
+      input.focus();
     }
 
-    // Réapplication du filtrage avec une requête vide
     this.filterPlaces('');
-
-    console.log('🧹 Recherche effacée, tous les lieux réaffichés');
   }
 };
 
 // ========== Module de surlignage bidirectionnel pour les lieux ==========
 const PlacesHighlighter = {
-  // Stockage des éléments actuellement surlignés
-  currentHighlights: [],
-  currentIndicators: [],
+  // État centralisé
+  state: {
+    highlighted: new Set(),
+    indicators: new Map(),
+    expandedNames: new Map(),
+    svgElements: new Map(),
+
+    clear: function() {
+      this.highlighted.clear();
+      this.indicators.forEach(elements => elements.forEach(el => el.remove()));
+      this.indicators.clear();
+      this.expandedNames.clear();
+      this.svgElements.clear();
+    }
+  },
 
   /**
-   * Simule le survol d'une personne - appelé depuis SVGRenderer
-   * @param {Array<string>} placeNames - Noms des lieux à surligner
-   * @param {Array<string>} eventTypes - Types d'événements pour chaque lieu
+   * Point d'entrée principal pour surligner un lieu
    */
-  simulatePersonHover: function(placeNames, eventTypes) {
-    this.clearAllHighlights(); // Nettoyage préalable
-    if (!placeNames || placeNames.length === 0) return;
+  highlightPlace: function(placeName, source = 'svg') {
+    this.clearAllHighlights();
 
-    const highlightedPlaces = new Set(placeNames);
-    const matchingElements = [];
+    const placeData = lieux[placeName];
+    if (!placeData) return;
 
-    placeNames.forEach((placeName, index) => { // Traiter chaque lieu
-      const placeData = lieux[placeName];
-      if (!placeData || !placeData.domElement) {
-        console.warn(`⚠️ Lieu non trouvé ou sans élément DOM: ${placeName}`);
-        return;
+    // Collecter tous les événements pour ce lieu
+    const events = Events.types.filter(eventType =>
+      placeData[Events.svgPrefix(eventType)]
+    );
+
+    // Appliquer le surlignage
+    this.highlight([placeName], [events], source);
+  },
+
+  /**
+   * Surlignage par type d'événement (pour les totaux NBMDS)
+   */
+  highlightByEventType: function(eventType) {
+    this.clearAllHighlights();
+
+    const placesToHighlight = [];
+
+    // Trouver tous les lieux avec ce type d'événement
+    Object.entries(lieux).forEach(([placeName, placeData]) => {
+      if (placeData[Events.svgPrefix(eventType)]) {
+        placesToHighlight.push(placeName);
       }
-
-      // Surligner l'élément de la liste
-      placeData.domElement.classList.add('person-match');
-      this.currentHighlights.push(placeData.domElement);
-
-      // Ajouter les indicateurs d'événements
-      if (placeData.indicatorElement) {
-        const events = placeNames.length === 1 ? eventTypes : [eventTypes[index]].filter(Boolean);
-        if (events.length > 0) {
-          this.addIndicatorsForPlace(placeData.indicatorElement, events);
-        }
-      }
-
-      this.expandPlaceNameIfNeeded(placeData.domElement, placeName, highlightedPlaces);
-
-      matchingElements.push({
-        element: placeData.domElement,
-        index: placeData.visualIndex,
-        placeName: placeName
-      });
     });
 
-    // Griser les autres lieux
-    this.grayOutOtherPlaces();
-
-    if (matchingElements.length > 0) {
-      setTimeout(() => {
-        ModernOverflowManager.handleOverflow(matchingElements);
-      }, 100);
+    if (placesToHighlight.length > 0) {
+      // Créer un array d'événements de même longueur
+      const eventArrays = placesToHighlight.map(() => [eventType]);
+      this.highlight(placesToHighlight, eventArrays, 'totals');
     }
+  },
+
+  /**
+   * Méthode principale de surlignage multi-lieux
+   */
+  highlight: function(placeNames, eventTypes, source = 'svg') {
+    this.clearAllHighlights();
+
+    if (!placeNames?.length) return;
+
+    // Créer une map pour organiser les données
+    const highlightMap = new Map();
+
+    placeNames.forEach((placeName, index) => {
+      const placeData = lieux[placeName];
+      if (!placeData) return;
+
+      const events = eventTypes[index] || [];
+      highlightMap.set(placeName, { placeData, events });
+      this.state.highlighted.add(placeName);
+    });
+
+    // Appliquer les surlignages
+    this.applyHighlights(highlightMap, source);
+  },
+
+  /**
+   * Application des surlignages
+   */
+  applyHighlights: function(highlightMap, source) {
+    const elementsToShow = [];
+
+    highlightMap.forEach(({ placeData, events }, placeName) => {
+      // Surlignage dans la liste
+      if (placeData.domElement) {
+        placeData.domElement.classList.add('person-match');
+
+        // Expansion du nom si nécessaire
+        if (placeData.isSubLocation && sortMode === 'alphabetical') {
+          this.expandSubLocationName(placeData);
+        }
+
+        // Ajout des indicateurs
+        if (placeData.indicatorElement && events.length > 0) {
+          this.addIndicators(placeData.indicatorElement, events);
+        }
+
+        elementsToShow.push({
+          element: placeData.domElement,
+          index: placeData.visualIndex,
+          placeName: placeName
+        });
+      }
+
+      // Surlignage dans le SVG (bidirectionnel corrigé)
+      if (source === 'list' || source === 'totals') {
+        this.highlightInSVG(placeName, placeData, true);
+      }
+    });
+
+    // Griser les autres
+    this.grayOutOthers();
+
+    // Gestion de l'overflow
+    if (elementsToShow.length > 0) {
+      setTimeout(() => {
+        ModernOverflowManager.handleOverflow(elementsToShow);
+      }, 50);
+    }
+  },
+
+  /**
+   * Surlignage SVG bidirectionnel corrigé
+   */
+  highlightInSVG: function(placeName, placeData, highlight) {
+    const placeClass = placeData.c; // Ex: "L0"
+
+    // Pour chaque type d'événement présent dans ce lieu
+    Events.types.forEach(eventType => {
+      if (placeData[Events.svgPrefix(eventType)]) {
+        const svgClass = `${Events.svgPrefix(eventType)}-${placeClass}`;
+        const elements = document.getElementsByClassName(svgClass);
+
+        Array.from(elements).forEach(element => {
+          if (highlight) {
+            // Sauvegarder l'état original
+            if (!element.dataset.originalFill) {
+              element.dataset.originalFill = element.style.fill || '';
+            }
+
+            // Appliquer le surlignage
+            element.classList.add('svg-place-highlight');
+            element.style.fill = 'lightblue';
+
+            // Tracker pour éviter les conflits
+            this.state.svgElements.set(element, placeName);
+          } else {
+            // Restaurer l'état original
+            element.classList.remove('svg-place-highlight');
+            element.style.fill = element.dataset.originalFill || '';
+            delete element.dataset.originalFill;
+
+            this.state.svgElements.delete(element);
+          }
+        });
+      }
+    });
+  },
+
+  /**
+   * Expansion du nom de sous-lieu
+   */
+  expandSubLocationName: function(placeData) {
+    const nameElement = placeData.domElement.querySelector('.place-name');
+    if (!nameElement || this.state.expandedNames.has(placeData.fullName)) return;
+
+    // Sauvegarder l'original
+    this.state.expandedNames.set(placeData.fullName, nameElement.innerHTML);
+
+    // Afficher le nom complet
+    nameElement.textContent = placeData.fullName;
+  },
+
+  /**
+   * Ajout des indicateurs d'événements
+   */
+  addIndicators: function(container, events) {
+    if (!container || !events.length) return;
+
+    const eventArray = Array.isArray(events) ? events : [events];
+    if (eventArray.length === 0) return;
+
+    const indicators = [];
+
+    events.forEach((event, index) => {
+      const indicator = document.createElement('div');
+      indicator.className = `indicator ${Events.cssClass(event)}`;
+      indicator.textContent = Events.label(event);
+      container.appendChild(indicator);
+      indicators.push(indicator);
+
+      // Line break pour 4+ événements
+      if (index === 1 && events.length >= 4) {
+        const breaker = document.createElement('div');
+        breaker.className = 'line-break';
+        container.appendChild(breaker);
+        indicators.push(breaker);
+      }
+    });
+
+    // Ajuster la hauteur si nécessaire
+    if (events.length >= 4) {
+      container.closest('.place-row')?.classList.add('tall-row');
+    }
+
+    // Stocker pour nettoyage
+    this.state.indicators.set(container, indicators);
+  },
+
+  /**
+   * Griser les éléments non surlignés
+   */
+  grayOutOthers: function() {
+    document.querySelectorAll('.place-content').forEach(element => {
+      if (!element.classList.contains('person-match')) {
+        element.classList.add('grayed-out');
+      }
+    });
+  },
+
+  /**
+   * Nettoyage complet
+   */
+  clearAllHighlights: function() {
+    // Nettoyer les surlignages de liste
+    document.querySelectorAll('.person-match').forEach(el => {
+      el.classList.remove('person-match');
+    });
+
+    // Restaurer les noms expandés
+    this.state.expandedNames.forEach((originalHTML, placeName) => {
+      const placeData = lieux[placeName];
+      if (placeData?.domElement) {
+        const nameEl = placeData.domElement.querySelector('.place-name');
+        if (nameEl) nameEl.innerHTML = originalHTML;
+      }
+    });
+
+    // Nettoyer les indicateurs
+    this.state.indicators.forEach((indicators, container) => {
+      indicators.forEach(el => el.remove());
+    });
+
+    // Nettoyer le grisage
+    document.querySelectorAll('.grayed-out').forEach(el => {
+      el.classList.remove('grayed-out');
+    });
+
+    // Nettoyer les rangées hautes
+    document.querySelectorAll('.tall-row').forEach(el => {
+      el.classList.remove('tall-row');
+    });
+
+    // Nettoyer les surlignages SVG
+    this.state.svgElements.forEach((placeName, element) => {
+      this.highlightInSVG(placeName, lieux[placeName], false);
+    });
+
+    // Nettoyer l'overflow
+    ModernOverflowManager.clearOverflowSections();
+
+    // Reset de l'état
+    this.state.clear();
+  },
+
+  /**
+   * Fonction de compatibilité pour l'ancien code
+   */
+  simulatePersonHover: function(placeNames, eventTypes) {
+    this.highlight(placeNames, eventTypes, 'svg');
   },
 
   /**
@@ -1460,92 +1747,6 @@ const PlacesHighlighter = {
       placeNameElement.innerHTML = placeNameElement.dataset.originalHtml;
       delete placeNameElement.dataset.originalHtml;
     }
-  },
-
-  /**
-   * Ajoute les indicateurs visuels d'événements pour un lieu
-   * @param {HTMLElement} container - Conteneur des indicateurs
-   * @param {Array<string>} events - Types d'événements à afficher
-   */
-  addIndicatorsForPlace: function(container, events) {
-    if (!container) return;
-
-    events.forEach((event, index) => {
-      const indicator = document.createElement('div');
-      const shortClass = Events.cssClass(event);
-      const label = Events.label(event);
-
-      indicator.className = `indicator ${shortClass}`;
-      indicator.textContent = label;
-      container.appendChild(indicator);
-      this.currentIndicators.push(indicator);
-
-      // Line-break après le 2e si 4+ événements
-      if (index === 1 && events.length >= 4) {
-        const breaker = document.createElement('div');
-        breaker.className = 'line-break';
-        container.appendChild(breaker);
-        this.currentIndicators.push(breaker);
-      }
-    });
-
-    // Ajouter tall-row seulement si 4+ événements
-    if (events.length >= 4) {
-      const row = container.closest('.place-row');
-      if (row) row.classList.add('tall-row');
-    }
-  },
-
-  /**
-   * Nettoie tous les surlignages et indicateurs
-   */
-  clearAllHighlights: function() {
-    // Nettoyer les surlignages
-    this.currentHighlights.forEach(element => {
-      element.classList.remove('person-match');
-    });
-    this.currentHighlights = [];
-
-    // Nettoyer les indicateurs
-    this.currentIndicators.forEach(indicator => {
-      indicator.remove();
-    });
-    this.currentIndicators = [];
-
-    // Retirer le grisage
-    document.querySelectorAll('.place-content.grayed-out').forEach(element => {
-      element.classList.remove('grayed-out');
-    });
-
-    //Restaurer la hauteur de liste et nettoyer overflow
-    const list = document.querySelector('.places-list');
-    if (list) {
-      list.style.maxHeight = 'none';
-      list.style.height = 'auto';
-    }
-
-    // Nettoyer les sections d'overflow
-    document.querySelectorAll('.overflow-section').forEach(section => {
-      section.remove();
-    });
-
-    // Retirer toutes les classes tall-row
-    document.querySelectorAll('.place-row.tall-row').forEach(row => {
-      row.classList.remove('tall-row');
-    });
-
-    this.currentHighlights.forEach(element => {
-      element.classList.remove('person-match');
-      this.restorePlaceNameIfNeeded(element);
-    });
-  },
-
-  grayOutOtherPlaces: function() { // Grise tous les lieux non surlignés
-    document.querySelectorAll('.place-content').forEach(element => {
-      if (!element.classList.contains('person-match')) {
-        element.classList.add('grayed-out');
-      }
-    });
   },
 
   /**
@@ -1950,75 +2151,28 @@ const SVGRenderer = {
     }
   },
 
-  togglePlaceHighlights: function(p, show, type) {
-    // Nettoyer d'abord si on désactive
-    if (!show) {
-      PlacesHighlighter.clearAllHighlights();
-      return;
-    }
-
-    // Fonction utilitaire pour vérifier et highlighter un lieu de façon robuste
-    const safeHighlightPlace = (placeName, eventType) => {
-      if (!placeName || !lieux[placeName]) return false;
-
-      const placeData = lieux[placeName];
-      const className = `${Events.svgPrefix(eventType)}-${placeData.c}`;
-      const elements = document.getElementsByClassName(className);
-
-      if (elements.length > 0) {
-        Array.from(elements).forEach(el => {
-          el.classList.toggle("hidden", !show);
-        });
-        return true;
-      }
-      return false;
-    };
-
-    if (type === 'marriage') {
-      // Pour les mariages, traiter seulement le lieu de mariage
-      const placeName = p[Events.place('marriage')];
-      const highlighted = safeHighlightPlace(placeName, 'marriage');
-
-      if (highlighted && show && PlacesInterface.elements.panel) {
-        PlacesHighlighter.simulatePersonHover([placeName], ['marriage']);
-      }
-    } else {
-      // Pour les personnes, GROUPER par lieu
-      const placeEventMap = new Map();
-
-      Events.types.forEach(eventType => {
-        const placeName = p[Events.place(eventType)];
-        if (safeHighlightPlace(placeName, eventType)) {
-          if (show) {
-            if (!placeEventMap.has(placeName)) {
-              placeEventMap.set(placeName, []);
-            }
-            placeEventMap.get(placeName).push(eventType);
-          }
-        }
-      });
-
-      if (show && placeEventMap.size > 0 && PlacesInterface.elements.panel) {
-        const placesToHighlight = Array.from(placeEventMap.keys());
-        const eventsToShow = Array.from(placeEventMap.values()).flat();
-        PlacesHighlighter.simulatePersonHover(placesToHighlight, eventsToShow);
-      }
-    }
-  },
-
   handleMouseEnter: function(p, type, event) {
-    // Gestion des lieux
-    this.togglePlaceHighlights(p, true, type);
-
-    // Gestion du background
-    if (event && event.currentTarget) {
-      const group = event.currentTarget.parentNode;
-      const backgroundSector = group.querySelector('.bg');
-
-      if (backgroundSector && backgroundSector.style.fill !== "lightgrey") {
-        backgroundSector.style.fill = "lightgrey";
-        backgroundSector.dataset.highlighted = "true";
-      }
+    // Préparer les données pour le highlighter
+    if (document.body.classList.contains('place_color') && PlacesInterface.cache.elements.panel) {
+        const placesToHighlight = [];
+        const eventsToHighlight = [];
+        
+        if (type === 'marriage' && p.marriage_place) {
+            placesToHighlight.push(p.marriage_place);
+            eventsToHighlight.push(['marriage']); // Array d'arrays !
+        } else if (type === 'person') {
+            Events.types.forEach(eventType => {
+                const placeField = Events.place(eventType);
+                if (p[placeField]) {
+                    placesToHighlight.push(p[placeField]);
+                    eventsToHighlight.push([eventType]); // Array d'arrays !
+                }
+            });
+        }
+        
+        if (placesToHighlight.length > 0) {
+            PlacesHighlighter.simulatePersonHover(placesToHighlight, eventsToHighlight);
+        }
     }
 
     // Gestion spécifique par type
@@ -2041,8 +2195,9 @@ const SVGRenderer = {
   },
 
   handleMouseLeave: function(p, type, event) {
-    // Gestion des lieux
-    this.togglePlaceHighlights(p, false, type);
+    if (document.body.classList.contains('place_color')) {
+        PlacesHighlighter.clearAllHighlights();
+    }
 
     // Gestion du background
     if (event && event.currentTarget) {
@@ -2072,6 +2227,24 @@ const SVGRenderer = {
       const ref = document.getElementById("S" + p.sosasame);
       if (ref) ref.classList.remove("same_hl");
     }
+  },
+
+  // Extraire les lieux
+  extractPlacesFromPerson: function(person, type) {
+    const places = [];
+
+    if (type === 'marriage' && person.marriage_place) {
+      places.push({ place: person.marriage_place, event: 'marriage' });
+    } else if (type === 'person') {
+      Events.types.forEach(eventType => {
+        const placeField = Events.place(eventType);
+        if (person[placeField]) {
+          places.push({ place: person[placeField], event: eventType });
+        }
+      });
+    }
+
+    return places;
   },
 
   drawSectorText: function(pg, r1, r2, a1, a2, sosa, p, classes, generation, isSame = false) {
@@ -2671,100 +2844,6 @@ const AngleManager = {
   }
 };
 
-// ========== GESTIONNAIRE D'ÉVÉNEMENTS GLOBAL ==========
-const FanchartPlacesEventManager = {
-  /**
-   * Initialise tous les événements liés au panneau des lieux
-   * Cette fonction centralise l'initialisation pour éviter les doublons
-   */
-  initializeAll: function() {
-    console.log('🎮 Initialisation des événements du panneau des lieux...');
-
-    // Vérifier que les modules sont chargés
-    if (!PlacesInterface.elements.panel) {
-      console.error('❌ Le panneau des lieux doit être initialisé d\'abord');
-      return;
-    }
-
-    // Initialiser les événements de base
-    this.initializeHoverEvents();
-    this.initializeClickEvents();
-    this.initializeKeyboardShortcuts();
-
-    console.log('✅ Événements initialisés');
-  },
-
-  /**
-   * Événements de survol (délégation)
-   */
-  initializeHoverEvents: function() {
-    const placesList = PlacesInterface.elements.placesList;
-    if (!placesList) return;
-
-    // Survol entrée
-    placesList.addEventListener('mouseenter', (e) => {
-      const placeContent = e.target.closest('.place-content');
-      if (placeContent) {
-        const placeName = placeContent.dataset.place;
-        if (placeName) {
-          placeContent.classList.add('hovered');
-          PlacesHighlighter.expandPlaceNameIfNeeded(placeContent, placeName, null, true);
-        }
-      }
-    }, true);
-
-    // Survol sortie
-    placesList.addEventListener('mouseleave', (e) => {
-      const placeContent = e.target.closest('.place-content');
-      if (placeContent) {
-        const placeName = placeContent.dataset.place;
-        if (placeName) {
-          placeContent.classList.remove('hovered');
-          PlacesHighlighter.restorePlaceNameIfNeeded(placeContent);
-          PlacesHighlighter.highlightSVGSectorsForPlace(placeName, false);
-        }
-      }
-    }, true);
-  },
-
-  /**
-   * Événements de clic
-   */
-  initializeClickEvents: function() {
-    const placesList = PlacesInterface.elements.placesList;
-    if (!placesList) return;
-
-    placesList.addEventListener('click', (e) => {
-      const placeContent = e.target.closest('.place-content');
-      if (placeContent) {
-        const placeName = placeContent.dataset.place;
-        if (placeName) {
-          PlacesInterface.handlePlaceClick(placeName, e);
-        }
-      }
-    });
-  },
-
-  /**
-   * Raccourcis clavier (optionnel)
-   */
-  initializeKeyboardShortcuts: function() {
-    document.addEventListener('keydown', (e) => {
-      // Ctrl/Cmd + L : Focus sur la recherche de lieux
-      if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
-        e.preventDefault();
-        const searchInput = document.getElementById('fanchart-search-input');
-        if (searchInput) searchInput.focus();
-      }
-
-      // Escape : Nettoyer les surlignages
-      if (e.key === 'Escape') {
-        PlacesHighlighter.clearAllHighlights();
-      }
-    });
-  }
-};
-
 // ========== MODULE DE GESTION DE L'OVERFLOW ==========
 const ModernOverflowManager = {
   // Configuration
@@ -3146,14 +3225,12 @@ const FanchartApp = {
   },
 
   init: function() {
-    // ========== PHASE 1: CALCULS DE BASE ==========
+    // CALCULS INITIAUX
     this.calculateDimensions();
     this.processAncestorData();
 
-    // ========== PHASE 2: LECTURE CENTRALISÉE DE L'ÉTAT ==========
+    // LECTURE DE L'ÉTAT URL
     const state = URLManager.readCurrentState();
-
-    // Application directe aux variables globales (une seule fois)
     tool = state.tool;
     sortMode = state.sortMode;
     showEvents = state.showEvents;
@@ -3161,34 +3238,30 @@ const FanchartApp = {
     current_angle = state.angle;
     implexMode = state.implexMode;
 
-    // ========== PHASE 3: CONSTRUCTION DES DONNÉES ==========
+    // CONSTRUCTION DES DONNÉES
     LocationDataBuilder.buildCompleteLocationData();
 
-    // ========== PHASE 4: INTERFACE DES LIEUX ==========
+    // INTERFACE DES LIEUX
     if (document.querySelector('.places-panel')) {
-      if (PlacesInterface.initialize()) {
-        PlacesInterface.generatePlacesList();
-        PlacesInterface.updateSummarySection();
-        PlacesPanelControls.initialize();
-        PlacesInterface.initializeEventListeners();
-      }
+      PlacesInterface.initialize();
+      PlacesPanelControls.initialize();
     }
-
-    // ========== PHASE 5: MISE À JOUR DES BOUTONS ==========
+    
+    // MISE À JOUR DES BOUTONS
     AngleManager.updateAngleButtons();
     if (isCircularMode) {
       const circularBtn = document.getElementById('b-circular-mode');
       if (circularBtn) circularBtn.classList.add('active');
     }
-
-    // ========== PHASE 6: INITIALISATION DES ÉVÉNEMENTS ==========
+    
+    // INITIALISATION DES ÉVÉNEMENTS
     DOMCache.preload();
     this.initializeEvents();
     this.initializeAngleEvents();
     ColorManager.initializeColorEvents();
     LegendManager.initializeAllEvents();
 
-    // ========== PHASE 7: RENDU ET FINALISATION ==========
+    // RENDU ET FINALISATION
     this.renderFanchart();
     this.updateGenerationTitle();
     this.applyInitialState();
@@ -3774,6 +3847,9 @@ const FanchartApp = {
   },
 
   reRenderWithCurrentGenerations: function() {
+    if (max_gen > LocationDataBuilder._generationCache.size) {
+      LocationDataBuilder.clearCache();
+    }
     DOMCache.invalidate();
     this.calculateDimensions();
     LocationDataBuilder.buildCompleteLocationData(max_gen);
@@ -3784,7 +3860,7 @@ const FanchartApp = {
     if (placesPanel) {
       PlacesInterface.generatePlacesList();
       PlacesInterface.updateSummarySection();
-      PlacesInterface.initializeEventListeners();
+      PlacesPanelControls.initialize();
   }
     this.fitScreen();
     this.updateButtonStates();
