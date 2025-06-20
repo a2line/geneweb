@@ -179,6 +179,40 @@ svg .same_hl .text {
   fill: black !important;
 }
 
+svg path.link {
+  transition: fill 0.2s ease, fill-opacity 0.2s ease;
+}
+
+svg path.link:focus-visible {
+  stroke: #007bff;
+  stroke-width: 2px;
+}
+
+svg .sector-highlighted {
+  cursor: pointer;
+}
+
+svg .event-highlight-birth, svg .event-highlight-baptism,
+svg .event-highlight-death, svg .event-highlight-burial,
+svg .event-highlight-marriage, svg .svg-place-highlight {
+  transition: all 0.2s ease;
+}
+
+@media (prefers-contrast: high) {
+  svg .sector-highlighted {
+    fill: #333333 !important;
+    fill-opacity: 0.5 !important;
+  }
+  
+  svg .event-highlight-birth,
+  svg .event-highlight-baptism,
+  svg .event-highlight-marriage,
+  svg .event-highlight-death,
+  svg .event-highlight-burial {
+    fill-opacity: 0.7 !important;
+  }
+}
+
 /* ========== VISIBILITÉ DES PANNEAUX ========== */
 .hidden {
   visibility: hidden;
@@ -808,6 +842,17 @@ body:not(.place_color) .places-panel {
   background: white;
   cursor: help;
   box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.summary-event-label:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.summary-event-label.active-hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.3);
 }
 
 .places-panel.show-events .summary-event-label.birth-label {
@@ -919,10 +964,24 @@ body:not(.place_color) .places-panel {
   width: 56px;
   height: 42px;
   align-content: center;
+  align-items: center;
   justify-content: flex-end;
   padding: 1px 4px;
   gap: 1px;
 }
+
+/* alternavite avec grid
+.place-row.tall-row .place-indicators {
+  display: grid;
+  grid-template-columns: repeat(2, 16px);
+  grid-auto-rows: 16px;
+  gap: 2px;
+  align-content: center;
+  justify-content: end;
+  padding: 0 4px;
+  width: 56px;
+  height: 42px;
+} */
 
 .line-break {
   flex-basis: 100%;
@@ -933,7 +992,7 @@ body:not(.place_color) .places-panel {
 .place-row.tall-row .place-content {
   min-height: 42px;
   align-items: center;
-  display: grid;
+  display: center;
   align-content: center;
 }
 
@@ -950,6 +1009,8 @@ body:not(.place_color) .places-panel {
   align-items: center;
   justify-content: center;
   margin: 1px;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+  text-shadow: 0 1px 1px rgba(0,0,0,0.2);
 }
 
 /* Couleurs des indicateurs */
@@ -981,6 +1042,11 @@ body:not(.place_color) .places-panel {
   margin-bottom: -1px;
   padding-top: 2px;
   padding-bottom: 2px;
+}
+
+.place-content:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: -2px;
 }
 
 .places-panel.show-events .place-content {
@@ -1064,13 +1130,22 @@ body:not(.place_color) .places-panel {
   white-space: normal;
   overflow: visible;
   text-overflow: unset;
+}
+
+.places-panel.show-events .place-name {
+  font-weight: 500;
+}
+
+.places-panel.show-events .place-content:hover .place-name,
+.place-content.person-match .place-name {
   font-weight: 600;
 }
 
 .place-events {
-  display: none;
+  display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: flex-end;
   font-size: 6px;
   color: #95989b;
 }
@@ -1228,4 +1303,361 @@ body:not(.place_color) .places-panel {
 
 .overflow-content::-webkit-scrollbar {
   width: 0px;
+}
+
+
+/* ========== EXTENSIONS CSS POUR LE SYSTÈME DE SURLIGNAGE REFACTORISÉ ========== */
+
+/* ===== VARIABLES GLOBALES ===== */
+:root {
+  /* Couleurs de surlignage */
+  --highlight-hover-color: lightgrey;
+  --highlight-hover-opacity: 0.3;
+  --highlight-event-opacity: 0.5;
+  
+  /* Couleurs des événements */
+  --event-birth-color: #4CAF50;
+  --event-baptism-color: #66BB6A;
+  --event-marriage-color: #E67E22;
+  --event-death-color: #757575;
+  --event-burial-color: #9E9E9E;
+  --event-multiple-color: #2196F3;
+  
+  /* Transitions */
+  --highlight-transition: all 0.2s ease;
+  --highlight-fast-transition: all 0.1s ease;
+}
+
+/* ===== SURLIGNAGES SVG ===== */
+
+/* Secteur survolé */
+svg .sector-highlighted {
+  cursor: pointer;
+  transition: var(--highlight-fast-transition);
+}
+
+/* Secteur de fond surligné */
+svg .bg-highlighted {
+  transition: var(--highlight-fast-transition);
+}
+
+/* Surlignage par lieu */
+svg .svg-place-highlight {
+  transition: var(--highlight-transition);
+}
+
+/* Surlignages par type d'événement */
+svg .event-highlight-birth {
+  transition: var(--highlight-transition);
+}
+
+svg .event-highlight-baptism {
+  transition: var(--highlight-transition);
+}
+
+svg .event-highlight-marriage {
+  transition: var(--highlight-transition);
+}
+
+svg .event-highlight-death {
+  transition: var(--highlight-transition);
+}
+
+svg .event-highlight-burial {
+  transition: var(--highlight-transition);
+}
+
+/* Surlignage des groupes d'âge */
+svg .age-highlight {
+  transition: var(--highlight-transition);
+}
+
+/* Amélioration du contraste pour l'accessibilité */
+@media (prefers-contrast: high) {
+  svg .sector-highlighted,
+  svg .svg-place-highlight,
+  svg [class*="event-highlight-"] {
+    stroke: #000000;
+    stroke-width: 2px;
+  }
+}
+
+/* ===== SURLIGNAGES DE LA LISTE DES LIEUX ===== */
+
+/* Lieu surligné */
+.place-content.person-match {
+  background: rgba(40, 167, 69, 0.12) !important;
+  border-left: 3px solid #28a745;
+  margin-left: -1px;
+  transition: var(--highlight-transition);
+}
+
+/* Éléments grisés */
+.place-content.grayed-out {
+  opacity: 0.35;
+  transition: var(--highlight-transition);
+  filter: grayscale(50%);
+}
+
+/* Animation au survol pour les éléments non grisés */
+.place-content:not(.grayed-out):hover {
+  transform: translateX(2px);
+}
+
+/* Ligne haute pour plus d'indicateurs */
+.place-row.tall-row {
+  min-height: 42px;
+  transition: min-height 0.2s ease;
+}
+
+.place-row.tall-row .place-indicators {
+  height: 42px;
+}
+
+.place-row.tall-row .place-content {
+  min-height: 42px;
+  align-items: center;
+}
+
+/* Nom de lieu étendu */
+.place-name.name-expanded {
+  font-weight: 600;
+  transition: font-weight 0.1s ease;
+}
+
+/* ===== INDICATEURS D'ÉVÉNEMENTS ===== */
+
+/* Animation d'apparition des indicateurs */
+.place-indicators .indicator {
+  animation: indicatorFadeIn 0.2s ease-out;
+  animation-fill-mode: both;
+}
+
+.place-indicators .indicator:nth-child(1) { animation-delay: 0ms; }
+.place-indicators .indicator:nth-child(2) { animation-delay: 50ms; }
+.place-indicators .indicator:nth-child(3) { animation-delay: 100ms; }
+.place-indicators .indicator:nth-child(4) { animation-delay: 150ms; }
+.place-indicators .indicator:nth-child(5) { animation-delay: 200ms; }
+
+@keyframes indicatorFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Couleurs améliorées des indicateurs avec ombres */
+.indicator.n { 
+  background: var(--event-birth-color);
+  box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+}
+
+.indicator.b { 
+  background: var(--event-baptism-color);
+  box-shadow: 0 2px 4px rgba(102, 187, 106, 0.3);
+}
+
+.indicator.m { 
+  background: var(--event-marriage-color);
+  box-shadow: 0 2px 4px rgba(230, 126, 34, 0.3);
+}
+
+.indicator.d { 
+  background: var(--event-death-color);
+  box-shadow: 0 2px 4px rgba(117, 117, 117, 0.3);
+}
+
+.indicator.s { 
+  background: var(--event-burial-color);
+  box-shadow: 0 2px 4px rgba(158, 158, 158, 0.3);
+}
+
+/* ===== TOTAUX D'ÉVÉNEMENTS ===== */
+
+/* Label de total survolé */
+.summary-event-label {
+  transition: var(--highlight-transition);
+  cursor: pointer;
+  position: relative;
+}
+
+.summary-event-label:hover {
+  transform: scale(1.1);
+  z-index: 10;
+}
+
+.summary-event-label.active-hover {
+  transform: scale(1.2);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+  z-index: 20;
+}
+
+/* Effet de pulsation pour les totaux actifs */
+.summary-event-label.active-hover::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border: 2px solid currentColor;
+  border-radius: 5px;
+  animation: pulseBorder 1s ease-in-out infinite;
+}
+
+@keyframes pulseBorder {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+/* ===== LÉGENDES D'ÂGE ===== */
+
+/* Amélioration du survol des légendes */
+#death-age li {
+  transition: var(--highlight-transition);
+  padding: 2px 4px;
+  margin: 1px 0;
+}
+
+#death-age li.hl {
+  background-color: rgba(0, 123, 255, 0.15);
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+#death-age li.hl .arrow {
+  color: #007bff;
+  transition: color 0.1s ease;
+}
+
+/* ===== SECTIONS D'OVERFLOW ===== */
+
+/* Animations d'apparition */
+.overflow-section {
+  animation: slideIn 0.3s ease-out;
+}
+
+.overflow-section.above {
+  animation-name: slideInFromTop;
+}
+
+.overflow-section.below {
+  animation-name: slideInFromBottom;
+}
+
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Header d'overflow amélioré */
+.overflow-header {
+  background: linear-gradient(to right, 
+    rgba(255,255,255,0.95) 0%, 
+    rgba(40,167,69,0.8) 30%, 
+    #28a745 100%);
+  backdrop-filter: blur(5px);
+}
+
+/* ===== EFFETS DE TRANSITION GLOBAUX ===== */
+
+/* Désactiver les transitions pendant le nettoyage */
+body.clearing-highlights * {
+  transition: none !important;
+}
+
+/* ===== MODE DEBUG ===== */
+
+/* Indicateurs visuels en mode debug */
+body.highlight-debug .sector-highlighted {
+  outline: 2px dashed red;
+}
+
+body.highlight-debug .person-match {
+  outline: 2px dashed green;
+}
+
+body.highlight-debug .grayed-out {
+  outline: 1px dotted gray;
+}
+
+/* ===== AMÉLIORATIONS D'ACCESSIBILITÉ ===== */
+
+/* Focus visible pour la navigation au clavier */
+.place-content:focus-visible,
+.summary-event-label:focus-visible,
+#death-age li:focus-visible {
+  outline: 3px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* Mode haute contraste */
+@media (prefers-contrast: high) {
+  .place-content.person-match {
+    border-left-width: 5px;
+    background: rgba(40, 167, 69, 0.25) !important;
+  }
+  
+  .indicator {
+    border: 2px solid #000000;
+  }
+  
+  .summary-event-label.active-hover {
+    outline: 3px solid #000000;
+  }
+}
+
+/* Mode sombre (si implémenté) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --highlight-hover-color: #444444;
+    --highlight-hover-opacity: 0.5;
+  }
+  
+  .place-content.person-match {
+    background: rgba(40, 167, 69, 0.25) !important;
+  }
+  
+  .place-content.grayed-out {
+    opacity: 0.5;
+  }
+}
+
+/* ===== OPTIMISATIONS DE PERFORMANCE ===== */
+/* TODO : intégrer proprement à l'existant */
+/* Utiliser l'accélération matérielle pour les transformations */
+.place-content,
+.summary-event-label,
+.indicator {
+  will-change: transform;
+}
+
+/* Désactiver les animations si l'utilisateur le préfère */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

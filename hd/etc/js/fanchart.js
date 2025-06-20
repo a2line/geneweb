@@ -19,30 +19,6 @@ var showEvents = false;
 var has_bi = false, has_ba = false, has_ma = false, has_de = false, has_bu = false;
 var svg_viewbox_x = 0, svg_viewbox_y = 0, svg_viewbox_w = 0, svg_viewbox_h = 0;
 
-// ========== CONSTANTES D'ÉVÉNEMENTS ==========
-const EVENT_CONFIG = {
-  eventOrder: ['birth', 'baptism', 'marriage', 'death', 'burial'],
-  eventToClass: { 'birth': 'n', 'baptism': 'b', 'marriage': 'm', 'death': 'd', 'burial': 's' },
-  eventToLabel: { 'birth': 'N', 'baptism': 'B', 'marriage': 'M', 'death': 'D', 'burial': 'S' }
-};
-
-const Events = {
-  get types() { return EVENT_CONFIG.eventOrder; },
-  cssClass: (type) => EVENT_CONFIG.eventToClass[type],
-  label: (type) => EVENT_CONFIG.eventToLabel[type],
-  count: (type) => type + '_count', // 'birth' -> 'birth_count'
-  place: (type) => type + '_place', // 'birth' -> 'birth_place'
-  svgPrefix: (type) => type.substring(0, 2), // 'birth' → 'bi'
-  flagProp: (type) => 'has_' + Events.svgPrefix(type), // 'birth' → 'has_bi'
-  findByClass: (cssClass) => EVENT_CONFIG.eventOrder.find(type => Events.cssClass(type) === cssClass),
-  findBySvgPrefix: (prefix) => EVENT_CONFIG.eventOrder.find(type => Events.svgPrefix(type) === prefix),
-  isValid: (type) => EVENT_CONFIG.eventOrder.includes(type),
-  translate: (type, count = 1) => {
-    const translationKey = count > 1 ? type + 's' : type;
-    return window.FC_TRANSLATIONS?.[translationKey] || type;
-  }
-};
-
 // ====== Configuration =======
 const CONFIG = {
   security: 0.95,
@@ -59,6 +35,1664 @@ const CONFIG = {
 let isCircularMode = false;
 let renderTarget = null; // (null = fanchart direct)
 let current_angle = CONFIG.default_angle;
+
+
+// Configuration des événements
+const EVENT_CONFIG = {
+  eventOrder: ['birth', 'baptism', 'marriage', 'death', 'burial'],
+  eventToClass: { 'birth': 'n', 'baptism': 'b', 'marriage': 'm', 'death': 'd', 'burial': 's' },
+  eventToLabel: { 'birth': 'N', 'baptism': 'B', 'marriage': 'M', 'death': 'D', 'burial': 'S' }
+};
+
+const Events = {
+  get types() { return EVENT_CONFIG.eventOrder; },
+  cssClass: (type) => EVENT_CONFIG.eventToClass[type],
+  label: (type) => EVENT_CONFIG.eventToLabel[type],
+  count: (type) => type + '_count',
+  place: (type) => type + '_place',
+  svgPrefix: (type) => type.substring(0, 2),
+  flagProp: (type) => 'has_' + Events.svgPrefix(type),
+  findByClass: (cssClass) => EVENT_CONFIG.eventOrder.find(type => Events.cssClass(type) === cssClass),
+  findBySvgPrefix: (prefix) => EVENT_CONFIG.eventOrder.find(type => Events.svgPrefix(type) === prefix),
+  isValid: (type) => EVENT_CONFIG.eventOrder.includes(type),
+  translate: (type, count = 1) => {
+    const translationKey = count > 1 ? type + 's' : type;
+    return window.FC_TRANSLATIONS?.[translationKey] || type;
+  }
+};
+
+// Utilitaires
+const Utils = {
+  calculateAgeCategory: function(age) {
+    const boundaries = [30, 45, 60, 75, 90, 105, Infinity];
+    const category = boundaries.findIndex(boundary => age < boundary);
+    return Math.min(category, 6);
+  },
+
+  deathAgeClass: function(age) {
+    return "DA" + this.calculateAgeCategory(age);
+  },
+
+  marriageLengthClass: function(length) {
+    const years = parseInt(length);
+    if (isNaN(years) || years < 0) return "";
+    const marriageThresholds = [4, 14, 24, 34, 44, 54];
+    const index = marriageThresholds.findIndex(threshold => years <= threshold);
+    return index === -1 ? "DAM6" : `DAM${index}`;
+  }
+};
+
+/**
+ * HighlightStateManager - Gestionnaire d'état centralisé pour tous les surlignages
+ *
+ * Ce module maintient l'état global de tous les surlignages actifs et coordonne
+ * les transitions entre les différents états. Il garantit qu'un seul type de
+ * surlignage peut être actif à la fois et gère le nettoyage approprié.
+ */
+const HighlightStateManager = {
+  // État complet du système de surlignage
+  state: {
+    // Type de surlignage actif
+    activeHighlight: {
+      source: null,      // 'sector', 'place', 'event-total', 'age-legend', null
+      sourceElement: null, // L'élément DOM qui a déclenché le surlignage
+      type: null,        // 'person', 'marriage', 'place', 'event', 'age'
+      data: null         // Données associées au surlignage
+    },
+
+    // Collections d'éléments modifiés pour restauration
+    modifiedElements: {
+      svg: new Map(),       // Éléments SVG modifiés
+      dom: new Map(),       // Éléments DOM (liste) modifiés
+      classes: new Map()    // Classes ajoutées/supprimées
+    },
+
+    // État des modes visuels
+    visualModes: {
+      placeColorActive: false,
+      deathAgeActive: false,
+      showEvents: false
+    },
+
+    // Cache des données pour optimisation
+    cache: {
+      lastHighlight: null,
+      preventRedundant: true
+    }
+  },
+
+  /**
+   * Initialise un nouveau surlignage en nettoyant l'état précédent
+   * @param {string} source - Source du surlignage ('sector', 'place', etc.)
+   * @param {string} type - Type spécifique ('person', 'marriage', etc.)
+   * @param {*} data - Données associées
+   * @param {HTMLElement} sourceElement - Élément déclencheur
+   * @returns {boolean} true si le surlignage peut procéder
+   */
+  startHighlight(source, type, data, sourceElement = null) {
+    // Vérifier si c'est le même surlignage (optimisation)
+    if (this.state.cache.preventRedundant && this.isSameHighlight(source, type, data)) {
+      return false;
+    }
+
+    // Nettoyer l'état précédent
+    this.clearAllHighlights();
+
+    // Enregistrer le nouvel état
+    this.state.activeHighlight = {
+      source,
+      sourceElement,
+      type,
+      data
+    };
+
+    // Mettre en cache pour détecter les répétitions
+    this.state.cache.lastHighlight = { source, type, data };
+
+    // Logger pour debug
+    console.log(`🎯 Surlignage démarré: ${source}/${type}`, data);
+
+    return true;
+  },
+
+  /**
+   * Vérifie si le surlignage demandé est identique au précédent
+   */
+  isSameHighlight(source, type, data) {
+    const last = this.state.cache.lastHighlight;
+    if (!last) return false;
+
+    // Comparaison basique pour les types simples
+    if (last.source !== source || last.type !== type) return false;
+
+    // Comparaison approfondie selon le type
+    if (source === 'sector' && data?.sosa) {
+      return last.data?.sosa === data.sosa;
+    } else if (source === 'place' && data?.placeName) {
+      return last.data?.placeName === data.placeName;
+    } else if (source === 'event-total' && data?.eventType) {
+      return last.data?.eventType === data.eventType;
+    }
+
+    return false;
+  },
+
+  /**
+   * Enregistre un élément modifié pour restauration ultérieure
+   * @param {string} category - 'svg', 'dom', ou 'classes'
+   * @param {Element} element - L'élément modifié
+   * @param {Object} originalState - État original à restaurer
+   */
+  trackModification(category, element, originalState) {
+    if (!element) return;
+
+    const collection = this.state.modifiedElements[category];
+    if (!collection) {
+      console.warn(`Catégorie invalide: ${category}`);
+      return;
+    }
+
+    // Stocker l'état original si pas déjà tracké
+    if (!collection.has(element)) {
+      collection.set(element, originalState);
+    }
+  },
+
+  /**
+   * Nettoie complètement tous les surlignages actifs
+   */
+  clearAllHighlights() {
+    // Restaurer les éléments SVG
+    this.state.modifiedElements.svg.forEach((originalState, element) => {
+      if (originalState.fill !== undefined) {
+        element.style.fill = originalState.fill;
+      }
+      if (originalState.fillOpacity !== undefined) {
+        element.style.fillOpacity = originalState.fillOpacity;
+      }
+      if (originalState.stroke !== undefined) {
+        element.style.stroke = originalState.stroke;
+      }
+
+      // Nettoyer les data attributes
+      ['originalFill', 'originalOpacity', 'highlighted', 'listHighlighted'].forEach(attr => {
+        delete element.dataset[attr];
+      });
+    });
+
+    // Restaurer les éléments DOM
+    this.state.modifiedElements.dom.forEach((originalState, element) => {
+      if (originalState.innerHTML !== undefined) {
+        element.innerHTML = originalState.innerHTML;
+      }
+      if (originalState.display !== undefined) {
+        element.style.display = originalState.display;
+      }
+    });
+
+    // Restaurer les classes
+    this.state.modifiedElements.classes.forEach((operations, element) => {
+      operations.added.forEach(className => element.classList.remove(className));
+      operations.removed.forEach(className => element.classList.add(className));
+    });
+
+    // Vider les collections
+    this.state.modifiedElements.svg.clear();
+    this.state.modifiedElements.dom.clear();
+    this.state.modifiedElements.classes.clear();
+
+    // Réinitialiser l'état actif
+    this.state.activeHighlight = {
+      source: null,
+      sourceElement: null,
+      type: null,
+      data: null
+    };
+
+  },
+
+  /**
+   * Met à jour l'état des modes visuels
+   */
+  updateVisualModes() {
+    this.state.visualModes.placeColorActive = document.body.classList.contains('place_color');
+    this.state.visualModes.deathAgeActive = document.body.classList.contains('death-age');
+    this.state.visualModes.showEvents = document.querySelector('.places-panel')?.classList.contains('show-events') || false;
+  },
+
+  /**
+   * Vérifie si un type de surlignage est actuellement actif
+   */
+  isHighlightActive(source = null, type = null) {
+    if (!source) {
+      return this.state.activeHighlight.source !== null;
+    }
+
+    if (!type) {
+      return this.state.activeHighlight.source === source;
+    }
+
+    return this.state.activeHighlight.source === source &&
+           this.state.activeHighlight.type === type;
+  },
+
+  /**
+   * Obtient les données du surlignage actif
+   */
+  getActiveHighlight() {
+    return { ...this.state.activeHighlight };
+  },
+
+  /**
+   * Enregistre une opération sur les classes CSS
+   */
+  trackClassOperation(element, added = [], removed = []) {
+    if (!element) return;
+
+    let operations = this.state.modifiedElements.classes.get(element);
+    if (!operations) {
+      operations = { added: new Set(), removed: new Set() };
+      this.state.modifiedElements.classes.set(element, operations);
+    }
+
+    // Enregistrer les classes ajoutées
+    added.forEach(className => {
+      operations.added.add(className);
+      // Si la classe était dans removed, l'enlever
+      operations.removed.delete(className);
+    });
+
+    // Enregistrer les classes supprimées
+    removed.forEach(className => {
+      operations.removed.add(className);
+      // Si la classe était dans added, l'enlever
+      operations.added.delete(className);
+    });
+  },
+
+  /**
+   * Interface de débogage pour afficher l'état actuel
+   */
+  debugState() {
+    console.group('📊 État du HighlightStateManager');
+    console.log('Surlignage actif:', this.state.activeHighlight);
+    console.log('Éléments SVG modifiés:', this.state.modifiedElements.svg.size);
+    console.log('Éléments DOM modifiés:', this.state.modifiedElements.dom.size);
+    console.log('Classes modifiées:', this.state.modifiedElements.classes.size);
+    console.log('Modes visuels:', this.state.visualModes);
+    console.groupEnd();
+  }
+};
+
+/**
+ * SVGHighlightHandler - Gestionnaire spécialisé pour les surlignages dans le SVG
+ * 
+ * Ce module gère exclusivement les modifications visuelles des éléments SVG,
+ * incluant les secteurs individuels, les mariages, et les colorisations par lieu/événement.
+ */
+const SVGHighlightHandler = {
+  // Configuration des styles de surlignage
+  config: {
+    hover: {
+      fill: 'lightgrey',
+      fillOpacity: '0.3'
+    },
+    
+    eventColors: {
+      birth: '#4CAF50',
+      baptism: '#66BB6A', 
+      marriage: '#E67E22',
+      death: '#757575',
+      burial: '#9E9E9E',
+      multiple: '#2196F3'  // Pour les événements multiples
+    },
+    
+    classes: {
+      sectorHover: 'sector-highlighted',
+      placeHighlight: 'svg-place-highlight',
+      eventHighlight: 'event-highlight-',  // Préfixe pour event-highlight-birth, etc.
+      ageHighlight: 'age-highlight',
+      backgroundHighlight: 'bg-highlighted'
+    }
+  },
+  
+  /**
+   * Surligne un secteur individuel au survol
+   * @param {SVGElement} sector - Le secteur SVG à surligner
+   * @param {Object} person - Les données de la personne
+   * @param {string} type - 'person' ou 'marriage'
+   */
+  highlightSector: function(sector, person, type) {
+    if (!sector) return;
+    
+    // Sauvegarder l'état original
+    const originalState = {
+      fill: sector.style.fill || '',
+      fillOpacity: sector.style.fillOpacity || '',
+      stroke: sector.style.stroke || ''
+    };
+    
+    // Enregistrer dans le gestionnaire d'état
+    HighlightStateManager.trackModification('svg', sector, originalState);
+    
+    // Appliquer le style de survol
+    sector.style.fill = this.config.hover.fill;
+    sector.style.fillOpacity = this.config.hover.fillOpacity;
+    sector.classList.add(this.config.classes.sectorHover);
+    
+    // Traquer l'opération de classe
+    HighlightStateManager.trackClassOperation(sector, [this.config.classes.sectorHover]);
+    
+    // Surligner aussi le secteur de fond s'il existe
+    this.highlightBackgroundSector(sector.parentNode, person, type);
+  },
+  
+  /**
+   * Surligne le secteur de fond associé
+   */
+  highlightBackgroundSector: function(group, person, type) {
+    if (!group) return;
+    
+    const bgSector = group.querySelector('.bg');
+    if (!bgSector) return;
+    
+    // Sauvegarder l'état
+    const originalState = {
+      fill: bgSector.style.fill || ''
+    };
+    
+    HighlightStateManager.trackModification('svg', bgSector, originalState);
+    
+    // Appliquer le surlignage
+    bgSector.style.fill = this.config.hover.fill;
+    bgSector.classList.add(this.config.classes.backgroundHighlight);
+    
+    HighlightStateManager.trackClassOperation(bgSector, [this.config.classes.backgroundHighlight]);
+  },
+  
+  /**
+   * Colorise les secteurs SVG selon les lieux
+   * @param {string} placeName - Nom du lieu
+   * @param {Object} placeData - Données du lieu
+   * @param {Array} eventTypes - Types d'événements à coloriser
+   */
+  highlightByPlace: function(placeName, placeData, eventTypes) {
+    if (!placeData || !placeData.c) {
+      console.warn('⚠️ Données de lieu invalides:', placeName);
+      return;
+    }
+    
+    const placeClass = placeData.c; // Ex: "L0"
+    console.log(`🎨 Colorisation pour le lieu ${placeName} (${placeClass})`);
+    
+    // Si pas d'événements spécifiés, utiliser tous ceux du lieu
+    const eventsToHighlight = eventTypes || this.getPlaceEvents(placeData);
+    
+    eventsToHighlight.forEach(eventType => {
+      const svgPrefix = Events.svgPrefix(eventType);
+      
+      if (!placeData[svgPrefix]) return;
+      
+      const color = this.config.eventColors[eventType];
+      
+      if (eventType === 'marriage') {
+        // Chercher les secteurs de mariage
+        const marriageSectors = document.querySelectorAll(`path.link.ma-${placeClass}`);
+        console.log(`  - Mariages trouvés: ${marriageSectors.length}`);
+        
+        marriageSectors.forEach(sector => {
+          this.applyColorHighlight(sector, color, 'marriage');
+        });
+      } else {
+        // Chercher les secteurs individuels
+        const selectors = [
+          `path.link.${svgPrefix}-${placeClass}`,
+          `circle.link.${svgPrefix}-${placeClass}`
+        ];
+        
+        selectors.forEach(selector => {
+          const elements = document.querySelectorAll(selector);
+          console.log(`  - ${eventType} (${selector}): ${elements.length} éléments`);
+          
+          elements.forEach(element => {
+            this.applyColorHighlight(element, color, eventType);
+          });
+        });
+      }
+    });
+  },
+
+  /**
+   * Trouve tous les individus ayant des événements dans un lieu donné
+   * Cette méthode est nécessaire pour implémenter correctement la logique
+   * de colorisation selon le nombre d'événements par individu dans un lieu
+   * @private
+   */
+  findIndividualsWithPlaceEvents: function(placeClass, eventTypes) {
+    const individuals = new Map(); // Clé: ID groupe, Valeur: {element, events}
+    
+    // Parcourir tous les groupes d'individus
+    const individualGroups = document.querySelectorAll('g[id^="S"]');
+    
+    individualGroups.forEach(group => {
+      const groupId = group.id;
+      const eventsInPlace = [];
+      
+      // Vérifier chaque type d'événement (sauf mariage)
+      eventTypes.filter(et => et !== 'marriage').forEach(eventType => {
+        const svgPrefix = Events.svgPrefix(eventType);
+        
+        // Chercher les éléments avec cette classe
+        const selector = `path.link.${svgPrefix}-${placeClass}, circle.link.${svgPrefix}-${placeClass}`;
+        const elements = group.querySelectorAll(selector);
+        
+        if (elements.length > 0) {
+          eventsInPlace.push({
+            type: eventType,
+            element: elements[0] // Premier élément interactif trouvé
+          });
+        }
+      });
+      
+      // Si l'individu a des événements dans ce lieu, l'ajouter à la map
+      if (eventsInPlace.length > 0) {
+        individuals.set(groupId, {
+          elements: eventsInPlace,
+          count: eventsInPlace.length
+        });
+      }
+    });
+    
+    // Convertir en array pour le traitement
+    const result = [];
+    individuals.forEach((data, groupId) => {
+      data.elements.forEach(event => {
+        result.push({
+          element: event.element,
+          eventCount: data.count,
+          eventType: event.type,
+          groupId: groupId
+        });
+      });
+    });
+    
+    return result;
+  },
+
+  /**
+   * Surligne les secteurs de mariage pour un lieu spécifique
+   */
+  highlightMarriageSectorsForPlace: function(placeClass, color) {
+    // Chercher dans tous les groupes de mariage
+    const marriageGroups = document.querySelectorAll('g[id^="M"]');
+    
+    marriageGroups.forEach(group => {
+      // Chercher les secteurs de mariage avec cette classe de lieu
+      const selector = `path.ma-${placeClass}`;
+      const marriageSectors = group.querySelectorAll(selector);
+      
+      marriageSectors.forEach(sector => {
+        if (sector.classList.contains('link') && !sector.classList.contains('bg')) {
+          this.applyColorHighlight(sector, color, 'marriage');
+        }
+      });
+    });
+  },
+
+  /**
+   * Surligne les secteurs individuels pour un lieu et événement spécifiques
+   */
+  highlightIndividualSectorsForPlace: function(placeClass, svgPrefix, color, eventType) {
+    // Chercher dans tous les groupes d'individus
+    const individualGroups = document.querySelectorAll('g[id^="S"]');
+    
+    individualGroups.forEach(group => {
+      // Sélecteurs pour path et circle
+      const selectors = [
+        `path.${svgPrefix}-${placeClass}`,
+        `circle.${svgPrefix}-${placeClass}`
+      ];
+      
+      selectors.forEach(selector => {
+        const elements = group.querySelectorAll(selector);
+        elements.forEach(element => {
+          if (element.classList.contains('link') && !element.classList.contains('bg')) {
+            // Déterminer la couleur finale
+            // Si un seul événement individuel dans ce lieu, utiliser sa couleur
+            // Sinon, utiliser la couleur passée en paramètre
+            const finalColor = (eventType !== 'marriage') ? 
+              (this.config.eventColors[eventType] || color) : color;
+            
+            this.applyColorHighlight(element, finalColor, eventType);
+          }
+        });
+      });
+    });
+  },
+  
+  /**
+   * Colorise les secteurs par type d'événement
+   * @param {string} eventType - Type d'événement ('birth', 'marriage', etc.)
+   */
+  highlightByEventType(eventType) {
+    if (!Events.isValid(eventType)) return;
+
+    const color = this.config.eventColors[eventType];
+
+    if (eventType === 'marriage') {
+      // SPEC: "Pour M (mariages) - CAS SPÉCIAL"
+      // "seuls les SECTEURS DE MARIAGE sont colorisés en orange"
+      this.highlightMarriageSectorsOnly(color);
+    } else {
+      // Autres événements : secteurs d'individus uniquement
+      this.highlightIndividualsByEvent(eventType, color);
+    }
+  },
+  
+  /**
+   * Surligne uniquement les secteurs de mariage
+   */
+  highlightMarriageSectorsOnly: function(color) {
+    // Chercher dans tous les groupes de mariage
+    const marriageGroups = document.querySelectorAll('g[id^="M"]');
+    
+    marriageGroups.forEach(group => {
+      // Chercher tous les secteurs de mariage avec des lieux
+      const marriageSectors = group.querySelectorAll('path.link[class*="ma-L"]');
+      
+      marriageSectors.forEach(sector => {
+        // Vérifier que c'est bien un secteur de mariage avec lieu
+        const classMatch = sector.className.baseVal.match(/ma-(L\d+)/);
+        if (classMatch && !sector.classList.contains('bg')) {
+          this.applyColorHighlight(sector, color, 'marriage');
+        }
+      });
+    });
+  },
+  
+  /**
+   * Surligne les secteurs d'individus par événement
+   */
+  highlightIndividualsByEvent: function(eventType, color) {
+    const svgPrefix = Events.svgPrefix(eventType);
+    
+    // Chercher dans tous les groupes d'individus
+    const individualGroups = document.querySelectorAll('g[id^="S"]');
+    
+    individualGroups.forEach(group => {
+      // Chercher les éléments avec la classe d'événement
+      const selectors = [
+        `path.link[class*="${svgPrefix}-L"]`,
+        `circle.link[class*="${svgPrefix}-L"]`
+      ];
+      
+      selectors.forEach(selector => {
+        const elements = group.querySelectorAll(selector);
+        elements.forEach(element => {
+          // Vérifier que c'est bien un secteur avec ce type d'événement
+          const classMatch = element.className.baseVal.match(new RegExp(`${svgPrefix}-(L\\d+)`));
+          if (classMatch && !element.classList.contains('bg')) {
+            this.applyColorHighlight(element, color, eventType);
+          }
+        });
+      });
+    });
+  },
+  
+  /**
+   * Applique une colorisation à un élément SVG
+   */
+  applyColorHighlight: function(element, color, eventType) {
+    // Sauvegarder l'état original
+    const originalState = {
+      fill: element.style.fill || '',
+      fillOpacity: element.style.fillOpacity || ''
+    };
+    
+    HighlightStateManager.trackModification('svg', element, originalState);
+    
+    // Appliquer la colorisation
+    element.style.fill = color;
+    element.style.fillOpacity = '0.5';
+    
+    // Ajouter la classe spécifique
+    const highlightClass = `${this.config.classes.eventHighlight}${eventType}`;
+    element.classList.add(highlightClass);
+    
+    HighlightStateManager.trackClassOperation(element, [highlightClass]);
+  },
+  
+  /**
+   * Obtient les événements présents pour un lieu
+   */
+  getPlaceEvents: function(placeData) {
+    return Events.types.filter(eventType => 
+      placeData[Events.svgPrefix(eventType)]
+    );
+  },
+  
+  /**
+   * Gère le surlignage des secteurs liés aux âges au décès
+   * @param {string} ageClass - Classe d'âge (DA0-DA6)
+   * @param {boolean} highlight - true pour surligner, false pour nettoyer
+   */
+  highlightAgeGroup: function(ageClass, highlight) {
+    // Chercher tous les éléments avec cette classe d'âge
+    const elements = document.getElementsByClassName(ageClass);
+    
+    Array.from(elements).forEach(element => {
+      if (highlight) {
+        // Sauvegarder l'état
+        const originalState = {
+          fill: element.style.fill || '',
+          fillOpacity: element.style.fillOpacity || ''
+        };
+        
+        HighlightStateManager.trackModification('svg', element, originalState);
+        
+        // Appliquer le surlignage
+        element.classList.add(this.config.classes.ageHighlight);
+        element.style.fillOpacity = '0.5';
+        
+        HighlightStateManager.trackClassOperation(element, [this.config.classes.ageHighlight]);
+      }
+      // Note: le nettoyage est géré par HighlightStateManager
+    });
+  },
+  
+  /**
+   * Méthode de débogage pour visualiser les éléments surlignés
+   */
+  debugHighlightedElements: function() {
+    console.group('🎨 Éléments SVG surlignés');
+    
+    // Secteurs surlignés
+    const highlighted = document.querySelectorAll(`.${this.config.classes.sectorHover}`);
+    console.log(`Secteurs en survol: ${highlighted.length}`);
+    
+    // Éléments colorisés par événement
+    Events.types.forEach(eventType => {
+      const className = `${this.config.classes.eventHighlight}${eventType}`;
+      const elements = document.querySelectorAll(`.${className}`);
+      if (elements.length > 0) {
+        console.log(`${eventType}: ${elements.length} éléments`);
+      }
+    });
+    
+    // Éléments d'âge surlignés
+    const ageElements = document.querySelectorAll(`.${this.config.classes.ageHighlight}`);
+    if (ageElements.length > 0) {
+      console.log(`Éléments d'âge: ${ageElements.length}`);
+    }
+    
+    console.groupEnd();
+  }
+};
+
+/**
+ * ListHighlightHandler - Gestionnaire spécialisé pour les surlignages dans la liste des lieux
+ * 
+ * Ce module gère exclusivement les modifications visuelles dans le panneau des lieux,
+ * incluant le surlignage des lignes, l'ajout d'indicateurs d'événements, et la gestion
+ * de l'overflow pour les éléments hors de vue.
+ */
+const ListHighlightHandler = {
+  // Configuration des styles et comportements
+  config: {
+    classes: {
+      personMatch: 'person-match',
+      grayedOut: 'grayed-out',
+      tallRow: 'tall-row',
+      expandedName: 'name-expanded'
+    },
+    
+    indicators: {
+      maxBeforeBreak: 3,  // Nombre d'indicateurs avant saut de ligne
+      containerClass: 'place-indicators',
+      indicatorClass: 'indicator',
+      lineBreakClass: 'line-break'
+    },
+    
+    overflow: {
+      sectionClass: 'overflow-section',
+      headerClass: 'overflow-header',
+      contentClass: 'overflow-content',
+      maxItems: 5,  // Maximum d'éléments dans une section overflow
+      animationDelay: 50  // Délai avant affichage overflow (ms)
+    }
+  },
+  
+  // État interne
+  state: {
+    highlightedPlaces: new Set(),
+    addedIndicators: new Map(),  // element -> [indicators]
+    expandedNames: new Map(),    // element -> originalHTML
+    overflowSections: []
+  },
+  
+  /**
+   * Surligne un ou plusieurs lieux dans la liste
+   * @param {Array<string>} placeNames - Noms des lieux à surligner
+   * @param {boolean} showIndicators - Afficher les indicateurs d'événements
+   * @param {string} specificEventType - Type d'événement spécifique (optionnel)
+   */
+  highlightPlaces(placeNames, showIndicators = true, specificEventType = null) {
+    if (!placeNames || placeNames.length === 0) return;
+    
+    // Vérifier que les références sont disponibles
+    if (!lieux || sortMode === null) {
+      console.error('❌ Références non initialisées dans ListHighlightHandler');
+      return;
+    }
+    
+    // Nettoyer l'état précédent
+    this.clearHighlights();
+    
+    const elementsToShow = [];
+    
+    placeNames.forEach(placeName => {
+      const placeData = lieux[placeName];
+      if (!placeData?.domElement) return;
+      
+      const placeElement = placeData.domElement;
+      
+      // Marquer comme surligné
+      placeElement.classList.add(this.config.classes.personMatch);
+      HighlightStateManager.trackClassOperation(placeElement, [this.config.classes.personMatch]);
+      
+      this.state.highlightedPlaces.add(placeName);
+      
+      // Expansion du nom si nécessaire (sous-lieux en mode alphabétique)
+      if (placeData.isSubLocation && sortMode === 'alphabetical') {
+        this.expandPlaceName(placeElement, placeName);
+      }
+      
+      // Ajout des indicateurs si demandé
+      if (showIndicators && placeData.indicatorElement) {
+        let events;
+        
+        if (specificEventType) {
+          // Pour les mariages depuis un secteur, montrer seulement M
+          events = [specificEventType];
+        } else {
+          // Sinon, montrer tous les événements du lieu
+          events = this.getPlaceEvents(placeData);
+        }
+        
+        if (events.length > 0) {
+          this.addEventIndicators(placeData.indicatorElement, events);
+        }
+      }
+      
+      // Collecter pour l'overflow
+      elementsToShow.push({
+        element: placeElement,
+        index: placeData.visualIndex,
+        placeName: placeName
+      });
+    });
+    
+    // Griser les autres éléments
+    this.grayOutOthers();
+    
+    // Gérer l'overflow après un court délai
+    if (elementsToShow.length > 0) {
+      setTimeout(() => {
+        this.handleOverflow(elementsToShow);
+      }, this.config.overflow.animationDelay);
+    }
+  },
+  
+  /**
+   * Ajoute des indicateurs d'événements à un conteneur
+   */
+  addEventIndicators(container, events) {
+    if (!container || !events || events.length === 0) return;
+    
+    const indicators = [];
+    
+    events.forEach((eventType, index) => {
+      // Créer l'indicateur
+      const indicator = document.createElement('div');
+      indicator.className = `${this.config.indicators.indicatorClass} ${Events.cssClass(eventType)}`;
+      indicator.textContent = Events.label(eventType);
+      container.appendChild(indicator);
+      indicators.push(indicator);
+      
+      // Ajouter un saut de ligne si nécessaire (4+ événements)
+      if (index === this.config.indicators.maxBeforeBreak - 1 && events.length >= 4) {
+        const breaker = document.createElement('div');
+        breaker.className = this.config.indicators.lineBreakClass;
+        container.appendChild(breaker);
+        indicators.push(breaker);
+        
+        // Ajuster la hauteur de la ligne
+        const row = container.closest('.place-row');
+        if (row) {
+          row.classList.add(this.config.classes.tallRow);
+          HighlightStateManager.trackClassOperation(row, [this.config.classes.tallRow]);
+        }
+      }
+    });
+    
+    // Enregistrer pour le nettoyage ultérieur
+    this.state.addedIndicators.set(container, indicators);
+  },
+  
+  /**
+   * Grise les éléments non surlignés
+   */
+  grayOutOthers() {
+    const allPlaceContents = document.querySelectorAll('.place-content');
+    
+    allPlaceContents.forEach(element => {
+      const placeName = element.dataset.place;
+      
+      if (!this.state.highlightedPlaces.has(placeName)) {
+        element.classList.add(this.config.classes.grayedOut);
+        HighlightStateManager.trackClassOperation(element, [this.config.classes.grayedOut]);
+      }
+    });
+  },
+  
+  /**
+   * Expand le nom d'un sous-lieu pour afficher le nom complet
+   */
+  expandPlaceName(placeElement, placeName) {
+    const nameElement = placeElement.querySelector('.place-name');
+    if (!nameElement) return;
+    
+    // Sauvegarder le HTML original
+    const originalHTML = nameElement.innerHTML;
+    this.state.expandedNames.set(nameElement, originalHTML);
+    HighlightStateManager.trackModification('dom', nameElement, { innerHTML: originalHTML });
+    
+    // Afficher le nom complet
+    nameElement.textContent = placeName;
+    nameElement.classList.add(this.config.classes.expandedName);
+    HighlightStateManager.trackClassOperation(nameElement, [this.config.classes.expandedName]);
+  },
+  
+  /**
+   * Obtient les événements d'un lieu
+   */
+  getPlaceEvents(placeData) {
+    return Events.types.filter(eventType => 
+      placeData[Events.svgPrefix(eventType)]
+    );
+  },
+  
+  /**
+   * Gère l'overflow pour les éléments hors de vue
+   */
+  handleOverflow(elementsToShow) {
+    const list = document.querySelector('.places-list');
+    if (!list) return;
+    
+    const scrollTop = list.scrollTop;
+    const scrollBottom = scrollTop + list.clientHeight;
+    
+    const overflowAbove = [];
+    const overflowBelow = [];
+    
+    // Déterminer quels éléments sont hors de vue
+    elementsToShow.forEach(item => {
+      const row = item.element.closest('.place-row');
+      if (!row) return;
+      
+      const itemTop = row.offsetTop;
+      const itemBottom = itemTop + row.offsetHeight;
+      
+      // L'élément est-il complètement visible ?
+      const isCompletelyVisible = (itemTop >= scrollTop && itemBottom <= scrollBottom);
+      
+      if (!isCompletelyVisible) {
+        const itemCenter = (itemTop + itemBottom) / 2;
+        const viewCenter = (scrollTop + scrollBottom) / 2;
+        
+        if (itemCenter < viewCenter) {
+          overflowAbove.push(item);
+        } else {
+          overflowBelow.push(item);
+        }
+      }
+    });
+    
+    // Créer les sections d'overflow si nécessaire
+    if (overflowAbove.length > 0 || overflowBelow.length > 0) {
+      this.createOverflowSections(overflowAbove, overflowBelow);
+    }
+  },
+  
+  /**
+   * Crée les sections d'overflow au-dessus et en-dessous
+   */
+  createOverflowSections(above, below) {
+    const container = document.querySelector('.places-container');
+    if (!container) return;
+    
+    // Section au-dessus
+    if (above.length > 0) {
+      const section = this.createOverflowSection('above', above);
+      container.appendChild(section);
+      this.state.overflowSections.push(section);
+    }
+    
+    // Section en-dessous
+    if (below.length > 0) {
+      const section = this.createOverflowSection('below', below);
+      container.appendChild(section);
+      this.state.overflowSections.push(section);
+    }
+  },
+  
+  /**
+   * Crée une section d'overflow individuelle
+   */
+  createOverflowSection(position, items) {
+    const section = document.createElement('div');
+    section.className = `${this.config.overflow.sectionClass} ${position}`;
+    
+    // Header
+    const header = document.createElement('div');
+    header.className = this.config.overflow.headerClass;
+    header.innerHTML = `
+      <i class="fas fa-arrow-${position === 'above' ? 'up' : 'down'} fa-sm"></i>
+      ${items.length} lieu${items.length > 1 ? 'x' : ''} hors écran
+    `;
+    
+    // Contenu
+    const content = document.createElement('div');
+    content.className = this.config.overflow.contentClass;
+    
+    // Ajouter les éléments (max 5)
+    items.slice(0, this.config.overflow.maxItems).forEach(item => {
+      const row = item.element.closest('.place-row');
+      if (row) {
+        const clone = row.cloneNode(true);
+        
+        // Nettoyer les IDs pour éviter les conflits
+        clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+        
+        // S'assurer que l'élément n'est pas grisé
+        const placeContent = clone.querySelector('.place-content');
+        if (placeContent) {
+          placeContent.classList.remove(this.config.classes.grayedOut);
+        }
+        
+        content.appendChild(clone);
+      }
+    });
+    
+    section.appendChild(header);
+    section.appendChild(content);
+    
+    return section;
+  },
+  
+  /**
+   * Nettoie tous les surlignages de la liste
+   */
+  clearHighlights() {
+    // Nettoyer les indicateurs ajoutés
+    this.state.addedIndicators.forEach((indicators, container) => {
+      indicators.forEach(indicator => indicator.remove());
+    });
+    this.state.addedIndicators.clear();
+    
+    // Nettoyer les noms expandés
+    this.state.expandedNames.clear();
+    
+    // Nettoyer les sections d'overflow
+    this.state.overflowSections.forEach(section => section.remove());
+    this.state.overflowSections = [];
+    
+    // Réinitialiser l'état
+    this.state.highlightedPlaces.clear();
+  },
+  
+  /**
+   * Met en évidence les totaux d'événements dans le résumé
+   */
+  highlightEventTotal(eventType, highlight = true) {
+    const labelSelector = `.summary-event-label.${Events.cssClass(eventType)}-label`;
+    const label = document.querySelector(labelSelector);
+    
+    if (!label) return;
+    
+    if (highlight) {
+      label.classList.add('active-hover');
+      HighlightStateManager.trackClassOperation(label, ['active-hover']);
+    }
+  }
+};
+
+/**
+ * HighlightCoordinator - Coordinateur principal du système de surlignage
+ *
+ * Ce module orchestre tous les handlers de surlignage et gère les interactions
+ * bidirectionnelles entre le SVG et la liste des lieux. Il sert de point d'entrée
+ * unique pour toutes les opérations de surlignage.
+ */
+const HighlightCoordinator = {
+  // Configuration des comportements
+  config: {
+    enableBidirectional: true,  // Active le surlignage bidirectionnel SVG <-> Liste
+    enableAgeHighlights: true,  // Active le surlignage des âges au décès
+    enableImplexHighlights: true,  // Active le surlignage des implexes
+    debugMode: false  // Mode debug pour tracer les opérations
+  },
+
+  /**
+   * Initialise le système de surlignage
+   */
+  initialize() {
+    // Mettre à jour l'état des modes visuels
+    HighlightStateManager.updateVisualModes();
+
+    // Configuration initiale si nécessaire
+    this.config.enableBidirectional = HighlightStateManager.state.visualModes.placeColorActive;
+
+    console.log('✨ Système de surlignage initialisé');
+  },
+
+  /**
+   * Gère le survol d'un secteur SVG (personne ou mariage)
+   * @param {SVGElement} sector - Le secteur survolé
+   * @param {Object} person - Les données de la personne/mariage
+   * @param {string} type - 'person' ou 'marriage'
+   * @param {Event} event - L'événement de survol
+   */
+  handleSectorHover(sector, person, type, event) {
+    if (this.config.debugMode) {
+      console.log(`🎯 Survol secteur ${type}:`, person);
+    }
+    
+    // Démarrer un nouveau surlignage
+    if (!HighlightStateManager.startHighlight('sector', type, { person, sector }, sector)) {
+      return;
+    }
+    
+    // 1. Surligner le secteur SVG lui-même
+    SVGHighlightHandler.highlightSector(sector, person, type);
+    
+    // 2. Si le mode colorisation est actif, surligner dans la liste
+    if (this.config.enableBidirectional && HighlightStateManager.state.visualModes.placeColorActive) {
+      const places = this.extractPlacesFromPerson(person, type);
+      
+      if (places.length > 0) {
+        const placeNames = places.map(p => p.place);
+        
+        // IMPORTANT: Toujours montrer les indicateurs pour le survol secteur
+        const showIndicators = true;
+        
+        // CORRECTION POUR MARIAGES: Si c'est un mariage, on ne montre que M
+        const specificEventType = (type === 'marriage') ? 'marriage' : null;
+        
+        ListHighlightHandler.highlightPlaces(placeNames, showIndicators, specificEventType);
+      }
+    }
+    
+    // 3. Gérer les surlignages spéciaux
+    this.handleSpecialHighlights(person, type, true);
+  },
+
+  /**
+   * Gère la fin du survol d'un secteur SVG
+   * @param {Object} person - Les données de la personne/mariage
+   * @param {string} type - 'person' ou 'marriage'
+   */
+  handleSectorLeave(person, type) {
+    if (this.config.debugMode) {
+      console.log(`🎯 Fin survol secteur ${type}`);
+    }
+
+    // Nettoyer tous les surlignages
+    HighlightStateManager.clearAllHighlights();
+
+    // Gérer les surlignages spéciaux
+    this.handleSpecialHighlights(person, type, false);
+  },
+
+  /**
+   * Gère le survol d'un lieu dans la liste
+   * @param {string} placeName - Nom du lieu survolé
+   * @param {HTMLElement} placeElement - Élément DOM du lieu
+   */
+  handlePlaceHover(placeName, placeElement) {
+    if (this.config.debugMode) {
+      console.log(`📍 Survol lieu: ${placeName}`);
+    }
+    
+    // Vérifier que lieux est disponible
+    if (!lieux) {
+      console.error('❌ Références non initialisées. Appelez initializeHighlightReferences d\'abord.');
+      return;
+    }
+    
+    const placeData = lieux[placeName];
+    if (!placeData) {
+      console.warn(`⚠️ Lieu non trouvé: ${placeName}`);
+      return;
+    }
+    
+    // Démarrer un nouveau surlignage
+    if (!HighlightStateManager.startHighlight('place', 'place', { placeName, placeData }, placeElement)) {
+      return;
+    }
+    
+    // 1. Surligner dans la liste avec indicateurs (TOUJOURS selon la spec)
+    ListHighlightHandler.highlightPlaces([placeName], true);
+    
+    // 2. Surligner dans le SVG avec colorisation appropriée
+    const events = this.getPlaceEvents(placeData);
+    SVGHighlightHandler.highlightByPlace(placeName, placeData, events);
+  },
+
+  /**
+   * Gère la fin du survol d'un lieu
+   */
+  handlePlaceLeave() {
+    if (this.config.debugMode) {
+      console.log(`📍 Fin survol lieu`);
+    }
+
+    HighlightStateManager.clearAllHighlights();
+  },
+
+  /**
+   * Gère le survol d'un total d'événement (NBMDS)
+   * @param {string} eventType - Type d'événement ('birth', 'marriage', etc.)
+   * @param {HTMLElement} labelElement - Élément du label survolé
+   */
+  handleEventTotalHover(eventType, labelElement) {
+    if (this.config.debugMode) {
+      console.log(`📊 Survol total événement: ${eventType}`);
+    }
+    
+    if (!Events.isValid(eventType)) return;
+    
+    // Vérifier que lieux est disponible
+    if (!lieux) {
+      console.error('❌ Références non initialisées');
+      return;
+    }
+    
+    // Démarrer un nouveau surlignage
+    if (!HighlightStateManager.startHighlight('event-total', eventType, { eventType }, labelElement)) {
+      return;
+    }
+    
+    // 1. Mettre en évidence le label
+    ListHighlightHandler.highlightEventTotal(eventType, true);
+    
+    // 2. Collecter tous les lieux avec cet événement
+    const placesToHighlight = [];
+    
+    Object.entries(lieux).forEach(([placeName, placeData]) => {
+      if (placeData[Events.svgPrefix(eventType)]) {
+        placesToHighlight.push(placeName);
+      }
+    });
+    
+    // 3. Surligner dans la liste SANS indicateurs (spec: "PAS d'indicateurs ajoutés")
+    if (placesToHighlight.length > 0) {
+      ListHighlightHandler.highlightPlaces(placesToHighlight, false, eventType);
+    }
+    
+    // 4. Surligner dans le SVG selon le type d'événement
+    // IMPORTANT: Pour les mariages, seuls les secteurs de mariage sont colorés
+    SVGHighlightHandler.highlightByEventType(eventType);
+  },
+
+  // Méthode helper pour obtenir les événements d'un lieu
+  getPlaceEvents(placeData) {
+    return Events.types.filter(eventType => 
+      placeData[Events.svgPrefix(eventType)]
+    );
+  },
+
+  /**
+   * Gère la fin du survol d'un total d'événement
+   */
+  handleEventTotalLeave() {
+    if (this.config.debugMode) {
+      console.log(`📊 Fin survol total événement`);
+    }
+
+    HighlightStateManager.clearAllHighlights();
+  },
+
+  /**
+   * Gère le survol d'une légende d'âge au décès
+   * @param {string} ageClass - Classe d'âge (DA0-DA6 ou DAM0-DAM6)
+   * @param {HTMLElement} legendElement - Élément de la légende
+   */
+  handleAgeLegendHover(ageClass, legendElement) {
+    if (!this.config.enableAgeHighlights) return;
+
+    if (this.config.debugMode) {
+      console.log(`💀 Survol légende âge: ${ageClass}`);
+    }
+
+    // Démarrer un nouveau surlignage
+    if (!HighlightStateManager.startHighlight('age-legend', 'age', { ageClass }, legendElement)) {
+      return;
+    }
+
+    // Surligner les secteurs SVG correspondants
+    SVGHighlightHandler.highlightAgeGroup(ageClass, true);
+
+    // Ajouter la classe de surlignage à la légende elle-même
+    legendElement.classList.add('hl');
+    HighlightStateManager.trackClassOperation(legendElement, ['hl']);
+  },
+
+  /**
+   * Gère la fin du survol d'une légende d'âge
+   */
+  handleAgeLegendLeave() {
+    if (this.config.debugMode) {
+      console.log(`💀 Fin survol légende âge`);
+    }
+
+    HighlightStateManager.clearAllHighlights();
+  },
+
+  /**
+   * Extrait les lieux associés à une personne
+   * @private
+   */
+  extractPlacesFromPerson: function(person, type) {
+    const places = [];
+    
+    if (type === 'marriage' && person.marriage_place) {
+      places.push({
+        place: person.marriage_place,
+        event: 'marriage'
+      });
+    } else if (type === 'person') {
+      // Utiliser directement les champs de person
+      if (person.birth_place) places.push({ place: person.birth_place, event: 'birth' });
+      if (person.baptism_place) places.push({ place: person.baptism_place, event: 'baptism' });
+      if (person.death_place) places.push({ place: person.death_place, event: 'death' });
+      if (person.burial_place) places.push({ place: person.burial_place, event: 'burial' });
+    }
+    
+    console.log(`📍 Lieux extraits pour ${type}:`, places);
+    return places;
+  },
+
+  /**
+   * Gère les surlignages spéciaux (âges, implexes)
+   * @private
+   */
+  handleSpecialHighlights(person, type, highlight) {
+    // Surlignage des âges au décès
+    if (this.config.enableAgeHighlights && type === 'person' && person.death_age) {
+      const ageClass = Utils.deathAgeClass(person.death_age);
+      const ageElement = document.getElementById(ageClass);
+
+      if (ageElement) {
+        if (highlight) {
+          ageElement.classList.add('hl');
+          HighlightStateManager.trackClassOperation(ageElement, ['hl']);
+        } else {
+          ageElement.classList.remove('hl');
+        }
+      }
+    }
+
+    // Surlignage des durées de mariage
+    if (this.config.enableAgeHighlights && type === 'marriage' && person.marriage_length) {
+      const marriageClass = Utils.marriageLengthClass(person.marriage_length);
+      if (marriageClass) {
+        const marriageElement = document.getElementById(marriageClass);
+
+        if (marriageElement) {
+          if (highlight) {
+            marriageElement.classList.add('hl');
+            HighlightStateManager.trackClassOperation(marriageElement, ['hl']);
+          } else {
+            marriageElement.classList.remove('hl');
+          }
+        }
+      }
+    }
+
+    // Surlignage des implexes
+    if (this.config.enableImplexHighlights && person.sosasame) {
+      const refElement = document.getElementById("S" + person.sosasame);
+
+      if (refElement) {
+        if (highlight) {
+          refElement.classList.add('same_hl');
+          HighlightStateManager.trackClassOperation(refElement, ['same_hl']);
+        } else {
+          refElement.classList.remove('same_hl');
+        }
+      }
+    }
+  },
+
+  /**
+   * Active/désactive le mode debug
+   */
+  setDebugMode(enabled) {
+    this.config.debugMode = enabled;
+
+    if (enabled) {
+      console.log('🐛 Mode debug activé pour le système de surlignage');
+      HighlightStateManager.debugState();
+    }
+  },
+
+  /**
+   * Méthode utilitaire pour tester le système
+   */
+  testHighlightSystem() {
+    console.group('🧪 Test du système de surlignage');
+
+    // Test 1: Surlignage d'un lieu
+    console.log('Test 1: Surlignage du premier lieu...');
+    const firstPlace = Object.keys(lieux)[0];
+    if (firstPlace) {
+      this.handlePlaceHover(firstPlace, lieux[firstPlace].domElement);
+      setTimeout(() => {
+        this.handlePlaceLeave();
+        console.log('✅ Test 1 terminé');
+      }, 2000);
+    }
+
+    console.groupEnd();
+  }
+};
+
+/**
+ * IntegrationHelper - Guide d'intégration et migration vers la nouvelle architecture
+ *
+ 
+ */
+const IntegrationHelper = {
+  /**
+   * Initialise le système de surlignage
+   */
+  initializeHighlightSystem: function() {
+    // 1. S'assurer que les données sont prêtes
+    if (!lieux || Object.keys(lieux).length === 0) {
+      console.error('❌ Système de surlignage : lieux non disponibles');
+      return;
+    }
+    
+    // 2. Générer les styles CSS
+    HighlightCSSGenerator.generateLocationStyles();
+    
+    // 3. Initialiser le coordinateur
+    HighlightCoordinator.initialize();
+    
+    // 4. Configurer les événements après un court délai
+    setTimeout(() => {
+      IntegrationHelper.setupSVGEventListeners();
+      
+      if (document.querySelector('.places-panel')) {
+        IntegrationHelper.setupListEventListeners();
+      }
+      
+      if (document.body.classList.contains('death-age')) {
+        IntegrationHelper.setupLegendEventListeners();
+      }
+      
+      console.log('✅ Système de surlignage entièrement initialisé');
+      
+      // 5. Test automatique en mode debug
+      if (window.location.search.includes('debug=highlight')) {
+        setTimeout(() => {
+          console.log('🧪 Test automatique du système de surlignage...');
+          HighlightCoordinator.testHighlightSystem();
+        }, 1000);
+      }
+    }, 200); // Délai pour s'assurer que le DOM est stable
+  },
+
+  initializeHighlightReferences: function() {
+      // Vérifier et logger l'état des références
+      console.log('🔧 Initialisation des références de surlignage');
+      console.log('- lieux disponibles:', Object.keys(lieux).length);
+      console.log('- sortMode:', sortMode);
+      console.log('- showEvents:', showEvents);
+      
+      // Injecter les références si nécessaire
+      if (typeof ListHighlightHandler !== 'undefined') {
+          ListHighlightHandler._lieux = lieux;
+          ListHighlightHandler._sortMode = sortMode;
+      }
+  },
+
+  verifyHighlightClasses: function() {
+      console.group('🔍 Vérification des classes CSS de surlignage');
+      
+      // Vérifier les styles de lieu
+      const sheet = [...document.styleSheets].find(s => s.title === "fc-auto");
+      if (sheet) {
+          const rules = Array.from(sheet.cssRules);
+          const locationRules = rules.filter(r => r.selectorText?.includes('-L'));
+          console.log(`Classes de lieu trouvées: ${locationRules.length}`);
+      }
+      
+      // Vérifier les éléments SVG
+      Events.types.forEach(eventType => {
+          const prefix = Events.svgPrefix(eventType);
+          const elements = document.querySelectorAll(`[class*="${prefix}-L"]`);
+          console.log(`Éléments ${eventType}: ${elements.length}`);
+      });
+      
+      console.groupEnd();
+  },
+
+  /**
+   * Configure les événements de surlignage sur les éléments SVG
+   * Remplace complètement les anciens handleMouseEnter/handleMouseLeave de SVGRenderer
+   */
+  setupSVGEventListeners: function() {
+    console.log('🔗 Configuration des événements SVG pour le surlignage');
+    
+    // Utiliser une délégation d'événements sur le SVG entier
+    const svg = document.getElementById('fanchart');
+    if (!svg) return;
+    
+    // Mouseenter avec capture pour intercepter avant les handlers existants
+    svg.addEventListener('mouseenter', (e) => {
+      const link = e.target.closest('.link');
+      if (!link) return;
+      
+      const group = link.closest('g[id^="S"], g[id^="M"]');
+      if (!group) return;
+      
+      const id = group.id;
+      const sosa = parseInt(id.substring(1));
+      
+      // Déterminer le type et récupérer les données
+      let person, type;
+      if (id.startsWith('S')) {
+        person = ancestor["S" + sosa];
+        type = 'person';
+      } else if (id.startsWith('M')) {
+        // Pour les mariages, récupérer depuis le père
+        const fatherSosa = sosa;
+        person = ancestor["S" + fatherSosa];
+        type = 'marriage';
+      }
+      
+      if (person) {
+        // Appeler le coordinateur APRÈS le handler existant
+        setTimeout(() => {
+          HighlightCoordinator.handleSectorHover(link, person, type, e);
+        }, 0);
+      }
+    }, true); // Capture phase
+    
+    // Mouseleave
+    svg.addEventListener('mouseleave', (e) => {
+      const link = e.target.closest('.link');
+      if (!link) return;
+      
+      const group = link.closest('g[id^="S"], g[id^="M"]');
+      if (!group) return;
+      
+      const id = group.id;
+      const sosa = parseInt(id.substring(1));
+      
+      let person, type;
+      if (id.startsWith('S')) {
+        person = ancestor["S" + sosa];
+        type = 'person';
+      } else if (id.startsWith('M')) {
+        const fatherSosa = sosa;
+        person = ancestor["S" + fatherSosa];
+        type = 'marriage';
+      }
+      
+      if (person) {
+        setTimeout(() => {
+          HighlightCoordinator.handleSectorLeave(person, type);
+        }, 0);
+      }
+    }, true);
+  },
+
+  /**
+   * Configure les événements sur la liste des lieux
+   * Remplace le code existant dans PlacesInterface.setupEventListeners
+   */
+  setupListEventListeners() {
+    const placesList = document.querySelector('.places-list');
+    if (!placesList) return;
+
+    // Survol des lieux
+    placesList.addEventListener('mouseenter', (e) => {
+      const placeContent = e.target.closest('.place-content');
+      if (placeContent) {
+        const placeName = placeContent.dataset.place;
+        if (placeName) {
+          HighlightCoordinator.handlePlaceHover(placeName, placeContent);
+        }
+      }
+    }, true);
+
+    placesList.addEventListener('mouseleave', (e) => {
+      const placeContent = e.target.closest('.place-content');
+      if (placeContent) {
+        HighlightCoordinator.handlePlaceLeave();
+      }
+    }, true);
+
+    // Survol des totaux d'événements
+    document.querySelectorAll('.summary-event-label').forEach(label => {
+      // Déterminer le type d'événement à partir du texte du label
+      const eventType = this.getEventTypeFromLabel(label);
+      if (!eventType) return;
+
+      label.addEventListener('mouseenter', () => {
+        HighlightCoordinator.handleEventTotalHover(eventType, label);
+      });
+
+      label.addEventListener('mouseleave', () => {
+        HighlightCoordinator.handleEventTotalLeave();
+      });
+    });
+  },
+
+  /**
+   * Configure les événements sur les légendes d'âge
+   * Remplace le code existant dans LegendManager
+   */
+  setupLegendEventListeners() {
+    // Légendes d'âge au décès
+    const ageClasses = ["DA0", "DA1", "DA2", "DA3", "DA4", "DA5", "DA6"];
+    const marriageClasses = ["DAM0", "DAM1", "DAM2", "DAM3", "DAM4", "DAM5", "DAM6"];
+
+    [...ageClasses, ...marriageClasses].forEach(ageClass => {
+      const element = document.getElementById(ageClass);
+      if (!element) return;
+
+      element.addEventListener('mouseenter', () => {
+        HighlightCoordinator.handleAgeLegendHover(ageClass, element);
+      });
+
+      element.addEventListener('mouseleave', () => {
+        HighlightCoordinator.handleAgeLegendLeave();
+      });
+    });
+  },
+
+  /**
+   * Détermine le type d'événement à partir d'un label
+   * @private
+   */
+  getEventTypeFromLabel: function(label) {
+    // Utiliser les classes CSS au lieu du texte
+    if (label.classList.contains('birth-label')) return 'birth';
+    if (label.classList.contains('baptism-label')) return 'baptism';
+    if (label.classList.contains('marriage-label')) return 'marriage';
+    if (label.classList.contains('death-label')) return 'death';
+    if (label.classList.contains('burial-label')) return 'burial';
+    
+    // Fallback sur le texte
+    const labelText = label.textContent.trim();
+    const labelToEvent = {
+      'N': 'birth',
+      'B': 'baptism', 
+      'M': 'marriage',
+      'D': 'death',
+      'S': 'burial'
+    };
+    
+    return labelToEvent[labelText] || null;
+  },
+
+  /**
+   * Teste la migration en vérifiant que tous les composants sont présents
+   */
+  verifyMigration() {
+    console.group('🔍 Vérification de la migration');
+
+    const checks = [
+      {
+        name: 'HighlightStateManager',
+        test: () => typeof HighlightStateManager !== 'undefined'
+      },
+      {
+        name: 'SVGHighlightHandler',
+        test: () => typeof SVGHighlightHandler !== 'undefined'
+      },
+      {
+        name: 'ListHighlightHandler',
+        test: () => typeof ListHighlightHandler !== 'undefined'
+      },
+      {
+        name: 'HighlightCoordinator',
+        test: () => typeof HighlightCoordinator !== 'undefined'
+      },
+      {
+        name: 'Ancien PlacesHighlighter supprimé',
+        test: () => typeof PlacesHighlighter === 'undefined'
+      }
+    ];
+
+    let allPassed = true;
+
+    checks.forEach(check => {
+      const passed = check.test();
+      console.log(`${passed ? '✅' : '❌'} ${check.name}`);
+      if (!passed) allPassed = false;
+    });
+
+    console.log(allPassed ? '✅ Migration réussie!' : '❌ Migration incomplète');
+    console.groupEnd();
+
+    return allPassed;
+  }
+};
 
 const DOMCache = {
   // Cache pour les éléments individuels
@@ -453,43 +2087,6 @@ const URLManager = {
   }
 };
 
-// ========== Utilitaires généraux ==========
-const Utils = {
-  calculateAgeCategory: function(age) {
-    const boundaries = [30, 45, 60, 75, 90, 105, Infinity];
-    const category = boundaries.findIndex(boundary => age < boundary);
-    return Math.min(category, 6);
-  },
-
-  deathAgeClass: function(age) {
-    return "DA" + this.calculateAgeCategory(age);
-  },
-
-  marriageLengthClass: function(length) {
-    const years = parseInt(length);
-    if (isNaN(years) || years < 0) return "";
-    const index = CONFIG.marriage_length_thresholds.findIndex(threshold => years <= threshold);
-    return index === -1 ? "DAM6" : `DAM${index}`;
-  },
-
-  relativeLuminance: function(color) {
-    pixel.fillStyle = color;
-    pixel.fillRect(0, 0, 1, 1);
-    const data = pixel.getImageData(0, 0, 1, 1).data;
-    const rsrgb = data[0] / 255;
-    const gsrgb = data[1] / 255;
-    const bsrgb = data[2] / 255;
-    const r = rsrgb <= 0.03928 ? rsrgb / 12.92 : Math.pow((rsrgb + 0.055) / 1.055, 2.4);
-    const g = gsrgb <= 0.03928 ? gsrgb / 12.92 : Math.pow((gsrgb + 0.055) / 1.055, 2.4);
-    const b = bsrgb <= 0.03928 ? bsrgb / 12.92 : Math.pow((bsrgb + 0.055) / 1.055, 2.4);
-    return r * 0.2126 + g * 0.7152 + b * 0.0722;
-  },
-
-  contrastRatio: function(color1, color2) {
-    return (this.relativeLuminance(color1) + 0.05) / (this.relativeLuminance(color2) + 0.05);
-  },
-};
-
 // ========== Module de construction des données de lieux ==========
 const LocationDataBuilder = {
   _locationCache: new Map(),
@@ -806,6 +2403,49 @@ const LocationDataBuilder = {
   }
 };
 
+const HighlightCSSGenerator = {
+  generateLocationStyles: function() {
+    console.log('🎨 Génération des styles CSS de colorisation');
+    
+    // Nettoyer les anciennes règles
+    for (let i = sheet.cssRules.length - 1; i >= 0; i--) {
+      if (sheet.cssRules[i].selectorText?.includes('-L')) {
+        sheet.deleteRule(i);
+      }
+    }
+    
+    // Générer les nouvelles règles
+    lieux_a.forEach(([placeName, locationData], index) => {
+      const hue = (index * 360 / lieux_a.length) % 360;
+      const color = `hsl(${hue}, 60%, 65%)`;
+      
+      // Créer les règles pour chaque type d'événement
+      Events.types.forEach(eventType => {
+        const prefix = Events.svgPrefix(eventType);
+        
+        // Règle pour les secteurs
+        sheet.insertRule(
+          `body.place_color svg .${prefix}-L${index} { 
+            fill: ${color} !important; 
+            fill-opacity: 0.6 !important; 
+          }`,
+          sheet.cssRules.length
+        );
+        
+        // Règle pour les textes
+        sheet.insertRule(
+          `body.place_color svg .${prefix}-tL${index} { 
+            fill: black !important; 
+          }`,
+          sheet.cssRules.length
+        );
+      });
+    });
+    
+    console.log(`✅ ${lieux_a.length * Events.types.length * 2} règles CSS générées`);
+  }
+};
+
 // ========== Interface du panneau des lieux ==========
 const PlacesInterface = {
   cache: { // Cache avec invalidation sélective
@@ -836,7 +2476,7 @@ const PlacesInterface = {
 
     this.generatePlacesList();
     this.updateSummarySection();
-    this.setupEventListeners();
+    this.setupNavigationListeners();
 
     return true;
   },
@@ -927,6 +2567,25 @@ const PlacesInterface = {
     // Une seule manipulation DOM
     container.innerHTML = '';
     container.appendChild(fragment);
+  },
+
+  exposeDataToHighlightSystem: function() {
+    // Enrichir chaque entrée de lieux avec une référence DOM directe
+    const placeElements = document.querySelectorAll('.place-content');
+    
+    placeElements.forEach(element => {
+      const placeName = element.dataset.place;
+      if (placeName && lieux[placeName]) {
+        // Référence bidirectionnelle
+        lieux[placeName].domElement = element;
+        element.dataset.placeData = JSON.stringify({
+          c: lieux[placeName].c,
+          events: Events.types.filter(t => lieux[placeName][Events.svgPrefix(t)])
+        });
+      }
+    });
+    
+    console.log(`📌 ${placeElements.length} éléments DOM liés aux données de lieux`);
   },
 
   /**
@@ -1129,32 +2788,15 @@ const PlacesInterface = {
     personsElement.title = `${personsWithPlaces} ${label} avec lieux`;
   },
 
- /**
-   * Configuration des événements avec support du surlignage bidirectionnel
+  /**
+   * Configuration des événements
    */
-  setupEventListeners: function() {
+  setupNavigationListeners: function() {
     if (!this.cache.elements.placesList) return;
 
-    // Survol des lieux (délégation d'événements)
-    this.cache.elements.placesList.addEventListener('mouseenter', (e) => {
-      const placeContent = e.target.closest('.place-content');
-      if (placeContent) {
-        const placeName = placeContent.dataset.place;
-        const placeData = lieux[placeName];
-        if (placeData) {
-          PlacesHighlighter.highlightPlace(placeName, 'list');
-        }
-      }
-    }, true);
+    // Les événements de surlignage sont maintenant gérés par IntegrationHelper
 
-    this.cache.elements.placesList.addEventListener('mouseleave', (e) => {
-      const placeContent = e.target.closest('.place-content');
-      if (placeContent) {
-        PlacesHighlighter.clearAllHighlights();
-      }
-    }, true);
-
-    // Clic pour navigation
+    // Conserver uniquement le clic pour la navigation
     this.cache.elements.placesList.addEventListener('click', (e) => {
       const placeContent = e.target.closest('.place-content');
       if (placeContent) {
@@ -1165,9 +2807,6 @@ const PlacesInterface = {
         }
       }
     });
-
-    // Préparation pour le futur surlignage des totaux NBMDS
-    this.setupEventTotalHighlights();
   },
 
   /**
@@ -1181,11 +2820,11 @@ const PlacesInterface = {
       label.style.cursor = 'pointer';
 
       label.addEventListener('mouseenter', () => {
-        PlacesHighlighter.highlightByEventType(eventType);
+        SVGHighlightHandler.highlightByEventType(eventType);
       });
 
       label.addEventListener('mouseleave', () => {
-        PlacesHighlighter.clearAllHighlights();
+        SVGHighlightHandler.clearAllHighlights();
       });
     });
   },
@@ -1430,355 +3069,6 @@ const PlacesPanelControls = {
   }
 };
 
-// ========== Module de surlignage bidirectionnel pour les lieux ==========
-const PlacesHighlighter = {
-  // État centralisé
-  state: {
-    highlighted: new Set(),
-    indicators: new Map(),
-    expandedNames: new Map(),
-    svgElements: new Map(),
-
-    clear: function() {
-      this.highlighted.clear();
-      this.indicators.forEach(elements => elements.forEach(el => el.remove()));
-      this.indicators.clear();
-      this.expandedNames.clear();
-      this.svgElements.clear();
-    }
-  },
-
-  /**
-   * Point d'entrée principal pour surligner un lieu
-   */
-  highlightPlace: function(placeName, source = 'svg') {
-    this.clearAllHighlights();
-
-    const placeData = lieux[placeName];
-    if (!placeData) return;
-
-    // Collecter tous les événements pour ce lieu
-    const events = Events.types.filter(eventType =>
-      placeData[Events.svgPrefix(eventType)]
-    );
-
-    // Appliquer le surlignage
-    this.highlight([placeName], [events], source);
-  },
-
-  /**
-   * Surlignage par type d'événement (pour les totaux NBMDS)
-   */
-  highlightByEventType: function(eventType) {
-    this.clearAllHighlights();
-
-    const placesToHighlight = [];
-
-    // Trouver tous les lieux avec ce type d'événement
-    Object.entries(lieux).forEach(([placeName, placeData]) => {
-      if (placeData[Events.svgPrefix(eventType)]) {
-        placesToHighlight.push(placeName);
-      }
-    });
-
-    if (placesToHighlight.length > 0) {
-      // Créer un array d'événements de même longueur
-      const eventArrays = placesToHighlight.map(() => [eventType]);
-      this.highlight(placesToHighlight, eventArrays, 'totals');
-    }
-  },
-
-  /**
-   * Méthode principale de surlignage multi-lieux
-   */
-  highlight: function(placeNames, eventTypes, source = 'svg') {
-    this.clearAllHighlights();
-
-    if (!placeNames?.length) return;
-
-    // Créer une map pour organiser les données
-    const highlightMap = new Map();
-
-    placeNames.forEach((placeName, index) => {
-      const placeData = lieux[placeName];
-      if (!placeData) return;
-
-      const events = eventTypes[index] || [];
-      highlightMap.set(placeName, { placeData, events });
-      this.state.highlighted.add(placeName);
-    });
-
-    // Appliquer les surlignages
-    this.applyHighlights(highlightMap, source);
-  },
-
-  /**
-   * Application des surlignages
-   */
-  applyHighlights: function(highlightMap, source) {
-    const elementsToShow = [];
-
-    highlightMap.forEach(({ placeData, events }, placeName) => {
-      // Surlignage dans la liste
-      if (placeData.domElement) {
-        placeData.domElement.classList.add('person-match');
-
-        // Expansion du nom si nécessaire
-        if (placeData.isSubLocation && sortMode === 'alphabetical') {
-          this.expandSubLocationName(placeData);
-        }
-
-        // Ajout des indicateurs
-        if (placeData.indicatorElement && events.length > 0) {
-          this.addIndicators(placeData.indicatorElement, events);
-        }
-
-        elementsToShow.push({
-          element: placeData.domElement,
-          index: placeData.visualIndex,
-          placeName: placeName
-        });
-      }
-
-      // Surlignage dans le SVG (bidirectionnel corrigé)
-      if (source === 'list' || source === 'totals') {
-        this.highlightInSVG(placeName, placeData, true);
-      }
-    });
-
-    // Griser les autres
-    this.grayOutOthers();
-
-    // Gestion de l'overflow
-    if (elementsToShow.length > 0) {
-      setTimeout(() => {
-        ModernOverflowManager.handleOverflow(elementsToShow);
-      }, 50);
-    }
-  },
-
-  /**
-   * Surlignage SVG bidirectionnel corrigé
-   */
-  highlightInSVG: function(placeName, placeData, highlight) {
-    const placeClass = placeData.c; // Ex: "L0"
-
-    // Pour chaque type d'événement présent dans ce lieu
-    Events.types.forEach(eventType => {
-      if (placeData[Events.svgPrefix(eventType)]) {
-        const svgClass = `${Events.svgPrefix(eventType)}-${placeClass}`;
-        const elements = document.getElementsByClassName(svgClass);
-
-        Array.from(elements).forEach(element => {
-          if (highlight) {
-            // Sauvegarder l'état original
-            if (!element.dataset.originalFill) {
-              element.dataset.originalFill = element.style.fill || '';
-            }
-
-            // Appliquer le surlignage
-            element.classList.add('svg-place-highlight');
-            element.style.fill = 'lightblue';
-
-            // Tracker pour éviter les conflits
-            this.state.svgElements.set(element, placeName);
-          } else {
-            // Restaurer l'état original
-            element.classList.remove('svg-place-highlight');
-            element.style.fill = element.dataset.originalFill || '';
-            delete element.dataset.originalFill;
-
-            this.state.svgElements.delete(element);
-          }
-        });
-      }
-    });
-  },
-
-  /**
-   * Expansion du nom de sous-lieu
-   */
-  expandSubLocationName: function(placeData) {
-    const nameElement = placeData.domElement.querySelector('.place-name');
-    if (!nameElement || this.state.expandedNames.has(placeData.fullName)) return;
-
-    // Sauvegarder l'original
-    this.state.expandedNames.set(placeData.fullName, nameElement.innerHTML);
-
-    // Afficher le nom complet
-    nameElement.textContent = placeData.fullName;
-  },
-
-  /**
-   * Ajout des indicateurs d'événements
-   */
-  addIndicators: function(container, events) {
-    if (!container || !events.length) return;
-
-    const eventArray = Array.isArray(events) ? events : [events];
-    if (eventArray.length === 0) return;
-
-    const indicators = [];
-
-    events.forEach((event, index) => {
-      const indicator = document.createElement('div');
-      indicator.className = `indicator ${Events.cssClass(event)}`;
-      indicator.textContent = Events.label(event);
-      container.appendChild(indicator);
-      indicators.push(indicator);
-
-      // Line break pour 4+ événements
-      if (index === 1 && events.length >= 4) {
-        const breaker = document.createElement('div');
-        breaker.className = 'line-break';
-        container.appendChild(breaker);
-        indicators.push(breaker);
-      }
-    });
-
-    // Ajuster la hauteur si nécessaire
-    if (events.length >= 4) {
-      container.closest('.place-row')?.classList.add('tall-row');
-    }
-
-    // Stocker pour nettoyage
-    this.state.indicators.set(container, indicators);
-  },
-
-  /**
-   * Griser les éléments non surlignés
-   */
-  grayOutOthers: function() {
-    document.querySelectorAll('.place-content').forEach(element => {
-      if (!element.classList.contains('person-match')) {
-        element.classList.add('grayed-out');
-      }
-    });
-  },
-
-  /**
-   * Nettoyage complet
-   */
-  clearAllHighlights: function() {
-    // Nettoyer les surlignages de liste
-    document.querySelectorAll('.person-match').forEach(el => {
-      el.classList.remove('person-match');
-    });
-
-    // Restaurer les noms expandés
-    this.state.expandedNames.forEach((originalHTML, placeName) => {
-      const placeData = lieux[placeName];
-      if (placeData?.domElement) {
-        const nameEl = placeData.domElement.querySelector('.place-name');
-        if (nameEl) nameEl.innerHTML = originalHTML;
-      }
-    });
-
-    // Nettoyer les indicateurs
-    this.state.indicators.forEach((indicators, container) => {
-      indicators.forEach(el => el.remove());
-    });
-
-    // Nettoyer le grisage
-    document.querySelectorAll('.grayed-out').forEach(el => {
-      el.classList.remove('grayed-out');
-    });
-
-    // Nettoyer les rangées hautes
-    document.querySelectorAll('.tall-row').forEach(el => {
-      el.classList.remove('tall-row');
-    });
-
-    // Nettoyer les surlignages SVG
-    this.state.svgElements.forEach((placeName, element) => {
-      this.highlightInSVG(placeName, lieux[placeName], false);
-    });
-
-    // Nettoyer l'overflow
-    ModernOverflowManager.clearOverflowSections();
-
-    // Reset de l'état
-    this.state.clear();
-  },
-
-  /**
-   * Fonction de compatibilité pour l'ancien code
-   */
-  simulatePersonHover: function(placeNames, eventTypes) {
-    this.highlight(placeNames, eventTypes, 'svg');
-  },
-
-  /**
-   * Affiche le nom complet d'un sous-lieu si nécessaire
-   */
-  expandPlaceNameIfNeeded: function(placeElement, placeName, highlightedPlaces = null, forceExpand = false) {
-      console.log('🚀 expandPlaceNameIfNeeded appelé avec:', {
-    placeName,
-    forceExpand,
-    'placeData.isSubLocation': lieux[placeName]?.isSubLocation
-  });
-    const placeData = lieux[placeName];
-    const placeNameElement = placeElement.querySelector('.place-name');
-
-    if (placeNameElement && placeData) {
-      let shouldExpand = false;
-
-      if (forceExpand && placeData.isSubLocation) {
-        // Cas survol liste : toujours afficher pour les sous-lieux uniquement
-        shouldExpand = true;
-      } else if (sortMode === 'alphabetical' && placeData.isSubLocation) {
-        // Cas survol secteur : vérifier le parent
-        shouldExpand = !highlightedPlaces || !highlightedPlaces.has(placeData.parentLocation);
-      }
-
-      if (shouldExpand) {
-        if (!placeNameElement.dataset.originalHtml) {
-          placeNameElement.dataset.originalHtml = placeNameElement.innerHTML;
-        }
-        // Remplacer par le nom complet sans indicateur de sous-lieu
-        placeNameElement.innerHTML = placeName;
-      }
-    }
-  },
-
-  restorePlaceNameIfNeeded: function(placeElement) {
-    const placeNameElement = placeElement.querySelector('.place-name');
-    if (placeNameElement && placeNameElement.dataset.originalHtml) {
-      placeNameElement.innerHTML = placeNameElement.dataset.originalHtml;
-      delete placeNameElement.dataset.originalHtml;
-    }
-  },
-
-  /**
-   * Surligne les secteurs SVG pour un lieu donné (Liste → SVG)
-   * @param {string} placeName - Nom du lieu
-   * @param {boolean} highlight - true pour surligner, false pour nettoyer
-   */
-  highlightSVGSectorsForPlace: function(placeName, highlight) {
-    if (!placeName || !lieux[placeName]) return;
-
-    const placeData = lieux[placeName];
-    const placeClass = placeData.c; // Ex: "L0"
-
-    // Trouver tous les secteurs SVG avec cette classe
-    const sectors = document.querySelectorAll(`svg .${placeClass}`);
-
-    sectors.forEach(sector => {
-      if (highlight) {
-        // Utiliser une couleur différente pour distinguer la direction du highlighting
-        sector.style.fill = 'lightblue';
-        sector.dataset.listHighlighted = 'true';
-      } else {
-        // Nettoyer seulement si c'était un highlighting depuis la liste
-        if (sector.dataset.listHighlighted === 'true') {
-          sector.style.fill = '';
-          delete sector.dataset.listHighlighted;
-        }
-      }
-    });
-  }
-};
-
 // ========== Module de rendu circulaire ==========
 const CircularModeRenderer = {
   // Active/désactive le mode circulaire
@@ -2003,8 +3293,28 @@ const SVGRenderer = {
 
       // Événements - réutilisation des méthodes universelles
       circle.onclick = (e) => this.handleClick(e, p);
-      circle.onmouseenter = (e) => this.handleMouseEnter(p, 'person', e);
-      circle.onmouseleave = (e) => this.handleMouseLeave(p, 'person', e);
+      circle.onmouseenter = (e) => {
+        e.stopPropagation();
+        // Panneau d'information
+        const panel = document.getElementById("person-panel");
+        if (panel) {
+          this.buildTooltipContent(panel, p, 'person');
+          panel.style.display = "block";
+        }
+        // Nouveau système de surlignage
+        HighlightCoordinator.handleSectorHover(circle, p, 'person', e);
+      };
+      circle.onmouseleave = (e) => {
+        e.stopPropagation();
+        // Panneau d'information
+        const panel = document.getElementById("person-panel");
+        if (panel) {
+          panel.style.display = "none";
+          panel.innerHTML = "";
+        }
+        // Nouveau système de surlignage
+        HighlightCoordinator.handleSectorLeave(p, 'person');
+      };
     }
 
     g.append(circle);
@@ -2025,11 +3335,35 @@ const SVGRenderer = {
       `A ${r1} ${r1} 0 ${(a2 - a1 > 180 ? 1 : 0)} 0 ${p4.x},${p4.y} Z`
     );
 
-    if (options.isBackground) {
-      // Version background - applique les classes CSS pour les lieux et âges
-      this.applyBackgroundClasses(path, p, options.type);
-    } else {
-      // Version interactive - ajoute événements et titre
+    // NOUVEAU : Toujours construire les classes de base
+    let baseClasses = options.isBackground ? ['bg'] : ['link'];
+    
+    // NOUVEAU : Toujours ajouter les classes de lieu
+    if (p) {
+      if (options.type === 'person') {
+        Events.types.forEach(eventType => {
+          const placeField = Events.place(eventType);
+          const svgPrefix = Events.svgPrefix(eventType);
+          if (p[placeField] && lieux[p[placeField]]) {
+            baseClasses.push(`${svgPrefix}-${lieux[p[placeField]].c}`);
+          }
+        });
+        if (p.death_age) baseClasses.push(Utils.deathAgeClass(p.death_age));
+      } else if (options.type === 'marriage') {
+        if (p.marriage_place && lieux[p.marriage_place]) {
+          baseClasses.push(`ma-${lieux[p.marriage_place].c}`);
+        }
+        if (p.marriage_length) {
+          const marriageClass = Utils.marriageLengthClass(p.marriage_length);
+          if (marriageClass) baseClasses.push(marriageClass);
+        }
+      }
+    }
+    
+    path.setAttribute("class", baseClasses.join(' '));
+    
+    // Ajouter les fonctionnalités interactives si nécessaire
+    if (!options.isBackground) {
       this.applyInteractiveFeatures(path, p, options.type);
     }
 
@@ -2069,33 +3403,46 @@ const SVGRenderer = {
   },
 
   applyInteractiveFeatures: function(element, p, type) {
+    // Vérifier que l'élément est valide pour l'interaction
     if (!p || (p.fn === "?" || (!p.fn && !p.sosasame && type !== 'marriage'))) return;
 
-    element.setAttribute("class", "link");
+    // Note: la classe "link" est déjà appliquée dans drawPie/drawCircle
+    // Nous ajoutons seulement les événements et le titre
+    
     const panel = document.getElementById("person-panel");
 
-    // Gestion du clic avec propagation contrôlée
+    // Gestion du clic
     element.addEventListener("click", (e) => {
       e.stopPropagation();
       this.handleClick(e, p);
     });
 
+    // Gestion du survol
     element.addEventListener("mouseenter", (e) => {
       e.stopPropagation();
+
+      // Panneau d'information
       if (panel) {
         this.buildTooltipContent(panel, p, type);
         panel.style.display = "block";
       }
-      this.handleMouseEnter(p, type, e);
+
+      // Nouveau système de surlignage
+      HighlightCoordinator.handleSectorHover(element, p, type, e);
     });
 
+    // Gestion de la sortie
     element.addEventListener("mouseleave", (e) => {
       e.stopPropagation();
+
+      // Panneau d'information
       if (panel) {
         panel.style.display = "none";
         panel.innerHTML = "";
       }
-      this.handleMouseLeave(p, type, e);
+
+      // Nouveau système de surlignage
+      HighlightCoordinator.handleSectorLeave(p, type);
     });
   },
 
@@ -2149,102 +3496,6 @@ const SVGRenderer = {
       URLManager.navigateToPlace(placeName, true);
       return;
     }
-  },
-
-  handleMouseEnter: function(p, type, event) {
-    // Préparer les données pour le highlighter
-    if (document.body.classList.contains('place_color') && PlacesInterface.cache.elements.panel) {
-        const placesToHighlight = [];
-        const eventsToHighlight = [];
-        
-        if (type === 'marriage' && p.marriage_place) {
-            placesToHighlight.push(p.marriage_place);
-            eventsToHighlight.push(['marriage']); // Array d'arrays !
-        } else if (type === 'person') {
-            Events.types.forEach(eventType => {
-                const placeField = Events.place(eventType);
-                if (p[placeField]) {
-                    placesToHighlight.push(p[placeField]);
-                    eventsToHighlight.push([eventType]); // Array d'arrays !
-                }
-            });
-        }
-        
-        if (placesToHighlight.length > 0) {
-            PlacesHighlighter.simulatePersonHover(placesToHighlight, eventsToHighlight);
-        }
-    }
-
-    // Gestion spécifique par type
-    if (type === 'person' && p.death_age) {
-      const ageEl = DOMCache.getElementById(Utils.deathAgeClass(p.death_age));
-      if (ageEl) ageEl.classList.add("hl");
-    } else if (type === 'marriage' && p.marriage_length) {
-      const marriageClass = Utils.marriageLengthClass(p.marriage_length);
-      if (marriageClass) {
-        const marriageEl = document.getElementById(marriageClass);
-        if (marriageEl) marriageEl.classList.add("hl");
-      }
-    }
-
-    // Gestion des implexes
-    if (p.sosasame) {
-      const ref = document.getElementById("S" + p.sosasame);
-      if (ref) ref.classList.add("same_hl");
-    }
-  },
-
-  handleMouseLeave: function(p, type, event) {
-    if (document.body.classList.contains('place_color')) {
-        PlacesHighlighter.clearAllHighlights();
-    }
-
-    // Gestion du background
-    if (event && event.currentTarget) {
-      const group = event.currentTarget.parentNode;
-      const backgroundSector = group.querySelector('.bg');
-
-      if (backgroundSector) {
-        backgroundSector.style.fill = "";
-        delete backgroundSector.dataset.highlighted;
-      }
-    }
-
-    // Gestion spécifique par type
-    if (type === 'person' && p.death_age) {
-      const ageEl = DOMCache.getElementById(Utils.deathAgeClass(p.death_age));
-      if (ageEl) ageEl.classList.remove("hl");
-    } else if (type === 'marriage' && p.marriage_length) {
-      const marriageClass = Utils.marriageLengthClass(p.marriage_length);
-      if (marriageClass) {
-        const marriageEl = document.getElementById(marriageClass);
-        if (marriageEl) marriageEl.classList.remove("hl");
-      }
-    }
-
-    // Gestion des implexes
-    if (p.sosasame) {
-      const ref = document.getElementById("S" + p.sosasame);
-      if (ref) ref.classList.remove("same_hl");
-    }
-  },
-
-  // Extraire les lieux
-  extractPlacesFromPerson: function(person, type) {
-    const places = [];
-
-    if (type === 'marriage' && person.marriage_place) {
-      places.push({ place: person.marriage_place, event: 'marriage' });
-    } else if (type === 'person') {
-      Events.types.forEach(eventType => {
-        const placeField = Events.place(eventType);
-        if (person[placeField]) {
-          places.push({ place: person[placeField], event: eventType });
-        }
-      });
-    }
-
-    return places;
   },
 
   drawSectorText: function(pg, r1, r2, a1, a2, sosa, p, classes, generation, isSame = false) {
@@ -2605,7 +3856,6 @@ const ColorManager = {
     // Nettoyer l'état précédent
     document.body.classList.remove('place_color', 'death-age');
 
-
     // Désactiver tous les toggles NMBDS
     this.EVENT_TYPES.forEach(id => {
       const checkbox = document.getElementById(id);
@@ -2763,36 +4013,6 @@ const ColorManager = {
   }
 };
 
-const LegendManager = {
-  initializeLegendEvents: function(ids) {
-    ids.forEach(function(id) {
-      var element = document.getElementById(id);
-      if (!element) return;
-
-      element.onmouseenter = function() {
-        var elements = document.getElementsByClassName(id);
-        for (var i = 0; i < elements.length; i++) {
-          elements[i].classList.add("highlight");
-        }
-        document.getElementById(id).classList.add("hl");
-      };
-
-      element.onmouseleave = function() {
-        var elements = document.getElementsByClassName(id);
-        for (var i = 0; i < elements.length; i++) {
-          elements[i].classList.remove("highlight");
-        }
-        document.getElementById(id).classList.remove("hl");
-      };
-    });
-  },
-
-  initializeAllEvents: function() {
-    this.initializeLegendEvents(["DA0", "DA1", "DA2", "DA3", "DA4", "DA5", "DA6"]);
-    this.initializeLegendEvents(["DAM0", "DAM1", "DAM2", "DAM3", "DAM4", "DAM5", "DAM6", "DAM7"]);
-  }
-};
-
 const AngleManager = {
   // Obtenir l'angle actuel
   getCurrentAngle: function() {
@@ -2832,7 +4052,7 @@ const AngleManager = {
     });
   },
 
-  // Initialiser les boutons (appelé depuis FanchartApp.init)
+  // Initialiser les boutons
   initialize: function() {
     this.updateAngleButtons();
 
@@ -2873,36 +4093,6 @@ const ModernOverflowManager = {
     console.log('📏 Hauteur liste initiale:', this.originalListHeight);
 
     return true;
-  },
-
-  /**
-   * Gère l'overflow après un surlignage
-   * @param {Array} matchingItems - Éléments surlignés à garder visibles
-   */
-  handleOverflow: function(matchingItems) {
-    // Prévenir les appels multiples simultanés
-    if (this.isProcessing) {
-      console.log('⚠️ Overflow déjà en cours, ignoré');
-      return;
-    }
-
-    this.isProcessing = true;
-
-    if (!this.initialize() || !matchingItems?.length) {
-      this.isProcessing = false;
-      return;
-    }
-
-    // Déduplication par lieu pour éviter les collisions
-    const uniqueItems = this.deduplicateByPlace(matchingItems);
-
-    // Nettoyer les sections d'overflow précédentes
-    this.clearOverflowSections();
-
-    // Lancer la stabilisation
-    this.stabilizeOverflow(uniqueItems);
-
-    this.isProcessing = false;
   },
 
   // Gestion de la déduplication
@@ -3167,25 +4357,6 @@ const ModernOverflowManager = {
       return aPlace.localeCompare(bPlace, 'fr', { sensitivity: 'base' });
     });
   },
-
-  /**
-   * Nettoie toutes les sections d'overflow
-   */
-  clearOverflowSections: function() {
-    // Nettoyer les sections trackées
-    this.currentOverflowSections.forEach(section => {
-      if (section.parentNode) {
-        section.parentNode.removeChild(section);
-      }
-    });
-    this.currentOverflowSections = [];
-
-    // Nettoyer toutes les sections d'overflow orphelines
-    document.querySelectorAll('.overflow-section').forEach(el => el.remove());
-
-    // Réinitialiser l’état de traitement au cas où
-    this.isProcessing = false;
-  }
 };
 
 // ========== Application principale ==========
@@ -3222,51 +4393,6 @@ const FanchartApp = {
 
   fitScreen: function() {
     this.set_svg_viewbox(0, 0, svg_w, svg_h);
-  },
-
-  init: function() {
-    // CALCULS INITIAUX
-    this.calculateDimensions();
-    this.processAncestorData();
-
-    // LECTURE DE L'ÉTAT URL
-    const state = URLManager.readCurrentState();
-    tool = state.tool;
-    sortMode = state.sortMode;
-    showEvents = state.showEvents;
-    isCircularMode = state.isCircular;
-    current_angle = state.angle;
-    implexMode = state.implexMode;
-
-    // CONSTRUCTION DES DONNÉES
-    LocationDataBuilder.buildCompleteLocationData();
-
-    // INTERFACE DES LIEUX
-    if (document.querySelector('.places-panel')) {
-      PlacesInterface.initialize();
-      PlacesPanelControls.initialize();
-    }
-    
-    // MISE À JOUR DES BOUTONS
-    AngleManager.updateAngleButtons();
-    if (isCircularMode) {
-      const circularBtn = document.getElementById('b-circular-mode');
-      if (circularBtn) circularBtn.classList.add('active');
-    }
-    
-    // INITIALISATION DES ÉVÉNEMENTS
-    DOMCache.preload();
-    this.initializeEvents();
-    this.initializeAngleEvents();
-    ColorManager.initializeColorEvents();
-    LegendManager.initializeAllEvents();
-
-    // RENDU ET FINALISATION
-    this.renderFanchart();
-    this.updateGenerationTitle();
-    this.applyInitialState();
-    UIManager.addNavigationHelp();
-    this.fitScreen();
   },
 
   processAncestorData: function() {
@@ -3847,21 +4973,25 @@ const FanchartApp = {
   },
 
   reRenderWithCurrentGenerations: function() {
+    // Nettoyer le cache si on augmente les générations
     if (max_gen > LocationDataBuilder._generationCache.size) {
       LocationDataBuilder.clearCache();
     }
-    DOMCache.invalidate();
+
+    DOMCache.invalidate(); // Invalider les caches DOM
     this.calculateDimensions();
     LocationDataBuilder.buildCompleteLocationData(max_gen);
     const fanchart = document.getElementById("fanchart");
     fanchart.innerHTML = "";
     this.renderFanchart();
     const placesPanel = document.querySelector('.places-panel');
-    if (placesPanel) {
+    if (placesPanel && PlacesInterface.cache.elements.panel) {
+      // Invalider le cache de tri car les données ont changé
+      PlacesInterface.cache.invalidateSort();
+
       PlacesInterface.generatePlacesList();
       PlacesInterface.updateSummarySection();
-      PlacesPanelControls.initialize();
-  }
+    }
     this.fitScreen();
     this.updateButtonStates();
     this.updateGenerationTitle();
@@ -3993,8 +5123,249 @@ const FanchartApp = {
       if (maCheckbox) maCheckbox.checked = true;
       ColorManager.applyColorization();
     }
+
+    if (typeof HighlightCoordinator !== 'undefined' && HighlightCoordinator.config) {
+      HighlightCoordinator.config.enableBidirectional = document.body.classList.contains('place_color');
+      console.log('✅ enableBidirectional forcé à:', HighlightCoordinator.config.enableBidirectional);
+    }
+  },
+  
+  init: function() {
+    console.log('🚀 Initialisation du FanChart...');
+    
+    // ========== PHASE 1 : CALCULS ET DIMENSIONS ==========
+    console.log('📐 Phase 1 : Calculs et dimensions');
+    this.calculateDimensions();
+    
+    // ========== PHASE 2 : TRAITEMENT DES DONNÉES ==========
+    console.log('🔄 Phase 2 : Traitement des données ancêtres');
+    this.processAncestorData();
+    
+    // ========== PHASE 3 : LECTURE DE L'ÉTAT URL ==========
+    console.log('🔗 Phase 3 : Lecture de l\'état URL');
+    const state = URLManager.readCurrentState();
+    tool = state.tool;
+    sortMode = state.sortMode;
+    showEvents = state.showEvents;
+    isCircularMode = state.isCircular;
+    current_angle = state.angle;
+    implexMode = state.implexMode;
+    
+    // ========== PHASE 4 : CONSTRUCTION DES DONNÉES DE LIEUX ==========
+    console.log('🏗️ Phase 4 : Construction des données de lieux');
+    LocationDataBuilder.buildCompleteLocationData();
+    
+    // ========== PHASE 5 : GÉNÉRATION DES STYLES CSS ==========
+    console.log('🎨 Phase 5 : Génération des styles CSS');
+    // Créer d'abord les classes de colorisation des lieux
+    let colorIndex = 0;
+    Object.entries(lieux).forEach(([placeName, data]) => {
+      const hue = (colorIndex * 360 / Object.keys(lieux).length) % 360;
+      const lightness = 65;
+      ColorManager.createLocationStyles(colorIndex, hue, lightness);
+      colorIndex++;
+    });
+    
+    // Si la fonction HighlightCSSGenerator existe, l'utiliser aussi
+    if (typeof HighlightCSSGenerator !== 'undefined' && HighlightCSSGenerator.generateLocationStyles) {
+      HighlightCSSGenerator.generateLocationStyles();
+    }
+    
+    // ========== PHASE 6 : INTERFACE DES LIEUX ==========
+    console.log('📋 Phase 6 : Interface des lieux');
+    if (document.querySelector('.places-panel')) {
+      PlacesInterface.initialize();
+      PlacesPanelControls.initialize();
+      
+      // Enrichir les données pour le système de surlignage
+      if (PlacesInterface.exposeDataToHighlightSystem) {
+        PlacesInterface.exposeDataToHighlightSystem();
+      }
+    }
+    
+    // ========== PHASE 7 : APPLICATION DE L'ÉTAT INITIAL ==========
+    console.log('⚙️ Phase 7 : Application de l\'état initial');
+    this.applyInitialState();
+    
+    // ========== PHASE 8 : RENDU DU GRAPHIQUE ==========
+    console.log('🎯 Phase 8 : Rendu du graphique SVG');
+    this.renderFanchart();
+    
+    // ========== PHASE 9 : MISE À JOUR DES CONTRÔLES ==========
+    console.log('🎮 Phase 9 : Mise à jour des contrôles');
+    
+    // Boutons d'angle
+    AngleManager.updateAngleButtons();
+    
+    // Bouton circulaire
+    if (isCircularMode) {
+      const circularBtn = document.getElementById('b-circular-mode');
+      if (circularBtn) circularBtn.classList.add('active');
+    }
+    
+    // Mise à jour des états des boutons (implexes, générations)
+    this.updateButtonStates();
+    
+    // ========== PHASE 10 : INITIALISATION DES ÉVÉNEMENTS ==========
+    console.log('🖱️ Phase 10 : Initialisation des événements');
+    
+    // Préchargement du cache DOM
+    if (DOMCache && DOMCache.preload) {
+      DOMCache.preload();
+    }
+    
+    // Événements de base (zoom, drag, navigation)
+    this.initializeEvents();
+    
+    // Événements des angles
+    if (this.initializeAngleEvents) {
+      this.initializeAngleEvents();
+    }
+    
+    // Événements de colorisation
+    if (ColorManager && ColorManager.initializeColorEvents) {
+      ColorManager.initializeColorEvents();
+    }
+    
+    // ========== PHASE 11 : SYSTÈME DE SURLIGNAGE ==========
+    console.log('✨ Phase 11 : Système de surlignage');
+    
+    // Délai pour s'assurer que le DOM est complètement prêt
+    setTimeout(() => {
+      // Vérifier que les modules sont disponibles
+      if (typeof IntegrationHelper !== 'undefined') {
+        // Initialiser le système principal
+        if (IntegrationHelper.initializeHighlightSystem) {
+          IntegrationHelper.initializeHighlightSystem();
+        }
+        
+        // Initialiser les références
+        if (IntegrationHelper.initializeHighlightReferences) {
+          IntegrationHelper.initializeHighlightReferences();
+        }
+      }
+      
+      // Forcer la mise à jour de enableBidirectional
+      if (typeof HighlightCoordinator !== 'undefined' && HighlightCoordinator.config) {
+        const isPlaceColorActive = document.body.classList.contains('place_color');
+        HighlightCoordinator.config.enableBidirectional = isPlaceColorActive;
+        console.log('🔧 enableBidirectional forcé à:', isPlaceColorActive);
+      }
+      
+      // Vérification optionnelle des classes en mode debug
+      if (window.location.search.includes('debug=highlight')) {
+        setTimeout(() => {
+          if (window.verifyClassesOnElements) {
+            window.verifyClassesOnElements();
+          }
+        }, 500);
+      }
+      
+    }, 300); // 300ms de délai pour la stabilité
+    
+    // ========== PHASE 12 : FINALISATION ==========
+    console.log('🏁 Phase 12 : Finalisation');
+    
+    // Titre des générations
+    this.updateGenerationTitle();
+    
+    // Panneau d'aide à la navigation
+    if (UIManager && UIManager.addNavigationHelp) {
+      UIManager.addNavigationHelp();
+    }
+    
+    // Ajustement final de la vue
+    this.fitScreen();
+    
+    console.log('✅ Initialisation du FanChart terminée');
+    // Ajouter ?autotest=highlight dans l'URL pour lancer les tests automatiquement
+    if (window.location.search.includes('autotest=highlight')) {
+      setTimeout(() => {
+        console.log('🧪 Lancement des tests automatiques...');
+        if (window.testHighlightInteractions) {
+          window.testHighlightInteractions();
+        }
+      }, 1000);
+    }
   }
 };
+
+window.debugInitSequence = function() {
+  console.group('🔍 Vérification de la Séquence d\'Initialisation');
+  
+  console.log('1. Dimensions calculées:', {
+    svg_w: typeof svg_w !== 'undefined' ? svg_w : 'NON DÉFINI',
+    svg_h: typeof svg_h !== 'undefined' ? svg_h : 'NON DÉFINI',
+    center_x: typeof center_x !== 'undefined' ? center_x : 'NON DÉFINI',
+    center_y: typeof center_y !== 'undefined' ? center_y : 'NON DÉFINI'
+  });
+  
+  console.log('2. État URL lu:', {
+    tool: tool,
+    sortMode: sortMode,
+    showEvents: showEvents,
+    isCircularMode: isCircularMode,
+    current_angle: current_angle
+  });
+  
+  console.log('3. Données construites:', {
+    lieux: typeof lieux === 'object' ? Object.keys(lieux).length + ' lieux' : 'NON DÉFINI',
+    ancestor: typeof ancestor === 'object' ? Object.keys(ancestor).length + ' ancêtres' : 'NON DÉFINI'
+  });
+  
+  console.log('4. État du body:', {
+    classes: document.body.className,
+    place_color_actif: document.body.classList.contains('place_color')
+  });
+  
+  console.log('5. Système de surlignage:', {
+    HighlightCoordinator: typeof HighlightCoordinator !== 'undefined' ? 'CHARGÉ' : 'NON CHARGÉ',
+    enableBidirectional: typeof HighlightCoordinator !== 'undefined' ? 
+      HighlightCoordinator.config.enableBidirectional : 'N/A'
+  });
+  
+  console.log('6. Éléments SVG avec classes:', {
+    'path.link avec classes lieu': document.querySelectorAll('path.link[class*="-L"]').length,
+    'circle.link avec classes lieu': document.querySelectorAll('circle.link[class*="-L"]').length
+  });
+  
+  console.groupEnd();
+};
+
+window.verifyClassesOnElements = function() {
+  console.group('🔍 Vérification des Classes après Correction');
+  
+  // Vérifier les éléments .link
+  const linkElements = document.querySelectorAll('path.link, circle.link');
+  console.log(`Nombre d'éléments .link: ${linkElements.length}`);
+  
+  // Compter les éléments avec classes de lieu
+  let withPlaceClasses = 0;
+  linkElements.forEach(el => {
+    const hasPlaceClass = Events.types.some(type => {
+      const prefix = Events.svgPrefix(type);
+      return el.className.baseVal.includes(`${prefix}-L`);
+    });
+    if (hasPlaceClass) withPlaceClasses++;
+  });
+  
+  console.log(`Éléments .link avec classes de lieu: ${withPlaceClasses}`);
+  
+  // Exemples spécifiques
+  Events.types.forEach(type => {
+    const prefix = Events.svgPrefix(type);
+    const count = document.querySelectorAll(`path.link[class*="${prefix}-L"], circle.link[class*="${prefix}-L"]`).length;
+    console.log(`  ${type} (.link.${prefix}-L*): ${count} éléments`);
+  });
+  
+  // Vérifier enableBidirectional
+  if (typeof HighlightCoordinator !== 'undefined') {
+    console.log('\nenableBidirectional:', HighlightCoordinator.config.enableBidirectional);
+  }
+  
+  console.groupEnd();
+};
+
 
 // Alias pour la rétrocompatibilité
 const R = SVGRenderer;
