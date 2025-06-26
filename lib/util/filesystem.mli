@@ -4,7 +4,7 @@ val create_file : ?required_perm:int -> string -> unit
 (** [create_file ?required_perm ~kind path] creates a file at [path] if the
     target does not exist.
 
-    The default permissions are 0o644. In absence of required permissions, we do
+    The default permissions are 0o640. In absence of required permissions, we do
     not check the permissions of the target.
 
     @raise File_error

@@ -108,7 +108,7 @@ let copy_file ?(perm = 0o640) src dst =
   let buf = Bytes.create sz in
   Compat.In_channel.with_open_bin src @@ fun ic ->
   Compat.Out_channel.with_open_gen
-    [ Open_wronly; Open_append; Open_trunc ]
+    [ Open_wronly; Open_append; Open_trunc; Open_binary ]
     perm dst
   @@ fun oc ->
   let rec loop () =
