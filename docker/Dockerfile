@@ -2,7 +2,7 @@
 #                                                      STAGE 1: Build Geneweb
 ###############################################################################
 
-FROM ocaml/opam:debian-ocaml-4.14-nnp AS builder
+FROM ocaml/opam:debian-12-ocaml-4.14-nnp AS builder
 
 ENV OPAMYES=yes
 ENV OPAMJOBS=2
@@ -13,22 +13,27 @@ USER root
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
     && apt-get install -yq --no-install-recommends \
-    m4 libgmp-dev libpcre3-dev libipc-system-simple-perl xdot zlib1g-dev pkg-config \
-    && ln -sf /usr/bin/opam-2.3 /usr/bin/opam
+    m4 libgmp-dev libpcre3-dev libipc-system-simple-perl xdot zlib1g-dev pkg-config
 
-# Initialize OPAM
+# Use opam 2.3 and configure to use live repository like Colab
 USER opam
 WORKDIR /home/opam
-RUN opam init --disable-sandboxing --auto-setup --bare
+RUN sudo ln -f /usr/bin/opam-2.3 /usr/bin/opam \
+    && opam init --reinit --bare --disable-sandboxing -ni \
+    && opam repository set-url default https://opam.ocaml.org
 
 # Copy opam file for dependency resolution then install dependencies
 COPY --chown=opam:opam *.opam ./
-RUN eval "$(opam env)" && opam install . --deps-only --with-test && opam pin add ancient "https://github.com/OCamlPro/ocaml-ancient.git#ea8df144ee96c660b2401c832a10f30f8c69994a"
+RUN eval "$(opam env)" \
+    && opam install . --deps-only --with-test \
+    && opam install ancient.0.10.0
 
 # Clone repository and build Geneweb
 WORKDIR /home/opam/geneweb
 COPY --chown=opam:opam . .
-RUN eval "$(opam env)" && ocaml ./configure.ml --sosa-zarith --gwd-caching && make distrib
+RUN eval "$(opam env)" \
+    && ocaml ./configure.ml --sosa-zarith --gwd-caching \
+    && make distrib
 
 ###############################################################################
 #                                       STAGE 2: Export build via blank image
@@ -48,10 +53,8 @@ ENV GENEWEB_DATA_PATH=${GENEWEB_HOME}/share/data
 ENV GWSETUP_IP=172.17.0.1
 
 # Install runtime tools and add Geneweb user
-# Ignore the apt warning here as apt-get does not allow wildcarding versions
-# hadolint ignore=DL3027
 RUN apt-get update -q \
-  && apt install -qy --no-install-recommends sudo openssl \
+  && apt-get install -qy --no-install-recommends sudo openssl \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/* \
   && adduser --system --group --uid 1000 \
