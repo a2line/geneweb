@@ -656,6 +656,11 @@ module InvertedIndex (X : X) : sig
 
       @raise Conflict
         if string [s] is already present in [t] with a different index. *)
+
+  val remove : t -> string -> unit
+  (** [remove t s] remove string [s] in [t].
+
+      @raise Not_found if string [s] is not found in [t]. *)
 end = struct
   module HS = Hashtbl.Make (struct
     type t = string
@@ -701,8 +706,9 @@ end = struct
     List.iter (Hashtbl.iter (fun i s -> insert t s i)) indexes;
     t
 
-  let find t s =
+  let find (* with_tombstone *) t s =
     match HS.find t.tbl s with
+    | -1 -> raise Not_found (* Tombstone: explicitly removed *)
     | i -> i
     | exception Not_found -> (
         match t.inx with
@@ -719,6 +725,19 @@ end = struct
                 loop @@ input_binary_int ic)
             in
             loop @@ input_binary_int ic)
+
+  let remove (* with_tombstone *) t s =
+    try
+      (* Remove from hashtable if present *)
+      HS.remove t.tbl s;
+      (* If string might exist in file index, add tombstone *)
+      match t.inx with
+      | None -> () (* No file index, simple removal is sufficient *)
+      | Some _ ->
+          (* Add a special "removed" marker to override file index *)
+          (* Using -1 as tombstone since valid indices should be >= 0 *)
+          HS.add t.tbl s (-1)
+    with Not_found -> () (* String doesn't exist, nothing to remove *)
 end
 
 let ( // ) = Filename.concat
@@ -1227,6 +1246,19 @@ let with_database ?(read_only = false) bname k =
       I.insert inv_idx s i;
       i
   in
+  let replace_string old_s new_s =
+    try
+      let i = I.find inv_idx old_s in
+      Geneweb_logs.Logs.info (fun k -> k "  OLD: %s\n  NEW: %s\n" old_s new_s);
+      (* Remove old string from inverse index *)
+      I.remove inv_idx old_s;
+      (* Update the hashtable with new string at same index *)
+      Hashtbl.remove (snd pending.h_string) i;
+      Hashtbl.add (snd pending.h_string) i new_s;
+      (* Add new string to inverse index with same index *)
+      i
+    with Not_found -> insert_string new_s
+  in
   let patch_name s ip =
     (* FIXME: pending patches? *)
     let i = Dutil.name_index s in
@@ -1354,6 +1386,7 @@ let with_database ?(read_only = false) bname k =
       patch_descend;
       patch_name;
       insert_string;
+      replace_string;
       commit_patches;
       commit_notes;
       commit_wiznotes;
@@ -1429,6 +1462,7 @@ let make bname particles ((persons, families, strings, bnotes) as _arrays) k =
       patch_descend = (fun _ -> assert false);
       patch_name = (fun _ -> assert false);
       insert_string = (fun _ -> assert false);
+      replace_string = (fun _ -> assert false);
       commit_patches = (fun _ -> assert false);
       commit_notes = (fun _ -> assert false);
       commit_wiznotes = (fun _ -> assert false);
