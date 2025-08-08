@@ -14,9 +14,9 @@ let get_purged_fn_sn = Update_util.get_purged_fn_sn removed_string
 let reconstitute_somebody = Update_util.reconstitute_somebody removed_string
 
 let reconstitute_parent_or_child conf var default_surname =
-  let first_name = only_printable (getn conf var "fn") in
+  let first_name = clean_user_input (getn conf var "fn") in
   let surname =
-    let surname = only_printable (getn conf var "sn") in
+    let surname = clean_user_input (getn conf var "sn") in
     if surname = "" then default_surname else surname
   in
   (* S'il y a des caractères interdits, on les supprime *)

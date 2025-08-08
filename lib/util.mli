@@ -613,6 +613,14 @@ val only_printable : string -> string
 val only_printable_or_nl : string -> string
 (** Same as [only_printable] but also accepts '\n'. *)
 
+val remove_invisible_chars : string -> string
+(** Removes invisible Unicode characters (zero-width spaces, soft hyphens, etc.)
+    that can corrupt searches and displays. *)
+
+val clean_user_input : string -> string
+(** Complete input sanitization: removes invisible Unicode chars, ASCII control
+    chars, and trims. Used before saving user input. *)
+
 val relation_type_text : config -> relation_type -> int -> Adef.safe_string
 val rchild_type_text : config -> relation_type -> int -> Adef.safe_string
 
@@ -843,6 +851,14 @@ val print_loading_overlay :
     overlay with a spinner and message. Uses the translation key
     [waiting overlay] by default, or the provided custom translation key. The
     overlay is initially hidden and can controlled via JavaScript functions. *)
+
+val loading_overlay_js_content : string
+(** [loading_overlay_js_content] contains the JavaScript code for loading
+    overlay functionality as a string constant. This allows modules to compose
+    this JavaScript with their own code rather than printing it directly.
+
+    Contains showOverlay(), hideOverlay() functions and automatic DOM ready
+    initialization. Can be concatenated with other JavaScript before output. *)
 
 val print_loading_overlay_js : Config.config -> unit
 (** [print_loading_overlay_js conf] generates JavaScript functions to control

@@ -551,8 +551,8 @@ let reconstitute_person conf =
         with Failure _ -> Driver.Iper.dummy)
     | None -> Driver.Iper.dummy
   in
-  let first_name = only_printable (get conf "first_name") in
-  let surname = only_printable (get conf "surname") in
+  let first_name = clean_user_input (get conf "first_name") in
+  let surname = clean_user_input (get conf "surname") in
   (* S'il y a des caractères interdits, on les supprime *)
   let first_name, surname = get_purged_fn_sn first_name surname in
   let occ =
@@ -565,7 +565,7 @@ let reconstitute_person conf =
   let surnames_aliases, ext =
     reconstitute_string_list conf "surname_alias" ext 0
   in
-  let public_name = only_printable (get conf "public_name") in
+  let public_name = clean_user_input (get conf "public_name") in
   let qualifiers, ext = reconstitute_string_list conf "qualifier" ext 0 in
   let aliases, ext = reconstitute_string_list conf "alias" ext 0 in
   let titles, ext = reconstitute_titles conf ext 1 in
@@ -579,7 +579,7 @@ let reconstitute_person conf =
     | Some "Private" -> Private
     | Some _ | None -> IfTitles
   in
-  let occupation = only_printable (get conf "occu") in
+  let occupation = clean_user_input (get conf "occu") in
   let sex =
     match p_getenv conf.env "sex" with
     | Some "M" -> Male

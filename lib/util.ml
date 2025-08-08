@@ -2364,6 +2364,134 @@ let gen_only_printable or_nl s =
 let only_printable_or_nl = gen_only_printable true
 let only_printable = gen_only_printable false
 
+let remove_invisible_chars s =
+  (* Liste des codes Unicode des caractères invisibles problématiques *)
+  let invisible_codes =
+    [
+      0x00AD;
+      (* SOFT HYPHEN *)
+      0x034F;
+      (* COMBINING GRAPHEME JOINER *)
+      0x0600;
+      0x0601;
+      0x0602;
+      0x0603;
+      (* Arabic marks *)
+      0x06DD;
+      (* ARABIC END OF AYAH *)
+      0x070F;
+      (* SYRIAC ABBREVIATION MARK *)
+      0x0F0C;
+      (* TIBETAN DELIMITER TSHEG BRTAGS *)
+      0x115F;
+      0x1160;
+      (* Hangul fillers *)
+      0x1680;
+      (* OGHAM SPACE MARK *)
+      0x180E;
+      (* MONGOLIAN VOWEL SEPARATOR *)
+      0x2000;
+      0x2001;
+      0x2002;
+      0x2003;
+      0x2004;
+      0x2005;
+      0x2006;
+      0x2007;
+      0x2008;
+      0x2009;
+      0x200A;
+      (* Various spaces *)
+      0x200B;
+      0x200C;
+      0x200D;
+      (* Zero width chars *)
+      0x200E;
+      0x200F;
+      (* Directional marks *)
+      0x205F;
+      (* MEDIUM MATHEMATICAL SPACE *)
+      0x2060;
+      0x2061;
+      0x2062;
+      0x2063;
+      0x2064;
+      (* Invisible operators *)
+      0x206A;
+      0x206B;
+      0x206C;
+      0x206D;
+      0x206E;
+      0x206F;
+      (* Format chars *)
+      0x3000;
+      (* IDEOGRAPHIC SPACE *)
+      0xFEFF;
+      (* ZERO WIDTH NO-BREAK SPACE *)
+    ]
+  in
+  let buf = Buffer.create (String.length s) in
+  let len = String.length s in
+  let rec loop i =
+    if i >= len then Buffer.contents buf
+    else
+      let c = Char.code s.[i] in
+      if c < 0x80 then (
+        (* ASCII simple *)
+        if not (List.mem c invisible_codes) then Buffer.add_char buf s.[i];
+        loop (i + 1))
+      else if c < 0xE0 then
+        if
+          (* UTF-8 sur 2 octets *)
+          i + 1 < len
+        then (
+          let codepoint =
+            ((c land 0x1F) lsl 6) lor (Char.code s.[i + 1] land 0x3F)
+          in
+          if not (List.mem codepoint invisible_codes) then (
+            Buffer.add_char buf s.[i];
+            Buffer.add_char buf s.[i + 1]);
+          loop (i + 2))
+        else loop (i + 1)
+      else if c < 0xF0 then
+        if
+          (* UTF-8 sur 3 octets *)
+          i + 2 < len
+        then (
+          let codepoint =
+            ((c land 0x0F) lsl 12)
+            lor ((Char.code s.[i + 1] land 0x3F) lsl 6)
+            lor (Char.code s.[i + 2] land 0x3F)
+          in
+          if not (List.mem codepoint invisible_codes) then (
+            Buffer.add_char buf s.[i];
+            Buffer.add_char buf s.[i + 1];
+            Buffer.add_char buf s.[i + 2]);
+          loop (i + 3))
+        else loop (i + 1)
+      else if
+        (* UTF-8 sur 4 octets - pour être complet *)
+        i + 3 < len
+      then (
+        let codepoint =
+          ((c land 0x07) lsl 18)
+          lor ((Char.code s.[i + 1] land 0x3F) lsl 12)
+          lor ((Char.code s.[i + 2] land 0x3F) lsl 6)
+          lor (Char.code s.[i + 3] land 0x3F)
+        in
+        if not (List.mem codepoint invisible_codes) then (
+          Buffer.add_char buf s.[i];
+          Buffer.add_char buf s.[i + 1];
+          Buffer.add_char buf s.[i + 2];
+          Buffer.add_char buf s.[i + 3]);
+        loop (i + 4))
+      else loop (i + 1)
+  in
+  loop 0
+
+let clean_user_input s =
+  s |> remove_invisible_chars |> only_printable |> String.trim
+
 let relation_type_text conf t n =
   match t with
   | Adoption ->
@@ -3243,22 +3371,20 @@ let print_loading_overlay conf ?custom_translation_key () =
   let title = Utf8.capitalize_fst (transl_nth conf translation_key 0) in
   let subtitle = Utf8.capitalize_fst (transl_nth conf translation_key 1) in
   Output.printf conf
-    {|
-<div class="loading-overlay hidden">
-  <div class="text-center">
-    <div class="spinner-border text-light mb-3" role="status">
-      <span class="sr-only">Loading…</span>
+    {|  <div class="loading-overlay hidden">
+    <div class="text-center">
+      <div class="spinner-border text-light mb-3" role="status">
+        <span class="sr-only">Loading…</span>
+      </div>
+      <h4>%s</h4>
+      <p>%s</p>
     </div>
-    <h4>%s</h4>
-    <p>%s</p>
   </div>
-</div>|}
+|}
     title subtitle
 
-let print_loading_overlay_js conf =
-  Output.printf conf
-    {|
-<script>
+let loading_overlay_js_content =
+  {|<script>
 function showOverlay() {
   const overlay = document.querySelector('.loading-overlay');
   if (overlay) overlay.classList.remove('hidden');
@@ -3269,3 +3395,6 @@ function hideOverlay() {
 }
 document.addEventListener('DOMContentLoaded', hideOverlay);
 </script>|}
+
+let print_loading_overlay_js conf =
+  Output.print_sstring conf loading_overlay_js_content
