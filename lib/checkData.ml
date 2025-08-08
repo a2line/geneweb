@@ -540,7 +540,8 @@ let make_error_html conf base data istr entry error_type =
     Printf.sprintf "%sm=MOD_DATA&data=%s&key=%s&s=%s%s" commd data istr_ s s2_p
   in
   let url_chk =
-    Printf.sprintf "%sm=CHK_DATA_OK&k=%s&s=%s&s2=%s" commd istr_ s_ori s2
+    Printf.sprintf "%sm=CHK_DATA_OK&d=%s&k=%s&s=%s&s2=%s" commd data istr_ s_ori
+      s2
   in
   (hl, url_mod, url_chk, entry_escaped, s2_auto)
 
@@ -664,6 +665,48 @@ let read_cache conf dict_type =
       close_in ic;
       raise e
   with Sys_error _ -> []
+
+let update_cache_entry conf dict_type istr new_value =
+  let cache_file = cache_file_path conf dict_type in
+  if Sys.file_exists cache_file then
+    try
+      let entries = read_cache conf dict_type in
+      let updated_entries =
+        List.map
+          (fun (i, s) -> if i = istr then (i, new_value) else (i, s))
+          entries
+      in
+      let oc = Secure.open_out_bin cache_file in
+      try
+        Marshal.to_channel oc updated_entries [ Marshal.No_sharing ];
+        close_out oc;
+        true
+      with e ->
+        close_out oc;
+        raise e
+    with _ -> false
+  else false
+
+let find_dict_type_for_istr conf istr =
+  let check_in_cache dict_type =
+    if cache_file_exists conf dict_type then
+      let entries = read_cache conf dict_type in
+      List.exists (fun (i, _) -> i = istr) entries
+    else false
+  in
+  List.find_opt check_in_cache
+    [
+      Fnames;
+      Snames;
+      Places;
+      PubNames;
+      Qualifiers;
+      Aliases;
+      Occupation;
+      Titles;
+      Estates;
+      Sources;
+    ]
 
 (* Collecter les erreurs depuis le cache binaire checkdata *)
 let collect_all_errors_from_cache conf dict_type max_results

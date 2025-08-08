@@ -26,11 +26,8 @@ const CheckDataEditor = {
 
       const s2 = e.target.closest('a.s2');
       if (s2?.closest('.err')) {
-        // Les liens ont déjà target="_blank" dans le HTML
-        // On laisse le comportement natif et on passe au suivant
-        requestAnimationFrame(() => {
-          this.focusNext(s2.closest('.err'));
-        });
+        e.preventDefault();
+        this.validateWithAjax(s2, s2.closest('.err'));
       }
     });
 
@@ -126,12 +123,8 @@ const CheckDataEditor = {
       if (e.key === 'Enter' && (!isTextarea || e.shiftKey)) {
         e.preventDefault();
         if (s2?.style.visibility !== 'hidden') {
-          // Simuler le clic sur le lien (qui s'ouvre dans target="_blank")
-          s2.click();
-          // Passer au suivant après un court délai
-          requestAnimationFrame(() => {
-            this.focusNext(container.closest('.err'));
-          });
+          // ✅ AJAX au lieu de s2.click() - mais on garde la navigation !
+          this.validateWithAjax(s2, container.closest('.err'));
         }
       }
       // Escape pour annuler
@@ -216,7 +209,9 @@ const CheckDataEditor = {
         s2.classList.remove('btn-warning', 'btn-info');
         s2.classList.add('btn-success');
         s2.style.visibility = 'visible'; // Toujours visible après validation
-        s2.innerHTML = '<i class="fa fa-check"></i>'; // Garder l'icône check
+        if (!s2.querySelector('.fa-spell-check')) {
+          s2.innerHTML = '<i class="fa fa-check"></i>';
+        }
       }
     } else {
       // Si navigation par flèches, fermer proprement l'édition
@@ -317,6 +312,143 @@ const CheckDataEditor = {
         window.scrollTo(0, parseInt(saved));
         sessionStorage.removeItem('checkDataScroll');
       });
+    }
+  },
+  
+  _validating: new Set(),
+
+  async validateWithAjax(s2, errElement) {
+    if (!s2 || !errElement) return;
+    
+    // Éviter double validation
+    const key = s2.href;
+    if (this._validating.has(key)) return;
+    this._validating.add(key);
+    
+    // Indicator de chargement
+    const originalContent = s2.innerHTML;
+    s2.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+    s2.classList.add('btn-info');
+    s2.classList.remove('btn-warning', 'btn-success', 'btn-danger');
+    
+    try {
+      // Construire l'URL AJAX (ajouter &ajax)
+      const ajaxUrl = s2.href + '&ajax';
+      
+      const response = await fetch(ajaxUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Succès: afficher notification et marquer comme validé
+        this.showNotification('success', 
+          `✓ ${result.message}${result.cache_updated ? 
+           ' (cache mis à jour)' : ''}`);
+        
+        // Icône spell-check SEULE et FINALE
+        s2.innerHTML = '<i class="fa fa-spell-check"></i>';
+        s2.classList.remove('btn-info', 'btn-warning', 'btn-danger');
+        s2.classList.add('btn-success');
+        s2.title = 'Validé';
+        s2.style.pointerEvents = 'none'; // Empêcher re-clic
+        
+        // Désactiver l'erreur visuellement
+        errElement.classList.add('disabled', 'validated');
+        
+        // Passer au suivant après un délai court
+        setTimeout(() => {
+          this.focusNext(errElement);
+        }, 300);
+        
+      } else {
+        // Erreur: afficher le message en rouge
+        this.showNotification('error', `✗ ${result.message}`);
+        
+        // Icône d'erreur temporaire
+        s2.innerHTML = '<i class="fa fa-exclamation-triangle"></i>';
+        s2.classList.remove('btn-info', 'btn-warning', 'btn-success');
+        s2.classList.add('btn-danger');
+        s2.title = result.message;
+        
+        // Restaurer l'état original après 2s
+        setTimeout(() => {
+          s2.innerHTML = originalContent;
+          s2.classList.remove('btn-danger');
+          s2.classList.add('btn-warning');
+          s2.title = '';
+        }, 2000);
+      }
+      
+    } catch (error) {
+      console.error('Erreur AJAX:', error);
+      this.showNotification('error', '✗ Erreur de connexion');
+      
+      // Fallback: restaurer le bouton et ouvrir dans un onglet
+      s2.innerHTML = originalContent; // <-- FIX: sans quotes!
+      s2.classList.remove('btn-info', 'btn-success', 'btn-danger');
+      s2.classList.add('btn-warning');
+      
+      // Ouvrir dans un nouvel onglet comme fallback
+      window.open(s2.href, '_blank');
+      
+    } finally {
+      this._validating.delete(key);
+    }
+  },
+  
+  // Notifications modernes
+  showNotification(type, message, duration = 4000) {
+    document.querySelectorAll('.ajax-notification')
+      .forEach(n => n.remove());
+    
+    const notification = document.createElement('div');
+    const isSuccess = type === 'success';
+    notification.className = 
+      `alert alert-${isSuccess ? 'success' : 'danger'} ajax-notification`;
+    notification.style.cssText = `
+      position: fixed; top: 20px; right: 20px; z-index: 9999;
+      min-width: 300px; animation: slideInRight 0.3s ease-out;`;
+    
+    notification.innerHTML = `
+      <div class="d-flex align-items-center">
+        <span class="flex-grow-1">${message}</span>
+        <button type="button" class="close ml-2">&times;</button>
+      </div>`;
+    
+    const remove = () => {
+      notification.style.animation = 'slideOutRight 0.3s ease-in';
+      notification.addEventListener('animationend', () => 
+        notification.remove());
+    };
+    
+    const timeout = setTimeout(remove, duration);
+    notification.querySelector('.close').onclick = () => {
+      clearTimeout(timeout);
+      remove();
+    };
+    
+    document.body.appendChild(notification);
+  },
+  
+  async validateWithRetry(s2, errElement, retries = 2) {
+    for (let i = 0; i <= retries; i++) {
+      try {
+        await this.validateWithAjax(s2, errElement);
+        break;
+      } catch (error) {
+        if (i === retries) throw error;
+        await new Promise(r => setTimeout(r, 500 * (i + 1)));
+      }
     }
   }
 };
