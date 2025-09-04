@@ -833,6 +833,51 @@ let search_surname_print conf base _not_found_fun x =
           let strl = List.map (fun (s, _) -> s) list in
           print_several_possible_surnames x conf base (bhl, strl))
 
+let print_multiple_display conf base query_string surnames_groups =
+  let title _ =
+    Output.printf conf {|%s %s|}
+      (Util.escape_html query_string :> string)
+      (transl conf "specify")
+  in
+  Hutil.header conf title;
+  let sorted_surnames =
+    List.sort (fun (sn1, _) (sn2, _) -> String.compare sn1 sn2) surnames_groups
+  in
+  List.iter
+    (fun (sn, persons) ->
+      Output.printf conf
+        {|<h3 class="mt-3"><a href="%sm=N&v=%s"><strong>%s</strong></a> (%d)</h3>|}
+        (commd conf :> string)
+        (Mutil.encode sn :> string)
+        (Util.escape_html sn :> string)
+        (List.length persons);
+      Output.print_sstring conf "<ul>\n";
+      let sorted_persons =
+        List.sort
+          (fun p1 p2 ->
+            match
+              ( Date.od_of_cdate (Driver.get_birth p1),
+                Date.od_of_cdate (Driver.get_birth p2) )
+            with
+            | Some d1, Some d2 -> Date.compare_date d1 d2
+            | None, Some _ -> 1
+            | Some _, None -> -1
+            | None, None ->
+                Gutil.alphabetic_order
+                  (Driver.p_first_name base p1)
+                  (Driver.p_first_name base p2))
+          persons
+      in
+      List.iter
+        (fun p ->
+          Output.print_sstring conf "<li>";
+          Update.print_person_parents_and_spouses conf base p;
+          Output.print_sstring conf "</li>\n")
+        sorted_persons;
+      Output.print_sstring conf "</ul>\n")
+    sorted_surnames;
+  Hutil.trailer conf
+
 let search_first_name conf base x =
   let list, _ =
     if p_getenv conf.env "t" = Some "A" then

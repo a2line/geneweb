@@ -177,6 +177,41 @@ type opts = {
   all_in : bool; (* all first_names should match one of the typed first_names *)
 }
 
+(* Type unifié pour les résultats de recherche *)
+type search_results = {
+  exact : Driver.Iper.t list; (* résultats exacts *)
+  partial : Driver.Iper.t list; (* résultats partiels *)
+  spouse : Driver.Iper.t list; (* résultats avec nom d'époux *)
+}
+
+(* Gestionnaire centralisé des duplicatas *)
+module DuplicateManager = struct
+  let create () = Hashtbl.create 100
+
+  let add_if_new ht ip =
+    if Hashtbl.mem ht ip then false
+    else (
+      Hashtbl.add ht ip ();
+      true)
+
+  let filter_new ht ips = List.filter (add_if_new ht) ips
+end
+
+(* Convertit une liste de persons en ipers *)
+let persons_to_ipers persons = List.map Driver.get_iper persons
+
+(* Recherche par sosa optimisée *)
+let search_sosa_opt conf base query =
+  match search_by_sosa conf base query with
+  | None -> []
+  | Some p -> [ Driver.get_iper p ]
+
+(* Recherche par clé optimisée *)
+let search_key_opt conf base query =
+  match search_by_key conf base query with
+  | None -> []
+  | Some p -> [ Driver.get_iper p ]
+
 let match_fn_lists fn_l fn1_l opts =
   let lower fn_l =
     List.map (fun fn -> if opts.case then fn else Name.lower fn) fn_l
@@ -226,7 +261,300 @@ let search_for_multiple_fn conf base fn pl opts =
         else pl)
     [] pl
 
-let search conf base an search_order specify unknown =
+(* Filtre les personnes selon les critères de prénom *)
+let filter_by_firstname base fn_words opts persons =
+  List.filter
+    (fun p ->
+      let fn = Driver.sou base (Driver.get_first_name p) in
+      let fn_l = cut_words fn in
+      fn <> "" && match_fn_lists fn_words fn_l opts)
+    persons
+
+(* Recherche de prénom optimisée avec cache *)
+let search_firstname_with_cache conf base query opts =
+  let fn_words = cut_words query in
+  let save_env = conf.env in
+
+  (* Recherche exacte *)
+  let conf_exact =
+    {
+      conf with
+      env =
+        ("first_name", Adef.encoded query)
+        :: ("exact_first_name", Adef.encoded "on")
+        :: save_env;
+    }
+  in
+  let exact_results, _ = AdvSearchOk.advanced_search conf_exact base max_int in
+  let exact_filtered = filter_by_firstname base fn_words opts exact_results in
+
+  (* Recherche non exacte *)
+  let conf_fuzzy =
+    {
+      conf with
+      env =
+        ("first_name", Adef.encoded query)
+        :: ("exact_first_name", Adef.encoded "off")
+        :: save_env;
+    }
+  in
+  let fuzzy_results, _ = AdvSearchOk.advanced_search conf_fuzzy base max_int in
+  let fuzzy_filtered = filter_by_firstname base fn_words opts fuzzy_results in
+
+  (* Retourner les ipers directement *)
+  (persons_to_ipers exact_filtered, persons_to_ipers fuzzy_filtered)
+
+let group_by_surname base ipers =
+  let groups = Hashtbl.create 10 in
+  List.iter
+    (fun ip ->
+      let p = Driver.poi base ip in
+      let sn = Driver.sou base (Driver.get_surname p) in
+      let current = try Hashtbl.find groups sn with Not_found -> [] in
+      Hashtbl.replace groups sn (p :: current))
+    ipers;
+  Hashtbl.fold (fun sn persons acc -> (sn, List.rev persons) :: acc) groups []
+
+let search_fullname conf base fn sn =
+  let conf_sn =
+    {
+      conf with
+      env =
+        ("surname", Adef.encoded sn)
+        :: ("exact_surname", Adef.encoded "on")
+        :: conf.env;
+    }
+  in
+  let persons, _ = AdvSearchOk.advanced_search conf_sn base max_int in
+
+  match persons with
+  | [] -> { exact = []; partial = []; spouse = [] }
+  | [ p ] -> { exact = [ Driver.get_iper p ]; partial = []; spouse = [] }
+  | pl ->
+      (* Créer les options pour la recherche *)
+      let opts =
+        {
+          order = false;
+          all = true;
+          case = false;
+          exact = false;
+          all_in = true;
+        }
+      in
+      (* Recherche avec all_in = true pour exact *)
+      let exact = search_for_multiple_fn conf base fn pl opts in
+
+      (* Recherche avec all_in = false pour partial *)
+      let opts_partial = { opts with all_in = false } in
+      let partial = search_for_multiple_fn conf base fn pl opts_partial in
+
+      (* Recherche dans les conjoints si autorisé *)
+      let spouse =
+        if List.assoc_opt "public_name_as_fn" conf.base_env <> Some "no" then
+          let sn_bearers = Some.search_surname conf base sn in
+          let spouses =
+            List.fold_left
+              (fun acc ip ->
+                let p = Driver.poi base ip in
+                Array.fold_left
+                  (fun acc ifam ->
+                    let f = Driver.foi base ifam in
+                    let spouse_ip =
+                      if ip = Driver.get_father f then Driver.get_mother f
+                      else Driver.get_father f
+                    in
+                    Driver.poi base spouse_ip :: acc)
+                  acc (Driver.get_family p))
+              [] sn_bearers
+          in
+          search_for_multiple_fn conf base fn spouses opts_partial
+        else []
+      in
+      {
+        exact = persons_to_ipers exact;
+        partial = persons_to_ipers partial;
+        spouse = persons_to_ipers spouse;
+      }
+
+(* Recherche par clé partielle optimisée *)
+let search_partial_key conf base query =
+  let pl = search_by_name conf base query in
+  match pl with
+  | [] ->
+      (* Essayer recherche avancée *)
+      let n1 = Name.abbrev (Name.lower query) in
+      let fn, sn =
+        match String.index_opt n1 ' ' with
+        | Some i ->
+            (String.sub n1 0 i, String.sub n1 (i + 1) (String.length n1 - i - 1))
+        | _ -> ("", n1)
+      in
+      let conf = { conf with env = ("surname", Adef.encoded sn) :: conf.env } in
+      let persons, _ = AdvSearchOk.advanced_search conf base max_int in
+      if persons = [] then { exact = []; partial = []; spouse = [] }
+      else
+        (* Options corrigées *)
+        let opts_exact =
+          {
+            order = false;
+            all = true;
+            case = false;
+            exact = false;
+            all_in = true;
+          }
+        in
+        let opts_partial = { opts_exact with all_in = false } in
+        let exact = search_for_multiple_fn conf base fn persons opts_exact in
+        let partial =
+          search_for_multiple_fn conf base fn persons opts_partial
+        in
+        {
+          exact = persons_to_ipers exact;
+          partial = persons_to_ipers partial;
+          spouse = [];
+        }
+  | _ -> { exact = persons_to_ipers pl; partial = []; spouse = [] }
+
+module ApostropheCache = struct
+  let cache = Hashtbl.create 100
+
+  let get_variants s =
+    try Hashtbl.find cache s
+    with Not_found ->
+      let variants = generate_apostrophe_variants s in
+      Hashtbl.add cache s variants;
+      variants
+end
+
+(* Fonction de recherche unifiée pour une variante *)
+let search_one_variant_refactored conf base query search_order =
+  let results = ref { exact = []; partial = []; spouse = [] } in
+
+  List.iter
+    (function
+      | Sosa ->
+          let ips = search_sosa_opt conf base query in
+          results := { !results with exact = !results.exact @ ips }
+      | Key ->
+          let ips = search_key_opt conf base query in
+          results := { !results with exact = !results.exact @ ips }
+      | Surname ->
+          let ips = Some.search_surname conf base query in
+          results := { !results with exact = !results.exact @ ips }
+      | FirstName ->
+          let opts =
+            {
+              order = false;
+              all = true;
+              case = false;
+              exact = false;
+              all_in = true;
+            }
+          in
+          let exact, partial =
+            search_firstname_with_cache conf base query opts
+          in
+          results :=
+            {
+              exact = !results.exact @ exact;
+              partial = !results.partial @ partial;
+              spouse = !results.spouse;
+            }
+      | FullName ->
+          (* Extraire fn et sn intelligemment *)
+          let fn, sn =
+            match (p_getenv conf.env "p", p_getenv conf.env "n") with
+            | Some fn, Some sn when fn <> "" && sn <> "" -> (fn, sn)
+            | _ -> (
+                (* Diviser query au dernier espace *)
+                match String.rindex_opt query ' ' with
+                | Some i ->
+                    ( String.sub query 0 i,
+                      String.sub query (i + 1) (String.length query - i - 1) )
+                | None -> ("", query))
+          in
+          let r = search_fullname conf base fn sn in
+          results :=
+            {
+              exact = !results.exact @ r.exact;
+              partial = !results.partial @ r.partial;
+              spouse = !results.spouse @ r.spouse;
+            }
+      | PartialKey ->
+          let r = search_partial_key conf base query in
+          results :=
+            {
+              exact = !results.exact @ r.exact;
+              partial = !results.partial @ r.partial;
+              spouse = !results.spouse @ r.spouse;
+            }
+      | ApproxKey ->
+          let pl = search_approx_key conf base query in
+          let ips = persons_to_ipers pl in
+          results := { !results with exact = !results.exact @ ips }
+      | DefaultSurname ->
+          let ips = Some.search_surname conf base query in
+          results := { !results with exact = !results.exact @ ips })
+    search_order;
+
+  (* Éliminer les duplicatas entre catégories *)
+  let seen = DuplicateManager.create () in
+  let exact = DuplicateManager.filter_new seen !results.exact in
+  let partial = DuplicateManager.filter_new seen !results.partial in
+  let spouse = DuplicateManager.filter_new seen !results.spouse in
+
+  { exact; partial; spouse }
+
+(* Fonction principale *)
+let search conf base query search_order specify unknown =
+  (* Obtenir toutes les variantes *)
+  let variants = ApostropheCache.get_variants query in
+
+  (* Rechercher avec toutes les variantes *)
+  let all_results =
+    List.fold_left
+      (fun acc variant ->
+        let r = search_one_variant_refactored conf base variant search_order in
+        {
+          exact = acc.exact @ r.exact;
+          partial = acc.partial @ r.partial;
+          spouse = acc.spouse @ r.spouse;
+        })
+      { exact = []; partial = []; spouse = [] }
+      variants
+  in
+
+  (* Grouper par nom de famille si nécessaire *)
+  let all_ips = all_results.exact @ all_results.partial @ all_results.spouse in
+
+  (* Gérer l'affichage selon les résultats *)
+  match all_ips with
+  | [] -> SrcfileDisplay.print_welcome conf base
+  | [ ip ] ->
+      record_visited conf ip;
+      Perso.print conf base (Driver.poi base ip)
+  | _ -> (
+      (* Déterminer le type d'affichage *)
+      let fn = p_getenv conf.env "p" in
+      let sn = p_getenv conf.env "n" in
+      let pn = p_getenv conf.env "pn" in
+
+      match (fn, sn, pn) with
+      | _, Some _, None when sn <> Some "" -> (
+          (* Affichage par nom de famille *)
+          let surname_groups = group_by_surname base all_ips in
+          match surname_groups with
+          | [ (surname, _) ] ->
+              Some.search_surname_print conf base unknown surname
+          | multiple -> Some.print_multiple_display conf base query multiple)
+      | _ ->
+          (* Affichage standard avec specify *)
+          let pl1 = List.map (Driver.poi base) all_results.exact in
+          let pl2 = List.map (Driver.poi base) all_results.partial in
+          let pl3 = List.map (Driver.poi base) all_results.spouse in
+          specify conf base query pl1 pl2 pl3)
+
+let _search conf base an search_order specify unknown =
   let test label = p_getenv conf.env label = Some "on" in
   let test_not label = p_getenv conf.env label = Some "off" in
   let opts =
@@ -591,7 +919,6 @@ let search conf base an search_order specify unknown =
                 sorted_surnames;
               Hutil.trailer conf)
       | _ -> specify conf base an pl1 pl2 pl3)
-(* do the right thing !! *)
 
 (* ************************************************************************ *)
 (*  [Fonc] print : conf -> string -> unit                                   *)

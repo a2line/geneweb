@@ -37,6 +37,16 @@ val search_surname_print :
   string ->
   unit
 
+val print_multiple_display :
+  Config.config ->
+  Geneweb_db.Driver.base ->
+  string ->
+  (string * Geneweb_db.Driver.person list) list ->
+  unit
+(** [print_multiple_display conf base query surnames_groups] displays multiple
+    surname groups with their associated persons. Used when a search returns
+    multiple surname matches. *)
+
 val search_first_name :
   Config.config ->
   Geneweb_db.Driver.base ->
