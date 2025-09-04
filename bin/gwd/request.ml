@@ -68,106 +68,104 @@ let relation_print conf base p =
   in
   RelationDisplay.print conf base p p1
 
-let specify conf base n pl1 pl2 pl3 =
-  let title _ = Output.printf conf "%s : %s" n (transl conf "specify") in
-  let n = Name.crush_lower n in
-  let ptll pl =
-    List.map
-      (fun p ->
-        let tl = ref [] in
-        let add_tl t =
-          tl :=
-            let rec add_rec = function
-              | t1 :: tl1 ->
-                  if
-                    Driver.Istr.equal t1.t_ident t.t_ident
-                    && Driver.Istr.equal t1.t_place t.t_place
-                  then t1 :: tl1
-                  else t1 :: add_rec tl1
-              | [] -> [ t ]
-            in
-            add_rec !tl
-        in
-        let compare_and_add t pn =
-          let pn = Driver.sou base pn in
-          if Name.crush_lower pn = n then add_tl t
-          else
-            match Driver.get_qualifiers p with
-            | nn :: _ ->
-                let nn = Driver.sou base nn in
-                if Name.crush_lower (pn ^ " " ^ nn) = n then add_tl t
-            | _ -> ()
-        in
-        List.iter
-          (fun t ->
-            match (t.t_name, Driver.get_public_name p) with
-            | Tname s, _ -> compare_and_add t s
-            | _, pn when Driver.sou base pn <> "" -> compare_and_add t pn
-            | _ -> ())
-          (nobtit conf base p);
-        (p, !tl))
-      pl
+let process_titles conf base n p =
+  let n_crushed = Name.crush_lower n in
+  let tl = ref [] in
+  let add_title t =
+    tl :=
+      let rec add_rec = function
+        | t1 :: tl1 ->
+            if
+              Driver.Istr.equal t1.t_ident t.t_ident
+              && Driver.Istr.equal t1.t_place t.t_place
+            then t1 :: tl1
+            else t1 :: add_rec tl1
+        | [] -> [ t ]
+      in
+      add_rec !tl
   in
-
-  let sort_ptll ptll =
-    let l =
-      List.rev_map
-        (fun (p, v) ->
-          let bi = Driver.get_birth p in
-          let bi = if bi = Date.cdate_None then Driver.get_baptism p else bi in
-          (p, v, Date.cdate_to_dmy_opt bi))
-        ptll
-    in
-    List.sort
-      (fun (_, _, dmy1) (_, _, dmy2) ->
-        Option.compare Date.compare_dmy dmy2 dmy1)
-      l
-    |> List.rev_map (fun (p, v, _) -> (p, v))
+  let compare_and_add t pn =
+    let pn = Driver.sou base pn in
+    if Name.crush_lower pn = n_crushed then add_title t
+    else
+      match Driver.get_qualifiers p with
+      | nn :: _ ->
+          let nn = Driver.sou base nn in
+          if Name.crush_lower (pn ^ " " ^ nn) = n_crushed then add_title t
+      | _ -> ()
   in
-  let ptll1 = ptll pl1 |> sort_ptll in
-  let ptll2 = ptll pl2 |> sort_ptll in
-  let ptll3 = ptll pl3 |> sort_ptll in
-  Hutil.header conf title;
-  (* Si on est dans un calcul de parenté, on affiche *)
-  (* l'aide sur la sélection d'un individu.          *)
-  Util.print_tips_relationship conf;
-  (* TODO set possible limit to number of persons displayed (ptll) *)
-  (* Construction de la table des sosa de la base *)
-  let () = SosaCache.build_sosa_ht conf base in
-  Output.print_sstring conf "<ul>\n";
   List.iter
-    (fun (p, _tl) ->
-      Output.print_sstring conf "<li>\n";
-      SosaCache.print_sosa conf base p true;
-      Update.print_person_parents_and_spouses conf base p;
-      Output.print_sstring conf "</li>\n")
-    ptll1;
-  Output.print_sstring conf "</ul>\n";
-  if ptll2 <> [] then (
-    Output.print_sstring conf
-      (transl conf "other possibilities" |> Utf8.capitalize_fst);
-    Output.print_sstring conf "<ul>\n";
-    List.iter
-      (fun (p, _tl) ->
-        Output.print_sstring conf "<li>\n";
-        SosaCache.print_sosa conf base p true;
-        Update.print_person_parents_and_spouses conf base p;
-        Output.print_sstring conf "</li>\n")
-      ptll2;
-    Output.print_sstring conf "</ul>\n");
-  if ptll3 <> [] then (
-    Output.print_sstring conf
-      (transl conf "with spouse name" |> Utf8.capitalize_fst);
-    Output.print_sstring conf "<ul>\n";
-    List.iter
-      (fun (p, _tl) ->
-        Output.print_sstring conf "<li>\n";
-        SosaCache.print_sosa conf base p true;
-        Update.print_person_parents_and_spouses conf base p;
-        Output.print_sstring conf "</li>\n")
-      ptll3;
-    Output.print_sstring conf "</ul>\n");
+    (fun t ->
+      match (t.t_name, Driver.get_public_name p) with
+      | Tname s, _ -> compare_and_add t s
+      | _, pn when Driver.sou base pn <> "" -> compare_and_add t pn
+      | _ -> ())
+    (nobtit conf base p);
+  !tl
 
+let sort_by_birth_date persons_with_titles =
+  let with_dates =
+    List.rev_map
+      (fun (p, tl) ->
+        let bi = Driver.get_birth p in
+        let bi = if bi = Date.cdate_None then Driver.get_baptism p else bi in
+        (p, tl, Date.cdate_to_dmy_opt bi))
+      persons_with_titles
+  in
+  List.sort
+    (fun (_, _, dmy1) (_, _, dmy2) -> Option.compare Date.compare_dmy dmy2 dmy1)
+    with_dates
+  |> List.rev_map (fun (p, tl, _) -> (p, tl))
+
+let print_person_list conf base title_opt persons_with_titles =
+  match persons_with_titles with
+  | [] -> ()
+  | _ ->
+      (match title_opt with
+      | Some title ->
+          Output.print_sstring conf title;
+          Output.print_sstring conf "\n"
+      | None -> ());
+      Output.print_sstring conf {|<ul class="fa-ul">|};
+      Output.print_sstring conf "\n";
+      List.iter
+        (fun (p, _titles) ->
+          Output.print_sstring conf {|<li><span class="fa-li">|};
+          Output.print_sstring conf "\n";
+          let sosa_num = SosaCache.get_sosa_person p in
+          if Geneweb_sosa.gt sosa_num Geneweb_sosa.zero then
+            SosaCache.print_sosa conf base p true
+          else Output.print_sstring conf {|<span class="bullet">•</span>|};
+          Output.print_sstring conf "</span>";
+          Update.print_person_parents_and_spouses conf base p;
+          Output.print_sstring conf "</li>\n")
+        persons_with_titles;
+      Output.print_sstring conf "</ul>\n"
+
+let specify conf base n pl1 pl2 pl3 =
+  let title _ =
+    Output.printf conf "%s%s %s"
+      (Util.escape_html n :> string)
+      (transl conf ":") (transl conf "specify")
+  in
+  Hutil.header conf title;
+  Util.print_tips_relationship conf;
+  SosaCache.build_sosa_ht conf base;
+  let process_list pl =
+    pl
+    |> List.map (fun p -> (p, process_titles conf base n p))
+    |> sort_by_birth_date
+  in
+  let ptll1 = process_list pl1 in
+  let ptll2 = process_list pl2 in
+  let ptll3 = process_list pl3 in
+  print_person_list conf base None ptll1;
+  (if ptll2 <> [] then
+     let title = transl conf "other possibilities" |> Utf8.capitalize_fst in
+     print_person_list conf base (Some title) ptll2);
+  (if ptll3 <> [] then
+     let title = transl conf "with spouse name" |> Utf8.capitalize_fst in
+     print_person_list conf base (Some title) ptll3);
   Hutil.trailer conf
 
 let this_request_updates_database conf =

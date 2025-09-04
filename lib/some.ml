@@ -840,6 +840,7 @@ let print_multiple_display conf base query_string surnames_groups =
       (transl conf "specify")
   in
   Hutil.header conf title;
+  SosaCache.build_sosa_ht conf base;
   let sorted_surnames =
     List.sort (fun (sn1, _) (sn2, _) -> String.compare sn1 sn2) surnames_groups
   in
@@ -870,7 +871,14 @@ let print_multiple_display conf base query_string surnames_groups =
       in
       List.iter
         (fun p ->
-          Output.print_sstring conf "<li>";
+          Output.print_sstring conf {|<li><span class="fa-li">|};
+          Output.print_sstring conf "\n";
+          let sosa_num = SosaCache.get_sosa_person p in
+          if Geneweb_sosa.gt sosa_num Geneweb_sosa.zero then
+            SosaCache.print_sosa conf base p true
+          else
+            Output.print_sstring conf {|<span class="bullet">•</span>|};
+          Output.print_sstring conf "</span>";
           Update.print_person_parents_and_spouses conf base p;
           Output.print_sstring conf "</li>\n")
         sorted_persons;
