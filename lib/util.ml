@@ -1821,72 +1821,55 @@ let hexa_string s =
   done;
   Bytes.unsafe_to_string s'
 
+(* Optimized version of print_alphab_list using Buffer *)
 let print_alphab_list conf crit print_elem liste =
   let len = List.length liste in
-  (* No work to do if list is empty *)
   if liste = [] then Output.print_sstring conf "<ul></ul>\n"
   else (
-    (* Print alphabetical index links at the top if we have many items *)
+    (* Print alphabetical index if we have many items *)
     if len > menu_threshold then (
-      Output.print_sstring conf "<p>\n";
+      let buf = Buffer.create 512 in
+      Buffer.add_string buf "<p>\n";
+      let seen = ref [] in
+      List.iter
+        (fun e ->
+          let t = crit e in
+          if not (List.mem t !seen) then (
+            seen := t :: !seen;
+            Printf.bprintf buf "<a href=\"#ai%s\">%s</a>\n" (hexa_string t) t))
+        liste;
+      Buffer.add_string buf "</p>\n";
+      Output.print_sstring conf (Buffer.contents buf));
 
-      (* Create index links without duplicates *)
-      let rec print_index seen = function
-        | [] -> ()
-        | e :: rest ->
-            let t = crit e in
-            if not (List.mem t seen) then
-              Output.printf conf "<a href=\"#ai%s\">%s</a>\n" (hexa_string t) t;
-            print_index (t :: seen) rest
-      in
-      print_index [] liste;
-      Output.print_sstring conf "</p>\n";
-      Output.print_sstring conf "<ul>\n")
-    else Output.print_sstring conf "<ul>\n";
-    (* Group items by their criteria and print each group *)
+    Output.print_sstring conf "<ul>\n";
+
+    (* Process groups and print items *)
     let rec process_groups current_group current_index = function
       | [] when current_group != [] ->
-          (* Print the last group *)
           print_group (List.rev current_group) current_index
-      | [] ->
-          (* Empty list, nothing to do *)
-          ()
+      | [] -> ()
       | e :: rest ->
           let t = crit e in
-          (* If we're using numerical indexes or have many items, group by criteria *)
           if len > menu_threshold || is_number t then
-            if current_index = None || Some t <> current_index then
-              (* New group - print previous group if any, then start new group *)
-              let () =
-                if current_group <> [] then
-                  print_group (List.rev current_group) current_index
-              in
-              process_groups [ e ] (Some t) rest
-            else
-              (* Continue same group *)
-              process_groups (e :: current_group) current_index rest
-          else
-            (* Not grouping - print all items together *)
-            print_group (e :: rest) (Some "")
-    (* Print a group of items with the same criteria *)
+            if current_index = None || Some t <> current_index then (
+              if current_group <> [] then
+                print_group (List.rev current_group) current_index;
+              process_groups [ e ] (Some t) rest)
+            else process_groups (e :: current_group) current_index rest
+          else print_group (e :: rest) (Some "")
     and print_group items index_opt =
       let index = match index_opt with Some t -> t | None -> "" in
-      (* If we're grouping items, create a container with an anchor *)
-      if len > menu_threshold && index <> "" then (
-        Output.print_sstring conf "<li>\n";
-        Output.printf conf "<a id=\"ai%s\">%s</a>\n" (hexa_string index) index;
-        Output.print_sstring conf "<ul>\n");
-      (* Print each item in the group *)
+      if len > menu_threshold && index <> "" then
+        Output.printf conf "<li>\n<a id=\"ai%s\">%s</a>\n<ul>\n"
+          (hexa_string index) index;
       List.iter
         (fun e ->
           Output.print_sstring conf "<li>\n  ";
           print_elem e;
           Output.print_sstring conf "</li>\n")
         items;
-      (* Close the container if we opened one *)
-      if len > menu_threshold && index <> "" then (
-        Output.print_sstring conf "</ul>\n";
-        Output.print_sstring conf "</li>\n")
+      if len > menu_threshold && index <> "" then
+        Output.print_sstring conf "</ul>\n</li>\n"
     in
     process_groups [] None liste;
     Output.print_sstring conf "</ul>\n")

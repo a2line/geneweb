@@ -203,24 +203,31 @@ let print_elem conf base is_surname (p, xl) =
     (fun first x ->
       let iper = Driver.get_iper x in
       if not first then Output.print_sstring conf "</li><li> ";
+      (* Keep original SOSA display *)
       SosaCache.print_sosa conf base x true;
-      Output.print_sstring conf {|<a href="|};
-      Output.print_string conf (commd conf);
-      Output.print_string conf (acces conf base x);
-      Output.print_sstring conf {|" id="i|};
-      Output.print_sstring conf (Driver.Iper.to_string iper);
-      Output.print_sstring conf {|">|};
+      (* Buffer for the rest of the output *)
+      let buf = Buffer.create 512 in
+      Printf.bprintf buf {|<a href="%s%s" id="i%s">|}
+        (commd conf :> string)
+        (acces conf base x :> string)
+        (Driver.Iper.to_string iper :> string);
+      (* Display name based on context *)
       if is_surname then (
-        Output.print_string conf (escape_html @@ surname_without_particle base p);
-        Output.print_string conf (escape_html @@ surname_particle base p);
-        Output.print_sstring conf " ";
-        Output.print_string conf
-          (escape_html @@ Driver.sou base (Driver.get_first_name x)))
+        Buffer.add_string buf
+          (escape_html @@ surname_without_particle base p :> string);
+        Buffer.add_string buf (escape_html @@ surname_particle base p :> string);
+        Buffer.add_string buf " ";
+        Buffer.add_string buf
+          (escape_html @@ Driver.sou base (Driver.get_first_name x) :> string))
       else
-        Output.print_string conf
-          (if p = "" then Adef.escaped "?" else escape_html p);
-      Output.print_sstring conf "</a>";
-      Output.print_string conf (DateDisplay.short_dates_text conf base x);
+        Buffer.add_string buf
+          (if p = "" then (Adef.escaped "?" :> string)
+           else (escape_html p :> string));
+      Buffer.add_string buf "</a>";
+      Buffer.add_string buf (DateDisplay.short_dates_text conf base x :> string);
+      (* Output buffer content *)
+      Output.print_sstring conf (Buffer.contents buf);
+      (* Call specify_homonymous as in original *)
       specify_homonymous conf base x true)
     xl
 
@@ -246,21 +253,20 @@ let first_name_print_list conf base x1 xl listes =
     if h || p_getenv conf.env "t" = Some "A" then
       Output.print_string conf (escape_html x1)
     else
+      let buf = Buffer.create 256 in
       Mutil.list_iter_first
         (fun first x ->
-          if not first then Output.print_sstring conf ", ";
-          Output.print_sstring conf {|<a href="|};
-          Output.print_string conf (commd conf);
-          Output.print_sstring conf {|m=P&t=A&v=|};
-          Output.print_string conf (Mutil.encode x);
-          Output.print_sstring conf {|">|};
-          Output.print_string conf (escape_html x);
-          Output.print_sstring conf {|</a>|})
-        (StrSet.elements xl)
+          if not first then Buffer.add_string buf ", ";
+          Printf.bprintf buf {|<a href="%sm=P&t=A&v=%s">%s</a>|}
+            (commd conf :> string)
+            (Mutil.encode x :> string)
+            (escape_html x :> string))
+        (StrSet.elements xl);
+      Output.print_sstring conf (Buffer.contents buf)
   in
   Hutil.header conf title;
   (* Si on est dans un calcul de parenté, on affiche *)
-  (* l'aide sur la sélection d'un individu.          *)
+  (* l'aide sur la sélection d'un individu. *)
   Util.print_tips_relationship conf;
 
   List.iter
