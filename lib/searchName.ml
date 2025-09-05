@@ -6,6 +6,14 @@ module Sosa = Geneweb_sosa
 module Driver = Geneweb_db.Driver
 module Gutil = Geneweb_db.Gutil
 
+let max_results_per_category =
+  1000 (* Limite par catégorie (exact/partial/spouse) *)
+
+let _max_total_results = 2000 (* Limite totale *)
+let fst3 (a, _, _) = a
+let snd3 (_, b, _) = b
+let trd3 (_, _, c) = c
+
 (* Generate all apostrophe variants of a string *)
 let generate_apostrophe_variants s =
   let apostrophes =
@@ -44,6 +52,24 @@ let generate_apostrophe_variants s =
           String.sub s 0 pos ^ apo
           ^ String.sub s (pos + len) (String.length s - pos - len))
         apostrophes
+
+let _contains_apostrophe s =
+  let rec check i =
+    if i >= String.length s then false
+    else
+      match s.[i] with
+      | '\'' -> true (* Apostrophe ASCII *)
+      | '\xE2'
+        when i + 2 < String.length s && s.[i + 1] = '\x80' && s.[i + 2] = '\x99'
+        ->
+          true (* U+2019 *)
+      | '\xCA'
+        when i + 1 < String.length s
+             && (s.[i + 1] = '\xBC' || s.[i + 1] = '\xBB') ->
+          true (* U+02BC, U+02BB *)
+      | _ -> check (i + 1)
+  in
+  check 0
 
 (* TODO use function from Util instead? *)
 let empty_sn_or_fn base p =
@@ -426,6 +452,78 @@ module ApostropheCache = struct
       variants
 end
 
+(* Fonction de recherche d'une variante avec limites *)
+let _search_one_variant_refactored_limited conf base query search_order
+    ~ignore_limits =
+  let results = ref { exact = []; partial = []; spouse = [] } in
+  let counts = ref (0, 0, 0) in
+
+  List.iter
+    (function
+      | Sosa ->
+          let ips = search_sosa_opt conf base query in
+          let ips =
+            if ignore_limits then ips
+            else Mutil.list_limit max_results_per_category ips
+          in
+          results := { !results with exact = !results.exact @ ips };
+          counts := (fst3 !counts + List.length ips, snd3 !counts, trd3 !counts)
+      | Key ->
+          let ips = search_key_opt conf base query in
+          let ips =
+            if ignore_limits then ips
+            else Mutil.list_limit max_results_per_category ips
+          in
+          results := { !results with exact = !results.exact @ ips };
+          counts := (fst3 !counts + List.length ips, snd3 !counts, trd3 !counts)
+      | Surname ->
+          let ips = Some.search_surname conf base query in
+          let ips =
+            if ignore_limits then ips
+            else Mutil.list_limit max_results_per_category ips
+          in
+          results := { !results with exact = !results.exact @ ips };
+          counts := (fst3 !counts + List.length ips, snd3 !counts, trd3 !counts)
+      | FirstName ->
+          let opts =
+            {
+              order = false;
+              all = true;
+              case = false;
+              exact = false;
+              all_in = true;
+            }
+          in
+          let exact, partial =
+            search_firstname_with_cache conf base query opts
+          in
+          let exact, partial =
+            if ignore_limits then (exact, partial)
+            else
+              let remaining_exact = max_results_per_category - fst3 !counts in
+              let remaining_partial = max_results_per_category - snd3 !counts in
+              ( Mutil.list_limit remaining_exact exact,
+                Mutil.list_limit remaining_partial partial )
+          in
+          results :=
+            {
+              !results with
+              exact = !results.exact @ exact;
+              partial = !results.partial @ partial;
+            };
+          counts :=
+            ( fst3 !counts + List.length exact,
+              snd3 !counts + List.length partial,
+              trd3 !counts )
+      | _ -> ())
+    search_order;
+
+  let seen = DuplicateManager.create () in
+  let exact = DuplicateManager.filter_new seen !results.exact in
+  let partial = DuplicateManager.filter_new seen !results.partial in
+  let spouse = DuplicateManager.filter_new seen !results.spouse in
+  ({ exact; partial; spouse }, !counts)
+
 (* Fonction de recherche unifiée pour une variante *)
 let search_one_variant_refactored conf base query search_order =
   let results = ref { exact = []; partial = []; spouse = [] } in
@@ -505,16 +603,30 @@ let search_one_variant_refactored conf base query search_order =
 
   { exact; partial; spouse }
 
-(* Fonction principale *)
+(* lib/searchName.ml - Fonction search CORRIGÉE pour les paramètres vides *)
+
 let search conf base query search_order specify unknown =
-  (* Obtenir toutes les variantes *)
+  (* Utiliser le cache pour les variantes d'apostrophes *)
   let variants = ApostropheCache.get_variants query in
+  let has_variants = List.length variants > 1 in
+
+  (* DEBUG *)
+  if conf.wizard then (
+    Printf.eprintf "[DEBUG] Query: %s\n" query;
+    Printf.eprintf "[DEBUG] Variants (%d): %s\n" (List.length variants)
+      (String.concat ", " variants));
 
   (* Rechercher avec toutes les variantes *)
   let all_results =
     List.fold_left
       (fun acc variant ->
         let r = search_one_variant_refactored conf base variant search_order in
+
+        if conf.wizard then
+          Printf.eprintf
+            "[DEBUG] Variant '%s': %d exact, %d partial, %d spouse\n" variant
+            (List.length r.exact) (List.length r.partial) (List.length r.spouse);
+
         {
           exact = acc.exact @ r.exact;
           partial = acc.partial @ r.partial;
@@ -524,8 +636,23 @@ let search conf base query search_order specify unknown =
       variants
   in
 
-  (* Grouper par nom de famille si nécessaire *)
-  let all_ips = all_results.exact @ all_results.partial @ all_results.spouse in
+  (* Éliminer les duplicatas globaux *)
+  let seen = DuplicateManager.create () in
+  let final_results =
+    {
+      exact = DuplicateManager.filter_new seen all_results.exact;
+      partial = DuplicateManager.filter_new seen all_results.partial;
+      spouse = DuplicateManager.filter_new seen all_results.spouse;
+    }
+  in
+
+  let all_ips =
+    final_results.exact @ final_results.partial @ final_results.spouse
+  in
+
+  (* DEBUG *)
+  if conf.wizard then
+    Printf.eprintf "[DEBUG] Total results: %d ips\n" (List.length all_ips);
 
   (* Gérer l'affichage selon les résultats *)
   match all_ips with
@@ -534,24 +661,154 @@ let search conf base query search_order specify unknown =
       record_visited conf ip;
       Perso.print conf base (Driver.poi base ip)
   | _ -> (
-      (* Déterminer le type d'affichage *)
-      let fn = p_getenv conf.env "p" in
-      let sn = p_getenv conf.env "n" in
-      let pn = p_getenv conf.env "pn" in
+      let pl1 = List.map (Driver.poi base) final_results.exact in
+      let pl2 = List.map (Driver.poi base) final_results.partial in
+      let pl3 = List.map (Driver.poi base) final_results.spouse in
 
+      (* CORRECTION : Traiter les chaînes vides comme None *)
+      let fn =
+        match p_getenv conf.env "p" with
+        | Some "" | None -> None
+        | Some s -> Some s
+      in
+      let sn =
+        match p_getenv conf.env "n" with
+        | Some "" | None -> None
+        | Some s -> Some s
+      in
+      let pn =
+        match p_getenv conf.env "pn" with
+        | Some "" | None -> None
+        | Some s -> Some s
+      in
+
+      (* DEBUG *)
+      if conf.wizard then
+        Printf.eprintf "[DEBUG] Normalized parameters: fn=%s, sn=%s, pn=%s\n"
+          (match fn with Some s -> "'" ^ s ^ "'" | None -> "None")
+          (match sn with Some s -> "'" ^ s ^ "'" | None -> "None")
+          (match pn with Some s -> "'" ^ s ^ "'" | None -> "None");
+
+      (* Logique de décision pour l'affichage *)
       match (fn, sn, pn) with
-      | _, Some _, None when sn <> Some "" -> (
-          (* Affichage par nom de famille *)
+      (* CAS 1: Recherche par PRÉNOM seul *)
+      | Some _, None, None ->
+          if conf.wizard then Printf.eprintf "[DEBUG] Case: First name only\n";
+          let str = Mutil.StrSet.empty |> Mutil.StrSet.add query in
+          let tit2 =
+            if pl2 <> [] then
+              transl conf "other possibilities" |> Utf8.capitalize_fst
+            else ""
+          in
+          let tit3 =
+            if pl3 <> [] then
+              transl conf "with spouse name" |> Utf8.capitalize_fst
+            else ""
+          in
+          Some.first_name_print_list conf base query str
+            [ ("", pl1); (tit2, pl2); (tit3, pl3) ]
+      (* CAS 2: Recherche par NOM DE FAMILLE seul *)
+      | None, Some _, None -> (
+          if conf.wizard then Printf.eprintf "[DEBUG] Case: Surname only\n";
+
+          (* Grouper par nom de famille pour voir les variantes *)
           let surname_groups = group_by_surname base all_ips in
+
+          (* DEBUG *)
+          if conf.wizard then (
+            Printf.eprintf "[DEBUG] Surname groups found: %d\n"
+              (List.length surname_groups);
+            List.iter
+              (fun (sn, persons) ->
+                Printf.eprintf "[DEBUG]   Group '%s': %d persons\n" sn
+                  (List.length persons))
+              surname_groups;
+            Printf.eprintf "[DEBUG] Has variants: %b\n" has_variants);
+
+          (* Décider selon le nombre de groupes et la présence de variantes *)
           match surname_groups with
+          | [] ->
+              if conf.wizard then
+                Printf.eprintf "[DEBUG] No groups (should not happen)\n";
+              specify conf base query pl1 pl2 pl3
           | [ (surname, _) ] ->
+              (* Un seul groupe de nom *)
+              if conf.wizard then
+                Printf.eprintf "[DEBUG] Single surname group: %s\n" surname;
               Some.search_surname_print conf base unknown surname
-          | multiple -> Some.print_multiple_display conf base query multiple)
+          | multiple ->
+              (* Plusieurs groupes de noms *)
+              if conf.wizard then
+                Printf.eprintf "[DEBUG] Multiple surname groups: %d\n"
+                  (List.length multiple);
+              if has_variants then (
+                if conf.wizard then
+                  Printf.eprintf "[DEBUG] Using print_multiple_display\n";
+                Some.print_multiple_display conf base query multiple)
+              else (
+                if conf.wizard then
+                  Printf.eprintf "[DEBUG] Using specify (no variants)\n";
+                specify conf base query pl1 pl2 pl3))
+      (* CAS 3: Recherche avec PN (format prénom/nom/occ) *)
+      | None, None, Some pn_value -> (
+          if conf.wizard then Printf.eprintf "[DEBUG] Case: PN format\n";
+          let i = try String.index pn_value '/' with Not_found -> -1 in
+
+          if i = -1 then specify conf base query pl1 pl2 pl3
+          else
+            (* Format avec slash *)
+            let j =
+              try String.index_from pn_value (i + 1) '/' with Not_found -> -1
+            in
+            let oc =
+              if j = -1 then ""
+              else String.sub pn_value (j + 1) (String.length pn_value - j - 1)
+            in
+            let j = if j = -1 then 0 else String.length pn_value - j in
+            let fn_part = String.sub pn_value 0 i |> String.trim in
+            let sn_part =
+              String.sub pn_value (i + 1) (String.length pn_value - i - 1 - j)
+              |> String.trim
+            in
+
+            match (fn_part, sn_part, oc) with
+            (* Prénom seul via pn *)
+            | fn, "", "" when fn <> "" ->
+                let str = Mutil.StrSet.empty |> Mutil.StrSet.add query in
+                let tit2 =
+                  if pl2 <> [] then
+                    transl conf "other possibilities" |> Utf8.capitalize_fst
+                  else ""
+                in
+                let tit3 =
+                  if pl3 <> [] then
+                    transl conf "with spouse name" |> Utf8.capitalize_fst
+                  else ""
+                in
+                Some.first_name_print_list conf base query str
+                  [ ("", pl1); (tit2, pl2); (tit3, pl3) ]
+            (* Nom seul via pn *)
+            | "", sn, "" when sn <> "" -> (
+                let surname_groups = group_by_surname base all_ips in
+
+                match surname_groups with
+                | [] -> specify conf base query pl1 pl2 pl3
+                | [ (surname, _) ] ->
+                    Some.search_surname_print conf base unknown surname
+                | multiple ->
+                    if has_variants then
+                      Some.print_multiple_display conf base query multiple
+                    else specify conf base query pl1 pl2 pl3)
+            (* Autres cas avec pn *)
+            | _ -> specify conf base query pl1 pl2 pl3)
+      (* CAS 4: Recherche PRÉNOM + NOM *)
+      | Some _, Some _, None ->
+          if conf.wizard then
+            Printf.eprintf "[DEBUG] Case: First name + Surname\n";
+          specify conf base query pl1 pl2 pl3
+      (* CAS PAR DÉFAUT *)
       | _ ->
-          (* Affichage standard avec specify *)
-          let pl1 = List.map (Driver.poi base) all_results.exact in
-          let pl2 = List.map (Driver.poi base) all_results.partial in
-          let pl3 = List.map (Driver.poi base) all_results.spouse in
+          if conf.wizard then Printf.eprintf "[DEBUG] Case: Default\n";
           specify conf base query pl1 pl2 pl3)
 
 let _search conf base an search_order specify unknown =

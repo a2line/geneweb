@@ -666,6 +666,15 @@ val end_centered : config -> unit
 val print_alphab_list :
   config -> ('a -> string) -> ('a -> unit) -> 'a list -> unit
 
+val print_alphab_list_modern :
+  config ->
+  ('a -> string) ->
+  (* index/lettre pour l'ancre *)
+  ('a -> unit) ->
+  (* rendu d'un item *)
+  'a list ->
+  unit
+
 val short_f_month : int -> string
 
 (* Reading password file *)
