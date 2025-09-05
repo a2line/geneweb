@@ -694,7 +694,10 @@ let search conf base query search_order specify unknown =
       (* CAS 1: Recherche par PRÉNOM seul *)
       | Some _, None, None ->
           if conf.wizard then Printf.eprintf "[DEBUG] Case: First name only\n";
-          let str = Mutil.StrSet.empty |> Mutil.StrSet.add query in
+          let str = List.fold_left (fun acc p ->
+            Mutil.StrSet.add (Driver.sou base @@ Driver.get_first_name p)
+            acc) Mutil.StrSet.empty pl1
+          in
           let tit2 =
             if pl2 <> [] then
               transl conf "other possibilities" |> Utf8.capitalize_fst
@@ -774,7 +777,10 @@ let search conf base query search_order specify unknown =
             match (fn_part, sn_part, oc) with
             (* Prénom seul via pn *)
             | fn, "", "" when fn <> "" ->
-                let str = Mutil.StrSet.empty |> Mutil.StrSet.add query in
+                let str = List.fold_left (fun acc p ->
+                  Mutil.StrSet.add (Driver.sou base @@ Driver.get_first_name p)
+                  acc) Mutil.StrSet.empty pl1
+                in
                 let tit2 =
                   if pl2 <> [] then
                     transl conf "other possibilities" |> Utf8.capitalize_fst
