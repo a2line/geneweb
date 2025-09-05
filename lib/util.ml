@@ -2083,6 +2083,84 @@ let specify_homonymous conf base p specify_public_name =
         Output.print_sstring conf ", ";
         Output.print_string conf hw)
 
+(* Liste alphabétique paginée et ancrée, générique :
+   - [index_of] : récupère l’index (ex: lettre) pour un item
+   - [print_item] : affiche un item *)
+let print_alphab_list_modern conf index_of print_item items =
+  let total = List.length items in
+  let page_size = 100 in
+  let current_page =
+    match p_getint conf.env "pg" with Some n when n > 0 -> n | _ -> 1
+  in
+  let total_pages = (total + page_size - 1) / page_size in
+  let start_idx = (current_page - 1) * page_size in
+  let _end_idx = min (start_idx + page_size) total in
+  let rec take_range n start lst =
+    match lst with
+    | [] -> []
+    | _ when start > 0 -> take_range n (start - 1) (List.tl lst)
+    | h :: t when n > 0 -> h :: take_range (n - 1) 0 t
+    | _ -> []
+  in
+  let page_items = take_range page_size start_idx items in
+  Output.print_sstring conf
+    {|<div class="d-flex justify-content-between align-items-center mb-3">|};
+  if total_pages > 1 then (
+    Output.print_sstring conf {|<nav aria-label="Page navigation">|};
+    Output.print_sstring conf {|<ul class="pagination">|};
+    if current_page > 1 then
+      Output.printf conf
+        {|<li class="page-item"><a class="page-link" href="%s&pg=%d">%s</a></li>|}
+        (get_request_string conf :> string)
+        (current_page - 1) (transl conf "previous");
+    let page_start = max 1 (current_page - 2) in
+    let page_end = min total_pages (current_page + 2) in
+    for i = page_start to page_end do
+      if i = current_page then
+        Output.printf conf
+          {|<li class="page-item active"><span class="page-link">%d</span></li>|}
+          i
+      else
+        Output.printf conf
+          {|<li class="page-item"><a class="page-link" href="%s&pg=%d">%d</a></li>|}
+          (get_request_string conf :> string)
+          i i
+    done;
+    if current_page < total_pages then
+      Output.printf conf
+        {|<li class="page-item"><a class="page-link" href="%s&pg=%d">%s</a></li>|}
+        (get_request_string conf :> string)
+        (current_page + 1) (transl conf "next");
+    Output.print_sstring conf {|</ul></nav>|});
+  Output.print_sstring conf {|</div>|};
+  if List.length page_items > 20 then (
+    Output.print_sstring conf {|<div class="btn-group mb-3" role="group">|};
+    let seen = ref [] in
+    List.iter
+      (fun it ->
+        let index = index_of it in
+        if not (List.mem index !seen) then (
+          seen := index :: !seen;
+          Output.printf conf
+            {|<a href="#idx_%s" class="btn btn-outline-primary btn-sm">%s</a>|}
+            (hexa_string index) index))
+      page_items;
+    Output.print_sstring conf {|</div>|});
+  Output.print_sstring conf {|<ul class="list-unstyled">|};
+  let current_index = ref None in
+  List.iter
+    (fun it ->
+      let index = index_of it in
+      if !current_index <> Some index && List.length page_items > 20 then (
+        Output.printf conf {|<li class="mt-3"><h5 id="idx_%s">%s</h5></li>|}
+          (hexa_string index) index;
+        current_index := Some index);
+      Output.print_sstring conf {|<li class="mb-2">|};
+      print_item it;
+      Output.print_sstring conf {|</li>|})
+    page_items;
+  Output.print_sstring conf {|</ul>|}
+
 let get_approx_date_place d1 (p1 : Adef.safe_string) d2 (p2 : Adef.safe_string)
     =
   match (d1, (p1 :> string), d2, (p2 :> string)) with

@@ -7,6 +7,15 @@ module StrSet = Mutil.StrSet
 module Driver = Geneweb_db.Driver
 module Gutil = Geneweb_db.Gutil
 
+let name_unaccent s =
+  let rec copy i len =
+    if i = String.length s then Buff.get len
+    else
+      let t, j = Name.unaccent_utf_8 false s i in
+      copy j (Buff.mstore len t)
+  in
+  copy 0 0
+
 let not_found conf txt x =
   let title _ =
     Output.print_sstring conf (Utf8.capitalize_fst txt);
@@ -22,6 +31,35 @@ let first_name_not_found conf =
   not_found conf (transl conf "first name not found")
 
 let surname_not_found conf = not_found conf (transl conf "surname not found")
+
+(* Helper pour créer des groupes par nom de famille avec cache *)
+let _group_by_surname_cached base persons =
+  let cache = Hashtbl.create 1000 in
+  let get_surname_key p =
+    let ip = Driver.get_iper p in
+    try Hashtbl.find cache ip
+    with Not_found ->
+      let px = Driver.p_surname base p in
+      let txt =
+        Util.surname_without_particle base px ^ Util.surname_particle base px
+      in
+      let key = (px, name_unaccent txt, txt) in
+      Hashtbl.add cache ip key;
+      key
+  in
+  let groups = Hashtbl.create 100 in
+  List.iter
+    (fun p ->
+      let _px, ord, txt = get_surname_key p in
+      let current = try Hashtbl.find groups (ord, txt) with Not_found -> [] in
+      Hashtbl.replace groups (ord, txt) (p :: current))
+    persons;
+  let result =
+    Hashtbl.fold
+      (fun (ord, txt) persons acc -> (ord, txt, List.rev persons) :: acc)
+      groups []
+  in
+  List.sort (fun (o1, _, _) (o2, _, _) -> compare o1 o2) result
 
 (* **********************************************************************)
 (*  [Fonc] print_branch_to_alphabetic : conf -> string -> int -> unit   *)
@@ -175,18 +213,15 @@ let print_elem conf base is_surname (p, xl) =
       if is_surname then (
         Output.print_string conf (escape_html @@ surname_without_particle base p);
         Output.print_string conf (escape_html @@ surname_particle base p);
-        Output.print_sstring conf " (<small>";
+        Output.print_sstring conf " ";
         Output.print_string conf
-          (escape_html @@ Driver.sou base (Driver.get_first_name x));
-        Output.print_sstring conf "</small>)")
+          (escape_html @@ Driver.sou base (Driver.get_first_name x)))
       else
         Output.print_string conf
           (if p = "" then Adef.escaped "?" else escape_html p);
       Output.print_sstring conf "</a>";
       Output.print_string conf (DateDisplay.short_dates_text conf base x);
-      Output.print_sstring conf "<em>";
-      specify_homonymous conf base x true;
-      Output.print_sstring conf "</em>")
+      specify_homonymous conf base x true)
     xl
 
 let first_char s =
@@ -195,15 +230,6 @@ let first_char s =
   else
     let len = Utf8.next s 0 in
     if len < String.length s then String.sub s 0 len else s
-
-let name_unaccent s =
-  let rec copy i len =
-    if i = String.length s then Buff.get len
-    else
-      let t, j = Name.unaccent_utf_8 false s i in
-      copy j (Buff.mstore len t)
-  in
-  copy 0 0
 
 let first_name_print_list conf base x1 xl listes =
   let surnames_liste l =
@@ -876,8 +902,7 @@ let print_multiple_display conf base query_string surnames_groups =
           let sosa_num = SosaCache.get_sosa_person p in
           if Geneweb_sosa.gt sosa_num Geneweb_sosa.zero then
             SosaCache.print_sosa conf base p true
-          else
-            Output.print_sstring conf {|<span class="bullet">•</span>|};
+          else Output.print_sstring conf {|<span class="bullet">•</span>|};
           Output.print_sstring conf "</span>";
           Update.print_person_parents_and_spouses conf base p;
           Output.print_sstring conf "</li>\n")
