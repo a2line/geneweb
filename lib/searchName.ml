@@ -200,14 +200,12 @@ end
 (* Cache pour éviter les appels répétés à Driver.sou *)
 module StringCache = struct
   let cache = Hashtbl.create 1000
-
   let get_cached base istr =
     try Hashtbl.find cache istr
     with Not_found ->
       let s = Driver.sou base istr in
       Hashtbl.add cache istr s;
       s
-
   let clear () = Hashtbl.clear cache
 end
 
@@ -228,73 +226,74 @@ let search_key_opt conf base query =
   | Some p -> [ Driver.get_iper p ]
 
 let match_fn_lists fn_l fn1_l opts =
-  let module StrSet = Set.Make (String) in
-  let equal =
-    if opts.case then fun fn fn1 -> fn = fn1
-    else fun fn fn1 -> Name.lower fn = Name.lower fn1
-  in
+  let module StrSet = Set.Make(String) in
+  let normalize s = if opts.case then s else Name.lower s in
+  let fn1_set = List.fold_left (fun set s ->
+    StrSet.add (normalize s) set) StrSet.empty fn1_l in
   match (opts.all, opts.exact, opts.all_in) with
   | true, true, _ ->
-      (* Utiliser un Set pour performance O(log n) au lieu de O(n) *)
-      let fn1_set =
-        List.fold_left
-          (fun set s -> StrSet.add (if opts.case then s else Name.lower s) set)
-          StrSet.empty fn1_l
-      in
-      List.for_all
-        (fun fn -> StrSet.mem (if opts.case then fn else Name.lower fn) fn1_set)
-        fn_l
+      List.for_all (fun fn ->
+        StrSet.mem (normalize fn) fn1_set) fn_l
   | true, false, _ ->
-      (* Recherche de sous-chaîne - utilisation d'une méthode simple *)
-      List.for_all
-        (fun fn ->
-          List.exists
-            (fun fn1 ->
-              if opts.case then Mutil.contains fn1 fn
-              else Mutil.contains (Name.lower fn1) (Name.lower fn))
-            fn1_l)
-        fn_l
-  | _, true, true ->
-      let fn_set =
-        List.fold_left
-          (fun set s -> StrSet.add (if opts.case then s else Name.lower s) set)
-          StrSet.empty fn_l
-      in
-      List.for_all
-        (fun fn1 ->
-          StrSet.mem (if opts.case then fn1 else Name.lower fn1) fn_set)
-        fn1_l
-  | _, true, false ->
-      let fn1_set =
-        List.fold_left
-          (fun set s -> StrSet.add (if opts.case then s else Name.lower s) set)
-          StrSet.empty fn1_l
-      in
-      List.for_all
-        (fun fn -> StrSet.mem (if opts.case then fn else Name.lower fn) fn1_set)
-        fn_l
-  | _, false, _ ->
-      List.exists (fun fn -> List.exists (fun fn1 -> equal fn fn1) fn1_l) fn_l
+      List.for_all (fun fn ->
+        StrSet.exists (fun fn1 ->
+          Mutil.contains fn1 (normalize fn)) fn1_set) fn_l
+  | false, true, true ->
+      (* all_in=true: tous les fn1_l doivent être dans fn_l *)
+      let fn_set = List.fold_left (fun set s ->
+        StrSet.add (normalize s) set) StrSet.empty fn_l in
+      List.for_all (fun fn1 ->
+        StrSet.mem (normalize fn1) fn_set) fn1_l
+  | false, true, false ->
+      (* all_in=false: au moins un fn_l doit être dans fn1_l *)
+      List.for_all (fun fn ->
+        StrSet.mem (normalize fn) fn1_set) fn_l
+  | false, false, _ ->
+      List.exists (fun fn ->
+        StrSet.exists (fun fn1 ->
+          Mutil.contains fn1 (normalize fn)) fn1_set) fn_l
 
-let search_for_multiple_fn conf base fn pl opts =
+let rec list_take n = function
+  | [] -> []
+  | _ when n <= 0 -> []
+  | x :: xs -> x :: list_take (n - 1) xs
+
+let rec list_drop n = function
+  | xs when n <= 0 -> xs
+  | [] -> []
+  | _ :: xs -> list_drop (n - 1) xs
+
+let search_for_multiple_fn conf base fn pl opts batch_size =
   let fn_l = cut_words fn in
-  List.fold_left
-    (fun pl p ->
-      if search_reject_p conf base p then pl
-      else
-        (* Utiliser le cache pour Driver.sou *)
-        let fn1_istr = Driver.get_first_name p in
-        let fn1 = StringCache.get_cached base fn1_istr in
-        let fn1_l = split_normalize opts.case fn1 in
+  let rec process_batch acc remaining =
+    match remaining with
+    | [] -> acc
+    | _ ->
+        let batch, rest =
+          if List.length remaining <= batch_size then
+            (remaining, [])
+          else
+            (list_take batch_size remaining, list_drop batch_size remaining)
+        in
+        let batch_results = List.fold_left (fun acc_batch p ->
+          if search_reject_p conf base p then acc_batch
+          else
+            let fn1_istr = Driver.get_first_name p in
+            let fn1 = StringCache.get_cached base fn1_istr in
+            let fn1_l = split_normalize opts.case fn1 in
 
-        let fn2_istr = Driver.get_public_name p in
-        let fn2 = StringCache.get_cached base fn2_istr in
-        let fn2_l = split_normalize opts.case fn2 in
+            let fn2_istr = Driver.get_public_name p in
+            let fn2 = StringCache.get_cached base fn2_istr in
+            let fn2_l = split_normalize opts.case fn2 in
 
-        if match_fn_lists fn_l fn1_l opts || match_fn_lists fn_l fn2_l opts then
-          p :: pl
-        else pl)
-    [] pl
+            if match_fn_lists fn_l fn1_l opts ||
+               match_fn_lists fn_l fn2_l opts then
+              p :: acc_batch
+            else acc_batch
+        ) [] batch in
+        process_batch (batch_results @ acc) rest
+  in
+  process_batch [] pl
 
 (* Recherche directe de prénom via l'index *)
 let search_firstname_direct conf base query =
@@ -384,10 +383,10 @@ let search_fullname conf base fn sn =
           all_in = true;
         }
       in
-      let exact = search_for_multiple_fn conf base fn pl opts in
+      let exact = search_for_multiple_fn conf base fn pl opts 1000 in
 
       let opts_partial = { opts with all_in = false } in
-      let partial = search_for_multiple_fn conf base fn pl opts_partial in
+      let partial = search_for_multiple_fn conf base fn pl opts_partial 1000 in
 
       let spouse =
         if List.assoc_opt "public_name_as_fn" conf.base_env <> Some "no" then
@@ -407,7 +406,7 @@ let search_fullname conf base fn sn =
                   acc (Driver.get_family p))
               [] sn_bearers
           in
-          search_for_multiple_fn conf base fn spouses opts_partial
+          search_for_multiple_fn conf base fn spouses opts_partial 1000
         else []
       in
       {
@@ -443,9 +442,9 @@ let search_partial_key conf base query =
         in
         let opts_exact = { opts with all_in = true } in
         let opts_partial = { opts with all_in = false } in
-        let exact = search_for_multiple_fn conf base fn persons opts_exact in
+        let exact = search_for_multiple_fn conf base fn persons opts_exact 1000 in
         let partial =
-          search_for_multiple_fn conf base fn persons opts_partial
+          search_for_multiple_fn conf base fn persons opts_partial 1000
         in
         {
           exact = persons_to_ipers exact;
