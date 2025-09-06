@@ -1821,31 +1821,27 @@ let hexa_string s =
   done;
   Bytes.unsafe_to_string s'
 
-(* Optimized version of print_alphab_list using Buffer *)
 let print_alphab_list conf crit print_elem liste =
   let len = List.length liste in
   if liste = [] then Output.print_sstring conf "<ul></ul>\n"
   else (
-    (* Print alphabetical index if we have many items *)
     if len > menu_threshold then (
       let buf = Buffer.create 512 in
       Buffer.add_string buf "<p>\n";
-      let seen = ref [] in
+      let module StrSet = Set.Make (String) in
+      let seen = ref StrSet.empty in
       List.iter
         (fun e ->
           let t = crit e in
-          if not (List.mem t !seen) then (
-            seen := t :: !seen;
+          if not (StrSet.mem t !seen) then (
+            seen := StrSet.add t !seen;
             Printf.bprintf buf "<a href=\"#ai%s\">%s</a>\n" (hexa_string t) t))
         liste;
       Buffer.add_string buf "</p>\n";
       Output.print_sstring conf (Buffer.contents buf));
-
     Output.print_sstring conf "<ul>\n";
-
-    (* Process groups and print items *)
     let rec process_groups current_group current_index = function
-      | [] when current_group != [] ->
+      | [] when current_group <> [] ->
           print_group (List.rev current_group) current_index
       | [] -> ()
       | e :: rest ->
@@ -1904,39 +1900,29 @@ let child_of_parent conf base p =
     else gen_person_text ~sn:false conf base fath
   in
   let a = pget conf base (Driver.get_iper p) in
-  let ifam =
-    match Driver.get_parents a with
-    | Some ifam ->
-        let cpl = Driver.foi base ifam in
-        let fath =
-          let fath = pget conf base (Driver.get_father cpl) in
-          if Driver.p_first_name base fath = "?" then None else Some fath
-        in
-        let moth =
-          let moth = pget conf base (Driver.get_mother cpl) in
-          if Driver.p_first_name base moth = "?" then None else Some moth
-        in
-        Some (fath, moth)
-    | None -> None
-  in
-  match ifam with
-  | Some (None, None) | None -> Adef.safe ""
-  | Some (fath, moth) ->
-      let s =
-        match (fath, moth) with
-        | Some fath, None -> print_father fath
-        | None, Some moth -> gen_person_text conf base moth
-        | Some fath, Some moth ->
+  match Driver.get_parents a with
+  | None -> Adef.safe ""
+  | Some ifam ->
+      let cpl = Driver.foi base ifam in
+      let fath = pget conf base (Driver.get_father cpl) in
+      let moth = pget conf base (Driver.get_mother cpl) in
+      let fath_valid = Driver.p_first_name base fath <> "?" in
+      let moth_valid = Driver.p_first_name base moth <> "?" in
+      if (not fath_valid) && not moth_valid then Adef.safe ""
+      else
+        let s =
+          if fath_valid && moth_valid then
             print_father fath ^^^ " " ^<^ transl_nth conf "and" 0 ^<^ " "
             ^<^ gen_person_text conf base moth
-        | _ -> Adef.safe ""
-      in
-      let is = index_of_sex (Driver.get_sex p) in
-      let s = (s :> string) in
-      transl_a_of_gr_eq_gen_lev conf
-        (transl_nth conf "son/daughter/child" is)
-        s s
-      |> translate_eval |> Adef.safe
+          else if fath_valid then print_father fath
+          else gen_person_text conf base moth
+        in
+        let is = index_of_sex (Driver.get_sex p) in
+        transl_a_of_gr_eq_gen_lev conf
+          (transl_nth conf "son/daughter/child" is)
+          (s :> string)
+          (s :> string)
+        |> translate_eval |> Adef.safe
 
 let husband_wife ?(buf : Buffer.t option) conf base p all =
   let families = Driver.get_family p in
@@ -2032,115 +2018,38 @@ let first_child conf base p =
   loop 0
 
 let specify_homonymous conf base p specify_public_name =
-  match (Driver.get_public_name p, Driver.get_qualifiers p) with
+  let buf = Buffer.create 128 in
+  let pub_name = Driver.get_public_name p in
+  let qualifiers = Driver.get_qualifiers p in
+  (match (pub_name, qualifiers) with
   | n, nn :: _ when Driver.sou base n <> "" && specify_public_name ->
-      Output.print_sstring conf " ";
-      Output.print_string conf (esc @@ Driver.sou base n);
-      Output.print_sstring conf " <em>";
-      Output.print_string conf (esc @@ Driver.sou base nn);
-      Output.print_sstring conf "</em>"
+      Buffer.add_char buf ' ';
+      Buffer.add_string buf (esc (Driver.sou base n) :> string);
+      Buffer.add_string buf " <em>";
+      Buffer.add_string buf (esc (Driver.sou base nn) :> string);
+      Buffer.add_string buf "</em>"
   | _, nn :: _ when specify_public_name ->
-      Output.print_sstring conf " ";
-      Output.print_string conf (esc @@ Driver.p_first_name base p);
-      Output.print_sstring conf " <em>";
-      Output.print_string conf (esc @@ Driver.sou base nn);
-      Output.print_sstring conf "</em>"
+      Buffer.add_char buf ' ';
+      Buffer.add_string buf (esc (Driver.p_first_name base p) :> string);
+      Buffer.add_string buf " <em>";
+      Buffer.add_string buf (esc (Driver.sou base nn) :> string);
+      Buffer.add_string buf "</em>"
   | n, [] when Driver.sou base n <> "" && specify_public_name ->
-      Output.print_sstring conf " ";
-      Output.print_string conf (esc @@ Driver.sou base n)
+      Buffer.add_char buf ' ';
+      Buffer.add_string buf (esc (Driver.sou base n) :> string)
   | _, _ ->
-      (* Le nom public et le qualificatif ne permettent pas de distinguer *)
-      (* la personne, donc on affiche les informations sur les parents,   *)
-      (* le mariage et/ou le premier enfant.                              *)
       let cop = child_of_parent conf base p in
       if (cop :> string) <> "" then (
-        Output.print_sstring conf ", ";
-        Output.print_string conf cop);
+        Buffer.add_string buf ", ";
+        Buffer.add_string buf (cop :> string));
       let hw = husband_wife conf base p true in
       if (hw :> string) = "" then (
         let fc = first_child conf base p in
         if (fc :> string) <> "" then (
-          Output.print_sstring conf ", ";
-          Output.print_string conf fc))
-      else Output.print_string conf hw
-
-(* Liste alphabétique paginée et ancrée, générique :
-   - [index_of] : récupère l’index (ex: lettre) pour un item
-   - [print_item] : affiche un item *)
-let print_alphab_list_modern conf index_of print_item items =
-  let total = List.length items in
-  let page_size = 100 in
-  let current_page =
-    match p_getint conf.env "pg" with Some n when n > 0 -> n | _ -> 1
-  in
-  let total_pages = (total + page_size - 1) / page_size in
-  let start_idx = (current_page - 1) * page_size in
-  let _end_idx = min (start_idx + page_size) total in
-  let rec take_range n start lst =
-    match lst with
-    | [] -> []
-    | _ when start > 0 -> take_range n (start - 1) (List.tl lst)
-    | h :: t when n > 0 -> h :: take_range (n - 1) 0 t
-    | _ -> []
-  in
-  let page_items = take_range page_size start_idx items in
-  Output.print_sstring conf
-    {|<div class="d-flex justify-content-between align-items-center mb-3">|};
-  if total_pages > 1 then (
-    Output.print_sstring conf {|<nav aria-label="Page navigation">|};
-    Output.print_sstring conf {|<ul class="pagination">|};
-    if current_page > 1 then
-      Output.printf conf
-        {|<li class="page-item"><a class="page-link" href="%s&pg=%d">%s</a></li>|}
-        (get_request_string conf :> string)
-        (current_page - 1) (transl conf "previous");
-    let page_start = max 1 (current_page - 2) in
-    let page_end = min total_pages (current_page + 2) in
-    for i = page_start to page_end do
-      if i = current_page then
-        Output.printf conf
-          {|<li class="page-item active"><span class="page-link">%d</span></li>|}
-          i
-      else
-        Output.printf conf
-          {|<li class="page-item"><a class="page-link" href="%s&pg=%d">%d</a></li>|}
-          (get_request_string conf :> string)
-          i i
-    done;
-    if current_page < total_pages then
-      Output.printf conf
-        {|<li class="page-item"><a class="page-link" href="%s&pg=%d">%s</a></li>|}
-        (get_request_string conf :> string)
-        (current_page + 1) (transl conf "next");
-    Output.print_sstring conf {|</ul></nav>|});
-  Output.print_sstring conf {|</div>|};
-  if List.length page_items > 20 then (
-    Output.print_sstring conf {|<div class="btn-group mb-3" role="group">|};
-    let seen = ref [] in
-    List.iter
-      (fun it ->
-        let index = index_of it in
-        if not (List.mem index !seen) then (
-          seen := index :: !seen;
-          Output.printf conf
-            {|<a href="#idx_%s" class="btn btn-outline-primary btn-sm">%s</a>|}
-            (hexa_string index) index))
-      page_items;
-    Output.print_sstring conf {|</div>|});
-  Output.print_sstring conf {|<ul class="list-unstyled">|};
-  let current_index = ref None in
-  List.iter
-    (fun it ->
-      let index = index_of it in
-      if !current_index <> Some index && List.length page_items > 20 then (
-        Output.printf conf {|<li class="mt-3"><h5 id="idx_%s">%s</h5></li>|}
-          (hexa_string index) index;
-        current_index := Some index);
-      Output.print_sstring conf {|<li class="mb-2">|};
-      print_item it;
-      Output.print_sstring conf {|</li>|})
-    page_items;
-  Output.print_sstring conf {|</ul>|}
+          Buffer.add_string buf ", ";
+          Buffer.add_string buf (fc :> string)))
+      else Buffer.add_string buf (hw :> string));
+  if Buffer.length buf > 0 then Output.print_sstring conf (Buffer.contents buf)
 
 let get_approx_date_place d1 (p1 : Adef.safe_string) d2 (p2 : Adef.safe_string)
     =
