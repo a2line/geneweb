@@ -2062,9 +2062,7 @@ let specify_homonymous conf base p specify_public_name =
         if (fc :> string) <> "" then (
           Output.print_sstring conf ", ";
           Output.print_string conf fc))
-      else (
-        Output.print_sstring conf ", ";
-        Output.print_string conf hw)
+      else Output.print_string conf hw
 
 (* Liste alphabétique paginée et ancrée, générique :
    - [index_of] : récupère l’index (ex: lettre) pour un item
