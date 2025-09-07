@@ -199,14 +199,29 @@ end
 
 (* Cache pour éviter les appels répétés à Driver.sou *)
 module StringCache = struct
-  let cache = Hashtbl.create 1000
+  let cache = Hashtbl.create 2000
+  let max_size = 5000
+  let hits = ref 0
+  let misses = ref 0
   let get_cached base istr =
-    try Hashtbl.find cache istr
+    try 
+      incr hits;
+      Hashtbl.find cache istr
     with Not_found ->
+      incr misses;
       let s = Driver.sou base istr in
-      Hashtbl.add cache istr s;
+      if Hashtbl.length cache < max_size then
+        Hashtbl.add cache istr s;
       s
-  let clear () = Hashtbl.clear cache
+  let clear_if_full () =
+    if Hashtbl.length cache > max_size then (
+      Printf.eprintf "[StringCache] Clearing cache: %d hits, %d misses\n" 
+        !hits !misses;
+      Hashtbl.clear cache;
+      hits := 0;
+      misses := 0)
+
+  let maintenance () = clear_if_full ()
 end
 
 (* Convertit une liste de persons en liste d’ipers *)
@@ -226,32 +241,37 @@ let search_key_opt conf base query =
   | Some p -> [ Driver.get_iper p ]
 
 let match_fn_lists fn_l fn1_l opts =
-  let module StrSet = Set.Make(String) in
+  let module StrSet = Set.Make (String) in
   let normalize s = if opts.case then s else Name.lower s in
-  let fn1_set = List.fold_left (fun set s ->
-    StrSet.add (normalize s) set) StrSet.empty fn1_l in
+  let fn1_set =
+    List.fold_left
+      (fun set s -> StrSet.add (normalize s) set)
+      StrSet.empty fn1_l
+  in
   match (opts.all, opts.exact, opts.all_in) with
   | true, true, _ ->
-      List.for_all (fun fn ->
-        StrSet.mem (normalize fn) fn1_set) fn_l
+      List.for_all (fun fn -> StrSet.mem (normalize fn) fn1_set) fn_l
   | true, false, _ ->
-      List.for_all (fun fn ->
-        StrSet.exists (fun fn1 ->
-          Mutil.contains fn1 (normalize fn)) fn1_set) fn_l
+      List.for_all
+        (fun fn ->
+          StrSet.exists (fun fn1 -> Mutil.contains fn1 (normalize fn)) fn1_set)
+        fn_l
   | false, true, true ->
       (* all_in=true: tous les fn1_l doivent être dans fn_l *)
-      let fn_set = List.fold_left (fun set s ->
-        StrSet.add (normalize s) set) StrSet.empty fn_l in
-      List.for_all (fun fn1 ->
-        StrSet.mem (normalize fn1) fn_set) fn1_l
+      let fn_set =
+        List.fold_left
+          (fun set s -> StrSet.add (normalize s) set)
+          StrSet.empty fn_l
+      in
+      List.for_all (fun fn1 -> StrSet.mem (normalize fn1) fn_set) fn1_l
   | false, true, false ->
       (* all_in=false: au moins un fn_l doit être dans fn1_l *)
-      List.for_all (fun fn ->
-        StrSet.mem (normalize fn) fn1_set) fn_l
+      List.for_all (fun fn -> StrSet.mem (normalize fn) fn1_set) fn_l
   | false, false, _ ->
-      List.exists (fun fn ->
-        StrSet.exists (fun fn1 ->
-          Mutil.contains fn1 (normalize fn)) fn1_set) fn_l
+      List.exists
+        (fun fn ->
+          StrSet.exists (fun fn1 -> Mutil.contains fn1 (normalize fn)) fn1_set)
+        fn_l
 
 let rec list_take n = function
   | [] -> []
@@ -442,7 +462,9 @@ let search_partial_key conf base query =
         in
         let opts_exact = { opts with all_in = true } in
         let opts_partial = { opts with all_in = false } in
-        let exact = search_for_multiple_fn conf base fn persons opts_exact 1000 in
+        let exact =
+          search_for_multiple_fn conf base fn persons opts_exact 1000
+        in
         let partial =
           search_for_multiple_fn conf base fn persons opts_partial 1000
         in
@@ -469,7 +491,7 @@ end
 let search_one_variant_with_variants conf base query search_order =
   let results = ref { exact = []; partial = []; spouse = [] } in
   let firstname_variants = ref Mutil.StrSet.empty in
-  StringCache.clear ();
+  StringCache.maintenance ();
   List.iter
     (function
       | Sosa ->

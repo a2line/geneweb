@@ -7,6 +7,25 @@ module Sosa = Geneweb_sosa
 module Driver = Geneweb_db.Driver
 module Gutil = Geneweb_db.Gutil
 
+module BufferPool = struct
+  let pool = Queue.create ()
+  let max_size = 20
+
+  let get_buffer () =
+    if Queue.is_empty pool then Buffer.create 256 else Queue.take pool
+
+  let return_buffer buf =
+    if Queue.length pool < max_size then (
+      Buffer.clear buf;
+      Queue.add buf pool)
+
+  let with_buffer f =
+    let buf = get_buffer () in
+    let result = f buf in
+    return_buffer buf;
+    result
+end
+
 let make_link ?(title = "") ?(css_class = "") ?(tabindex = None)
     ?(aria_label = "") ?(disabled = false) ?(target = None) ?(data_attrs = [])
     ~href ~content () =
@@ -1825,20 +1844,21 @@ let print_alphab_list conf crit print_elem liste =
   let len = List.length liste in
   if liste = [] then Output.print_sstring conf "<ul></ul>\n"
   else (
-    if len > menu_threshold then (
-      let buf = Buffer.create 512 in
-      Buffer.add_string buf "<p>\n";
-      let module StrSet = Set.Make (String) in
-      let seen = ref StrSet.empty in
-      List.iter
-        (fun e ->
-          let t = crit e in
-          if not (StrSet.mem t !seen) then (
-            seen := StrSet.add t !seen;
-            Printf.bprintf buf "<a href=\"#ai%s\">%s</a>\n" (hexa_string t) t))
-        liste;
-      Buffer.add_string buf "</p>\n";
-      Output.print_sstring conf (Buffer.contents buf));
+    if len > menu_threshold then
+      BufferPool.with_buffer (fun buf ->
+          Buffer.add_string buf "<p>\n";
+          let module StrSet = Set.Make (String) in
+          let seen = ref StrSet.empty in
+          List.iter
+            (fun e ->
+              let t = crit e in
+              if not (StrSet.mem t !seen) then (
+                seen := StrSet.add t !seen;
+                Printf.bprintf buf "<a href=\"#ai%s\">%s</a>\n" (hexa_string t)
+                  t))
+            liste;
+          Buffer.add_string buf "</p>\n";
+          Output.print_sstring conf (Buffer.contents buf));
     Output.print_sstring conf "<ul>\n";
     let rec process_groups current_group current_index = function
       | [] when current_group <> [] ->
@@ -2018,38 +2038,39 @@ let first_child conf base p =
   loop 0
 
 let specify_homonymous conf base p specify_public_name =
-  let buf = Buffer.create 128 in
-  let pub_name = Driver.get_public_name p in
-  let qualifiers = Driver.get_qualifiers p in
-  (match (pub_name, qualifiers) with
-  | n, nn :: _ when Driver.sou base n <> "" && specify_public_name ->
-      Buffer.add_char buf ' ';
-      Buffer.add_string buf (esc (Driver.sou base n) :> string);
-      Buffer.add_string buf " <em>";
-      Buffer.add_string buf (esc (Driver.sou base nn) :> string);
-      Buffer.add_string buf "</em>"
-  | _, nn :: _ when specify_public_name ->
-      Buffer.add_char buf ' ';
-      Buffer.add_string buf (esc (Driver.p_first_name base p) :> string);
-      Buffer.add_string buf " <em>";
-      Buffer.add_string buf (esc (Driver.sou base nn) :> string);
-      Buffer.add_string buf "</em>"
-  | n, [] when Driver.sou base n <> "" && specify_public_name ->
-      Buffer.add_char buf ' ';
-      Buffer.add_string buf (esc (Driver.sou base n) :> string)
-  | _, _ ->
-      let cop = child_of_parent conf base p in
-      if (cop :> string) <> "" then (
-        Buffer.add_string buf ", ";
-        Buffer.add_string buf (cop :> string));
-      let hw = husband_wife conf base p true in
-      if (hw :> string) = "" then (
-        let fc = first_child conf base p in
-        if (fc :> string) <> "" then (
-          Buffer.add_string buf ", ";
-          Buffer.add_string buf (fc :> string)))
-      else Buffer.add_string buf (hw :> string));
-  if Buffer.length buf > 0 then Output.print_sstring conf (Buffer.contents buf)
+  BufferPool.with_buffer (fun buf ->
+      let pub_name = Driver.get_public_name p in
+      let qualifiers = Driver.get_qualifiers p in
+      (match (pub_name, qualifiers) with
+      | n, nn :: _ when Driver.sou base n <> "" && specify_public_name ->
+          Buffer.add_char buf ' ';
+          Buffer.add_string buf (esc (Driver.sou base n) :> string);
+          Buffer.add_string buf " <em>";
+          Buffer.add_string buf (esc (Driver.sou base nn) :> string);
+          Buffer.add_string buf "</em>"
+      | _, nn :: _ when specify_public_name ->
+          Buffer.add_char buf ' ';
+          Buffer.add_string buf (esc (Driver.p_first_name base p) :> string);
+          Buffer.add_string buf " <em>";
+          Buffer.add_string buf (esc (Driver.sou base nn) :> string);
+          Buffer.add_string buf "</em>"
+      | n, [] when Driver.sou base n <> "" && specify_public_name ->
+          Buffer.add_char buf ' ';
+          Buffer.add_string buf (esc (Driver.sou base n) :> string)
+      | _, _ ->
+          let cop = child_of_parent conf base p in
+          if (cop :> string) <> "" then (
+            Buffer.add_string buf ", ";
+            Buffer.add_string buf (cop :> string));
+          let hw = husband_wife conf base p true in
+          if (hw :> string) = "" then (
+            let fc = first_child conf base p in
+            if (fc :> string) <> "" then (
+              Buffer.add_string buf ", ";
+              Buffer.add_string buf (fc :> string)))
+          else Buffer.add_string buf (hw :> string));
+      if Buffer.length buf > 0 then
+        Output.print_sstring conf (Buffer.contents buf))
 
 let get_approx_date_place d1 (p1 : Adef.safe_string) d2 (p2 : Adef.safe_string)
     =
