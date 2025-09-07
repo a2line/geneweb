@@ -7,6 +7,14 @@ module StrSet = Mutil.StrSet
 module Driver = Geneweb_db.Driver
 module Gutil = Geneweb_db.Gutil
 
+module AliasCache = struct
+  let cache = Hashtbl.create 1000
+  let clear () = Hashtbl.clear cache
+  let add_alias iper alias = Hashtbl.replace cache iper (Some alias)
+  let add_direct iper = Hashtbl.replace cache iper None
+  let get_alias iper = try Hashtbl.find cache iper with Not_found -> None
+end
+
 let name_unaccent s =
   let rec copy i len =
     if i = String.length s then Buff.get len
@@ -203,15 +211,12 @@ let print_elem conf base is_surname (p, xl) =
     (fun first x ->
       let iper = Driver.get_iper x in
       if not first then Output.print_sstring conf "</li><li> ";
-      (* Keep original SOSA display *)
       SosaCache.print_sosa conf base x true;
-      (* Buffer for the rest of the output *)
       let buf = Buffer.create 512 in
       Printf.bprintf buf {|<a href="%s%s" id="i%s">|}
         (commd conf :> string)
         (acces conf base x :> string)
         (Driver.Iper.to_string iper :> string);
-      (* Display name based on context *)
       if is_surname then (
         Buffer.add_string buf
           (escape_html @@ surname_without_particle base p :> string);
@@ -224,10 +229,11 @@ let print_elem conf base is_surname (p, xl) =
           (if p = "" then (Adef.escaped "?" :> string)
            else (escape_html p :> string));
       Buffer.add_string buf "</a>";
+      (match AliasCache.get_alias (Driver.get_iper x) with
+      | Some alias -> Printf.bprintf buf " [%s]" (escape_html alias :> string)
+      | None -> ());
       Buffer.add_string buf (DateDisplay.short_dates_text conf base x :> string);
-      (* Output buffer content *)
       Output.print_sstring conf (Buffer.contents buf);
-      (* Call specify_homonymous as in original *)
       specify_homonymous conf base x true)
     xl
 

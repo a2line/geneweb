@@ -1,3 +1,10 @@
+module AliasCache : sig
+  val clear : unit -> unit
+  val add_alias : Geneweb_db.Driver.Iper.t -> string -> unit
+  val add_direct : Geneweb_db.Driver.Iper.t -> unit
+  val get_alias : Geneweb_db.Driver.Iper.t -> string option
+end
+
 val surname_not_found : Config.config -> string -> unit
 
 val persons_of_fsname :

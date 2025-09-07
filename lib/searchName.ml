@@ -6,6 +6,14 @@ module Sosa = Geneweb_sosa
 module Driver = Geneweb_db.Driver
 module Gutil = Geneweb_db.Gutil
 module Logs = Geneweb_logs.Logs
+module Collection = Geneweb_db.Collection
+
+type match_source = DirectMatch | FirstNameAlias of string
+
+type search_result_with_info = {
+  iper : Driver.Iper.t;
+  match_source : match_source;
+}
 
 (* Generate all apostrophe variants of a string *)
 let generate_apostrophe_variants s =
@@ -349,6 +357,82 @@ let search_firstname_direct conf base query =
     list;
   List.rev !result
 
+let search_firstname_aliases conf base query =
+  let result = ref [] in
+  let seen = Hashtbl.create 1000 in
+  let query_lower = Name.lower query in
+
+  Collection.iter
+    (fun iper ->
+      if not (Hashtbl.mem seen iper) then
+        let p = Driver.poi base iper in
+        let aliases = Driver.get_first_names_aliases p in
+        List.iter
+          (fun alias_istr ->
+            let alias_str = Driver.sou base alias_istr in
+            if Name.lower alias_str = query_lower then (
+              Hashtbl.add seen iper ();
+              if
+                alias_str <> ""
+                && (not (Driver.Istr.is_empty (Driver.get_first_name p)))
+                && (not (Driver.Istr.is_empty (Driver.get_surname p)))
+                && not
+                     (Util.is_hide_names conf p
+                     && not (Util.authorized_age conf base p))
+              then result := (iper, alias_str) :: !result))
+          aliases)
+    (Driver.ipers base);
+  List.rev !result
+
+let search_firstname_with_aliases conf base query =
+  Some.AliasCache.clear ();
+  let direct_results = search_firstname_direct conf base query in
+  let alias_results = search_firstname_aliases conf base query in
+
+  List.iter
+    (fun (iper, alias) -> Some.AliasCache.add_alias iper alias)
+    alias_results;
+  List.iter
+    (fun (iper, alias) -> Some.AliasCache.add_alias iper alias)
+    alias_results;
+
+  let direct_with_info =
+    List.map (fun iper -> { iper; match_source = DirectMatch }) direct_results
+  in
+  let alias_with_info =
+    List.map
+      (fun (iper, alias) -> { iper; match_source = FirstNameAlias alias })
+      alias_results
+  in
+
+  direct_with_info @ alias_with_info
+
+(* Recherche de prénom optimisée avec cache et accès direct à l'index *)
+let search_firstname_with_cache conf base query opts =
+  let all_results = search_firstname_with_aliases conf base query in
+  if (not opts.all) && not opts.exact then
+    (List.map (fun r -> r.iper) all_results, [])
+  else
+    let fn_words = cut_words query in
+    let exact = ref [] in
+    let partial = ref [] in
+    List.iter
+      (fun result ->
+        let ip = result.iper in
+        let p = Driver.poi base ip in
+        let fn_istr = Driver.get_first_name p in
+        let fn = StringCache.get_cached base fn_istr in
+        if fn <> "" then
+          match result.match_source with
+          | DirectMatch ->
+              let fn_l = cut_words fn in
+              if match_fn_lists fn_words fn_l opts then exact := ip :: !exact
+              else if match_fn_lists fn_words fn_l { opts with all_in = false }
+              then partial := ip :: !partial
+          | FirstNameAlias _ -> exact := ip :: !exact)
+      all_results;
+    (List.rev !exact, List.rev !partial)
+
 let search_surname_exact conf base query =
   let list, _name_inj =
     if query = "" then ([], fun x -> x)
@@ -379,27 +463,6 @@ let search_surname_exact conf base query =
           iperl)
     list;
   List.rev !result
-
-(* Recherche de prénom optimisée avec cache et accès direct à l'index *)
-let search_firstname_with_cache conf base query opts =
-  let all_ipers = search_firstname_direct conf base query in
-  if (not opts.all) && not opts.exact then (all_ipers, [])
-  else
-    let fn_words = cut_words query in
-    let exact = ref [] in
-    let partial = ref [] in
-    List.iter
-      (fun ip ->
-        let p = Driver.poi base ip in
-        let fn_istr = Driver.get_first_name p in
-        let fn = StringCache.get_cached base fn_istr in
-        if fn <> "" then
-          let fn_l = cut_words fn in
-          if match_fn_lists fn_words fn_l opts then exact := ip :: !exact
-          else if match_fn_lists fn_words fn_l { opts with all_in = false } then
-            partial := ip :: !partial)
-      all_ipers;
-    (List.rev !exact, List.rev !partial)
 
 let group_by_surname base ipers =
   let groups = Hashtbl.create 10 in
@@ -528,7 +591,7 @@ end
 
 (* Fonction de recherche unifiée pour une variante *)
 let search_one_variant_with_variants conf base query search_order =
-  Logs.debug (fun k -> k "  search_one_variant_with_variants");
+
   let results = ref { exact = []; partial = []; spouse = [] } in
   let firstname_variants = ref Mutil.StrSet.empty in
   StringCache.maintenance ();
@@ -570,11 +633,15 @@ let search_one_variant_with_variants conf base query search_order =
               let p = Driver.poi base ip in
               let fn = StringCache.get_cached base (Driver.get_first_name p) in
               if fn <> "" then
-                firstname_variants := Mutil.StrSet.add fn !firstname_variants)
+                match Some.AliasCache.get_alias ip with
+                | None ->
+                    firstname_variants :=
+                      Mutil.StrSet.add fn !firstname_variants
+                | Some _ -> ())
             exact;
           Logs.debug (fun k ->
-              k "  Method FirstName: %d + %d results exact/partial" (List.length exact)
-                (List.length partial));
+              k "  Method FirstName: %d + %d results exact/partial"
+                (List.length exact) (List.length partial));
           results :=
             {
               exact = !results.exact @ exact;
@@ -594,8 +661,9 @@ let search_one_variant_with_variants conf base query search_order =
           in
           let r = search_fullname conf base fn sn in
           Logs.debug (fun k ->
-              k "  Method FullName: %d + %d + %d results exact/partial/spouse" (List.length r.exact)
-                (List.length r.partial) (List.length r.spouse));
+              k "  Method FullName: %d + %d + %d results exact/partial/spouse"
+                (List.length r.exact) (List.length r.partial)
+                (List.length r.spouse));
           results :=
             {
               exact = !results.exact @ r.exact;
