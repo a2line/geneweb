@@ -5,6 +5,7 @@ open Util
 module Sosa = Geneweb_sosa
 module Driver = Geneweb_db.Driver
 module Gutil = Geneweb_db.Gutil
+module Logs = Geneweb_logs.Logs
 
 (* Generate all apostrophe variants of a string *)
 let generate_apostrophe_variants s =
@@ -83,7 +84,6 @@ let split_normalize case s =
   cut_words s
 
 (* search functions *)
-
 let search_by_sosa conf base an =
   let sosa_ref = Util.find_sosa_ref conf base in
   let sosa_nb = try Some (Sosa.of_string an) with _ -> None in
@@ -177,7 +177,6 @@ type opts = {
   all_in : bool; (* all first_names should match one of the typed first_names *)
 }
 
-(* Type unifié pour les résultats de recherche *)
 type search_results = {
   exact : Driver.Iper.t list; (* résultats exacts *)
   partial : Driver.Iper.t list; (* résultats partiels *)
@@ -203,20 +202,21 @@ module StringCache = struct
   let max_size = 5000
   let hits = ref 0
   let misses = ref 0
+
   let get_cached base istr =
-    try 
+    try
       incr hits;
       Hashtbl.find cache istr
     with Not_found ->
       incr misses;
       let s = Driver.sou base istr in
-      if Hashtbl.length cache < max_size then
-        Hashtbl.add cache istr s;
+      if Hashtbl.length cache < max_size then Hashtbl.add cache istr s;
       s
+
   let clear_if_full () =
     if Hashtbl.length cache > max_size then (
-      Printf.eprintf "[StringCache] Clearing cache: %d hits, %d misses\n" 
-        !hits !misses;
+      Logs.debug (fun k ->
+          k "StringCache clearing cache: %d hits, %d misses" !hits !misses);
       Hashtbl.clear cache;
       hits := 0;
       misses := 0)
@@ -290,27 +290,29 @@ let search_for_multiple_fn conf base fn pl opts batch_size =
     | [] -> acc
     | _ ->
         let batch, rest =
-          if List.length remaining <= batch_size then
-            (remaining, [])
-          else
-            (list_take batch_size remaining, list_drop batch_size remaining)
+          if List.length remaining <= batch_size then (remaining, [])
+          else (list_take batch_size remaining, list_drop batch_size remaining)
         in
-        let batch_results = List.fold_left (fun acc_batch p ->
-          if search_reject_p conf base p then acc_batch
-          else
-            let fn1_istr = Driver.get_first_name p in
-            let fn1 = StringCache.get_cached base fn1_istr in
-            let fn1_l = split_normalize opts.case fn1 in
+        let batch_results =
+          List.fold_left
+            (fun acc_batch p ->
+              if search_reject_p conf base p then acc_batch
+              else
+                let fn1_istr = Driver.get_first_name p in
+                let fn1 = StringCache.get_cached base fn1_istr in
+                let fn1_l = split_normalize opts.case fn1 in
 
-            let fn2_istr = Driver.get_public_name p in
-            let fn2 = StringCache.get_cached base fn2_istr in
-            let fn2_l = split_normalize opts.case fn2 in
+                let fn2_istr = Driver.get_public_name p in
+                let fn2 = StringCache.get_cached base fn2_istr in
+                let fn2_l = split_normalize opts.case fn2 in
 
-            if match_fn_lists fn_l fn1_l opts ||
-               match_fn_lists fn_l fn2_l opts then
-              p :: acc_batch
-            else acc_batch
-        ) [] batch in
+                if
+                  match_fn_lists fn_l fn1_l opts
+                  || match_fn_lists fn_l fn2_l opts
+                then p :: acc_batch
+                else acc_batch)
+            [] batch
+        in
         process_batch (batch_results @ acc) rest
   in
   process_batch [] pl
@@ -593,8 +595,7 @@ let search conf base query search_order specify unknown =
     in
     check 0
   in
-
-  (* Obtenir les variantes - mais ne pas générer si pas d'apostrophe *)
+  (* Obtenir les variantes d’apostrophes *)
   let variants =
     if contains_apostrophe query then ApostropheCache.get_variants query
     else [ query ]
@@ -602,12 +603,11 @@ let search conf base query search_order specify unknown =
   let has_variants = List.length variants > 1 in
 
   (* DEBUG *)
-  if conf.wizard && has_variants then (
-    Printf.eprintf "[DEBUG] Query: %s\n" query;
-    Printf.eprintf "[DEBUG] Variants (%d): %s\n" (List.length variants)
-      (String.concat ", " variants));
-
-  (* MODIFICATION: Collecter les résultats ET les variantes de prénoms *)
+  if has_variants then
+    Logs.debug (fun k ->
+        k "Query: %s, Variants (%d): %s" query (List.length variants)
+          (String.concat ", " variants));
+  (* Collecter les résultats et les variantes de prénoms *)
   let all_results, collected_firstname_variants =
     List.fold_left
       (fun (acc_results, acc_variants) variant ->
@@ -615,7 +615,6 @@ let search conf base query search_order specify unknown =
           try
             let cached = Hashtbl.find variant_cache variant in
             (cached, Mutil.StrSet.empty)
-            (* Les variantes ne sont pas cachées *)
           with Not_found ->
             let res, variants =
               search_one_variant_with_variants conf base variant search_order
@@ -623,12 +622,11 @@ let search conf base query search_order specify unknown =
             Hashtbl.add variant_cache variant res;
             (res, variants)
         in
-
-        if conf.wizard && has_variants then
-          Printf.eprintf
-            "[DEBUG] Variant '%s': %d exact, %d partial, %d spouse\n" variant
-            (List.length r.exact) (List.length r.partial) (List.length r.spouse);
-
+        if has_variants then
+          Logs.debug (fun k ->
+              k "Variant '%s': %d exact, %d partial, %d spouse" variant
+                (List.length r.exact) (List.length r.partial)
+                (List.length r.spouse));
         let merged_results =
           {
             exact = acc_results.exact @ r.exact;
@@ -641,8 +639,6 @@ let search conf base query search_order specify unknown =
       ({ exact = []; partial = []; spouse = [] }, Mutil.StrSet.empty)
       variants
   in
-
-  (* Éliminer les duplicatas globaux *)
   let seen = DuplicateManager.create () in
   let final_results =
     {
@@ -651,16 +647,10 @@ let search conf base query search_order specify unknown =
       spouse = DuplicateManager.filter_new seen all_results.spouse;
     }
   in
-
   let all_ips =
     final_results.exact @ final_results.partial @ final_results.spouse
   in
-
-  (* DEBUG *)
-  if conf.wizard then
-    Printf.eprintf "[DEBUG] Total results: %d ips\n" (List.length all_ips);
-
-  (* Gérer l'affichage selon les résultats *)
+  Logs.debug (fun k -> k "Total results: %d ips" (List.length all_ips));
   match all_ips with
   | [] -> SrcfileDisplay.print_welcome conf base
   | [ ip ] ->
@@ -670,8 +660,8 @@ let search conf base query search_order specify unknown =
       let pl1 = List.map (Driver.poi base) final_results.exact in
       let pl2 = List.map (Driver.poi base) final_results.partial in
       let pl3 = List.map (Driver.poi base) final_results.spouse in
-
-      (* CORRECTION : Traiter les chaînes vides comme None *)
+      let surname_groups = lazy (group_by_surname base all_ips) in
+      let get_surname_groups () = Lazy.force surname_groups in
       let fn =
         match p_getenv conf.env "p" with
         | Some "" | None -> None
@@ -687,35 +677,26 @@ let search conf base query search_order specify unknown =
         | Some "" | None -> None
         | Some s -> Some s
       in
+      Logs.debug (fun k ->
+          k "Normalized parameters: fn=%s, sn=%s, pn=%s"
+            (match fn with Some s -> "'" ^ s ^ "'" | None -> "None")
+            (match sn with Some s -> "'" ^ s ^ "'" | None -> "None")
+            (match pn with Some s -> "'" ^ s ^ "'" | None -> "None"));
 
-      (* DEBUG *)
-      if conf.wizard then
-        Printf.eprintf "[DEBUG] Normalized parameters: fn=%s, sn=%s, pn=%s\n"
-          (match fn with Some s -> "'" ^ s ^ "'" | None -> "None")
-          (match sn with Some s -> "'" ^ s ^ "'" | None -> "None")
-          (match pn with Some s -> "'" ^ s ^ "'" | None -> "None");
-
-      (* Logique de décision pour l'affichage *)
       match (fn, sn, pn) with
-      (* CAS 1: Recherche par PRÉNOM seul *)
+      (* CAS 1: PRÉNOM seul *)
       | Some _, None, None ->
-          if conf.wizard then Printf.eprintf "[DEBUG] Case: First name only\n";
-
-          (* OPTIMISATION: Utiliser les variantes pré-calculées au lieu de recalculer *)
+          Logs.debug (fun k -> k "Case: First name only");
           let str =
             if Mutil.StrSet.is_empty collected_firstname_variants then
-              (* Fallback au cas où aucune variante n'a été collectée *)
               List.fold_left
                 (fun acc p ->
                   Mutil.StrSet.add
                     (Driver.sou base @@ Driver.get_first_name p)
                     acc)
                 Mutil.StrSet.empty pl1
-            else
-              (* Utiliser les variantes déjà collectées - PAS DE DOUBLE PARCOURS ! *)
-              collected_firstname_variants
+            else collected_firstname_variants
           in
-
           let tit2 =
             if pl2 <> [] then
               transl conf "other possibilities" |> Utf8.capitalize_fst
@@ -728,56 +709,34 @@ let search conf base query search_order specify unknown =
           in
           Some.first_name_print_list conf base query str
             [ ("", pl1); (tit2, pl2); (tit3, pl3) ]
-      (* CAS 2: Recherche par NOM DE FAMILLE seul *)
+      (* CAS 2: NOM DE FAMILLE seul *)
       | None, Some _, None -> (
-          if conf.wizard then Printf.eprintf "[DEBUG] Case: Surname only\n";
-
-          (* Grouper par nom de famille pour voir les variantes *)
-          let surname_groups = group_by_surname base all_ips in
-
-          (* DEBUG *)
-          if conf.wizard then (
-            Printf.eprintf "[DEBUG] Surname groups found: %d\n"
-              (List.length surname_groups);
-            List.iter
-              (fun (sn, persons) ->
-                Printf.eprintf "[DEBUG]   Group '%s': %d persons\n" sn
-                  (List.length persons))
-              surname_groups;
-            Printf.eprintf "[DEBUG] Has variants: %b\n" has_variants);
-
-          (* Décider selon le nombre de groupes et la présence de variantes *)
+          Logs.debug (fun k -> k "Case: Surname only");
+          let surname_groups = get_surname_groups () in
+          Logs.debug (fun k ->
+              k "Surname groups found: %d, Has variants: %b"
+                (List.length surname_groups)
+                has_variants);
+          List.iter
+            (fun (sn, persons) ->
+              Logs.debug (fun k ->
+                  k "  Group '%s': %d persons" sn (List.length persons)))
+            surname_groups;
           match surname_groups with
-          | [] ->
-              if conf.wizard then
-                Printf.eprintf "[DEBUG] No groups (should not happen)\n";
-              specify conf base query pl1 pl2 pl3
+          | [] -> assert false (* Cannot happen if all_ips is not empty *)
           | [ (surname, _) ] ->
-              (* Un seul groupe de nom *)
-              if conf.wizard then
-                Printf.eprintf "[DEBUG] Single surname group: %s\n" surname;
+              Logs.debug (fun k -> k "Single surname group: %s" surname);
               Some.search_surname_print conf base unknown surname
           | multiple ->
-              (* Plusieurs groupes de noms *)
-              if conf.wizard then
-                Printf.eprintf "[DEBUG] Multiple surname groups: %d\n"
-                  (List.length multiple);
-              if has_variants then (
-                if conf.wizard then
-                  Printf.eprintf "[DEBUG] Using print_multiple_display\n";
-                Some.print_multiple_display conf base query multiple)
-              else (
-                if conf.wizard then
-                  Printf.eprintf "[DEBUG] Using specify (no variants)\n";
-                specify conf base query pl1 pl2 pl3))
+              Logs.debug (fun k ->
+                  k "Multiple surname groups: %d" (List.length multiple));
+              Some.print_multiple_display conf base query multiple)
       (* CAS 3: Recherche avec PN (format prénom/nom/occ) *)
       | None, None, Some pn_value -> (
-          if conf.wizard then Printf.eprintf "[DEBUG] Case: PN format\n";
+          Logs.debug (fun k -> k "Case: PN format");
           let i = try String.index pn_value '/' with Not_found -> -1 in
-
           if i = -1 then specify conf base query pl1 pl2 pl3
           else
-            (* Format avec slash *)
             let j =
               try String.index_from pn_value (i + 1) '/' with Not_found -> -1
             in
@@ -791,7 +750,6 @@ let search conf base query search_order specify unknown =
               String.sub pn_value (i + 1) (String.length pn_value - i - 1 - j)
               |> String.trim
             in
-
             match (fn_part, sn_part, oc) with
             (* Prénom seul via pn *)
             | fn, "", "" when fn <> "" ->
@@ -817,8 +775,7 @@ let search conf base query search_order specify unknown =
                   [ ("", pl1); (tit2, pl2); (tit3, pl3) ]
             (* Nom seul via pn *)
             | "", sn, "" when sn <> "" -> (
-                let surname_groups = group_by_surname base all_ips in
-
+                let surname_groups = get_surname_groups () in
                 match surname_groups with
                 | [] -> specify conf base query pl1 pl2 pl3
                 | [ (surname, _) ] ->
@@ -841,8 +798,6 @@ let search conf base query search_order specify unknown =
 
 (* ************************************************************************ *)
 (*  [Fonc] print : conf -> string -> unit                                   *)
-
-(* ************************************************************************ *)
 
 (** [Description] : Recherche qui n'utilise que 2 inputs. On essai donc de
     trouver la meilleure combinaison de résultat pour afficher la réponse la
