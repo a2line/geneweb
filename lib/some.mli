@@ -31,12 +31,6 @@ val persons_of_fsname :
     id of [str] and [iperl] is a list of persons found that has [istr] as a
     first/surname such that [str = inj x]*)
 
-val search_surname :
-  Config.config ->
-  Geneweb_db.Driver.base ->
-  string ->
-  Geneweb_db.Driver.iper list
-
 val search_surname_print :
   Config.config ->
   Geneweb_db.Driver.base ->

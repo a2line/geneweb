@@ -15,6 +15,12 @@ module AliasCache = struct
   let get_alias iper = try Hashtbl.find cache iper with Not_found -> None
 end
 
+module PerSet = Set.Make (struct
+  type t = Driver.iper
+
+  let compare = compare
+end)
+
 let name_unaccent s =
   let rec copy i len =
     if i = String.length s then Buff.get len
@@ -39,35 +45,6 @@ let first_name_not_found conf =
   not_found conf (transl conf "first name not found")
 
 let surname_not_found conf = not_found conf (transl conf "surname not found")
-
-(* Helper pour créer des groupes par nom de famille avec cache *)
-let _group_by_surname_cached base persons =
-  let cache = Hashtbl.create 1000 in
-  let get_surname_key p =
-    let ip = Driver.get_iper p in
-    try Hashtbl.find cache ip
-    with Not_found ->
-      let px = Driver.p_surname base p in
-      let txt =
-        Util.surname_without_particle base px ^ Util.surname_particle base px
-      in
-      let key = (px, name_unaccent txt, txt) in
-      Hashtbl.add cache ip key;
-      key
-  in
-  let groups = Hashtbl.create 100 in
-  List.iter
-    (fun p ->
-      let _px, ord, txt = get_surname_key p in
-      let current = try Hashtbl.find groups (ord, txt) with Not_found -> [] in
-      Hashtbl.replace groups (ord, txt) (p :: current))
-    persons;
-  let result =
-    Hashtbl.fold
-      (fun (ord, txt) persons acc -> (ord, txt, List.rev persons) :: acc)
-      groups []
-  in
-  List.sort (fun (o1, _, _) (o2, _, _) -> compare o1 o2) result
 
 (* **********************************************************************)
 (*  [Fonc] print_branch_to_alphabetic : conf -> string -> int -> unit   *)
@@ -254,23 +231,21 @@ let first_name_print_list conf base x1 xl listes =
         | _ -> (px, [ x ]) :: l)
       [] l
   in
-
-  let title h =
-    if h || p_getenv conf.env "t" = Some "A" then
-      Output.print_string conf (escape_html x1)
-    else
-      let buf = Buffer.create 256 in
-      Mutil.list_iter_first
-        (fun first x ->
-          if not first then Buffer.add_string buf ", ";
-          Printf.bprintf buf {|<a href="%sm=P&t=A&v=%s">%s</a>|}
-            (commd conf :> string)
-            (Mutil.encode x :> string)
-            (escape_html x :> string))
-        (StrSet.elements xl);
-      Output.print_sstring conf (Buffer.contents buf)
-  in
-  Hutil.header conf title;
+  (if p_getenv conf.env "t" = Some "A" then
+     let title _ = Output.print_string conf (escape_html x1) in
+     Hutil.header conf title
+   else
+     let buf = Buffer.create 256 in
+     Mutil.list_iter_first
+       (fun first x ->
+         if not first then Buffer.add_string buf ", ";
+         Printf.bprintf buf {|<a href="%sm=P&t=A&v=%s">%s</a>|}
+           (commd conf :> string)
+           (Mutil.encode x :> string)
+           (escape_html x :> string))
+       (StrSet.elements xl);
+     let title_content = Buffer.contents buf in
+     Hutil.header_with_adaptive_title conf title_content);
   (* Si on est dans un calcul de parenté, on affiche *)
   (* l'aide sur la sélection d'un individu. *)
   Util.print_tips_relationship conf;
@@ -776,12 +751,6 @@ let select_ancestors conf base name_inj ipl =
           bh :: bhl)
     [] ipl
 
-module PerSet = Set.Make (struct
-  type t = Driver.iper
-
-  let compare = compare
-end)
-
 let search_surname_list conf base x =
   let list, name_inj =
     if p_getenv conf.env "t" = Some "A" then
@@ -815,26 +784,8 @@ let search_surname_list conf base x =
   in
   (list, PerSet.elements iperl, name_inj)
 
-let search_surname conf base x =
-  let list, iperl, name_inj = search_surname_list conf base x in
-  let bhl = select_ancestors conf base name_inj iperl in
-  let bhl =
-    List.map
-      (fun bh ->
-        {
-          bh_ancestor = pget conf base bh.bh_ancestor;
-          bh_well_named_ancestors =
-            List.map (pget conf base) bh.bh_well_named_ancestors;
-        })
-      bhl
-  in
-  match (bhl, list) with
-  | [], _ -> []
-  | _, [ (_, (_, iperl)) ] -> iperl
-  | _ -> []
-
 let search_surname_print conf base _not_found_fun x =
-  let list, iperl, name_inj = search_surname_list conf base x in
+  let list, iperl, _name_inj = search_surname_list conf base x in
   (* Construction de la table des sosa de la base *)
   let () = SosaCache.build_sosa_ht conf base in
   match p_getenv conf.env "o" with
@@ -852,7 +803,7 @@ let search_surname_print conf base _not_found_fun x =
       in
       print_family_alphabetic x conf base pl
   | _ -> (
-      let bhl = select_ancestors conf base name_inj iperl in
+      let bhl = select_ancestors conf base _name_inj iperl in
       let bhl =
         List.map
           (fun bh ->

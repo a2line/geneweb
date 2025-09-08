@@ -359,6 +359,22 @@ and header_with_title ?(error = false) ?(fluid = false) conf title =
   title false;
   Output.print_sstring conf (Lazy.force StaticParts.h1_close)
 
+let header_with_adaptive_title ?(fluid = false) conf title_content =
+  let fluid = fluid || is_fluid conf in
+  Util.html conf;
+  header_without_http_nor_home conf (fun _ -> ());
+  include_home_template conf;
+  Output.print_sstring conf (StaticParts.container fluid);
+  let title_length = String.length title_content in
+  let header_class =
+    if title_length > 2000 then "h5"
+    else if title_length > 1000 then "h4"
+    else if title_length > 500 then "h3"
+    else ""
+  in
+  if header_class = "" then Output.printf conf "<h1>%s</h1>" title_content
+  else Output.printf conf {|<h1 class="%s">%s</h1>|} header_class title_content
+
 and header_fluid conf title = header_with_title ~fluid:true conf title
 
 and header_without_home conf title =
