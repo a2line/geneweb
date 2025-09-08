@@ -182,12 +182,12 @@ let print_person_parents_and_spouses conf base p =
     Buffer.add_string buf surname;
     Buffer.add_string buf "</a>";
     add_safe_string buf (DateDisplay.short_dates_text conf base p);
+    if pub_name <> "" then (
+      Buffer.add_string buf " (";
+      Buffer.add_string buf first_name;
+      Buffer.add_string buf ")");
     let cop = (Util.child_of_parent conf base p :> string) in
     if cop <> "" then (
-      if pub_name <> "" then (
-        Buffer.add_string buf " (";
-        Buffer.add_string buf first_name;
-        Buffer.add_string buf ")");
       Buffer.add_string buf ", ";
       Buffer.add_string buf cop);
     let spouses_buf = Buffer.create 128 in

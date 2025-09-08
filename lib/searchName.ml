@@ -250,37 +250,36 @@ let search_key_opt conf base query =
   | Some p -> [ Driver.get_iper p ]
 
 let match_fn_lists fn_l fn1_l opts =
-  let module StrSet = Set.Make (String) in
   let normalize s = if opts.case then s else Name.lower s in
-  let fn1_set =
-    List.fold_left
-      (fun set s -> StrSet.add (normalize s) set)
-      StrSet.empty fn1_l
+  let word_matches query_word person_word =
+    let q = normalize query_word in
+    let p = normalize person_word in
+    if opts.exact then q = p else Mutil.contains p q
   in
-  match (opts.all, opts.exact, opts.all_in) with
-  | true, true, _ ->
-      List.for_all (fun fn -> StrSet.mem (normalize fn) fn1_set) fn_l
-  | true, false, _ ->
-      List.for_all
-        (fun fn ->
-          StrSet.exists (fun fn1 -> Mutil.contains fn1 (normalize fn)) fn1_set)
-        fn_l
-  | false, true, true ->
-      (* all_in=true: tous les fn1_l doivent être dans fn_l *)
-      let fn_set =
-        List.fold_left
-          (fun set s -> StrSet.add (normalize s) set)
-          StrSet.empty fn_l
+  let check_order =
+    if not opts.order then true
+    else
+      let rec check_in_order query_list person_list =
+        match query_list with
+        | [] -> true
+        | q :: qs ->
+            let rec find_and_continue pl =
+              match pl with
+              | [] -> false
+              | p :: rest ->
+                  if word_matches q p then check_in_order qs rest
+                  else find_and_continue rest
+            in
+            find_and_continue person_list
       in
-      List.for_all (fun fn1 -> StrSet.mem (normalize fn1) fn_set) fn1_l
-  | false, true, false ->
-      (* all_in=false: au moins un fn_l doit être dans fn1_l *)
-      List.for_all (fun fn -> StrSet.mem (normalize fn) fn1_set) fn_l
-  | false, false, _ ->
-      List.exists
-        (fun fn ->
-          StrSet.exists (fun fn1 -> Mutil.contains fn1 (normalize fn)) fn1_set)
-        fn_l
+      check_in_order fn_l fn1_l
+  in
+  let basic_match =
+    if opts.all then
+      List.for_all (fun q -> List.exists (word_matches q) fn1_l) fn_l
+    else List.exists (fun q -> List.exists (word_matches q) fn1_l) fn_l
+  in
+  basic_match && check_order
 
 let rec list_take n = function
   | [] -> []
@@ -385,16 +384,13 @@ let search_firstname_aliases conf base query =
   List.rev !result
 
 let search_firstname_with_aliases conf base query =
-  Some.AliasCache.clear ();
   let direct_results = search_firstname_direct conf base query in
   let alias_results = search_firstname_aliases conf base query in
 
   List.iter
     (fun (iper, alias) -> Some.AliasCache.add_alias iper alias)
     alias_results;
-  List.iter
-    (fun (iper, alias) -> Some.AliasCache.add_alias iper alias)
-    alias_results;
+  List.iter (fun iper -> Some.AliasCache.add_direct iper) direct_results;
 
   let direct_with_info =
     List.map (fun iper -> { iper; match_source = DirectMatch }) direct_results
@@ -409,29 +405,139 @@ let search_firstname_with_aliases conf base query =
 
 (* Recherche de prénom optimisée avec cache et accès direct à l'index *)
 let search_firstname_with_cache conf base query opts =
-  let all_results = search_firstname_with_aliases conf base query in
-  if (not opts.all) && not opts.exact then
-    (List.map (fun r -> r.iper) all_results, [])
+  let query_words = cut_words query in
+  Logs.debug (fun k ->
+      k "    Searching for words: [%s]" (String.concat "; " query_words));
+
+  let all_results =
+    if opts.all && List.length query_words > 1 then (
+      (* Si all=true avec plusieurs mots *)
+      let search_queries =
+        if opts.order then
+          (* Si order=true, chercher seulement la phrase exacte *)
+          [ query ]
+        else
+          (* Si order=false, générer toutes les permutations *)
+          let rec permutations = function
+            | [] -> [ [] ]
+            | x :: xs ->
+                let perms = permutations xs in
+                List.flatten
+                  (List.map
+                     (fun p ->
+                       let rec insert_everywhere e = function
+                         | [] -> [ [ e ] ]
+                         | h :: t ->
+                             (e :: h :: t)
+                             :: List.map
+                                  (fun l -> h :: l)
+                                  (insert_everywhere e t)
+                       in
+                       insert_everywhere x p)
+                     perms)
+          in
+          let perms = permutations query_words in
+          List.map (fun words -> String.concat " " words) perms
+      in
+
+      Logs.debug (fun k ->
+          k "    Searching %d permutation(s): %s"
+            (List.length search_queries)
+            (String.concat ", " search_queries));
+
+      (* Chercher chaque permutation dans l'index *)
+      let all_found = ref [] in
+      let seen = Hashtbl.create 1000 in
+
+      List.iter
+        (fun search_query ->
+          let res = search_firstname_with_aliases conf base search_query in
+          Logs.debug (fun k ->
+              k "      Query '%s': %d results" search_query (List.length res));
+          List.iter
+            (fun r ->
+              if not (Hashtbl.mem seen r.iper) then (
+                Hashtbl.add seen r.iper ();
+                all_found := r :: !all_found))
+            res)
+        search_queries;
+
+      List.rev !all_found)
+    else if opts.all then (
+      (* Un seul mot avec all=true *)
+      let res = search_firstname_with_aliases conf base query in
+      Logs.debug (fun k ->
+          k "    Single word search '%s': %d results" query (List.length res));
+      res)
+    else
+      (* Si all=false, on cherche chaque mot séparément *)
+      let results_per_word =
+        List.map
+          (fun word ->
+            Logs.debug (fun k -> k "    Searching index for word: %s" word);
+            let res = search_firstname_with_aliases conf base word in
+            Logs.debug (fun k ->
+                k "      Found %d results for '%s'" (List.length res) word);
+            res)
+          query_words
+      in
+      let all_ips = List.flatten results_per_word in
+      let seen = Hashtbl.create 1000 in
+      List.filter
+        (fun r ->
+          if Hashtbl.mem seen r.iper then false
+          else (
+            Hashtbl.add seen r.iper ();
+            true))
+        all_ips
+  in
+
+  Logs.debug (fun k -> k "    Total candidates: %d" (List.length all_results));
+
+  (* Collecte des variantes de prénoms SEULEMENT pour DirectMatch *)
+  let firstname_variants = ref Mutil.StrSet.empty in
+
+  if not opts.all then (
+    (* Si all=false, tous les candidats sont exacts *)
+    List.iter
+      (fun result ->
+        match result.match_source with
+        | DirectMatch ->
+            let p = Driver.poi base result.iper in
+            let fn = Driver.sou base (Driver.get_first_name p) in
+            if fn <> "" then
+              firstname_variants := Mutil.StrSet.add fn !firstname_variants
+        | FirstNameAlias _ -> ())
+      all_results;
+    (List.map (fun r -> r.iper) all_results, [], !firstname_variants))
   else
-    let fn_words = cut_words query in
+    (* Si all=true, les résultats sont déjà corrects *)
     let exact = ref [] in
-    let partial = ref [] in
+    let exact_count = ref 0 in
+
     List.iter
       (fun result ->
         let ip = result.iper in
-        let p = Driver.poi base ip in
-        let fn_istr = Driver.get_first_name p in
-        let fn = StringCache.get_cached base fn_istr in
-        if fn <> "" then
-          match result.match_source with
-          | DirectMatch ->
-              let fn_l = cut_words fn in
-              if match_fn_lists fn_words fn_l opts then exact := ip :: !exact
-              else if match_fn_lists fn_words fn_l { opts with all_in = false }
-              then partial := ip :: !partial
-          | FirstNameAlias _ -> exact := ip :: !exact)
+        exact := ip :: !exact;
+        incr exact_count;
+        match result.match_source with
+        | DirectMatch ->
+            let p = Driver.poi base ip in
+            let fn = Driver.sou base (Driver.get_first_name p) in
+            if fn <> "" then
+              firstname_variants := Mutil.StrSet.add fn !firstname_variants;
+            if !exact_count <= 3 then
+              Logs.debug (fun k -> k "      Match: %s" fn)
+        | FirstNameAlias alias ->
+            if !exact_count <= 3 then
+              Logs.debug (fun k -> k "      Alias match: %s" alias))
       all_results;
-    (List.rev !exact, List.rev !partial)
+
+    Logs.debug (fun k ->
+        k "    Final: %d exact, 0 partial, %d variants" !exact_count
+          (Mutil.StrSet.cardinal !firstname_variants));
+
+    (List.rev !exact, [], !firstname_variants)
 
 let search_surname_exact conf base query =
   let list, _name_inj =
@@ -591,7 +697,6 @@ end
 
 (* Fonction de recherche unifiée pour une variante *)
 let search_one_variant_with_variants conf base query search_order =
-
   let results = ref { exact = []; partial = []; spouse = [] } in
   let firstname_variants = ref Mutil.StrSet.empty in
   StringCache.maintenance ();
@@ -618,27 +723,24 @@ let search_one_variant_with_variants conf base query search_order =
       | FirstName ->
           let opts =
             {
-              order = false;
-              all = true;
+              order = p_getenv conf.env "p_order" = Some "on";
+              all = p_getenv conf.env "p_all" <> Some "off";
               case = false;
-              exact = false;
-              all_in = true;
+              exact = p_getenv conf.env "p_exact" <> Some "off";
+              all_in = false;
             }
           in
-          let exact, partial =
+          Logs.debug (fun k ->
+              k "  FirstName options: all=%b, exact=%b, order=%b" opts.all
+                opts.exact opts.order);
+          let exact, partial, fn_variants =
             search_firstname_with_cache conf base query opts
           in
           List.iter
-            (fun ip ->
-              let p = Driver.poi base ip in
-              let fn = StringCache.get_cached base (Driver.get_first_name p) in
-              if fn <> "" then
-                match Some.AliasCache.get_alias ip with
-                | None ->
-                    firstname_variants :=
-                      Mutil.StrSet.add fn !firstname_variants
-                | Some _ -> ())
-            exact;
+            (fun fn ->
+              firstname_variants := Mutil.StrSet.add fn !firstname_variants)
+            (Mutil.StrSet.elements fn_variants);
+
           Logs.debug (fun k ->
               k "  Method FirstName: %d + %d results exact/partial"
                 (List.length exact) (List.length partial));
@@ -769,6 +871,7 @@ let search_variants_two_pass conf base variants search_order =
     (approx_results, Mutil.StrSet.union exact_variants approx_variants))
 
 let search conf base query search_order specify unknown =
+  Some.AliasCache.clear ();
   let variant_cache = Hashtbl.create 10 in
   let contains_apostrophe s =
     let rec check i =

@@ -2017,27 +2017,28 @@ let first_child conf base p =
   in
   loop 0
 
-let specify_homonymous conf base p specify_public_name =
+let specify_homonymous conf base p pn =
   let buf = Buffer.create 128 in
   let pub_name = Driver.get_public_name p in
+  let pub_name_str = Driver.sou base pub_name in
+  let first_name = Driver.p_first_name base p in
   let qualifiers = Driver.get_qualifiers p in
-  (match (pub_name, qualifiers) with
-  | n, nn :: _ when Driver.sou base n <> "" && specify_public_name ->
+  (match qualifiers with
+  | nn :: _ when pn ->
       Buffer.add_char buf ' ';
-      Buffer.add_string buf (esc (Driver.sou base n) :> string);
+      if pub_name_str <> "" then
+        Buffer.add_string buf (esc pub_name_str :> string)
+      else Buffer.add_string buf (esc first_name :> string);
       Buffer.add_string buf " <em>";
       Buffer.add_string buf (esc (Driver.sou base nn) :> string);
       Buffer.add_string buf "</em>"
-  | _, nn :: _ when specify_public_name ->
-      Buffer.add_char buf ' ';
-      Buffer.add_string buf (esc (Driver.p_first_name base p) :> string);
-      Buffer.add_string buf " <em>";
-      Buffer.add_string buf (esc (Driver.sou base nn) :> string);
-      Buffer.add_string buf "</em>"
-  | n, [] when Driver.sou base n <> "" && specify_public_name ->
-      Buffer.add_char buf ' ';
-      Buffer.add_string buf (esc (Driver.sou base n) :> string)
-  | _, _ ->
+  | [] when pub_name_str <> "" && pn ->
+      if first_name <> pub_name_str then (
+        Buffer.add_char buf ' ';
+        Buffer.add_char buf '(';
+        Buffer.add_string buf (esc pub_name_str :> string);
+        Buffer.add_char buf ')')
+  | _ ->
       let cop = child_of_parent conf base p in
       if (cop :> string) <> "" then (
         Buffer.add_string buf ", ";
