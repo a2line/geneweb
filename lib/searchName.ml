@@ -496,10 +496,7 @@ let search_firstname_with_cache conf base query opts =
       (* Si all=true avec plusieurs mots *)
       let search_queries =
         if opts.order then
-          (* Si order=true, chercher seulement la phrase exacte *)
-          [ query ]
-        else
-          (* Si order=false, générer toutes les permutations *)
+          (* Si order=on, générer toutes les permutations *)
           let rec permutations = function
             | [] -> [ [] ]
             | x :: xs ->
@@ -520,6 +517,7 @@ let search_firstname_with_cache conf base query opts =
           in
           let perms = permutations query_words in
           List.map (fun words -> String.concat " " words) perms
+        else [ query ]
       in
 
       Logs.debug (fun k ->

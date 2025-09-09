@@ -14738,14 +14738,14 @@ sv: eller
 tr: veya
 
     order
-de: gleiche Reihenfolge
-en: same order
-fr: même ordre
+de: Reihenfolge
+en: order
+fr: ordre
 
     order hlp
-de: die gleiche Reihenfolge behalten
-en: keep the same order
-fr: conserver le même ordre
+de: alle Permutationen auch suchen
+en: search all permutations too
+fr: chercher aussi toutes les permutations
 
     ordination
 co: ordinazione
@@ -16740,14 +16740,14 @@ en: hidden person
 fr: personne masquée
 
     not all
-de: ein Vorname
-en: one first name
-fr: un prénom
+de: einzeln
+en: one only
+fr: un seul
 
     not all hlp
-de: enthält nur einen Vornamen (enthält standardmäßig alle Vornamen)
-en: contains only one first name (contains all first names by default)
-fr: contient un seul prénom (contient tous les prénoms par défaut)
+de: einzeln suchen (alle standardmäßig)
+en: search one by one (all by default)
+fr: chercher un par un (tous par défaut)
 
     not exact
 de: teilweise
