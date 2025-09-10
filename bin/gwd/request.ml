@@ -137,7 +137,8 @@ let print_person_list conf base title_opt persons_with_titles =
             SosaCache.print_sosa conf base p true
           else Output.print_sstring conf {|<span class="bullet">•</span>|};
           Output.print_sstring conf "</span>";
-          Update.print_person_parents_and_spouses conf base p;
+          let alias = Some.AliasCache.get_alias (Driver.get_iper p) in
+          Update.print_person_parents_and_spouses conf base ~alias p;
           Output.print_sstring conf "</li>\n")
         persons_with_titles;
       Output.print_sstring conf "</ul>\n"

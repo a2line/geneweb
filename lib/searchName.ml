@@ -122,12 +122,34 @@ let person_is_approx_key base p k =
   let sn = Name.strip_lower (Driver.p_surname base p) in
   if k = fn ^ sn && fn <> "" && sn <> "" then true else false
 
+(* Select individuals matching key k and stock matching alias in AliasCache *)
 let select_approx_key conf base pl k =
   List.fold_right
     (fun p pl ->
-      if person_is_approx_key base p k then p :: pl
-      else if person_is_misc_name conf base p k then p :: pl
-      else pl)
+      let iper = Driver.get_iper p in
+      if person_is_approx_key base p k then (
+        Some.AliasCache.add_direct iper;
+        p :: pl)
+      else
+        let k_stripped = Name.strip_lower k in
+        let aliases = Driver.get_aliases p in
+        let matched_alias =
+          List.find_opt
+            (fun alias_istr ->
+              let alias_str = Driver.sou base alias_istr in
+              Name.strip_lower alias_str = k_stripped)
+            aliases
+        in
+        match matched_alias with
+        | Some alias_istr ->
+            let alias_str = Driver.sou base alias_istr in
+            Some.AliasCache.add_alias iper alias_str;
+            p :: pl
+        | None ->
+            if person_is_misc_name conf base p k then (
+              Some.AliasCache.add_direct iper;
+              p :: pl)
+            else pl)
     pl []
 
 let split_normalize case s =
