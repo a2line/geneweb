@@ -461,31 +461,29 @@ let search_firstname_direct conf base query =
   List.rev !result
 
 let search_firstname_aliases conf base query =
-  let result = ref [] in
-  let seen = Hashtbl.create 1000 in
   let query_lower = Name.lower query in
-
-  Collection.iter
-    (fun iper ->
-      if not (Hashtbl.mem seen iper) then
-        let p = Driver.poi base iper in
+  let all_misc_matches = Gutil.person_not_a_key_find_all base query in
+  List.fold_left
+    (fun acc ip ->
+      let p = Driver.poi base ip in
+      if
+        empty_sn_or_fn base p
+        || (Util.is_hide_names conf p && not (Util.authorized_age conf base p))
+      then acc
+      else
         let aliases = Driver.get_first_names_aliases p in
-        List.iter
-          (fun alias_istr ->
+        match
+          List.find_opt
+            (fun alias_istr ->
+              let alias_str = Driver.sou base alias_istr in
+              Name.lower alias_str = query_lower)
+            aliases
+        with
+        | Some alias_istr ->
             let alias_str = Driver.sou base alias_istr in
-            if Name.lower alias_str = query_lower then (
-              Hashtbl.add seen iper ();
-              if
-                alias_str <> ""
-                && (not (Driver.Istr.is_empty (Driver.get_first_name p)))
-                && (not (Driver.Istr.is_empty (Driver.get_surname p)))
-                && not
-                     (Util.is_hide_names conf p
-                     && not (Util.authorized_age conf base p))
-              then result := (iper, alias_str) :: !result))
-          aliases)
-    (Driver.ipers base);
-  List.rev !result
+            (ip, alias_str) :: acc
+        | None -> acc)
+    [] all_misc_matches
 
 let search_firstname_with_aliases conf base query =
   let direct_results = search_firstname_direct conf base query in
