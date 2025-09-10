@@ -187,8 +187,13 @@ let print_elem conf base is_surname (p, xl) =
   Mutil.list_iter_first
     (fun first x ->
       let iper = Driver.get_iper x in
-      if not first then Output.print_sstring conf "</li><li> ";
-      SosaCache.print_sosa conf base x true;
+      if not first then
+        Output.print_sstring conf "</span></li><li><span class=\"fa-li\">";
+      let sosa_num = SosaCache.get_sosa_person x in
+      if Geneweb_sosa.gt sosa_num Geneweb_sosa.zero then
+        SosaCache.print_sosa conf base x true
+      else Output.print_sstring conf {|<span class="bullet">•</span>|};
+      Output.print_sstring conf "</span>";
       let buf = Buffer.create 512 in
       Printf.bprintf buf {|<a href="%s%s" id="i%s">|}
         (commd conf :> string)
@@ -841,7 +846,7 @@ let print_multiple_display conf base query_string surnames_groups =
         (Mutil.encode sn :> string)
         (Util.escape_html sn :> string)
         (List.length persons);
-      Output.print_sstring conf "<ul>\n";
+      Output.print_sstring conf "<ul class=\"fa-ul\">\n";
       let sorted_persons =
         List.sort
           (fun p1 p2 ->

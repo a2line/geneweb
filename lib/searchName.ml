@@ -947,6 +947,7 @@ let search conf base query search_order specify unknown =
       (* CAS 1: PRÉNOM seul *)
       | Some _, None, None ->
           Logs.debug (fun k -> k "Case: First name only");
+          SosaCache.build_sosa_ht conf base;
           let str =
             if Mutil.StrSet.is_empty collected_firstname_variants then
               List.fold_left

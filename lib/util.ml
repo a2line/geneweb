@@ -1856,13 +1856,16 @@ let print_alphab_list conf crit print_elem liste =
     and print_group items index_opt =
       let index = match index_opt with Some t -> t | None -> "" in
       if len > menu_threshold && index <> "" then
-        Output.printf conf "<li>\n<a id=\"ai%s\">%s</a>\n<ul>\n"
+        Output.printf conf
+          "<li class=\"li-none\">\n\
+           <a id=\"ai%s\">%s</a>\n\
+           <ul class=\"fa-ul\">\n"
           (hexa_string index) index;
       List.iter
         (fun e ->
-          Output.print_sstring conf "<li>\n  ";
+          Output.print_sstring conf "<li><span class=\"fa-li\">\n";
           print_elem e;
-          Output.print_sstring conf "</li>\n")
+          Output.print_sstring conf "</span></li>\n")
         items;
       if len > menu_threshold && index <> "" then
         Output.print_sstring conf "</ul>\n</li>\n"
