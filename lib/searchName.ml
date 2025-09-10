@@ -991,13 +991,17 @@ let search conf base query search_order specify unknown =
           Some.first_name_print_list conf base query str
             [ ("", pl1); (tit2, pl2); (tit3, pl3) ]
       (* CAS 2: NOM DE FAMILLE seul *)
-      | None, Some _, None -> (
+      | None, Some sn, None -> (
           let surname_groups = get_surname_groups () in
           match surname_groups with
           | [] -> assert false
           | [ (surname, _) ] ->
               Some.search_surname_print conf base unknown surname
-          | multiple -> Some.print_multiple_display conf base query multiple)
+          | multiple ->
+              let surnames =
+                List.fold_left (fun acc (surname, _) -> surname :: acc ) [] multiple
+              in
+              Some.print_several_possible_surnames sn conf base ([], surnames))
       (* CAS 3: Recherche avec PN (format prénom/nom/occ) *)
       | None, None, Some pn_value -> (
           Logs.debug (fun k -> k "Case: PN format");
