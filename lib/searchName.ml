@@ -859,6 +859,119 @@ let dispatch_search_methods conf base query search_order =
   let spouse = DuplicateManager.filter_new seen !results.spouse in
   ({ exact; partial; spouse }, !firstname_variants)
 
+(* Fonction de debug pour analyser le contenu de l'index des patronymes *)
+
+let debug_surname_index conf base query =
+  Printf.eprintf "\n=== DEBUG SURNAME INDEX pour '%s' ===\n" query;
+  flush stderr;
+
+  (* 1. Analyser ce qui est dans l'index via base_strings_of_surname *)
+  let query_crushed = Name.crush_lower query in
+  Printf.eprintf "Query crushed: '%s' -> '%s'\n" query query_crushed;
+  flush stderr;
+
+  let istrl = Driver.base_strings_of_surname base query in
+  Printf.eprintf "Index lookup found %d string entries:\n" (List.length istrl);
+  flush stderr;
+
+  List.iteri
+    (fun i istr ->
+      let str = Driver.sou base istr in
+      let str_crushed = Name.crush_lower str in
+      Printf.eprintf "  [%d] '%s' -> crushed: '%s'\n" i str str_crushed;
+      flush stderr)
+    istrl;
+
+  (* 2. Pour quelques exemples de noms composés, analyser leur indexation *)
+  let test_names =
+    [
+      "vitali del carretto";
+      "delecourt gaborit de montjou";
+      "del carreto di utu";
+      "vitali del carreto";
+      "capot rey";
+      "guex dupont";
+      "gaillard du pont";
+      "dupont des loges";
+      "du pont depierre";
+    ]
+  in
+
+  Printf.eprintf "\n=== ANALYSE DES PIECES ===\n";
+  flush stderr;
+
+  List.iter
+    (fun name ->
+      Printf.eprintf "\nNom: '%s'\n" name;
+      let pieces_old = Mutil.surnames_pieces name in
+      Printf.eprintf "  surnames_pieces: [%s]\n" (String.concat "; " pieces_old);
+
+      (* Simuler split_sname_callback *)
+      let pieces_new = ref [] in
+      Name.split_sname_callback
+        (fun i j ->
+          let piece = String.sub name i j in
+          pieces_new := piece :: !pieces_new)
+        name;
+      pieces_new := List.rev !pieces_new;
+      Printf.eprintf "  split_sname_callback: [%s]\n"
+        (String.concat "; " !pieces_new);
+
+      (* Comparer les versions crushées *)
+      let pieces_old_crushed = List.map Name.crush_lower pieces_old in
+      let pieces_new_crushed = List.map Name.crush_lower !pieces_new in
+      Printf.eprintf "  old crushed: [%s]\n"
+        (String.concat "; " pieces_old_crushed);
+      Printf.eprintf "  new crushed: [%s]\n"
+        (String.concat "; " pieces_new_crushed);
+
+      (* Tester si query match *)
+      let old_match =
+        List.exists
+          (fun piece -> Mutil.contains piece query_crushed)
+          pieces_old_crushed
+      in
+      let new_match =
+        List.exists
+          (fun piece -> Mutil.contains piece query_crushed)
+          pieces_new_crushed
+      in
+      Printf.eprintf "  old match '%s': %b\n" query_crushed old_match;
+      Printf.eprintf "  new match '%s': %b\n" query_crushed new_match;
+      flush stderr)
+    test_names;
+
+  (* 3. Tester la recherche normale *)
+  Printf.eprintf "\n=== RECHERCHE NORMALE ===\n";
+  flush stderr;
+
+  let list, _name_inj =
+    Some.persons_of_fsname conf base Driver.base_strings_of_surname
+      (Driver.spi_find (Driver.persons_of_surname base))
+      Driver.get_surname query
+  in
+
+  Printf.eprintf "Résultats trouvés: %d\n" (List.length list);
+  flush stderr;
+
+  List.iteri
+    (fun i (str, _, iperl) ->
+      if i < 10 then (
+        Printf.eprintf "  [%d] '%s' (%d personnes)\n" i str (List.length iperl);
+        flush stderr))
+    list;
+
+  Printf.eprintf "=== FIN DEBUG ===\n\n";
+  flush stderr
+
+(* Fonction helper à ajouter temporairement dans searchName.ml *)
+let debug_search_surname conf base query =
+  debug_surname_index conf base query;
+  (* Continuer avec la recherche normale *)
+  Some.search_surname_print conf base (fun _ _ -> ()) query
+
+(* Utilisation: appeler debug_search_surname au lieu de search_surname_print *)
+
 let search conf base query search_order specify unknown =
   Some.AliasCache.clear ();
   let variant_cache = Hashtbl.create 10 in
@@ -991,8 +1104,8 @@ let search conf base query search_order specify unknown =
           Some.first_name_print_list conf base query str
             [ ("", pl1); (tit2, pl2); (tit3, pl3) ]
       (* CAS 2: NOM DE FAMILLE seul *)
-      | None, Some sn, None -> (
-          let surname_groups = get_surname_groups () in
+      | None, Some sn, None -> debug_search_surname conf base sn
+      (* ( let surname_groups = get_surname_groups () in
           match surname_groups with
           | [] -> assert false
           | [ (surname, _) ] ->
@@ -1001,7 +1114,7 @@ let search conf base query search_order specify unknown =
               let surnames =
                 List.fold_left (fun acc (surname, _) -> surname :: acc ) [] multiple
               in
-              Some.print_several_possible_surnames sn conf base ([], surnames))
+              Some.print_several_possible_surnames sn conf base ([], surnames)) *)
       (* CAS 3: Recherche avec PN (format prénom/nom/occ) *)
       | None, None, Some pn_value -> (
           Logs.debug (fun k -> k "Case: PN format");
