@@ -183,9 +183,10 @@ let print_person_parents_and_spouses conf base ?(alias = None) p =
     Buffer.add_string buf "</a>";
     add_safe_string buf (DateDisplay.short_dates_text conf base p);
     (match alias with
-    | Some alias_str ->
-        Printf.bprintf buf " alias <b>%s</b>"
-          (Util.escape_html alias_str :> string)
+    | Some alias ->
+        Printf.bprintf buf " %s %s"
+          (Util.transl conf "alias")
+          (Util.escape_html alias :> string)
     | None -> ());
     if pub_name <> "" then (
       Buffer.add_string buf " (";

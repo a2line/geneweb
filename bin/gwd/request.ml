@@ -149,6 +149,14 @@ let specify conf base n pl1 pl2 pl3 =
       (Util.escape_html n :> string)
       (transl conf ":") (transl conf "specify")
   in
+  let n = Name.lower n in
+  let split_pl n pl =
+    List.fold_left (fun (acc1, acc2) p ->
+      let aliases = Driver.get_aliases p
+        |> List.map (Driver.sou base) |> List.map Name.lower in
+      if List.mem n aliases then (p :: acc1, acc2) else (acc1, p :: acc2)
+    ) ([], []) pl
+  in
   Hutil.header conf title;
   Util.print_tips_relationship conf;
   SosaCache.build_sosa_ht conf base;
@@ -157,10 +165,19 @@ let specify conf base n pl1 pl2 pl3 =
     |> List.map (fun p -> (p, process_titles conf base n p))
     |> sort_by_birth_date
   in
-  let ptll1 = process_list pl1 in
+  let pl11, pl12 = split_pl n pl1 in
   let ptll2 = process_list pl2 in
   let ptll3 = process_list pl3 in
-  print_person_list conf base None ptll1;
+  if pl11 <> [] then (
+    let ptll11 = process_list pl11 in
+    let ptll12 = process_list pl12 in
+    let title = transl conf "alias" |> Utf8.capitalize_fst in
+    print_person_list conf base (Some title) ptll11;
+    let title = transl_nth conf "surname/surnames" 0|> Utf8.capitalize_fst in
+    print_person_list conf base (Some title) ptll12)
+  else
+    let ptll1 = process_list pl1 in
+    print_person_list conf base None ptll1;
   (if ptll2 <> [] then
      let title = transl conf "other possibilities" |> Utf8.capitalize_fst in
      print_person_list conf base (Some title) ptll2);
