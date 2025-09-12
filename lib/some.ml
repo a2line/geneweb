@@ -599,7 +599,7 @@ let print_several_possible_surnames x conf base (_, surname_groups) =
 
   (* Build cache Sosa *)
   SosaCache.build_sosa_ht conf base;
-  SosaCache.build_surname_sosa_cache conf base;
+  (* SosaCache.build_surname_sosa_cache conf base; *)
 
   (* Groupement par première lettre AVEC comptages et Sosa *)
   let groups =
@@ -610,7 +610,8 @@ let print_several_possible_surnames x conf base (_, surname_groups) =
         in
         let ord = name_unaccent txt in
         let count = List.length persons in
-        let has_sosa = SosaCache.surname_has_sosa sn in
+        let has_sosa = false in
+       (* let has_sosa = SosaCache.surname_has_sosa sn in *)
         let first_letter =
           if String.length ord > 0 then
             String.uppercase_ascii (String.sub ord 0 1)
