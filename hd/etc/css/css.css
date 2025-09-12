@@ -35,6 +35,148 @@ a:has(i), .deslist a, .ind-notes a {
   width: 2.3em;
 }
 
+/* Recherche patronyme liste alphabétique */
+/* Grille principale flexbox */
+.sn-details-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+/* Sections alphabétiques */
+.sn-details-section {
+  flex: 1 1 320px;
+  min-width: 280px;
+  max-width: 420px;
+}
+
+/* En-têtes de sections (A, B, C...) */
+.sn-details-section h6 {
+  background: #f8f9fa;
+  padding: 0.5rem 0.75rem;
+  margin: 0 0 0.75rem 0;
+  font-weight: 600;
+  font-size: 1.1rem;
+  border-left: 4px solid #007bff;
+  color: #495057;
+}
+
+/* Listes de patronymes */
+.sn-details-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.sn-details-list li {
+  margin: 0.4rem 0;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Liens patronymes */
+.sn-details-list a {
+  text-decoration: none;
+  color: #0066cc;
+  flex-grow: 1;
+}
+
+.sn-details-list a:hover {
+  text-decoration: underline;
+  color: #004499;
+}
+
+/* Comptages (10), (1), etc. */
+.sn-count {
+  font-size: 0.9rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+/* Icônes Sosa et bullets */
+.sn-sosa-icon {
+  font-size: 0.8rem;
+  width: 1rem;
+  text-align: center;
+}
+
+.sn-bullet {
+  color: #6c757d;
+  font-weight: bold;
+  width: 1rem;
+  text-align: center;
+}
+
+/* Index alphabétique */
+.sn-details-index {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 0.375rem;
+}
+
+.sn-details-index .badge {
+  font-size: 0.85rem;
+  margin: 0.2rem 0.3rem;
+}
+
+/* Bouton vue détaillée */
+.sn-details-cta {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: rgba(23, 162, 184, 0.1);
+  border-left: 4px solid #17a2b8;
+  border-radius: 0.25rem;
+}
+
+.sn-details-cta strong {
+  font-size: 1.1rem;
+  color: #495057;
+}
+
+.sn-details-cta small {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Responsive pour écrans moyens */
+@media (max-width: 768px) {
+  .sn-details-grid {
+    gap: 1rem;
+  }
+
+  .sn-details-section {
+    flex: 1 1 100%;
+    min-width: unset;
+  }
+
+  .sn-details-list li {
+    font-size: 1.1rem; /* Plus grand sur mobile pour seniors */
+  }
+}
+
+/* High contrast mode pour accessibilité */
+@media (prefers-contrast: high) {
+  .sn-details-section h6 {
+    background: #000;
+    color: #fff;
+    border-left-color: #fff;
+  }
+
+  .sn-details-list a {
+    color: #0000ff;
+  }
+
+  .sn-details-list a:hover {
+    color: #000080;
+  }
+}
+
+
 /* Styles pour les modals de relationMatrix m=RM */
 /* Masquer le header du modal */
 #rmModal table {

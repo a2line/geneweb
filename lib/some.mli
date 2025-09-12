@@ -38,7 +38,7 @@ val search_surname_print :
   string ->
   unit
 
-val print_multiple_display :
+val print_surname_details :
   Config.config ->
   Geneweb_db.Driver.base ->
   string ->
@@ -69,5 +69,5 @@ val print_several_possible_surnames :
   string ->
   Config.config ->
   Geneweb_db.Driver.base ->
-  Geneweb_db.Driver.iper list * string list ->
+  'a * (string * Geneweb_db.Driver.person list) list ->
   unit

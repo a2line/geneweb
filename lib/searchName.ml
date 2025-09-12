@@ -964,14 +964,6 @@ let debug_surname_index conf base query =
   Printf.eprintf "=== FIN DEBUG ===\n\n";
   flush stderr
 
-(* Fonction helper à ajouter temporairement dans searchName.ml *)
-let debug_search_surname conf base query =
-  debug_surname_index conf base query;
-  (* Continuer avec la recherche normale *)
-  Some.search_surname_print conf base (fun _ _ -> ()) query
-
-(* Utilisation: appeler debug_search_surname au lieu de search_surname_print *)
-
 let search conf base query search_order specify unknown =
   Some.AliasCache.clear ();
   let variant_cache = Hashtbl.create 10 in
@@ -1104,17 +1096,18 @@ let search conf base query search_order specify unknown =
           Some.first_name_print_list conf base query str
             [ ("", pl1); (tit2, pl2); (tit3, pl3) ]
       (* CAS 2: NOM DE FAMILLE seul *)
-      | None, Some sn, None -> debug_search_surname conf base sn
-      (* ( let surname_groups = get_surname_groups () in
+      | None, Some sn, None -> (
+          debug_surname_index conf base sn;
+          let surname_groups = get_surname_groups () in
           match surname_groups with
           | [] -> assert false
           | [ (surname, _) ] ->
               Some.search_surname_print conf base unknown surname
-          | multiple ->
-              let surnames =
-                List.fold_left (fun acc (surname, _) -> surname :: acc ) [] multiple
-              in
-              Some.print_several_possible_surnames sn conf base ([], surnames)) *)
+          | multiple -> (
+              match p_getenv conf.env "m" with
+              | Some "SN" -> Some.print_surname_details conf base sn multiple
+              | _ ->
+                  Some.print_several_possible_surnames sn conf base ([], multiple)))
       (* CAS 3: Recherche avec PN (format prénom/nom/occ) *)
       | None, None, Some pn_value -> (
           Logs.debug (fun k -> k "Case: PN format");
@@ -1174,7 +1167,8 @@ let search conf base query search_order specify unknown =
                     Some.search_surname_print conf base unknown surname
                 | multiple ->
                     if has_variants then
-                      Some.print_multiple_display conf base query multiple
+                      Some.print_several_possible_surnames query conf base
+                        ([], multiple)
                     else specify conf base query pl1 pl2 pl3)
             (* Autres cas avec pn *)
             | _ ->

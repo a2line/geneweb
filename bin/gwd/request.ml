@@ -850,7 +850,7 @@ let treat_request =
              | "RL" -> w_base @@ RelationLink.print
              | "RM" -> w_base @@ RelationMatrixDisplay.print
              | "RLM" -> w_base @@ RelationDisplay.print_multi
-             | "S" ->
+             | "S" | "SN" ->
                  w_base @@ fun conf base ->
                  SearchName.print conf base specify unknown
              | "SND_IMAGE" ->
