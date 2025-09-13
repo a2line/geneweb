@@ -596,112 +596,80 @@ let print_several_possible_surnames x conf base (_, surname_groups) =
   let fx = x in
   let title = mk_specify_title conf (transl_nth conf "surname/surnames" 0) fx in
   Hutil.header conf title;
-
+  
   (* Build cache Sosa *)
   SosaCache.build_sosa_ht conf base;
   (* SosaCache.build_surname_sosa_cache conf base; *)
-
-  (* Groupement par première lettre AVEC comptages et Sosa *)
-  let groups =
-    List.fold_left
-      (fun acc (sn, persons) ->
-        let txt =
-          Util.surname_without_particle base sn ^ Util.surname_particle base sn
-        in
-        let ord = name_unaccent txt in
-        let count = List.length persons in
-        let has_sosa = false in
-       (* let has_sosa = SosaCache.surname_has_sosa sn in *)
-        let first_letter =
-          if String.length ord > 0 then
-            String.uppercase_ascii (String.sub ord 0 1)
-          else "?"
+  
+  (* Helper function to process surname data *)
+  let process_surname (sn, persons) =
+    let txt = Util.surname_without_particle base sn ^ Util.surname_particle base sn in
+    let ord = name_unaccent txt in
+    let count = List.length persons in
+    let has_sosa = false in (* SosaCache.surname_has_sosa sn *)
+    (ord, txt, sn, count, has_sosa)
+  in
+  
+  (* Process and sort all surnames *)
+  let surname_list = 
+    surname_groups
+    |> List.map process_surname
+    |> List.sort (fun (ord1, _, _, _, _) (ord2, _, _, _, _) -> String.compare ord1 ord2)
+  in
+  
+  (* Group by first letter for index calculation *)
+  let letter_groups = 
+    let group_by_letter surnames =
+      List.fold_left (fun acc ((ord, _, _, _, _) as item) ->
+        let first_letter = 
+          if String.length ord > 0 then String.uppercase_ascii (String.sub ord 0 1) 
+          else "?" 
         in
         let existing = try List.assoc first_letter acc with Not_found -> [] in
-        (first_letter, (ord, txt, sn, count, has_sosa) :: existing)
-        :: List.remove_assoc first_letter acc)
-      [] surname_groups
+        (first_letter, item :: existing) :: List.remove_assoc first_letter acc
+      ) [] surnames
+      |> List.map (fun (letter, items) -> (letter, List.rev items))
+      |> List.sort (fun (a, _) (b, _) -> String.compare a b)
+    in
+    group_by_letter surname_list
   in
-
-  (* Tri : lettres alphabétiques + tri interne *)
-  let sorted_groups =
-    List.map
-      (fun (letter, entries) -> (letter, List.sort compare entries))
-      groups
-    |> List.sort (fun (a, _) (b, _) -> String.compare a b)
-  in
-
-  (* Container avec classes CSS externes *)
-  Output.printf conf {|
-    <div class="container">|};
-
-  (* Index alphabétique si beaucoup d'entrées *)
-  if List.length sorted_groups > 5 then (
-    Output.printf conf
-      {|
+  
+  (* Container and optional index *)
+  Output.printf conf {|<div class="container">|};
+  
+  if List.length letter_groups > 5 then (
+    Output.printf conf {|
       <div class="sn-details-index">
         <small class="text-muted">Navigation rapide : </small>|};
-
-    List.iter
-      (fun (letter, entries) ->
-        let total_persons =
-          List.fold_left (fun acc (_, _, _, count, _) -> acc + count) 0 entries
-        in
-        Output.printf conf
-          {|
-        <a href="#letter_%s" class="badge badge-secondary">%s (%d noms, %d pers.)</a>|}
-          letter letter (List.length entries) total_persons)
-      sorted_groups;
-
-    Output.printf conf {|
-      </div>|});
-
-  (* Grille de sections alphabétiques *)
-  Output.printf conf {|
-      <div class="sn-details-grid">|};
-
-  List.iter
-    (fun (letter, entries) ->
-      let total_in_section =
-        List.fold_left (fun acc (_, _, _, count, _) -> acc + count) 0 entries
-      in
-
-      Output.printf conf
-        {|
-        <div class="sn-details-section" id="letter_%s">
-          <h6>%s <small class="text-muted">(%d individus)</small></h6>
-          <ul class="sn-details-list">|}
-        letter letter total_in_section;
-
-      List.iter
-        (fun (_, txt, sn, count, has_sosa) ->
-          Output.printf conf
-            {|
-            <li>
-              %s
-              <a href="%sm=N&v=%s&t=N">%s</a>
-              <span class="sn-count">(%d)</span>
-            </li>|}
-            (if has_sosa then
-               {|<span class="sn-sosa-icon"><i class="fa fa-star text-warning"></i></span>|}
-             else {|<span class="sn-bullet">•</span>|})
-            (commd conf :> string)
-            (Mutil.encode sn :> string)
-            (escape_html txt :> string)
-            count)
-        entries;
-
+    
+    List.iter (fun (letter, entries) ->
+      let total_persons = List.fold_left (fun acc (_, _, _, count, _) -> acc + count) 0 entries in
       Output.printf conf {|
-          </ul>
-        </div>|})
-    sorted_groups;
-
+        <a href="#letter_%s" class="badge badge-secondary">%s (%d noms, %d pers.)</a>|}
+        letter letter (List.length entries) total_persons
+    ) letter_groups;
+    
+    Output.printf conf {|</div>|};
+  );
+  
+  (* Define functions for wprint_in_columns *)
+  let order (ord, _, _, _, _) = ord in
+  let wprint_elem (_, txt, sn, count, has_sosa) =
+    Output.printf conf "%s<a href=\"%sm=N&v=%s&t=N\">%s</a> <span class=\"sn-count\">(%d)</span>"
+      (if has_sosa then 
+         {|<span class="sn-sosa-icon"><i class="fa fa-star text-warning"></i></span> |}
+       else "")
+      (commd conf :> string)
+      (Mutil.encode sn :> string)
+      (escape_html txt :> string)
+      count
+  in
+  
+  (* Print surnames in balanced columns *)
+  wprint_in_columns conf order wprint_elem surname_list;
+  
+  (* Detailed view CTA *)
   Output.printf conf {|
-      </div>|};
-
-  (* Bouton vue détaillée *)
-  Output.printf conf
-    {|
       <div class="sn-details-cta d-flex align-items-center">
         <div class="flex-grow-1">
           <strong>%s</strong><br>
@@ -717,7 +685,7 @@ let print_several_possible_surnames x conf base (_, surname_groups) =
     (commd conf :> string)
     (Mutil.encode fx :> string)
     (transl conf "View details" :> string);
-
+  
   Hutil.trailer conf
 
 let print_family_alphabetic x conf base liste =
