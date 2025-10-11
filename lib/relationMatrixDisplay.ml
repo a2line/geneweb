@@ -200,6 +200,9 @@ let print conf base =
         {|<script>
 document.addEventListener('DOMContentLoaded', function() {
   $('[data-toggle="tooltip"]').tooltip();
+  $('#rm-table [data-toggle="tooltip"]').tooltip('dispose').tooltip({
+    customClass: 'rm-tooltip'
+  });
   $('.table [data-id]').hover(function() {
     var ids = $(this).data('id').split('_');
     $('[data-id*="' + ids[0] + '"]').toggleClass('rm-hl0');
