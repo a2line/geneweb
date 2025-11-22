@@ -46,8 +46,8 @@ env:
   PUSH_IMAGE: ${{ github.ref == 'refs/heads/master' }}
 
 jobs:
-  build-amd64:
-    runs-on: ubuntu-latest
+  build-ubuntu-22-amd64:
+    runs-on: ubuntu-22.04
     env:
       CACHE_FROM: type=gha,scope=docker-build-amd64
       CACHE_TO: type=gha,scope=docker-build-amd64,mode=max
@@ -107,8 +107,69 @@ jobs:
             BUILDKIT_PROGRESS=plain
             FAST_BUILD=${{ github.ref != 'refs/heads/master' && '1' || '0' }}
 
-  build-arm64:
-    runs-on: ubuntu-latest
+  build-ubuntu-24-amd64:
+    runs-on: ubuntu-24.04
+    env:
+      CACHE_FROM: type=gha,scope=docker-build-amd64
+      CACHE_TO: type=gha,scope=docker-build-amd64,mode=max
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: 'true'
+          fetch-depth: 1
+
+      - name: Generate Docker image metadata
+        id: docker-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=edge,branch=master
+            type=sha,prefix=,format=short
+          labels: |
+            org.opencontainers.image.title=GeneWeb
+            org.opencontainers.image.description=Genealogy Software
+            maintainer=${{ github.repository_owner }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64
+          driver-opts: |
+            network=host
+            image=moby/buildkit:latest
+
+      - name: Login to GitHub Container Registry
+        if: ${{ env.PUSH_IMAGE == 'true' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ github.token }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          target: container
+          platforms: linux/amd64
+          push: ${{ env.PUSH_IMAGE }}
+          tags: ${{ steps.docker-meta.outputs.tags }}
+          labels: ${{ steps.docker-meta.outputs.labels }}
+          cache-from: ${{ env.CACHE_FROM }}
+          cache-to: ${{ env.CACHE_TO }}
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+            BUILDKIT_PROGRESS=plain
+            FAST_BUILD=${{ github.ref != 'refs/heads/master' && '1' || '0' }}
+
+  build-ubuntu-22-arm64:
+    runs-on: ubuntu-22.04-arm
     env:
       CACHE_FROM: type=gha,scope=docker-build-arm64
       CACHE_TO: type=gha,scope=docker-build-arm64,mode=max
@@ -135,15 +196,8 @@ jobs:
             org.opencontainers.image.description=Genealogy Software
             maintainer=${{ github.repository_owner }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          platforms: linux/arm64/v8
-          driver-opts: |
-            image=moby/buildkit:latest
 
       - name: Login to GitHub Container Registry
         if: ${{ env.PUSH_IMAGE == 'true' }}
@@ -163,9 +217,118 @@ jobs:
           push: ${{ env.PUSH_IMAGE }}
           tags: ${{ steps.docker-meta.outputs.tags }}
           labels: ${{ steps.docker-meta.outputs.labels }}
-          cache-from: |
-            type=gha,scope=docker-build-arm64
-            type=gha,scope=docker-build-amd64
+          cache-from: ${{ env.CACHE_FROM }}
+          cache-to: ${{ env.CACHE_TO }}
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+            BUILDKIT_PROGRESS=plain
+            FAST_BUILD=${{ github.ref != 'refs/heads/master' && '1' || '0' }}
+  build-ubuntu-22-arm64:
+    runs-on: ubuntu-22.04-arm
+    env:
+      CACHE_FROM: type=gha,scope=docker-build-arm64
+      CACHE_TO: type=gha,scope=docker-build-arm64,mode=max
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: 'true'
+          fetch-depth: 1
+
+      - name: Generate Docker image metadata
+        id: docker-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=edge,branch=master
+            type=sha,prefix=,format=short
+          labels: |
+            org.opencontainers.image.title=GeneWeb
+            org.opencontainers.image.description=Genealogy Software
+            maintainer=${{ github.repository_owner }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        if: ${{ env.PUSH_IMAGE == 'true' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ github.token }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          target: container
+          platforms: linux/arm64/v8
+          push: ${{ env.PUSH_IMAGE }}
+          tags: ${{ steps.docker-meta.outputs.tags }}
+          labels: ${{ steps.docker-meta.outputs.labels }}
+          cache-from: ${{ env.CACHE_FROM }}
+          cache-to: ${{ env.CACHE_TO }}
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+            BUILDKIT_PROGRESS=plain
+            FAST_BUILD=${{ github.ref != 'refs/heads/master' && '1' || '0' }}
+
+  build-ubuntu-24-arm64:
+    runs-on: ubuntu-24.04-arm
+    env:
+      CACHE_FROM: type=gha,scope=docker-build-arm64
+      CACHE_TO: type=gha,scope=docker-build-arm64,mode=max
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: 'true'
+          fetch-depth: 1
+
+      - name: Generate Docker image metadata
+        id: docker-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=edge,branch=master
+            type=sha,prefix=,format=short
+          labels: |
+            org.opencontainers.image.title=GeneWeb
+            org.opencontainers.image.description=Genealogy Software
+            maintainer=${{ github.repository_owner }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        if: ${{ env.PUSH_IMAGE == 'true' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ github.token }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          target: container
+          platforms: linux/arm64/v8
+          push: ${{ env.PUSH_IMAGE }}
+          tags: ${{ steps.docker-meta.outputs.tags }}
+          labels: ${{ steps.docker-meta.outputs.labels }}
+          cache-from: ${{ env.CACHE_FROM }}
           cache-to: ${{ env.CACHE_TO }}
           build-args: |
             BUILDKIT_INLINE_CACHE=1
