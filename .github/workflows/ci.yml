@@ -96,7 +96,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.opam
-          key: ${{ runner.os }}-unix-${{ matrix.ocaml-compiler }}-${{ matrix.setup-version }}-${{ hashFiles('*.opam') }}-cache
+          key: ${{ runner.os }}-unix-${{ matrix.ocaml-compiler }}-${{ matrix.setup-version }}-${{ hashFiles('**/*.opam') }}-cache
           restore-keys: ${{ runner.os }}-unix-${{ matrix.ocaml-compiler }}-${{ matrix.setup-version }}
 
       - name: Cache Opam dependencies (Windows)
