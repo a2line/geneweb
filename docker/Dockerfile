@@ -5,21 +5,24 @@
 FROM ocaml/opam:debian-ocaml-4.14-nnp@sha256:6dd7a8b14d2d6dbdc5c0d7dcc5bb1bd1136d4b17abe12e9fece2464931bbf9f9 AS builder
 
 ENV OPAMYES=yes
-ENV OPAMJOBS=2
+ENV OPAMJOBS=4
 ENV DUNE_PROFILE=release
 
 USER root
-# Install required system dependencies
-RUN export DEBIAN_FRONTEND=noninteractive \
+# Install required system dependencies with cache mount
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
     && apt-get install -yq --no-install-recommends \
     m4 libgmp-dev libpcre2-dev libipc-system-simple-perl xdot zlib1g-dev pkg-config \
     && ln -sf /usr/bin/opam-2.3 /usr/bin/opam
 
-# Update local opam repository
+# Update local opam repository with cache
 USER opam
 WORKDIR /home/opam/opam-repository
-RUN git fetch origin master && git checkout 2ca36230be22748ea153057760524e23defe5fc7 && opam update
+RUN --mount=type=cache,target=/home/opam/.cache,uid=1000,gid=1000 \
+    git fetch origin master && git checkout 2ca36230be22748ea153057760524e23defe5fc7 && opam update
 
 # Initialize OPAM
 WORKDIR /home/opam
@@ -27,7 +30,9 @@ RUN opam init --disable-sandboxing --auto-setup --bare
 
 # Copy opam file for dependency resolution then install dependencies
 COPY --chown=opam:opam *.opam ./
-RUN eval "$(opam env)" && opam install . --deps-only --with-test && opam install ancient
+# Use cache mount for opam downloads to speed up dependency installation
+RUN --mount=type=cache,target=/home/opam/.opam/download-cache,uid=1000,gid=1000 \
+    eval "$(opam env)" && opam install . --deps-only --with-test && opam install ancient
 
 # Clone repository and build Geneweb
 WORKDIR /home/opam/geneweb
@@ -51,13 +56,13 @@ ENV GENEWEB_HOME=/usr/local/share/geneweb
 ENV GENEWEB_DATA_PATH=${GENEWEB_HOME}/share/data
 ENV GWSETUP_IP=172.17.0.1
 
-# Install runtime tools and add Geneweb user
+# Install runtime tools and add Geneweb user with cache mount
 # Ignore the apt warning here as apt-get does not allow wildcarding versions
 # hadolint ignore=DL3027
-RUN apt-get update -q \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update -q \
   && apt install -qy --no-install-recommends openssl adduser netcat-openbsd \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/* \
   && adduser --system --group --uid 1000 \
      --home ${GENEWEB_HOME} --shell /bin/bash geneweb
 

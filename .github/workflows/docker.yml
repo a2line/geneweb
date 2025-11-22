@@ -163,7 +163,9 @@ jobs:
           push: ${{ env.PUSH_IMAGE }}
           tags: ${{ steps.docker-meta.outputs.tags }}
           labels: ${{ steps.docker-meta.outputs.labels }}
-          cache-from: ${{ env.CACHE_FROM }}
+          cache-from: |
+            type=gha,scope=docker-build-arm64
+            type=gha,scope=docker-build-amd64
           cache-to: ${{ env.CACHE_TO }}
           build-args: |
             BUILDKIT_INLINE_CACHE=1
