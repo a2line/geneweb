@@ -79,7 +79,7 @@ function findElementById(baseId) {
     // D'abord essayer sans préfixe (mode normal)
     let element = document.getElementById(baseId);
     if (element) return element;
-    
+
     // En mode circulaire, essayer avec les suffixes
     if (isCircularMode) {
         const northEl = document.getElementById(baseId + '-N');
@@ -87,20 +87,20 @@ function findElementById(baseId) {
         const southEl = document.getElementById(baseId + '-S');
         if (southEl) elements.push(southEl);
     }
-    
+
     return null;
 }
 
 // Trouve tous les éléments avec le même ID de base (les deux hémisphères)
 function findAllElementsById(baseId) {
     const elements = [];
-    
+
     // Mode normal
     const element = document.getElementById(baseId);
     if (element) {
         elements.push(element);
     }
-    
+
     // Mode circulaire - chercher dans les deux hémisphères
     if (isCircularMode) {
         const northEl = document.getElementById('-N' + baseId);
@@ -108,7 +108,7 @@ function findAllElementsById(baseId) {
         const southEl = document.getElementById('-S' + baseId);
         if (southEl) elements.push(southEl);
     }
-    
+
     return elements;
 }
 
@@ -1476,8 +1476,10 @@ const PlacesHighlighter = {
     indicators: new Map(),
     expandedNames: new Map(),
     currentHoveredPlace: null,
-    hoverTimeout: null
-
+    hoverTimeout: null,
+    lockedPlace: null,
+    lockedPlaceEvents: [],
+    tempIndicators: false
   },
 
   /**
@@ -1488,38 +1490,79 @@ const PlacesHighlighter = {
     const placesList = document.querySelector('.places-list');
     if (!placesList) return;
 
+    // Gestion du clic pour verrouiller/déverrouiller le surlignage
+    placesList.addEventListener('click', (e) => {
+      const placeContent = e.target.closest('.place-content');
+      if (!placeContent) return;
+
+      const placeName = placeContent.dataset.place;
+      if (!placeName) return;
+
+      if (this.state.lockedPlace === placeName) {
+        // Second clic : déverrouiller (supprimer explicitement les indicateurs du lieu locké)
+        const placeData = lieux[placeName];
+        if (placeData?.indicatorElement) {
+          const indicators = placeData.indicatorElement.querySelectorAll('.indicator');
+          indicators.forEach(el => el.remove());
+        }
+        
+        this.state.lockedPlace = null;
+        this.state.lockedPlaceEvents = [];
+        placeContent.classList.remove('locked');
+        this.clearAllHighlights();
+      } else {
+        // Premier clic : verrouiller (nettoyer d'abord l'ancien verrou s'il existe)
+        if (this.state.lockedPlace) {
+          const oldLocked = document.querySelector('.place-content.locked');
+          if (oldLocked) oldLocked.classList.remove('locked');
+        }
+
+        this.state.lockedPlace = placeName;
+        
+        // Sauvegarder les événements du lieu pour restauration ultérieure
+        const placeData = lieux[placeName];
+        if (placeData) {
+          this.state.lockedPlaceEvents = [];
+          Events.types.forEach(eventType => {
+            if (placeData[Events.svgPrefix(eventType)]) {
+              this.state.lockedPlaceEvents.push(eventType);
+            }
+          });
+        }
+        
+        placeContent.classList.add('locked');
+      }
+    });
+
     // Utiliser la capture d'événements pour intercepter tous les mouvements
     placesList.addEventListener('mousemove', (e) => {
-      // Trouver le place-row le plus proche
-      const placeRow = e.target.closest('.place-row');
+      // Ne pas interférer si un lieu est verrouillé
+      if (this.state.lockedPlace) return;
 
-      if (placeRow) {
-        const placeContent = placeRow.querySelector('.place-content');
-        if (placeContent) {
-          const placeName = placeContent.dataset.place;
+      const placeContent = e.target.closest('.place-content');
+      if (placeContent) {
+        const placeName = placeContent.dataset.place;
+        if (!placeName) return;
 
-          // Si on est déjà sur ce lieu, ne rien faire
-          if (this.state.currentHoveredPlace === placeName) {
-            return;
-          }
-
-          // Si on était sur un autre lieu, le nettoyer d'abord
-          if (this.state.currentHoveredPlace && this.state.currentHoveredPlace !== placeName) {
-            this.clearHighlightForPlace(this.state.currentHoveredPlace);
-          }
-
-          // Appliquer le nouveau surlignage
-          this.state.currentHoveredPlace = placeName;
-          this.highlightPlace(placeName, 'list');
+        if (this.state.currentHoveredPlace === placeName) {
+          return;
         }
+
+        if (this.state.currentHoveredPlace && this.state.currentHoveredPlace !== placeName) {
+          this.clearHighlightForPlace(this.state.currentHoveredPlace);
+        }
+
+        this.state.currentHoveredPlace = placeName;
+        this.highlightPlace(placeName, 'list');
       }
     }, { capture: true, passive: true });
 
     // Gérer la sortie complète de la liste
     placesList.addEventListener('mouseleave', (e) => {
-      // Vérifier que la souris quitte vraiment la liste
+      // Ne pas effacer si un lieu est verrouillé
+      if (this.state.lockedPlace) return;
+
       if (!placesList.contains(e.relatedTarget)) {
-        // Utiliser un petit délai pour éviter les clignotements
         clearTimeout(this.state.hoverTimeout);
         this.state.hoverTimeout = setTimeout(() => {
           if (this.state.currentHoveredPlace) {
@@ -1579,8 +1622,8 @@ const PlacesHighlighter = {
     this.state.highlighted.delete(placeName);
   },
 
-  highlight: function(placeNames, eventTypes, source = 'svg') {
-    this.clearAllHighlights();
+  highlight: function(placeNames, eventTypes, source = 'svg', preserveLock = false) {
+    this.clearAllHighlights(preserveLock);
 
     if (!placeNames?.length) return;
 
@@ -1590,9 +1633,9 @@ const PlacesHighlighter = {
     placeNames.forEach((placeName, index) => {
         const placeData = lieux[placeName];
         if (!placeData) return;
-        
+
         const events = eventTypes[index] || [];
-        
+
         if (highlightMap.has(placeName)) {
             const existing = highlightMap.get(placeName);
             const mergedEvents = [...new Set([...existing.events, ...events])];
@@ -1600,58 +1643,13 @@ const PlacesHighlighter = {
         } else {
             highlightMap.set(placeName, { placeData, events: [...events] });
         }
-        
+
         this.state.highlighted.add(placeName);
     });
 
     this.applyHighlights(highlightMap, source);
   },
 
-  /**
-   * Fonction principale de surlignage multi-lieux
-   * Utilisée pour le survol des totaux NBMDS
-   */
-  highlightPlace: function(placeName, source = 'list') {
-    const placeData = lieux[placeName];
-    if (!placeData) return;
-
-    // Marquer visuellement le lieu
-    if (placeData.domElement) {
-      // Capturer la hauteur actuelle avant les changements
-      const placeRow = placeData.domElement.closest('.place-row');
-      if (placeRow && !placeRow.style.minHeight) {
-        // Fixer une hauteur minimale pour éviter les sauts
-        placeRow.style.minHeight = placeRow.offsetHeight + 'px';
-      }
-
-      placeData.domElement.classList.add('person-match');
-      this.state.highlighted.add(placeName);
-
-      // Expansion du nom si nécessaire
-      if (placeData.isSubLocation && sortMode === 'alphabetical') {
-        this.expandSubLocationName(placeData);
-      }
-
-      // Collecter TOUS les types d'événements pour ce lieu
-      const eventTypes = [];
-      Events.types.forEach(eventType => {
-        if (placeData[Events.svgPrefix(eventType)]) {
-          eventTypes.push(eventType);
-        }
-      });
-
-      // Ajouter les indicateurs avec gestion de la hauteur
-      if (placeData.indicatorElement && eventTypes.length > 0) {
-        this.addIndicatorsWithHeightManagement(placeData, eventTypes);
-      }
-    }
-
-    // Surligner dans le SVG avec colorisation
-    this.highlightInSVG(placeName, placeData, true);
-
-    // Griser les autres éléments
-    this.grayOutOthers();
-  },
 
   /**
    * Version améliorée de addIndicators qui gère mieux les changements de hauteur
@@ -1751,7 +1749,9 @@ const PlacesHighlighter = {
    * Surlignage d'un lieu unique depuis la liste
    */
   highlightPlace: function(placeName, source = 'list') {
-    this.clearAllHighlights();
+    // Préserver le verrou si c'est un clic de verrouillage
+    const isLocking = (this.state.lockedPlace === placeName);
+    this.clearAllHighlights(isLocking);
 
     const placeData = lieux[placeName];
     if (!placeData) return;
@@ -1808,7 +1808,7 @@ const PlacesHighlighter = {
 
             // Ignorer le préfixe de contexte (-N, -S) pour le mode circulaire
             const baseId = groupId.replace(/^-[NS]/, '');
-            
+
             if (eventType === 'marriage') {
               // Mariages : coloriser UNIQUEMENT les éléments dans les groupes M
               if (baseId.startsWith('M')) {
@@ -2023,6 +2023,7 @@ const PlacesHighlighter = {
    * Ajout des indicateurs d'événements
    */
   addIndicators: function(container, events) {
+    container.querySelectorAll('.indicator, .line-break').forEach(el => el.remove());
     if (!container || !events.length) return;
 
     const eventArray = Array.isArray(events) ? events : [events];
@@ -2067,27 +2068,47 @@ const PlacesHighlighter = {
   /**
    * Nettoie tous les surlignages
    */
-  clearAllHighlights: function() {
-    // Nettoyer chaque lieu individuellement
+  clearAllHighlights: function(preserveLock = false) {
+    const lockedPlace = preserveLock ? this.state.lockedPlace : null;
+    
+    // Nettoyer chaque lieu individuellement (sauf le lieu locké si preserveLock)
     this.state.highlighted.forEach(placeName => {
+      if (placeName === lockedPlace) return;
       this.clearHighlightForPlace(placeName);
     });
 
-    // Nettoyer les éléments grisés
-    document.querySelectorAll('.grayed-out').forEach(el => {
-      el.classList.remove('grayed-out');
-    });
-
+    // Nettoyer les éléments grisés (sauf si on préserve le lock)
+    if (!preserveLock) {
+      document.querySelectorAll('.grayed-out').forEach(el => {
+        el.classList.remove('grayed-out');
+      });
+    }
+    
     // Reset de l'état
     this.state.highlighted.clear();
     this.state.svgElements.clear();
     this.state.indicators.clear();
     this.state.expandedNames.clear();
     this.state.currentHoveredPlace = null;
+    
+    // Restaurer le lieu locké dans le state si préservé
+    if (lockedPlace) {
+      this.state.highlighted.add(lockedPlace);
+    }
 
     // Nettoyer l'overflow si présent
     if (typeof ModernOverflowManager !== 'undefined' && ModernOverflowManager.clearOverflowSections) {
       ModernOverflowManager.clearOverflowSections();
+    }
+
+    // Nettoyer le verrou visuel (sauf si préservé)
+    if (!preserveLock) {
+      const lockedElement = document.querySelector('.place-content.locked');
+      if (lockedElement) {
+        lockedElement.classList.remove('locked');
+      }
+      this.state.lockedPlace = null;
+      this.state.lockedPlaceEvents = [];
     }
   },
 
@@ -2167,7 +2188,7 @@ const CircularModeRenderer = {
     // standard_width = largeur d'un "M" de référence, permet la conversion
     const availableWidth = 1.7 * r;
     const conversionFactor = standard_width / 10; // approximation basée sur la taille standard
-    
+
     const texts = [person.fn, person.sn, person.dates || ''];
     const fontSizes = texts.map(text => {
       if (!text) return 100;
@@ -2177,10 +2198,10 @@ const CircularModeRenderer = {
       const widthRatio = bbox.width > targetWidth ? targetWidth / bbox.width : 1;
       return Math.round(widthRatio * 88);
     });
-    
-    
+
+
     const dy = Math.min(r / 3, 16);
-    
+
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
     text.setAttribute("x", x);
     text.setAttribute("y", y);
@@ -2189,12 +2210,12 @@ const CircularModeRenderer = {
     if (inverted) {
       text.setAttribute("transform", `rotate(180, ${x}, ${y})`);
     }
-    
-    text.innerHTML = 
+
+    text.innerHTML =
       `<tspan x="${x}" dy="-${dy * 0.4}px" style="font-size:${fontSizes[0]}%">${person.fn}</tspan>` +
       `<tspan x="${x}" dy="${dy * 0.9}px" class="bold-sn" style="font-size:${fontSizes[1]}%">${person.sn}</tspan>` +
       `<tspan x="${x}" dy="${dy * 0.7}px" class="dates" style="font-size:${Math.round(fontSizes[2] * 0.7)}%">${person.dates || ''}</tspan>`;
-    
+
     group.appendChild(text);
   },
 
@@ -2593,26 +2614,46 @@ const SVGRenderer = {
             ((type === 'person' && p.sosa) ? ImplexResolver.getDisplayData(p.sosa) : p);
         
         if (displayPerson) {
-            // Passer aussi le sosa original pour la détection époux/épouse
             const displaySosa = p.originalSosa || p.sosa;
             const enhancedPerson = { ...displayPerson, sosa: p.sosa };
             const places = this.extractPlacesFromPerson(enhancedPerson, type);
             
             if (places.length > 0) {
-                // Grouper par lieu pour éviter les doublons
-                const placeMap = new Map();
-                places.forEach(({ place, event }) => {
-                    if (!placeMap.has(place)) {
-                        placeMap.set(place, []);
-                    }
-                    placeMap.get(place).push(event);
-                });
-                
-                // Convertir en arrays parallèles
-                const placeNames = Array.from(placeMap.keys());
-                const events = Array.from(placeMap.values());
-                
-                PlacesHighlighter.highlight(placeNames, events, 'svg');
+              const placeMap = new Map();
+              places.forEach(({ place, event }) => {
+                if (!placeMap.has(place)) {
+                  placeMap.set(place, []);
+                }
+                placeMap.get(place).push(event);
+              });
+              
+              const placeNames = Array.from(placeMap.keys());
+              const events = Array.from(placeMap.values());
+              
+              if (PlacesHighlighter.state.lockedPlace) {
+                // Mode locké : supprimer visuellement les indicateurs du lieu locké
+                const lockedPlaceData = lieux[PlacesHighlighter.state.lockedPlace];
+                if (lockedPlaceData?.indicatorElement) {
+                  // Supprimer directement les .indicator du DOM
+                  const existingIndicators = lockedPlaceData.indicatorElement.querySelectorAll('.indicator');
+                  existingIndicators.forEach(el => el.remove());
+                  PlacesHighlighter.state.indicators.delete(lockedPlaceData.indicatorElement);
+                }
+                PlacesHighlighter.state.tempIndicators = true;
+              }
+              
+              // Afficher les indicateurs de l'individu (comportement normal)
+              const hasLock = !!PlacesHighlighter.state.lockedPlace;
+              PlacesHighlighter.highlight(placeNames, events, 'svg', hasLock);
+            } else if (PlacesHighlighter.state.lockedPlace) {
+              // L'individu n'a aucun lieu - supprimer les indicateurs du lieu locké
+              const lockedPlaceData = lieux[PlacesHighlighter.state.lockedPlace];
+              if (lockedPlaceData?.indicatorElement) {
+                const existingIndicators = lockedPlaceData.indicatorElement.querySelectorAll('.indicator');
+                existingIndicators.forEach(el => el.remove());
+                PlacesHighlighter.state.indicators.delete(lockedPlaceData.indicatorElement);
+              }
+              PlacesHighlighter.state.tempIndicators = true;
             }
         }
     }
@@ -2630,7 +2671,7 @@ const SVGRenderer = {
           const targetElements = isCircularMode
             ? Array.from(document.getElementsByClassName("os-" + targetSosa))
             : findAllElementsById("S" + targetSosa);
-          
+
           targetElements.forEach(targetElement => {
             targetElement.classList.add("same_hl");
             const targetPath = targetElement.querySelector('path.link');
@@ -2670,8 +2711,37 @@ const SVGRenderer = {
     }
 
     // 3. Modes spéciaux
-    if (document.body.classList.contains('place')) {
-      PlacesHighlighter.clearAllHighlights();
+if (document.body.classList.contains('place')) {
+      if (PlacesHighlighter.state.lockedPlace) {
+        // 1. Effacer TOUS les indicateurs temporaires
+        PlacesHighlighter.state.indicators.forEach((indicators, element) => {
+          indicators.forEach(el => el.remove());
+        });
+        PlacesHighlighter.state.indicators.clear();
+        
+        // 2. Effacer les highlights visuels des lieux (sauf le locké)
+        PlacesHighlighter.state.highlighted.forEach(placeName => {
+          if (placeName !== PlacesHighlighter.state.lockedPlace) {
+            PlacesHighlighter.clearHighlightForPlace(placeName);
+          }
+        });
+        PlacesHighlighter.state.highlighted.clear();
+        PlacesHighlighter.state.highlighted.add(PlacesHighlighter.state.lockedPlace);
+        
+        // 3. Restaurer les indicateurs ET le surlignage SVG du lieu locké
+        const lockedPlaceData = lieux[PlacesHighlighter.state.lockedPlace];
+        if (lockedPlaceData) {
+          if (lockedPlaceData.indicatorElement && PlacesHighlighter.state.lockedPlaceEvents.length > 0) {
+            PlacesHighlighter.addIndicators(lockedPlaceData.indicatorElement, PlacesHighlighter.state.lockedPlaceEvents);
+          }
+          // Restaurer le surlignage SVG complet du lieu locké
+          PlacesHighlighter.highlightInSVG(PlacesHighlighter.state.lockedPlace, lockedPlaceData, true);
+        }
+        
+        PlacesHighlighter.state.tempIndicators = false;
+      } else {
+        PlacesHighlighter.clearAllHighlights();
+      }
     }
 
     if (document.body.classList.contains('age')) {
@@ -2687,7 +2757,7 @@ const SVGRenderer = {
         const targetElements = isCircularMode
           ? Array.from(document.getElementsByClassName("os-" + targetSosa))
           : findAllElementsById("S" + targetSosa);
-        
+
         targetElements.forEach(targetElement => {
           targetElement.classList.remove("same_hl");
           const highlightedPaths = targetElement.querySelectorAll('.highlight');
@@ -2898,11 +2968,11 @@ const TextRenderer = {
       const pathId1 = contextualId(`tp1S${sosa}`);
       const pathLength1 = this.createCircularPath(g, pathId1, (r2-r1)*3/4 + r1, a1, a2);
       this.placeTextOnPath(g, pathId1, p.fn, classes, pathLength1, height, sizeFactor);
-      
+
       const pathId2 = contextualId(`tp2S${sosa}`);
       const pathLength2 = this.createCircularPath(g, pathId2, (r2-r1)*2/4 + r1, a1, a2);
       this.placeTextOnPath(g, pathId2, p.sn, classes, pathLength2, height, sizeFactor);
-      
+
       const pathId3 = contextualId(`tp3S${sosa}`);
       const pathLength3 = this.createCircularPath(g, pathId3, (r2-r1)/4 + r1, a1, a2);
       this.placeTextOnPath(g, pathId3, p.dates, classes + " dates", pathLength3, height, sizeFactor);
@@ -2913,17 +2983,17 @@ const TextRenderer = {
     // Calcul des paramètres de direction selon l'orientation
     const params = this.calculateRadialParameters(r1, r2, a1, a2, lineCount);
     const height = Math.abs(a2 - a1) / 360 * 2 * Math.PI * r1 / lineCount;
-    
+
     if (lineCount >= 3) {
         // Trois lignes : prénom, nom, dates
         const pathId1 = contextualId(`tp1S${sosa}`);
         const pathLength1 = this.createRadialPath(g, pathId1, params.r1, params.r2, params.angles[0]);
         this.placeTextOnPath(g, pathId1, p.fn, classes, pathLength1, height, sizeFactor);
-        
+
         const pathId2 = contextualId(`tp2S${sosa}`);
         const pathLength2 = this.createRadialPath(g, pathId2, params.r1, params.r2, params.angles[1]);
         this.placeTextOnPath(g, pathId2, p.sn, classes, pathLength2, height, sizeFactor);
-        
+
         const pathId3 = contextualId(`tp3S${sosa}`);
         const pathLength3 = this.createRadialPath(g, pathId3, params.r1, params.r2, params.angles[2]);
         this.placeTextOnPath(g, pathId3, p.dates, classes + " dates", pathLength3, height, sizeFactor);
@@ -2932,7 +3002,7 @@ const TextRenderer = {
         const pathId1 = contextualId(`tp1S${sosa}`);
         const pathLength1 = this.createRadialPath(g, pathId1, params.r1, params.r2, params.angles[0]);
         this.placeTextOnPath(g, pathId1, `${p.fn} ${p.sn}`, classes, pathLength1, height);
-        
+
         const pathId2 = contextualId(`tp2S${sosa}`);
         const pathLength2 = this.createRadialPath(g, pathId2, params.r1, params.r2, params.angles[1]);
         this.placeTextOnPath(g, pathId2, p.dates, classes + " dates", pathLength2, height);
@@ -3416,7 +3486,7 @@ const AngleManager = {
   setAngle: function(angle) {
     // Gérer le mode circulaire automatiquement
     const wasCircular = isCircularMode;
-    
+
     if (angle === 360) {
       isCircularMode = true;
       current_angle = 180;  // Le mode 360 utilise deux demi-cercles de 180°
@@ -3448,8 +3518,8 @@ const AngleManager = {
       const btn = document.getElementById(`b-angle-${angle}`);
       if (btn) {
         // Actif si : c'est 360 et on est en mode circulaire, OU c'est l'angle courant hors mode circulaire
-        const isActive = (angle === 360) 
-          ? isCircularMode 
+        const isActive = (angle === 360)
+          ? isCircularMode
           : (!isCircularMode && current_angle === angle);
         btn.classList.toggle('active', isActive);
       }
@@ -4311,7 +4381,7 @@ const FanchartApp = {
     if (isCircularMode) {
       rings += -1;
     }
-    
+
     for (let i = 0; i < rings; i++) {
       max_r += CONFIG.a_r[i] || CONFIG.a_r[CONFIG.a_r.length - 1];
     }
@@ -4367,18 +4437,18 @@ const FanchartApp = {
     // 1. D'abord calculer et appliquer la largeur du panneau des lieux
     const actualListWidth = LayoutCalculator.calculatePlacesListWidth();
     root.style.setProperty('--fc-tool-size', actualListWidth + 'px');
-    
+
     // 2. Déterminer la marge gauche selon le mode
     const isSquareChart = (current_angle >= 310 || isCircularMode);
-    
+
     // 3. Calculer l'espace réellement disponible pour le SVG
     const availableWidth = window.innerWidth - actualListWidth;
     const availableHeight = window.innerHeight;
-    
+
     // 4. Le SVG occupe tout l'espace disponible pour permettre zoom et navigation
     this.window_w = availableWidth;
     this.window_h = availableHeight;
-    
+
     // 5. Configurer le SVG à la taille complète de l'espace de travail
     fanchart.setAttribute("width", this.window_w);
     fanchart.setAttribute("height", this.window_h);
@@ -4820,7 +4890,7 @@ const FanchartApp = {
     let dragState = false;
     let rotateState = false;
     let lastMouseAngle = 0;
-    
+
     // Calcule l'angle de la souris par rapport au centre du SVG
     const getMouseAngle = (e) => {
       const rect = fanchart.getBoundingClientRect();
@@ -4828,7 +4898,7 @@ const FanchartApp = {
       const svgCenterY = rect.top + rect.height / 2;
       return Math.atan2(e.clientY - svgCenterY, e.clientX - svgCenterX) * 180 / Math.PI;
     };
-    
+
     // Applique la rotation au contenu du SVG
     const applyRotation = () => {
       const content = fanchart.querySelector('#fanchart-content');
@@ -4836,7 +4906,7 @@ const FanchartApp = {
         content.setAttribute('transform', `rotate(${currentRotation} ${center_x} ${center_y})`);
       }
     };
-    
+
     fanchart.addEventListener('mousedown', (e) => {
       e.preventDefault();
       if ((e.button === 2 || (e.button === 0 && e.shiftKey)) && isCircularMode) {
@@ -4844,22 +4914,22 @@ const FanchartApp = {
         rotateState = true;
         lastMouseAngle = getMouseAngle(e);
       } else if (e.button === 0) {
-        // Clic gauche : déplacement 
+        // Clic gauche : déplacement
         dragState = true;
-        
-      } 
+
+      }
     });
-    
+
     fanchart.addEventListener('mouseup', (e) => {
       dragState = false;
       rotateState = false;
     });
-    
+
     fanchart.addEventListener('mouseleave', () => {
       dragState = false;
       rotateState = false;
     });
-    
+
     fanchart.addEventListener('mousemove', (e) => {
       if (dragState) {
         e.preventDefault();
@@ -4877,7 +4947,7 @@ const FanchartApp = {
         applyRotation();
       }
     });
-    
+
     // Désactiver le menu contextuel sur le SVG (pour permettre le clic droit)
     fanchart.addEventListener('contextmenu', (e) => {
       if (isCircularMode) {

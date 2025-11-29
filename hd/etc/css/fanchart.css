@@ -1041,6 +1041,16 @@ body:not(.place) .places-panel {
   pointer-events: none;
 }
 
+/* Lieu verrouillé par clic */
+.place-content.locked {
+  background: rgba(40, 167, 69, 0.20) !important;
+  box-shadow: inset 1px 0 0 #28a745;
+}
+.
+.place-content.locked .place-name {
+  font-weight: 700;
+}
+
 /* Colonnes internes */
 .place-left {
   display: flex;
