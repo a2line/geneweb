@@ -367,6 +367,46 @@ const InseeTools = {
           return null; // Aucun champ vide trouvé
       },
 
+      // Gestion du localStorage pour la liste noire accumulée
+      blacklistStorage: {
+          STORAGE_KEY: 'insee_blacklist_accumulator',
+          
+          // Récupère toutes les entrées stockées
+          getAll: function() {
+              const data = localStorage.getItem(this.STORAGE_KEY);
+              return data ? JSON.parse(data) : [];
+          },
+          
+          // Ajoute une entrée (évite les doublons basés sur idinsee)
+          add: function(entry) {
+              const entries = this.getAll();
+              
+              // Vérifier si l'entrée existe déjà (comparaison sur idinsee)
+              const exists = entries.some(e => e.idinsee === entry.idinsee);
+              
+              if (!exists) {
+                  entries.push(entry);
+                  localStorage.setItem(this.STORAGE_KEY, JSON.stringify(entries));
+                  console.log('Entrée ajoutée à la liste noire:', entry.idinsee);
+                  return true;
+              }
+              
+              console.log('Entrée déjà présente dans la liste noire:', entry.idinsee);
+              return false;
+          },
+          
+          // Vide toute la liste
+          clear: function() {
+              localStorage.removeItem(this.STORAGE_KEY);
+              console.log('Liste noire vidée');
+          },
+          
+          // Compte le nombre d'entrées
+          count: function() {
+              return this.getAll().length;
+          }
+      },
+
       processField: function(fieldType, onlyEmpty = false, event = null) {
           // Verify INSEE data exists first
           if (!this.inseeData) {
@@ -924,41 +964,41 @@ const InseeTools = {
       },
 
       updateVisualFeedback: function(fieldType) {
-    const fieldConfig = FIELD_IDS[fieldType];
-    if (fieldConfig) {
-        const line = document.getElementById(fieldConfig.displayId);
-        if (line) {
-            // Update icon
-            const icon = line.querySelector('.check-icon-container i');
-            if (icon) {
-                icon.className = 'fa fa-check mr-1 text-success';
-            }
-            // Update value selection
-            const valueSpan = line.querySelector('.replacement-value');
-            if (valueSpan) {
-                valueSpan.classList.remove('user-select-all');
-                valueSpan.classList.add('user-select-none');
-                valueSpan.style.cursor = 'default';
-                valueSpan.removeAttribute('title');
-            }
+          const fieldConfig = FIELD_IDS[fieldType];
+          if (fieldConfig) {
+              const line = document.getElementById(fieldConfig.displayId);
+              if (line) {
+                  // Update icon
+                  const icon = line.querySelector('.check-icon-container i');
+                  if (icon) {
+                      icon.className = 'fa fa-check mr-1 text-success';
+                  }
+                  // Update value selection
+                  const valueSpan = line.querySelector('.replacement-value');
+                  if (valueSpan) {
+                      valueSpan.classList.remove('user-select-all');
+                      valueSpan.classList.add('user-select-none');
+                      valueSpan.style.cursor = 'default';
+                      valueSpan.removeAttribute('title');
+                  }
 
-            window.setTimeout(() => this.checkAllValidated(), 50);
-        }
-    }
-},
+                  window.setTimeout(() => this.checkAllValidated(), 50);
+              }
+          }
+      },
 
       // Setup click handlers for data replacement
       setupDataReplacementHandlers: function() {
-    document.querySelectorAll('.replacement-value').forEach(span => {
-        span.addEventListener('click', (e) => {
-            const fieldType = e.target.dataset.fieldType;
+          document.querySelectorAll('.replacement-value').forEach(span => {
+              span.addEventListener('click', (e) => {
+                  const fieldType = e.target.dataset.fieldType;
 
-            // Traiter le champ avec la fonction centralisée
-            // Passer l'événement pour permettre l'affichage du tooltip
-            this.processField(fieldType, false, e);
-        });
-    });
-},
+                  // Traiter le champ avec la fonction centralisée
+                  // Passer l'événement pour permettre l'affichage du tooltip
+                  this.processField(fieldType, false, e);
+              });
+          });
+      },
 
       checkAllValidated: function() {
           // Récupérer toutes les icônes de validation (sauf celle du titre)
@@ -1002,6 +1042,27 @@ const InseeTools = {
           }
       },
 
+      // Met à jour le badge du compteur sur le bouton d'export
+      updateExportBadge: function() {
+          const count = this.blacklistStorage.count();
+          const exportBtn = document.getElementById('btn-blacklist-export');
+          
+          if (exportBtn) {
+              if (count > 0) {
+                  exportBtn.innerHTML = `<i class="fa fa-download"></i> Exporter liste noire <span class="badge badge-light ml-1">${count}</span>`;
+                  exportBtn.disabled = false;
+                  exportBtn.classList.remove('btn-outline-secondary');
+                  exportBtn.classList.add('btn-outline-primary');
+              } else {
+                  exportBtn.innerHTML = `<i class="fa fa-download"></i> Exporter liste noire`;
+                  exportBtn.disabled = true;
+                  exportBtn.classList.remove('btn-outline-primary');
+                  exportBtn.classList.add('btn-outline-secondary');
+              }
+          }
+      },
+
+/*
       markNonMatch: function() {
           if (this.inseeData) {
               this.inseeData.blacklist.idinsee = '%' + this.inseeData.blacklist.idinsee;
@@ -1022,25 +1083,42 @@ const InseeTools = {
               this.disableBlacklistButtons();
           }
       },
-
+*/
       markFullMatch: function() {
           if (this.inseeData) {
-              this.inseeData.blacklist.idinsee = '$' + this.inseeData.blacklist.idinsee;
-
+              // Préparer l'entrée avec le préfixe $
+              const entry = {
+                  idinsee: '$' + this.inseeData.blacklist.idinsee,
+                  gwkey: this.inseeData.blacklist.gwkey,
+                  todokey: this.inseeData.blacklist.todokey
+              };
+              
+              // Ajouter à la liste accumulée
+              const added = this.blacklistStorage.add(entry);
+              
               // Mise à jour visuelle des boutons
               const nonMatchBtn = document.getElementById('btn-blacklist-nonmatch');
               const matchBtn = document.getElementById('btn-blacklist-match');
 
               if (matchBtn) {
                   matchBtn.classList.remove('btn-outline-success');
-                  matchBtn.classList.add('btn-success');  // Bouton actif devient plein
+                  matchBtn.classList.add('btn-success');
+                  
+                  // Afficher le compteur d'entrées
+                  const count = this.blacklistStorage.count();
+                  matchBtn.innerHTML = `<i class="fa fa-check"></i> Correspondance (${count})`;
               }
+              
               if (nonMatchBtn) {
                   nonMatchBtn.classList.remove('btn-outline-danger');
-                  nonMatchBtn.classList.add('btn-outline-light');  // L'autre devient light
+                  nonMatchBtn.classList.add('btn-outline-light');
                   nonMatchBtn.disabled = true;
               }
+              
               this.disableBlacklistButtons();
+              
+              // Mettre à jour le badge du bouton d'export si présent
+              this.updateExportBadge();
           }
       },
 
@@ -1058,25 +1136,59 @@ const InseeTools = {
       },
 
       exportBlacklist: function() {
-          if (!this.inseeData?.blacklist) return;
+          const entries = this.blacklistStorage.getAll();
+          
+          if (entries.length === 0) {
+              alert('Aucune entrée dans la liste noire à exporter.');
+              return;
+          }
 
-          const content = [
-              this.inseeData.blacklist.idinsee,
-              this.inseeData.blacklist.gwkey,
-              this.inseeData.blacklist.todokey,
-              '',  // Empty line at the end
-          ].join('\n');
+          // Construire le contenu du fichier
+          // Format: $IdInsee(xxxxx)\nGwKey\nTodoKey\n\n
+          const content = entries.map(entry => {
+              return [
+                  entry.idinsee,
+                  entry.gwkey,
+                  entry.todokey,
+                  '' // Ligne vide entre chaque entrée
+              ].join('\n');
+          }).join('\n');
 
-          // Create blob and trigger download
-          const blob = new Blob([content], { type: 'text/plain' });
+          // Créer et télécharger le fichier
+          const blob = new Blob([content], { type: 'text/plain; charset=utf-8' });
           const url = window.URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = 'blacklist.txt';
+          
+          // Nom de fichier avec timestamp
+          const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+          a.download = `blacklist_${timestamp}.txt`;
+          
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
           window.URL.revokeObjectURL(url);
+          
+          console.log(`Exporté ${entries.length} entrée(s) de la liste noire`);
+      },
+
+      clearBlacklist: function() {
+          const count = this.blacklistStorage.count();
+          
+          if (count === 0) {
+              alert('La liste noire est déjà vide.');
+              return;
+          }
+          
+          if (confirm(`Voulez-vous vraiment vider la liste noire ?\n(${count} entrée${count > 1 ? 's' : ''} sera${count > 1 ? 'ont' : ''} supprimée${count > 1 ? 's' : ''})`)) {
+              this.blacklistStorage.clear();
+              
+              // Mettre à jour l'interface
+              this.updateExportBadge();
+              
+              alert('Liste noire vidée avec succès.');
+              console.log('Liste noire vidée par l\'utilisateur');
+          }
       },
 
       createRawDataInfo: function(data) {
@@ -1101,11 +1213,19 @@ const InseeTools = {
           };
 
           displayDiv.innerHTML = `
-              <h4 class="mb-3">
-                <span class="user-select-none">Données de référence </span>
-                <span class="user-select-all">${data.blacklist.gwkey}</span>
-                <span class="user-select-none"> – Score ${data.title.score}</span>
-              </h4>
+              <div class="d-flex align-items-start">
+                  <h4 class="mb-3 flex-grow-1">
+                      <span class="user-select-none">Données de référence </span>
+                      <span class="user-select-all">${data.blacklist.gwkey}</span>
+                      <span class="user-select-none"> – Score ${data.title.score}</span>
+                  </h4>
+                  <button class="btn btn-sm btn-outline-danger ml-2" 
+                      onclick="InseeTools.form.clearBlacklist()"
+                      title="Effacer la liste noire accumulée"
+                      style="padding: 0.25rem 0.5rem; line-height: 1;">
+                      <i class="fa fa-x-mark"></i>
+                  </button>
+              </div>
 
        <div class="d-flex flex-wrap text-monospace">
             <div class="d-flex align-self-center align-self-lg-start mr-2 mr-lg-4">
@@ -1209,7 +1329,7 @@ const InseeTools = {
                       <div class="flex-grow-1"></div>
                   </div>
                   <div class="d-flex flex-column align-self-center ml-3">
-                      <button id="btn-blacklist-nonmatch" class="btn btn-outline-danger"
+                      <button id="btn-blacklist-nonmatch" class="btn btn-outline-danger" disabled
                           onclick="InseeTools.form.markNonMatch()"
                           title="Ajouter cette entrée Insee en liste noire pour cet individu">
                           <i class="fa fa-times"></i> Non-correspondance
@@ -1235,6 +1355,9 @@ const InseeTools = {
 
           // Setup click handlers
           this.setupDataReplacementHandlers();
+          
+          // Initialiser le badge du bouton d'export
+          this.updateExportBadge();
       },
 
       addCheckToSummary: function(targetId) {
