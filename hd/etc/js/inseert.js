@@ -309,17 +309,37 @@ const InseeTools = {
       },
 
       // Fonction de vérification pour les prénoms alias
+      // Retourne le numéro de l'alias en conflit, ou false si pas de conflit
       checkFirstNameAliasConflict: function() {
-          if (!this.inseeData) return false;
+          if (!this.inseeData || !this.inseeData.names.firstname) return false;
 
-          const aliasField = document.getElementById('first_name_alias0');
-          if (!aliasField || !aliasField.value) return false;
+          const normalizedInsee = this.inseeData.names.firstname
+              .toLowerCase()
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '');
 
-          // Normalisation simple: minuscules et suppression des accents
-          const normalizedAlias = aliasField.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          const normalizedInsee = this.inseeData.names.firstname.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          // Vérifier tous les champs de prénom alias (jusqu'à 20 pour être sûr)
+          for (let i = 0; i < 20; i++) {
+              const aliasField = document.getElementById(`first_name_alias${i}`);
+              
+              // Si le champ n'existe pas, on arrête la recherche
+              if (!aliasField) break;
+              
+              // Si le champ est vide, on continue
+              if (!aliasField.value) continue;
 
-          return normalizedAlias === normalizedInsee;
+              // Normalisation et comparaison
+              const normalizedAlias = aliasField.value
+                  .toLowerCase()
+                  .normalize('NFD')
+                  .replace(/[\u0300-\u036f]/g, '');
+
+              if (normalizedAlias === normalizedInsee) {
+                  return i; // Retourne le numéro de l'alias en conflit
+              }
+          }
+
+          return false; // Pas de conflit trouvé
       },
 
       processField: function(fieldType, onlyEmpty = false, event = null) {
@@ -347,9 +367,10 @@ const InseeTools = {
                   return false;
               }
 
-              // Vérifier si le prénom existe comme premier prénom alias
-              if (this.checkFirstNameAliasConflict()) {
-                 this.addAliasWarningBanner();
+              // Vérifier si le prénom existe comme prénom alias
+              const aliasConflict = this.checkFirstNameAliasConflict();
+              if (aliasConflict !== false) {
+                 this.addAliasWarningBanner(aliasConflict);
                  return true;
               }
               value = this.inseeData.names.firstname;
@@ -641,7 +662,8 @@ const InseeTools = {
       },
 
       // Ajoute un bandeau de warning si le prénom est déjà en prénom alias
-      addAliasWarningBanner: function() {
+      // aliasNumber: le numéro du champ alias en conflit (0, 1, 2, etc.)
+      addAliasWarningBanner: function(aliasNumber) {
           if (!document.getElementById('alias-warning') && this.inseeData?.names?.firstname) {
 
               const warningDiv = document.createElement('div');
@@ -649,7 +671,7 @@ const InseeTools = {
               warningDiv.className = 'alert alert-warning mt-2 mb-1';
               warningDiv.innerHTML = `<i class="fa fa-triangle-exclamation text-danger mr-1"></i>
                                      Prénom « ${this.inseeData.names.firstname} » ignoré car
-                                     déjà renseigné comme premier prénom alias.`;
+                                     déjà renseigné comme prénom alias ${aliasNumber}.`;
 
               const inseeDataDiv = document.querySelector('.insee-data');
               if (inseeDataDiv) {
@@ -759,9 +781,10 @@ const InseeTools = {
               return;
           }
 
-          // Cas spécial: ne pas remplacer le prénom si le même existe comme premier prénom alias
+          // Cas spécial: ne pas remplacer le prénom si le même existe comme prénom alias
           // mais marquer tout de même la ligne prénom validée
-          if (fieldType === 'firstname' && this.checkFirstNameAliasConflict()) {
+          const aliasConflict = this.checkFirstNameAliasConflict();
+          if (fieldType === 'firstname' && aliasConflict !== false) {
               console.log('Prénom ignoré car existe déjà comme prénom alias, marqué comme validé');
               this.updateVisualFeedback(fieldType);
               return;
