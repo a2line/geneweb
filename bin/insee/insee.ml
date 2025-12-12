@@ -1,8 +1,7 @@
 (* Copyright (c) 2019 Ludovic LEDIEU *)
 (* Updated by A2 and Claude in 2025 *)
 
-open Gwdb
-open Def
+module Driver = Geneweb_db.Driver
 
 let min_birth_year = ref 1870
 let nodate = ref false
@@ -30,24 +29,24 @@ let safe_printf fmt =
   let k _ = flush stdout in
   Printf.kfprintf k stdout fmt
 
-let is_living p = match get_death p with NotDead -> true | _ -> false
+let is_living p = match Driver.get_death p with NotDead -> true | _ -> false
 let has_date_info b_date d_date = b_date <> None || d_date <> None
 
 let has_useful_birth_info base p =
-  let has_place = sou base (get_birth_place p) <> "" in
+  let has_place = Driver.sou base (Driver.get_birth_place p) <> "" in
   let has_year =
-    match Date.od_of_cdate (get_birth p) with
-    | Some (Dgreg (d, _)) -> true
+    match Date.od_of_cdate (Driver.get_birth p) with
+    | Some (Dgreg (_, _)) -> true
     | _ -> false
   in
   has_place || has_year
 
 let has_useful_death_info base p =
-  let has_place = sou base (get_death_place p) <> "" in
+  let has_place = Driver.sou base (Driver.get_death_place p) <> "" in
   let has_year =
-    match get_death p with
+    match Driver.get_death p with
     | Death (_, cd) -> (
-        match Date.date_of_cdate cd with Dgreg (d, _) -> true | _ -> false)
+        match Date.date_of_cdate cd with Dgreg (_, _) -> true | _ -> false)
     | _ -> false
   in
   has_place || has_year
@@ -57,15 +56,15 @@ let estimate_period base p =
   let parent_limit = birth_limit - 40 in
   let marriage_limit = birth_limit + 16 in
   let has_recent_parents =
-    match get_parents p with
+    match Driver.get_parents p with
     | Some ifam -> (
-        let cpl = foi base ifam in
-        let father = poi base (get_father cpl) in
-        let mother = poi base (get_mother cpl) in
-        match Date.od_of_cdate (get_birth father) with
+        let cpl = Driver.foi base ifam in
+        let father = Driver.poi base (Driver.get_father cpl) in
+        let mother = Driver.poi base (Driver.get_mother cpl) in
+        match Date.od_of_cdate (Driver.get_birth father) with
         | Some (Dgreg (d, _)) when d.year > parent_limit -> true
         | _ -> (
-            match Date.od_of_cdate (get_birth mother) with
+            match Date.od_of_cdate (Driver.get_birth mother) with
             | Some (Dgreg (d, _)) when d.year > parent_limit -> true
             | _ -> false))
     | None -> false
@@ -74,25 +73,25 @@ let estimate_period base p =
   let has_recent_spouse =
     Array.exists
       (fun ifam ->
-        let cpl = foi base ifam in
+        let cpl = Driver.foi base ifam in
         let spouse =
-          if get_iper p = get_father cpl then poi base (get_mother cpl)
-          else poi base (get_father cpl)
+          if Driver.get_iper p = Driver.get_father cpl then Driver.poi base (Driver.get_mother cpl)
+          else Driver.poi base (Driver.get_father cpl)
         in
-        match Date.od_of_cdate (get_birth spouse) with
+        match Date.od_of_cdate (Driver.get_birth spouse) with
         | Some (Dgreg (d, _)) when d.year > birth_limit -> true
         | _ -> false)
-      (get_family p)
+      (Driver.get_family p)
   in
 
   let has_recent_marriage =
     Array.exists
       (fun ifam ->
-        let fam = foi base ifam in
-        match Date.od_of_cdate (get_marriage fam) with
+        let fam = Driver.foi base ifam in
+        match Date.od_of_cdate (Driver.get_marriage fam) with
         | Some (Dgreg (d, _)) when d.year > marriage_limit -> true
         | _ -> false)
-      (get_family p)
+      (Driver.get_family p)
   in
 
   has_recent_parents || has_recent_spouse || has_recent_marriage
@@ -138,33 +137,33 @@ let check_insee base =
   exported_with_birth := 0;
   exported_with_death := 0;
   exported_nodate := 0;
-  Gwdb.Collection.iteri
-    (fun i p ->
+  Geneweb_db.Collection.iteri
+    (fun _ p ->
       incr total_processed;
       let b_date =
-        match Date.od_of_cdate (get_birth p) with
+        match Date.od_of_cdate (Driver.get_birth p) with
         | Some (Dgreg (d, _)) -> Some d
         | _ -> None
       in
       let d_date =
-        match get_death p with
+        match Driver.get_death p with
         | Death (_, cd) -> (
             match Date.date_of_cdate cd with
             | Dgreg (d, _) -> Some d
             | _ -> None)
         | _ -> None
       in
-      let sn = my_uppercase (p_surname base p) in
-      let fn = my_uppercase (p_first_name base p) in
-      let s = match get_sex p with Male -> 1 | Female -> 2 | _ -> 0 in
-      let b_place = sou base (get_birth_place p) in
-      let d_place = sou base (get_death_place p) in
+      let sn = my_uppercase (Driver.p_surname base p) in
+      let fn = my_uppercase (Driver.p_first_name base p) in
+      let s = match Driver.get_sex p with Male -> 1 | Female -> 2 | _ -> 0 in
+      let b_place = Driver.sou base (Driver.get_birth_place p) in
+      let d_place = Driver.sou base (Driver.get_death_place p) in
       let key =
-        sou base (get_first_name p)
+        Driver.sou base (Driver.get_first_name p)
         ^ "."
-        ^ string_of_int (get_occ p)
+        ^ string_of_int (Driver.get_occ p)
         ^ " "
-        ^ sou base (get_surname p)
+        ^ Driver.sou base (Driver.get_surname p)
       in
       let check =
         if !nodate_only then
@@ -241,7 +240,7 @@ let check_insee base =
                 safe_printf "%s|%s|%d|00|00|0000|%s|00|00|0000|%s|%s\n" sn fn s
                   b_place d_place key
             | _ -> ()))
-    (Gwdb.persons base)
+    (Driver.persons base)
 
 (* main *)
 let usage_msg = "Usage: insee [-bd basedir] [-nodate] [-all] basename\n"
@@ -300,33 +299,43 @@ let anon_fun s =
   else raise (Arg.Bad "Cannot treat several databases")
 
 (* Main execution *)
-let () =
-  try
-    Arg.parse speclist anon_fun "Usage: insee [-bd basedir] basename";
-    let full_path =
-      if !base_name = "" then (
-        Arg.usage speclist "Usage: insee [-bd basedir] basename";
-        exit 2)
-      else if Filename.check_suffix !base_name ".gwb" then
-        Filename.concat !base_dir !base_name
-      else Filename.concat !base_dir (!base_name ^ ".gwb")
-    in
-    Secure.set_base_dir (Filename.dirname full_path);
-    let base = Gwdb.open_base full_path in
-    load_strings_array base;
-    check_insee base;
-    (* Print statistics here, before any potential exit *)
-    Printf.eprintf "Processing Statistics:\n%!";
-    (* Added %! to flush output *)
-    Printf.eprintf "Total individuals processed: %d\n%!" !total_processed;
-    Printf.eprintf "Total individuals exported: %d\n%!" !total_exported;
-    Printf.eprintf "  - With birth data: %d\n%!" !exported_with_birth;
-    Printf.eprintf "  - With death data: %d\n%!" !exported_with_death;
-    Printf.eprintf "  - From nodate criteria: %d\n%!" !exported_nodate;
-    Printf.eprintf "Export mode: %s\n%!"
-      (if !nodate_only then "Nodate only"
-      else if !nodate then "Including nodate"
-      else "Standard")
+let main () =
+  Secure.set_base_dir ".";
+  Arg.parse speclist anon_fun "Usage: insee [-bd basedir] basename";
+  let bname = 
+    if !base_name = "" then (
+      Arg.usage speclist "Usage: insee [-bd basedir] basename";
+      exit 2)
+    else 
+      let full_path = 
+        if Filename.check_suffix !base_name ".gwb" then
+          Filename.concat !base_dir !base_name
+        else 
+          Filename.concat !base_dir (!base_name ^ ".gwb")
+      in
+      (* Update base_dir security context if needed *)
+      if !base_dir <> "." then Secure.set_base_dir !base_dir;
+      Filename.concat (Secure.base_dir ()) (Filename.basename full_path)
+  in
+  
+  Driver.with_database bname @@ fun base ->
+  Driver.load_strings_array base;
+  check_insee base;
+  
+  (* Print statistics INSIDE the callback, before base is closed *)
+  Printf.eprintf "Processing Statistics:\n%!";
+  Printf.eprintf "Total individuals processed: %d\n%!" !total_processed;
+  Printf.eprintf "Total individuals exported: %d\n%!" !total_exported;
+  Printf.eprintf "  - With birth data: %d\n%!" !exported_with_birth;
+  Printf.eprintf "  - With death data: %d\n%!" !exported_with_death;
+  Printf.eprintf "  - From nodate criteria: %d\n%!" !exported_nodate;
+  Printf.eprintf "Export mode: %s\n%!"
+    (if !nodate_only then "Nodate only"
+    else if !nodate then "Including nodate"
+    else "Standard")
+
+let () = 
+  try main ()
   with e ->
     Printf.eprintf "Error: %s\n" (Printexc.to_string e);
     exit 1

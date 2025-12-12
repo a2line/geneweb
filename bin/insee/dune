@@ -1,0 +1,6 @@
+(executable
+ (package geneweb)
+ (name insee)
+ (public_name geneweb.insee)
+ (modules insee)
+ (libraries unix str uutf geneweb))
