@@ -18,6 +18,12 @@ const FIELD_IDS = {
     'death-source': { displayId: 'death-source-line', inputPrefix: 'e_src' }
 };
 
+// Fonction utilitaire pour vérifier si on est sur une base Henri
+const isHenriDatabase = () => {
+    const url = window.location.href.toLowerCase();
+    return url.includes('chausey') || url.includes('henri');
+};
+
 const InseeTools = {
   // Storage manager - simple key-value storage for INSEE data
   storage: {
@@ -342,6 +348,25 @@ const InseeTools = {
           return false; // Pas de conflit trouvé
       },
 
+      // Trouve le premier champ prénom alias vide
+      // Retourne l'élément du champ ou null si aucun n'est disponible
+      findFirstEmptyAliasField: function() {
+          // Chercher jusqu'à 20 champs prénom alias
+          for (let i = 0; i < 20; i++) {
+              const aliasField = document.getElementById(`first_name_alias${i}`);
+              
+              // Si le champ n'existe pas, on arrête
+              if (!aliasField) break;
+              
+              // Si le champ est vide, on le retourne
+              if (!aliasField.value || aliasField.value.trim() === '') {
+                  return aliasField;
+              }
+          }
+          
+          return null; // Aucun champ vide trouvé
+      },
+
       processField: function(fieldType, onlyEmpty = false, event = null) {
           // Verify INSEE data exists first
           if (!this.inseeData) {
@@ -373,6 +398,32 @@ const InseeTools = {
                  this.addAliasWarningBanner(aliasConflict);
                  return true;
               }
+
+              // Cas spécial Henri : insérer dans le premier prénom alias vide
+              if (isHenriDatabase()) {
+                  const emptyAliasField = this.findFirstEmptyAliasField();
+                  if (emptyAliasField) {
+                      // Insérer la valeur INSEE dans le champ alias avec capitalisation
+                      emptyAliasField.value = this.handleNameCase(
+                          this.inseeData.names.firstname, 
+                          'first_name' // On utilise la même règle de capitalisation que pour le prénom
+                      );
+                      
+                      // Afficher le message d'information
+                      this.addAliasWarningBanner('henri-inserted');
+                      
+                      // Marquer visuellement comme validé
+                      this.updateVisualFeedback('firstname');
+                      
+                      console.log(`Prénom INSEE inséré dans ${emptyAliasField.id} pour base Henri`);
+                      return true;
+                  } else {
+                      console.warn('Aucun champ prénom alias vide disponible');
+                      // On continue avec le comportement normal si aucun champ n'est disponible
+                  }
+              }
+
+              // Comportement normal : remplir le champ prénom principal
               value = this.inseeData.names.firstname;
               targetId = 'first_name';
           }
@@ -663,23 +714,36 @@ const InseeTools = {
 
       // Ajoute un bandeau de warning si le prénom est déjà en prénom alias
       // aliasNumber: le numéro du champ alias en conflit (0, 1, 2, etc.)
+      // OU 'henri-inserted' pour indiquer une insertion dans un champ alias (cas Henri)
       addAliasWarningBanner: function(aliasNumber) {
-          if (!document.getElementById('alias-warning') && this.inseeData?.names?.firstname) {
+          if (document.getElementById('alias-warning')) return; // Éviter les doublons
+          
+          if (!this.inseeData?.names?.firstname) return;
 
-              const warningDiv = document.createElement('div');
-              warningDiv.id = 'alias-warning';
+          const warningDiv = document.createElement('div');
+          warningDiv.id = 'alias-warning';
+          
+          // Cas spécial Henri : insertion dans prénom alias
+          if (aliasNumber === 'henri-inserted') {
+              warningDiv.className = 'alert alert-info mt-2 mb-1';
+              warningDiv.innerHTML = `<i class="fa fa-info-circle text-info mr-1"></i>
+                                     Prénom « ${this.inseeData.names.firstname} » ajouté en prénom alias 
+                                     (prénom d'usage conservé).`;
+          } 
+          // Cas normal : conflit détecté
+          else {
               warningDiv.className = 'alert alert-warning mt-2 mb-1';
               warningDiv.innerHTML = `<i class="fa fa-triangle-exclamation text-danger mr-1"></i>
                                      Prénom « ${this.inseeData.names.firstname} » ignoré car
                                      déjà renseigné comme prénom alias ${aliasNumber}.`;
-
-              const inseeDataDiv = document.querySelector('.insee-data');
-              if (inseeDataDiv) {
-                  inseeDataDiv.after(warningDiv);
-              }
-
-              this.updateVisualFeedback('firstname');
           }
+
+          const inseeDataDiv = document.querySelector('.insee-data');
+          if (inseeDataDiv) {
+              inseeDataDiv.after(warningDiv);
+          }
+
+          this.updateVisualFeedback('firstname');
       },
 
       fillFields: function(onlyEmpty = false) {
