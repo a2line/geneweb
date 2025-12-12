@@ -75,7 +75,8 @@ let estimate_period base p =
       (fun ifam ->
         let cpl = Driver.foi base ifam in
         let spouse =
-          if Driver.get_iper p = Driver.get_father cpl then Driver.poi base (Driver.get_mother cpl)
+          if Driver.get_iper p = Driver.get_father cpl then
+            Driver.poi base (Driver.get_mother cpl)
           else Driver.poi base (Driver.get_father cpl)
         in
         match Date.od_of_cdate (Driver.get_birth spouse) with
@@ -202,14 +203,14 @@ let check_insee base =
                   (if bd.prec = Sure || bd.prec = Maybe then bd.day else 0)
                   (if bd.prec = Sure || bd.prec = Maybe then bd.month else 0)
                   (if bd.prec = Sure || bd.prec = About || bd.prec = Maybe then
-                   bd.year
-                  else 0)
+                     bd.year
+                   else 0)
                   b_place
                   (if dd.prec = Sure || dd.prec = Maybe then dd.day else 0)
                   (if dd.prec = Sure || dd.prec = Maybe then dd.month else 0)
                   (if dd.prec = Sure || dd.prec = About || dd.prec = Maybe then
-                   dd.year
-                  else 0)
+                     dd.year
+                   else 0)
                   d_place key
             | None ->
                 safe_printf "%s|%s|%d|%02d|%02d|%04d|%s|00|00|0000|%s|%s\n" sn
@@ -217,8 +218,8 @@ let check_insee base =
                   (if bd.prec = Sure || bd.prec = Maybe then bd.day else 0)
                   (if bd.prec = Sure || bd.prec = Maybe then bd.month else 0)
                   (if bd.prec = Sure || bd.prec = About || bd.prec = Maybe then
-                   bd.year
-                  else 0)
+                     bd.year
+                   else 0)
                   b_place d_place key)
       | None -> (
           if check then
@@ -231,8 +232,8 @@ let check_insee base =
                   (if dd.prec = Sure || dd.prec = Maybe then dd.day else 0)
                   (if dd.prec = Sure || dd.prec = Maybe then dd.month else 0)
                   (if dd.prec = Sure || dd.prec = About || dd.prec = Maybe then
-                   dd.year
-                  else 0)
+                     dd.year
+                   else 0)
                   d_place key
             | None when !nodate && (is_living p || estimate_period base p) ->
                 incr exported_nodate;
@@ -302,26 +303,25 @@ let anon_fun s =
 let main () =
   Secure.set_base_dir ".";
   Arg.parse speclist anon_fun "Usage: insee [-bd basedir] basename";
-  let bname = 
+  let bname =
     if !base_name = "" then (
       Arg.usage speclist "Usage: insee [-bd basedir] basename";
       exit 2)
-    else 
-      let full_path = 
+    else
+      let full_path =
         if Filename.check_suffix !base_name ".gwb" then
           Filename.concat !base_dir !base_name
-        else 
-          Filename.concat !base_dir (!base_name ^ ".gwb")
+        else Filename.concat !base_dir (!base_name ^ ".gwb")
       in
       (* Update base_dir security context if needed *)
       if !base_dir <> "." then Secure.set_base_dir !base_dir;
       Filename.concat (Secure.base_dir ()) (Filename.basename full_path)
   in
-  
+
   Driver.with_database bname @@ fun base ->
   Driver.load_strings_array base;
   check_insee base;
-  
+
   (* Print statistics INSIDE the callback, before base is closed *)
   Printf.eprintf "Processing Statistics:\n%!";
   Printf.eprintf "Total individuals processed: %d\n%!" !total_processed;
@@ -331,10 +331,10 @@ let main () =
   Printf.eprintf "  - From nodate criteria: %d\n%!" !exported_nodate;
   Printf.eprintf "Export mode: %s\n%!"
     (if !nodate_only then "Nodate only"
-    else if !nodate then "Including nodate"
-    else "Standard")
+     else if !nodate then "Including nodate"
+     else "Standard")
 
-let () = 
+let () =
   try main ()
   with e ->
     Printf.eprintf "Error: %s\n" (Printexc.to_string e);
