@@ -1,4 +1,4 @@
-name: Geneweb Release (legacy)
+name: Geneweb Release
 
 on:
   push:
@@ -27,19 +27,19 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            ocaml-version: ocaml-variants.4.14.2+options,ocaml-option-nnp
+            ocaml-version: 5.4.0
             platform: macos-arm64
             is-unix: true
           - os: macos-15-intel
-            ocaml-version: ocaml-variants.4.14.2+options,ocaml-option-nnp
+            ocaml-version: 5.4.0
             platform: macos-intel
             is-unix: true
           - os: ubuntu-latest
-            ocaml-version: ocaml-variants.4.14.2+options,ocaml-option-nnp
+            ocaml-version: 5.4.0
             platform: linux
             is-unix: true
           - os: windows-latest
-            ocaml-version: 4.14.2
+            ocaml-version: 5.4.0
             platform: windows
             is-unix: false
 
@@ -65,15 +65,13 @@ jobs:
           rm -f _opam/bin/i686-w64-mingw32-gcc.exe || true
 
       - name: Install dependencies
-        shell: bash
         run: |
           opam install ./geneweb.opam --deps-only --with-test
-          opam install ${{ matrix.is-unix && 'ancient' || '' }}
+          opam install zarith ${{ matrix.is-unix && 'ancient' || '' }}
 
       - name: Configure and build Geneweb
-        shell: bash
         run: |
-          opam exec -- ocaml ./configure.ml --sosa-legacy --gwdb-legacy ${{ matrix.is-unix && '--gwd-caching' || '' }}
+          opam exec -- ocaml ./configure.ml ${{ matrix.is-unix && '--sosa-zarith --gwd-caching' || '' }}
           opam exec -- make distrib
 
       - name: Create release archive
@@ -89,8 +87,8 @@ jobs:
             VERSION="dev"
           fi
           
-          # Build versioned archive name with legacy suffix
-          VERSIONED_ARCHIVE="geneweb-${VERSION}-${{ matrix.platform }}-legacy.zip"
+          # Build versioned archive name
+          VERSIONED_ARCHIVE="geneweb-${VERSION}-${{ matrix.platform }}.zip"
           
           if [[ "$RUNNER_OS" == "Windows" ]]; then
             7z a -tzip "../${VERSIONED_ARCHIVE}" * -mx=9
@@ -110,14 +108,14 @@ jobs:
           draft: false
           name: "GeneWeb ${{ env.VERSION }}"
           body: |
-            ## GeneWeb ${{ env.VERSION }} - Legacy Build
+            ## GeneWeb ${{ env.VERSION }}
             
-            **Download the appropriate legacy version for your platform:**
+            **Download the appropriate version for your platform:**
             
-            - **Linux**: `geneweb-${{ env.VERSION }}-linux-legacy.zip`
-            - **macOS (Apple Silicon)**: `geneweb-${{ env.VERSION }}-macos-arm64-legacy.zip`
-            - **macOS (Intel)**: `geneweb-${{ env.VERSION }}-macos-intel-legacy.zip`
-            - **Windows**: `geneweb-${{ env.VERSION }}-windows-legacy.zip`
+            - **Linux**: `geneweb-${{ env.VERSION }}-linux.zip`
+            - **macOS (Apple Silicon)**: `geneweb-${{ env.VERSION }}-macos-arm64.zip`
+            - **macOS (Intel)**: `geneweb-${{ env.VERSION }}-macos-intel.zip`
+            - **Windows**: `geneweb-${{ env.VERSION }}-windows.zip`
             
             ### Installation
             
@@ -128,8 +126,6 @@ jobs:
             For more information, see the [documentation](https://geneweb.tuxfamily.org/wiki/GeneWeb).
             
             ---
-            
-            Built with OCaml 4.14.2 for maximum compatibility
             
             ${{ contains(env.VERSION, 'a') && '⚠️ **Alpha release** - Not for production use' || '' }}
             ${{ contains(env.VERSION, 'b') && '⚠️ **Beta release** - Testing recommended' || '' }}
