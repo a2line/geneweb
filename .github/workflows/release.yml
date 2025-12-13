@@ -3,70 +3,102 @@ name: release
 on:
   push:
     tags:
-      - v**
+      - v**        # Vraies releases
+      - test-v**   # Releases de test
+  workflow_dispatch:
+    inputs:
+      prerelease:
+        description: 'Mark as pre-release (for testing)'
+        required: false
+        type: boolean
+        default: true
 
 env:
   DUNE_PROFILE: "release"
+  OPAMYES: true
 
 jobs:
-
   release:
-
     strategy:
-
       fail-fast: false
-
       matrix:
-
         include:
           - os: macos-latest
-            ocaml-version: 4.14.x
-            geneweb-archive: geneweb-macos.zip
+            ocaml-version: 5.4.0
+            archive-name: geneweb-macos.zip
+            use-ancient: true
           - os: ubuntu-latest
-            ocaml-version: 4.14.x
-            geneweb-archive: geneweb-linux.zip
+            ocaml-version: 5.4.0
+            archive-name: geneweb-linux.zip
+            use-ancient: true
           - os: windows-latest
-            ocaml-version: 4.14.x
-            geneweb-archive: geneweb-windows.zip
+            ocaml-version: 5.4.0
+            archive-name: geneweb-windows.zip
+            use-ancient: false
 
     runs-on: ${{ matrix.os }}
 
     steps:
-
-      - name: checkout
+      - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
-      - name: setup-ocaml
-        uses: ocaml/setup-ocaml@v2
+      - name: Cache Opam dependencies (Unix)
+        id: cache-opam-unix
+        if: runner.os != 'Windows'
+        uses: actions/cache@v5
+        with:
+          path: ~/.opam
+          key: ${{ runner.os }}-release-${{ matrix.ocaml-version }}-${{ hashFiles('*.opam') }}
+          restore-keys: |
+            ${{ runner.os }}-release-${{ matrix.ocaml-version }}-
+
+      - name: Cache Opam dependencies (Windows)
+        id: cache-opam-windows
+        if: runner.os == 'Windows'
+        uses: actions/cache@v5
+        with:
+          path: D:\.opam
+          key: windows-release-${{ matrix.ocaml-version }}-${{ hashFiles('*.opam') }}
+          restore-keys: |
+            windows-release-${{ matrix.ocaml-version }}-
+
+      - name: Setup OCaml
+        uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: ${{ matrix.ocaml-version }}
 
-      - name: setup
+      - name: Install dependencies
+        run: opam install . --deps-only --with-test
+
+      - name: Install zarith
+        run: opam install zarith
+
+      - name: Install ancient (Unix with NNP)
+        if: matrix.use-ancient
+        run: opam install ancient
+
+      - name: Configure Geneweb
+        run: opam exec -- ocaml ./configure.ml --sosa-zarith ${{ matrix.use-ancient && '--gwd-caching' || '' }}
+
+      - name: Build distribution
+        run: opam exec -- make distrib
+
+      - name: Create release archive
+        shell: bash
+        working-directory: distribution
         run: |
-          opam install dune ocamlformat.0.27.0
-          opam exec -- dune build @fmt
-          opam pin add . -y --no-action
-          opam depext -y geneweb
-          opam install -y . --deps-only --with-test
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            7z a -tzip ../${{ matrix.archive-name }} * -mx=9
+          else
+            zip -r ../${{ matrix.archive-name }} *
+          fi
 
-      # Build the distribution
-      - name: Build the distribution
-        run: |
-          opam exec -- ocaml ./configure.ml --sosa-legacy --gwdb-legacy
-          opam exec -- make distrib
-
-      # Archive distribution for release
-      - name: Archive Release
-        uses: thedoctor0/zip-release@0.7.6
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          type: zip
-          filename: ${{ matrix.geneweb-archive }}
-          directory: distribution
-
-      # Upload the distribution
-      - name: Upload distribution to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: distribution/${{ matrix.geneweb-archive }}
-          tag: ${{ github.ref }}
+          files: ${{ matrix.archive-name }}
+          fail_on_unmatched_files: true
+          prerelease: ${{ startsWith(github.ref, 'refs/tags/test-') || (github.event_name == 'workflow_dispatch' && inputs.prerelease) }}
+          draft: false
