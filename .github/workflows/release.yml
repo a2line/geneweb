@@ -1,17 +1,20 @@
-name: release
+name: Geneweb release
 
 on:
   push:
     tags:
-      - v**        # Vraies releases
-      - test-v**   # Releases de test
+      - v*
   workflow_dispatch:
     inputs:
       prerelease:
-        description: 'Mark as pre-release (for testing)'
+        description: 'Pre-release'
         required: false
         type: boolean
         default: true
+      tag_name:
+        description: 'Tag name'
+        required: false
+        type: string
 
 env:
   DUNE_PROFILE: "release"
@@ -25,15 +28,19 @@ jobs:
         include:
           - os: macos-latest
             ocaml-version: 5.4.0
-            archive-name: geneweb-macos.zip
+            platform: macos-arm64
+            use-ancient: true
+          - os: macos-15-intel
+            ocaml-version: 5.4.0
+            platform: macos-intel
             use-ancient: true
           - os: ubuntu-latest
             ocaml-version: 5.4.0
-            archive-name: geneweb-linux.zip
+            platform: linux
             use-ancient: true
           - os: windows-latest
             ocaml-version: 5.4.0
-            archive-name: geneweb-windows.zip
+            platform: windows
             use-ancient: false
 
     runs-on: ${{ matrix.os }}
@@ -44,61 +51,85 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Cache Opam dependencies (Unix)
-        id: cache-opam-unix
-        if: runner.os != 'Windows'
-        uses: actions/cache@v5
-        with:
-          path: ~/.opam
-          key: ${{ runner.os }}-release-${{ matrix.ocaml-version }}-${{ hashFiles('*.opam') }}
-          restore-keys: |
-            ${{ runner.os }}-release-${{ matrix.ocaml-version }}-
-
-      - name: Cache Opam dependencies (Windows)
-        id: cache-opam-windows
-        if: runner.os == 'Windows'
-        uses: actions/cache@v5
-        with:
-          path: D:\.opam
-          key: windows-release-${{ matrix.ocaml-version }}-${{ hashFiles('*.opam') }}
-          restore-keys: |
-            windows-release-${{ matrix.ocaml-version }}-
-
       - name: Setup OCaml
         uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: ${{ matrix.ocaml-version }}
 
+      - name: Install Perl dependencies and remove locked mingw gcc shim (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          cpan -j .github/ci-config/cpan-config.pm -T -f -i String::ShellQuote IPC::System::Simple;
+          rm -f _opam/bin/x86_64-w64-mingw32-gcc.exe || true
+          rm -f _opam/bin/i686-w64-mingw32-gcc.exe || true
+
       - name: Install dependencies
-        run: opam install . --deps-only --with-test
+        run: |
+          opam install ./geneweb.opam --deps-only --with-test
+          opam install zarith ${{ matrix.use-ancient && 'ancient' || '' }}
 
-      - name: Install zarith
-        run: opam install zarith
-
-      - name: Install ancient (Unix with NNP)
-        if: matrix.use-ancient
-        run: opam install ancient
-
-      - name: Configure Geneweb
-        run: opam exec -- ocaml ./configure.ml --sosa-zarith ${{ matrix.use-ancient && '--gwd-caching' || '' }}
-
-      - name: Build distribution
-        run: opam exec -- make distrib
+      - name: Configure and build Geneweb
+        run: |
+          opam exec -- ocaml ./configure.ml --sosa-zarith ${{ matrix.use-ancient && '--gwd-caching' || '' }}
+          opam exec -- make distrib
 
       - name: Create release archive
         shell: bash
         working-directory: distribution
         run: |
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            7z a -tzip ../${{ matrix.archive-name }} * -mx=9
+          # Extract version from tag
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ inputs.tag_name || 'manual' }}"
+          elif [[ "${{ github.ref }}" =~ ^refs/tags/(.*)$ ]]; then
+            VERSION="${BASH_REMATCH[1]}"
           else
-            zip -r ../${{ matrix.archive-name }} *
+            VERSION="dev"
           fi
+          
+          # Build versioned archive name
+          VERSIONED_ARCHIVE="geneweb-${VERSION}-${{ matrix.platform }}.zip"
+          
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            7z a -tzip "../${VERSIONED_ARCHIVE}" * -mx=9
+          else
+            zip -9 -r "../${VERSIONED_ARCHIVE}" *
+          fi
+          
+          echo "VERSIONED_ARCHIVE=${VERSIONED_ARCHIVE}" >> $GITHUB_ENV
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ matrix.archive-name }}
+          files: ${{ env.VERSIONED_ARCHIVE }}
           fail_on_unmatched_files: true
-          prerelease: ${{ startsWith(github.ref, 'refs/tags/test-') || (github.event_name == 'workflow_dispatch' && inputs.prerelease) }}
+          # Auto-détection prerelease
+          prerelease: ${{ (github.event_name == 'workflow_dispatch' && inputs.prerelease) || contains(github.ref_name, 'a') || contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') || contains(github.ref_name, 'dev') }}
           draft: false
+          # Description de la release
+          name: "GeneWeb ${{ env.VERSION }}"
+          body: |
+            ## GeneWeb ${{ env.VERSION }}
+            
+            **Download the appropriate version for your platform:**
+            
+            - **Linux**: `geneweb-${{ env.VERSION }}-linux.zip`
+            - **macOS (Apple Silicon)**: `geneweb-${{ env.VERSION }}-macos-arm64.zip`
+            - **macOS (Intel)**: `geneweb-${{ env.VERSION }}-macos-intel.zip`
+            - **Windows**: `geneweb-${{ env.VERSION }}-windows.zip`
+            
+            ### Installation
+            
+            1. Download the appropriate archive for your system
+            2. Extract the archive
+            3. Run `./gwd` (Unix) or `gwd.exe` (Windows)
+            
+            For more information, see the [documentation](https://geneweb.tuxfamily.org/wiki/GeneWeb).
+            
+            ---
+            
+            Built with OCaml 5.4.0
+            ${{ contains(env.VERSION, 'a') && '⚠️ **Alpha release** - Not for production use' || '' }}
+            ${{ contains(env.VERSION, 'b') && '⚠️ **Beta release** - Testing recommended' || '' }}
+            ${{ contains(env.VERSION, 'rc') && '✅ **Release Candidate** - Production ready pending final validation' || '' }}
