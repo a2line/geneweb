@@ -28,11 +28,35 @@ const InseeTools = {
   // Storage manager - simple key-value storage for INSEE data
   storage: {
       save: function(key, data) {
+          console.log('💾 Storage SAVE:', {
+              key: key,
+              origin: window.location.origin,
+              hasData: !!data
+          });
+          
           localStorage.setItem(key, JSON.stringify(data));
+          
+          // Vérification immédiate
+          const verification = localStorage.getItem(key);
+          console.log('💾 Storage SAVE verification:', {
+              saved: verification !== null,
+              storageLength: localStorage.length
+          });
       },
 
       load: function(key) {
+          console.log('📖 Storage LOAD:', {
+              key: key,
+              origin: window.location.origin,
+              storageLength: localStorage.length
+          });
+          
           const data = localStorage.getItem(key);
+          
+          console.log('📖 Storage LOAD result:', {
+              found: data !== null
+          });
+          
           return data ? JSON.parse(data) : null;
       }
   },
