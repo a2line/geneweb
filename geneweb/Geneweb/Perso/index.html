@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Perso (geneweb.Geneweb.Perso)</title><meta charset="utf-8"/><link rel="stylesheet" href="../../../odoc.support/odoc.css"/><meta name="generator" content="odoc 3.1.0"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script src="../../../odoc.support/highlight.pack.js"></script><script>hljs.initHighlightingOnLoad();</script></head><body class="odoc"><nav class="odoc-nav"><a href="../index.html">Up</a> – <a href="../../../index.html">Index</a> &#x00BB; <a href="../../index.html">geneweb</a> &#x00BB; <a href="../index.html">Geneweb</a> &#x00BB; Perso</nav><header class="odoc-preamble"><h1>Module <code><span>Geneweb.Perso</span></code></h1></header><div class="odoc-content"><div class="odoc-spec"><div class="spec type anchored" id="type-generation_person"><a href="#type-generation_person" class="anchor"></a><code><span><span class="keyword">type</span> generation_person</span><span> = </span></code><ol><li id="type-generation_person.GP_person" class="def variant constructor anchored"><a href="#type-generation_person.GP_person" class="anchor"></a><code><span>| </span><span><span class="constructor">GP_person</span> <span class="keyword">of</span> <a href="../../Geneweb_sosa/index.html#type-t">Geneweb_sosa.t</a>
+  * <a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a>
+  * <span><a href="../../Geneweb_db/Driver/index.html#type-ifam">Geneweb_db.Driver.ifam</a> option</span></span></code></li><li id="type-generation_person.GP_same" class="def variant constructor anchored"><a href="#type-generation_person.GP_same" class="anchor"></a><code><span>| </span><span><span class="constructor">GP_same</span> <span class="keyword">of</span> <a href="../../Geneweb_sosa/index.html#type-t">Geneweb_sosa.t</a> * <a href="../../Geneweb_sosa/index.html#type-t">Geneweb_sosa.t</a> * <a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a></span></code></li><li id="type-generation_person.GP_interv" class="def variant constructor anchored"><a href="#type-generation_person.GP_interv" class="anchor"></a><code><span>| </span><span><span class="constructor">GP_interv</span> <span class="keyword">of</span> <span><span>(<a href="../../Geneweb_sosa/index.html#type-t">Geneweb_sosa.t</a>
+              * <a href="../../Geneweb_sosa/index.html#type-t">Geneweb_sosa.t</a>
+              * <span><span>(<a href="../../Geneweb_sosa/index.html#type-t">Geneweb_sosa.t</a> * <a href="../../Geneweb_sosa/index.html#type-t">Geneweb_sosa.t</a>)</span> option</span>)</span>
+               option</span></span></code></li><li id="type-generation_person.GP_missing" class="def variant constructor anchored"><a href="#type-generation_person.GP_missing" class="anchor"></a><code><span>| </span><span><span class="constructor">GP_missing</span> <span class="keyword">of</span> <a href="../../Geneweb_sosa/index.html#type-t">Geneweb_sosa.t</a> * <a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a></span></code></li></ol></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-string_of_marriage_text"><a href="#val-string_of_marriage_text" class="anchor"></a><code><span><span class="keyword">val</span> string_of_marriage_text : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-family">Geneweb_db.Driver.family</a> <span class="arrow">&#45;&gt;</span></span>
+  <a href="../../Adef/index.html#type-safe_string">Adef.safe_string</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-interp_templ"><a href="#val-interp_templ" class="anchor"></a><code><span><span class="keyword">val</span> interp_templ : 
+  <span><span class="optlabel">?no_headers</span>:bool <span class="arrow">&#45;&gt;</span></span>
+  <span>string <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  unit</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-interp_templ_with_menu"><a href="#val-interp_templ_with_menu" class="anchor"></a><code><span><span class="keyword">val</span> interp_templ_with_menu : 
+  <span><span>(<span>bool <span class="arrow">&#45;&gt;</span></span> unit)</span> <span class="arrow">&#45;&gt;</span></span>
+  <span>string <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  unit</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-interp_notempl_with_menu"><a href="#val-interp_notempl_with_menu" class="anchor"></a><code><span><span class="keyword">val</span> interp_notempl_with_menu : 
+  <span><span>(<span>bool <span class="arrow">&#45;&gt;</span></span> unit)</span> <span class="arrow">&#45;&gt;</span></span>
+  <span>string <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  unit</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-print"><a href="#val-print" class="anchor"></a><code><span><span class="keyword">val</span> print : 
+  <span><span class="optlabel">?no_headers</span>:bool <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  unit</span></code></div><div class="spec-doc"><p>Displays the HTML page of a Geneweb_db.Driver.person</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-get_linked_page"><a href="#val-get_linked_page" class="anchor"></a><code><span><span class="keyword">val</span> get_linked_page : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span>string <span class="arrow">&#45;&gt;</span></span>
+  <a href="../../Adef/index.html#type-safe_string">Adef.safe_string</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-get_birth_text"><a href="#val-get_birth_text" class="anchor"></a><code><span><span class="keyword">val</span> get_birth_text : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span>bool <span class="arrow">&#45;&gt;</span></span>
+  <a href="../../Adef/index.html#type-safe_string">Adef.safe_string</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-get_baptism_text"><a href="#val-get_baptism_text" class="anchor"></a><code><span><span class="keyword">val</span> get_baptism_text : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span>bool <span class="arrow">&#45;&gt;</span></span>
+  <a href="../../Adef/index.html#type-safe_string">Adef.safe_string</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-get_death_text"><a href="#val-get_death_text" class="anchor"></a><code><span><span class="keyword">val</span> get_death_text : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span>bool <span class="arrow">&#45;&gt;</span></span>
+  <a href="../../Adef/index.html#type-safe_string">Adef.safe_string</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-get_burial_text"><a href="#val-get_burial_text" class="anchor"></a><code><span><span class="keyword">val</span> get_burial_text : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span>bool <span class="arrow">&#45;&gt;</span></span>
+  <a href="../../Adef/index.html#type-safe_string">Adef.safe_string</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-get_cremation_text"><a href="#val-get_cremation_text" class="anchor"></a><code><span><span class="keyword">val</span> get_cremation_text : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span>bool <span class="arrow">&#45;&gt;</span></span>
+  <a href="../../Adef/index.html#type-safe_string">Adef.safe_string</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-get_marriage_date_text"><a href="#val-get_marriage_date_text" class="anchor"></a><code><span><span class="keyword">val</span> get_marriage_date_text : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-family">Geneweb_db.Driver.family</a> <span class="arrow">&#45;&gt;</span></span>
+  <span>bool <span class="arrow">&#45;&gt;</span></span>
+  <a href="../../Adef/index.html#type-safe_string">Adef.safe_string</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-linked_page_text"><a href="#val-linked_page_text" class="anchor"></a><code><span><span class="keyword">val</span> linked_page_text : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span>string <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="type-var">'a</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Adef/index.html#type-safe_string">Adef.safe_string</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span>(<span><span>(<a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a>, <a href="../../Geneweb_db/Driver/index.html#type-ifam">Geneweb_db.Driver.ifam</a>)</span> <a href="../../Def/NLDB/index.html#type-page">Def.NLDB.page</a></span>
+   * <span>(<span class="type-var">'b</span> * <span><span>(<span class="type-var">'a</span> * <a href="../../Def/NLDB/index.html#type-ind">Def.NLDB.ind</a>)</span> list</span>)</span>)</span> <span class="arrow">&#45;&gt;</span></span>
+  <a href="../../Adef/index.html#type-safe_string">Adef.safe_string</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-string_of_died"><a href="#val-string_of_died" class="anchor"></a><code><span><span class="keyword">val</span> string_of_died : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span>bool <span class="arrow">&#45;&gt;</span></span>
+  <a href="../../Adef/index.html#type-safe_string">Adef.safe_string</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-string_of_parent_age"><a href="#val-string_of_parent_age" class="anchor"></a><code><span><span class="keyword">val</span> string_of_parent_age : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span>(<a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> * bool)</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span>(<span><a href="../../Geneweb_db/Driver/index.html#type-family">Geneweb_db.Driver.family</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a>)</span> <span class="arrow">&#45;&gt;</span></span>
+  <a href="../../Adef/index.html#type-safe_string">Adef.safe_string</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-string_of_image_url"><a href="#val-string_of_image_url" class="anchor"></a><code><span><span class="keyword">val</span> string_of_image_url : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span>(<a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> * bool)</span> <span class="arrow">&#45;&gt;</span></span>
+  <span>bool <span class="arrow">&#45;&gt;</span></span>
+  <span>bool <span class="arrow">&#45;&gt;</span></span>
+  <a href="../../Adef/index.html#type-escaped_string">Adef.escaped_string</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-round_2_dec"><a href="#val-round_2_dec" class="anchor"></a><code><span><span class="keyword">val</span> round_2_dec : <span>float <span class="arrow">&#45;&gt;</span></span> float</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-string_of_image_size"><a href="#val-string_of_image_size" class="anchor"></a><code><span><span class="keyword">val</span> string_of_image_size : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span>(<a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> * bool)</span> <span class="arrow">&#45;&gt;</span></span>
+  string</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-string_of_image_medium_size"><a href="#val-string_of_image_medium_size" class="anchor"></a><code><span><span class="keyword">val</span> string_of_image_medium_size : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span>(<a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> * bool)</span> <span class="arrow">&#45;&gt;</span></span>
+  string</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-string_of_image_small_size"><a href="#val-string_of_image_small_size" class="anchor"></a><code><span><span class="keyword">val</span> string_of_image_small_size : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span>(<a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> * bool)</span> <span class="arrow">&#45;&gt;</span></span>
+  string</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-get_link"><a href="#val-get_link" class="anchor"></a><code><span><span class="keyword">val</span> get_link : 
+  <span><span><a href="#type-generation_person">generation_person</a> list</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="#type-generation_person">generation_person</a> option</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-infinite"><a href="#val-infinite" class="anchor"></a><code><span><span class="keyword">val</span> infinite : int</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-limit_desc"><a href="#val-limit_desc" class="anchor"></a><code><span><span class="keyword">val</span> limit_desc : <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span> int</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-make_desc_level_table"><a href="#val-make_desc_level_table" class="anchor"></a><code><span><span class="keyword">val</span> make_desc_level_table : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span>int <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span>(<a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a>, int)</span> <a href="../../Geneweb_db/Collection/Marker/index.html#type-t">Geneweb_db.Collection.Marker.t</a></span>
+  * <span><span>(<a href="../../Geneweb_db/Driver/index.html#type-ifam">Geneweb_db.Driver.ifam</a>, int)</span> <a href="../../Geneweb_db/Collection/Marker/index.html#type-t">Geneweb_db.Collection.Marker.t</a></span></span></code></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-dup"><a href="#type-dup" class="anchor"></a><code><span><span class="keyword">type</span> dup</span><span> = </span></code><ol><li id="type-dup.DupFam" class="def variant constructor anchored"><a href="#type-dup.DupFam" class="anchor"></a><code><span>| </span><span><span class="constructor">DupFam</span> <span class="keyword">of</span> <a href="../../Geneweb_db/Driver/index.html#type-ifam">Geneweb_db.Driver.ifam</a> * <a href="../../Geneweb_db/Driver/index.html#type-ifam">Geneweb_db.Driver.ifam</a></span></code></li><li id="type-dup.DupInd" class="def variant constructor anchored"><a href="#type-dup.DupInd" class="anchor"></a><code><span>| </span><span><span class="constructor">DupInd</span> <span class="keyword">of</span> <a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a> * <a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a></span></code></li><li id="type-dup.NoDup" class="def variant constructor anchored"><a href="#type-dup.NoDup" class="anchor"></a><code><span>| </span><span><span class="constructor">NoDup</span></span></code></li></ol></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-excl_dup"><a href="#type-excl_dup" class="anchor"></a><code><span><span class="keyword">type</span> excl_dup</span><span> =
+  <span><span>(<a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a> * <a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a>)</span> list</span>
+  * <span><span>(<a href="../../Geneweb_db/Driver/index.html#type-ifam">Geneweb_db.Driver.ifam</a> * <a href="../../Geneweb_db/Driver/index.html#type-ifam">Geneweb_db.Driver.ifam</a>)</span> list</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-excluded_possible_duplications"><a href="#val-excluded_possible_duplications" class="anchor"></a><code><span><span class="keyword">val</span> excluded_possible_duplications : <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span> <a href="#type-excl_dup">excl_dup</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-first_possible_duplication"><a href="#val-first_possible_duplication" class="anchor"></a><code><span><span class="keyword">val</span> first_possible_duplication : 
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="#type-excl_dup">excl_dup</a> <span class="arrow">&#45;&gt;</span></span>
+  <a href="#type-dup">dup</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-nobility_titles_list"><a href="#val-nobility_titles_list" class="anchor"></a><code><span><span class="keyword">val</span> nobility_titles_list : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span>(int
+   * <span><a href="../../Geneweb_db/Driver/index.html#type-istr">Geneweb_db.Driver.istr</a> <a href="../../Def/index.html#type-gen_title_name">Def.gen_title_name</a></span>
+   * <a href="../../Geneweb_db/Driver/index.html#type-istr">Geneweb_db.Driver.istr</a>
+   * <span><a href="../../Geneweb_db/Driver/index.html#type-istr">Geneweb_db.Driver.istr</a> list</span>
+   * <span><span>(<span><a href="../../Adef/index.html#type-date">Adef.date</a> option</span> * <span><a href="../../Adef/index.html#type-date">Adef.date</a> option</span>)</span> list</span>)</span>
+    list</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-has_history"><a href="#val-has_history" class="anchor"></a><code><span><span class="keyword">val</span> has_history : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span>bool <span class="arrow">&#45;&gt;</span></span>
+  bool</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-has_possible_duplications"><a href="#val-has_possible_duplications" class="anchor"></a><code><span><span class="keyword">val</span> has_possible_duplications : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  bool</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-string_of_title"><a href="#val-string_of_title" class="anchor"></a><code><span><span class="keyword">val</span> string_of_title : 
+  <span><span class="optlabel">?safe</span>:bool <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?link</span>:bool <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Adef/index.html#type-safe_string">Adef.safe_string</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span>(int
+   * <span><a href="../../Geneweb_db/Driver/index.html#type-istr">Geneweb_db.Driver.istr</a> <a href="../../Def/index.html#type-gen_title_name">Def.gen_title_name</a></span>
+   * <a href="../../Geneweb_db/Driver/index.html#type-istr">Geneweb_db.Driver.istr</a>
+   * <span><a href="../../Geneweb_db/Driver/index.html#type-istr">Geneweb_db.Driver.istr</a> list</span>
+   * <span><span>(<span><a href="../../Def/index.html#type-date">Def.date</a> option</span> * <span><a href="../../Def/index.html#type-date">Def.date</a> option</span>)</span> list</span>)</span> <span class="arrow">&#45;&gt;</span></span>
+  <a href="../../Adef/index.html#type-safe_string">Adef.safe_string</a></span></code></div><div class="spec-doc"><p>Optionnal <code>link</code> argument is passed to <a href="../DateDisplay/index.html#val-string_of_ondate"><code>DateDisplay.string_of_ondate</code></a></p></div></div></div></body></html>

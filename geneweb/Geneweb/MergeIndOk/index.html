@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>MergeIndOk (geneweb.Geneweb.MergeIndOk)</title><meta charset="utf-8"/><link rel="stylesheet" href="../../../odoc.support/odoc.css"/><meta name="generator" content="odoc 3.1.0"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script src="../../../odoc.support/highlight.pack.js"></script><script>hljs.initHighlightingOnLoad();</script></head><body class="odoc"><nav class="odoc-nav"><a href="../index.html">Up</a> – <a href="../../../index.html">Index</a> &#x00BB; <a href="../../index.html">geneweb</a> &#x00BB; <a href="../index.html">Geneweb</a> &#x00BB; MergeIndOk</nav><header class="odoc-preamble"><h1>Module <code><span>Geneweb.MergeIndOk</span></code></h1></header><div class="odoc-content"><div class="odoc-spec"><div class="spec value anchored" id="val-merge_carrousel"><a href="#val-merge_carrousel" class="anchor"></a><code><span><span class="keyword">val</span> merge_carrousel : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span><span>(<a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a>,
+    string * string * int * <a href="../Update/index.html#type-create">Update.create</a> * string,
+    string)</span>
+    <a href="../../Def/index.html#type-gen_person">Def.gen_person</a></span> <span class="arrow">&#45;&gt;</span></span>
+  unit</span></code></div><div class="spec-doc"><p>merge person 1 and 2 carrousel into third</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-reconstitute"><a href="#val-reconstitute" class="anchor"></a><code><span><span class="keyword">val</span> reconstitute : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Geneweb_db.Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span>(<a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a>,
+    string * string * int * <a href="../Update/index.html#type-create">Update.create</a> * string,
+    string)</span>
+    <a href="../../Def/index.html#type-gen_person">Def.gen_person</a></span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-effective_mod_merge"><a href="#val-effective_mod_merge" class="anchor"></a><code><span><span class="keyword">val</span> effective_mod_merge : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span><span>(<a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a>, <a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a>, string)</span> <a href="../../Def/index.html#type-gen_person">Def.gen_person</a></span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span><span>(<a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a>, <a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a>, string)</span> <a href="../../Def/index.html#type-gen_person">Def.gen_person</a></span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span><span>(<a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a>, <a href="../Update/index.html#type-key">Update.key</a>, string)</span> <a href="../../Def/index.html#type-gen_person">Def.gen_person</a></span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span>(<span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+    <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+    <span><span><a href="../CheckItem/index.html#type-base_warning">CheckItem.base_warning</a> list</span> <span class="arrow">&#45;&gt;</span></span>
+    <span><span><span>(<a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a>, <a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a>, <a href="../../Geneweb_db/Driver/index.html#type-istr">Geneweb_db.Driver.istr</a>)</span>
+      <a href="../../Def/index.html#type-gen_person">Def.gen_person</a></span> <span class="arrow">&#45;&gt;</span></span>
+    <span><span><span><span>(<a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a>, <a href="../../Geneweb_db/Driver/index.html#type-ifam">Geneweb_db.Driver.ifam</a>)</span> <a href="../../Def/NLDB/index.html#type-page">Def.NLDB.page</a></span> list</span> <span class="arrow">&#45;&gt;</span></span>
+    <span>string <span class="arrow">&#45;&gt;</span></span>
+    <span>string <span class="arrow">&#45;&gt;</span></span>
+    <span>int <span class="arrow">&#45;&gt;</span></span>
+    <span><span><span><span>(<a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a>, <a href="../../Geneweb_db/Driver/index.html#type-ifam">Geneweb_db.Driver.ifam</a>)</span> <a href="../../Def/NLDB/index.html#type-page">Def.NLDB.page</a></span> list</span> <span class="arrow">&#45;&gt;</span></span>
+    <span>string <span class="arrow">&#45;&gt;</span></span>
+    <span>string <span class="arrow">&#45;&gt;</span></span>
+    <span>int <span class="arrow">&#45;&gt;</span></span>
+    <span class="type-var">'a</span>)</span> <span class="arrow">&#45;&gt;</span></span>
+  <span class="type-var">'a</span></span></code></div></div></div></body></html>

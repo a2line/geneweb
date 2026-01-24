@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>RelationMatrix (geneweb.Geneweb.RelationMatrix)</title><meta charset="utf-8"/><link rel="stylesheet" href="../../../odoc.support/odoc.css"/><meta name="generator" content="odoc 3.1.0"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script src="../../../odoc.support/highlight.pack.js"></script><script>hljs.initHighlightingOnLoad();</script></head><body class="odoc"><nav class="odoc-nav"><a href="../index.html">Up</a> – <a href="../../../index.html">Index</a> &#x00BB; <a href="../../index.html">geneweb</a> &#x00BB; <a href="../index.html">Geneweb</a> &#x00BB; RelationMatrix</nav><header class="odoc-preamble"><h1>Module <code><span>Geneweb.RelationMatrix</span></code></h1></header><div class="odoc-content"><div class="odoc-spec"><div class="spec module anchored" id="module-Driver"><a href="#module-Driver" class="anchor"></a><code><span><span class="keyword">module</span> Driver</span><span> = <a href="../../Geneweb_db/Driver/index.html">Geneweb_db.Driver</a></span></code></div></div><div class="odoc-spec"><div class="spec module anchored" id="module-Sosa"><a href="#module-Sosa" class="anchor"></a><code><span><span class="keyword">module</span> Sosa</span><span> = <a href="../../Geneweb_sosa/index.html">Geneweb_sosa</a></span></code></div></div><div class="odoc-spec"><div class="spec module anchored" id="module-IperSet"><a href="#module-IperSet" class="anchor"></a><code><span><span class="keyword">module</span> <a href="IperSet/index.html">IperSet</a></span><span> : <span class="keyword">sig</span> ... <span class="keyword">end</span></span></code></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-cell_data"><a href="#type-cell_data" class="anchor"></a><code><span><span class="keyword">type</span> cell_data</span><span> = </span><span>{</span></code><ol><li id="type-cell_data.paths" class="def record field anchored"><a href="#type-cell_data.paths" class="anchor"></a><code><span>paths : <span><a href="../Relation/index.html#type-path_f">Relation.path_f</a> list</span>;</span></code></li><li id="type-cell_data.total" class="def record field anchored"><a href="#type-cell_data.total" class="anchor"></a><code><span>total : <a href="../../Geneweb_sosa/index.html#type-t">Sosa.t</a>;</span></code></li><li id="type-cell_data.coeff" class="def record field anchored"><a href="#type-cell_data.coeff" class="anchor"></a><code><span>coeff : float;</span></code></li></ol><code><span>}</span></code></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-relationship_link_mode"><a href="#type-relationship_link_mode" class="anchor"></a><code><span><span class="keyword">type</span> relationship_link_mode</span><span> = </span></code><ol><li id="type-relationship_link_mode.MatrixLink" class="def variant constructor anchored"><a href="#type-relationship_link_mode.MatrixLink" class="anchor"></a><code><span>| </span><span><span class="constructor">MatrixLink</span> <span class="keyword">of</span> <a href="../../Geneweb_db/Driver/index.html#type-person">Driver.person</a> * <a href="../../Geneweb_db/Driver/index.html#type-person">Driver.person</a></span></code></li><li id="type-relationship_link_mode.AncestorLink" class="def variant constructor anchored"><a href="#type-relationship_link_mode.AncestorLink" class="anchor"></a><code><span>| </span><span><span class="constructor">AncestorLink</span> <span class="keyword">of</span> <a href="../../Geneweb_db/Driver/index.html#type-person">Driver.person</a> * <a href="../../Geneweb_db/Driver/index.html#type-person">Driver.person</a> * <a href="../../Geneweb_db/Driver/index.html#type-person">Driver.person</a> * int * int</span></code></li></ol></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-triangular_matrix"><a href="#type-triangular_matrix" class="anchor"></a><code><span><span class="keyword">type</span> <span>'a triangular_matrix</span></span><span> = <span><span><span class="type-var">'a</span> option</span> array</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-create_triangular_matrix"><a href="#val-create_triangular_matrix" class="anchor"></a><code><span><span class="keyword">val</span> create_triangular_matrix : <span>int <span class="arrow">&#45;&gt;</span></span> <span><span><span class="type-var">'a</span> option</span> array</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-triangular_index"><a href="#val-triangular_index" class="anchor"></a><code><span><span class="keyword">val</span> triangular_index : <span>int <span class="arrow">&#45;&gt;</span></span> <span>int <span class="arrow">&#45;&gt;</span></span> <span><span class="type-var">'a</span> <span class="arrow">&#45;&gt;</span></span> int</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-triangular_get"><a href="#val-triangular_get" class="anchor"></a><code><span><span class="keyword">val</span> triangular_get : <span><span><span class="type-var">'a</span> array</span> <span class="arrow">&#45;&gt;</span></span> <span>int <span class="arrow">&#45;&gt;</span></span> <span>int <span class="arrow">&#45;&gt;</span></span> <span><span class="type-var">'b</span> <span class="arrow">&#45;&gt;</span></span> <span class="type-var">'a</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-triangular_set"><a href="#val-triangular_set" class="anchor"></a><code><span><span class="keyword">val</span> triangular_set : <span><span><span class="type-var">'a</span> array</span> <span class="arrow">&#45;&gt;</span></span> <span>int <span class="arrow">&#45;&gt;</span></span> <span>int <span class="arrow">&#45;&gt;</span></span> <span><span class="type-var">'b</span> <span class="arrow">&#45;&gt;</span></span> <span><span class="type-var">'a</span> <span class="arrow">&#45;&gt;</span></span> unit</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-find_shortest_path"><a href="#val-find_shortest_path" class="anchor"></a><code><span><span class="keyword">val</span> find_shortest_path : <span><span><a href="../Relation/index.html#type-path_f">Relation.path_f</a> list</span> <span class="arrow">&#45;&gt;</span></span> <span><a href="../Relation/index.html#type-path_f">Relation.path_f</a> option</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-find_best_inverted_path"><a href="#val-find_best_inverted_path" class="anchor"></a><code><span><span class="keyword">val</span> find_best_inverted_path : <span><span><a href="../Relation/index.html#type-path_f">Relation.path_f</a> list</span> <span class="arrow">&#45;&gt;</span></span> <span><a href="../Relation/index.html#type-path_f">Relation.path_f</a> option</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-compute_cell_data"><a href="#val-compute_cell_data" class="anchor"></a><code><span><span class="keyword">val</span> compute_cell_data : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span><span>(<a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb_db.Driver.iper</a>, int)</span> <a href="../../Geneweb_db/Collection/Marker/index.html#type-t">Geneweb_db.Collection.Marker.t</a></span> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="#type-cell_data">cell_data</a> option</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-get_person_simple_name"><a href="#val-get_person_simple_name" class="anchor"></a><code><span><span class="keyword">val</span> get_person_simple_name : <span><a href="../../Geneweb_db/Driver/index.html#type-base">Driver.base</a> <span class="arrow">&#45;&gt;</span></span> <span><a href="../../Geneweb_db/Driver/index.html#type-person">Driver.person</a> <span class="arrow">&#45;&gt;</span></span> string</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-encoded_key"><a href="#val-encoded_key" class="anchor"></a><code><span><span class="keyword">val</span> encoded_key : <span>string <span class="arrow">&#45;&gt;</span></span> string</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-make_relationship_link"><a href="#val-make_relationship_link" class="anchor"></a><code><span><span class="keyword">val</span> make_relationship_link : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Geneweb_db.Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="#type-relationship_link_mode">relationship_link_mode</a> <span class="arrow">&#45;&gt;</span></span>
+  string</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-format_percentage_for_cell"><a href="#val-format_percentage_for_cell" class="anchor"></a><code><span><span class="keyword">val</span> format_percentage_for_cell : <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span> <span>float <span class="arrow">&#45;&gt;</span></span> string</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-create_inverted_cell_data"><a href="#val-create_inverted_cell_data" class="anchor"></a><code><span><span class="keyword">val</span> create_inverted_cell_data : <span><a href="#type-cell_data">cell_data</a> <span class="arrow">&#45;&gt;</span></span> <span><a href="#type-cell_data">cell_data</a> option</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-group_ancestors_by_couples"><a href="#val-group_ancestors_by_couples" class="anchor"></a><code><span><span class="keyword">val</span> group_ancestors_by_couples : 
+  <span><span><a href="../Relation/index.html#type-anc_f">Relation.anc_f</a> list</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span>[&gt; <span>`Couple of
+       <a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb.Relation.Driver.iper</a>
+       * int
+       * <a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb.Relation.Driver.iper</a>
+       * int
+       * <a href="../../Geneweb_db/Driver/index.html#type-ifam">Geneweb.Relation.Driver.ifam</a></span>
+  <span><span>| `Unique</span> of <a href="../../Geneweb_db/Driver/index.html#type-iper">Geneweb.Relation.Driver.iper</a> * int</span> ]</span>
+    list</span></span></code></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-ancestor_item"><a href="#type-ancestor_item" class="anchor"></a><code><span><span class="keyword">type</span> ancestor_item</span><span> = </span><span>[ </span></code><ol><li id="type-ancestor_item.Couple" class="def variant constructor anchored"><a href="#type-ancestor_item.Couple" class="anchor"></a><code><span>| </span><span>`Couple <span class="keyword">of</span> <a href="../../Geneweb_db/Driver/index.html#type-iper">Driver.iper</a> * int * <a href="../../Geneweb_db/Driver/index.html#type-iper">Driver.iper</a> * int * <a href="../../Geneweb_db/Driver/index.html#type-ifam">Driver.ifam</a></span></code></li><li id="type-ancestor_item.Unique" class="def variant constructor anchored"><a href="#type-ancestor_item.Unique" class="anchor"></a><code><span>| </span><span>`Unique <span class="keyword">of</span> <a href="../../Geneweb_db/Driver/index.html#type-iper">Driver.iper</a> * int</span></code></li></ol><code><span> ]</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-format_ancestors_with_couples"><a href="#val-format_ancestors_with_couples" class="anchor"></a><code><span><span class="keyword">val</span> format_ancestors_with_couples : 
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span><a href="../Relation/index.html#type-anc_f">Relation.anc_f</a> list</span> <span class="arrow">&#45;&gt;</span></span>
+  string</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-make_tooltip_text"><a href="#val-make_tooltip_text" class="anchor"></a><code><span><span class="keyword">val</span> make_tooltip_text : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-person">Driver.person</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../Relation/index.html#type-path_f">Relation.path_f</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_sosa/index.html#type-t">Sosa.t</a> <span class="arrow">&#45;&gt;</span></span>
+  <span>float <span class="arrow">&#45;&gt;</span></span>
+  string</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-anc_to_json"><a href="#val-anc_to_json" class="anchor"></a><code><span><span class="keyword">val</span> anc_to_json : 
+  <span><a href="../Relation/index.html#type-anc_f">Relation.anc_f</a> <span class="arrow">&#45;&gt;</span></span>
+  <span>[&gt; <span>`Assoc of
+       <span><span>(string
+        * <span>[&gt; <span>`Int of int</span>
+          <span><span>| `List</span> of <span><span>[&gt; <span>`String of string</span> ]</span> list</span></span>
+          <span><span>| `String</span> of string</span> ]</span>)</span>
+         list</span></span> ]</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-path_to_json"><a href="#val-path_to_json" class="anchor"></a><code><span><span class="keyword">val</span> path_to_json : 
+  <span><a href="../Relation/index.html#type-path_f">Relation.path_f</a> <span class="arrow">&#45;&gt;</span></span>
+  <span>[&gt; <span>`Assoc of
+       <span><span>(string
+        * <span>[&gt; <span>`Int of int</span>
+          <span><span>| `List</span> of
+            <span><span>[&gt; <span>`Assoc of
+                 <span><span>(string
+                  * <span>[&gt; <span>`Int of int</span>
+                    <span><span>| `List</span> of <span><span>[&gt; <span>`String of string</span> ]</span> list</span></span>
+                    <span><span>| `String</span> of string</span> ]</span>)</span>
+                   list</span></span> ]</span>
+              list</span></span> ]</span>)</span>
+         list</span></span> ]</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-cell_data_to_json"><a href="#val-cell_data_to_json" class="anchor"></a><code><span><span class="keyword">val</span> cell_data_to_json : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="#type-cell_data">cell_data</a> <span class="arrow">&#45;&gt;</span></span>
+  <span>[&gt; <span>`Assoc of
+       <span><span>(string
+        * <span>[&gt; <span>`List of
+               <span><span>[&gt; <span>`Assoc of
+                    <span><span>(string
+                     * <span>[&gt; <span>`Int of int</span>
+                       <span><span>| `List</span> of
+                         <span><span>[&gt; <span>`Assoc of
+                              <span><span>(string
+                               * <span>[&gt; <span>`Int of int</span>
+                                 <span><span>| `List</span> of <span><span>[&gt; <span>`String of string</span> ]</span> list</span></span>
+                                 <span><span>| `String</span> of string</span> ]</span>)</span>
+                                list</span></span> ]</span>
+                           list</span></span> ]</span>)</span>
+                      list</span></span> ]</span>
+                 list</span></span>
+          <span><span>| `String</span> of string</span> ]</span>)</span>
+         list</span></span> ]</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-matrix_to_json"><a href="#val-matrix_to_json" class="anchor"></a><code><span><span class="keyword">val</span> matrix_to_json : 
+  <span><a href="../Config/index.html#type-config">Config.config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../../Geneweb_db/Driver/index.html#type-base">Driver.base</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span><a href="../../Geneweb_db/Driver/index.html#type-person">Driver.person</a> array</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span><span><a href="#type-cell_data">cell_data</a> option</span> array</span> <span class="arrow">&#45;&gt;</span></span>
+  <span>int <span class="arrow">&#45;&gt;</span></span>
+  <span>[&gt; <span>`Assoc of
+       <span><span>(string
+        * <span>[&gt; <span>`Assoc of
+               <span><span>(string
+                * <span>[&gt; <span>`Assoc of
+                       <span><span>(string
+                        * <span>[&gt; <span>`Assoc of
+                               <span><span>(string
+                                * <span>[&gt; <span>`List of
+                                       <span><span>[&gt; <span>`Assoc of
+                                            <span><span>(string
+                                             * <span>[&gt; <span>`Int of int</span>
+                                               <span><span>| `List</span> of
+                                                 <span><span>[&gt; <span>`Assoc of
+                                                      <span><span>(string
+                                                       * <span>[&gt; <span>`Int of int</span>
+                                                         <span><span>| `List</span> of
+                                                           <span><span>[&gt; <span>`String of string</span> ]</span>
+                                                             list</span></span>
+                                                         <span><span>| `String</span> of string</span> ]</span>)</span>
+                                                        list</span></span> ]</span>
+                                                   list</span></span> ]</span>)</span>
+                                              list</span></span> ]</span>
+                                         list</span></span>
+                                  <span><span>| `String</span> of string</span> ]</span>)</span>
+                                 list</span></span> ]</span>)</span>
+                         list</span></span>
+                  <span><span>| `String</span> of string</span> ]</span>)</span>
+                 list</span></span> ]</span>)</span>
+         list</span></span> ]</span></span></code></div></div></div></body></html>
