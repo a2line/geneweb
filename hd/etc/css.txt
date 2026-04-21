@@ -43,3 +43,6 @@
 %if;(b.css_prop!="" and b.css_prop!="stylesheet")
   <link rel="stylesheet" href="%etc_prefix;css/%bvar.css_prop;?hash=%apply;hash%with;%etc_prefix;css/%bvar.css_prop;%end;">
 %end;
+%if;is_welcome;
+  <link rel="stylesheet" href="%etc_prefix;css/welcome.css?hash=%apply;hash%with;%etc_prefix;css/welcome.css%end;">
+%end;

@@ -1,0 +1,506 @@
+/* =============================================================================
+   welcome.css — styles spécifiques à la page d'accueil (welcome.txt)
+
+   Chargé conditionnellement via css.txt quand le template courant est welcome.
+   Scope : toutes les règles structurelles sont préfixées par #welcome pour
+   éviter toute fuite si le fichier est chargé par inadvertance ailleurs.
+
+   Philosophie :
+   - Design tokens via CSS custom properties → prépare le dark mode BS5
+   - Overrides ciblés des variables BS5 (--bs-*) plutôt que CSS custom
+   - Classes Bootstrap natives privilégiées dans le HTML
+   ============================================================================= */
+
+/* ── Design tokens ─────────────────────────────────────────────────────────── */
+:root {
+  --gw-bg:        #f5f3ef;
+  --gw-surface:   #ffffff;
+  --gw-border:    #e4dfd6;
+  --gw-text:      #2c2825;
+  --gw-muted:     #7a7168;
+  --gw-accent:    #2d6a4f;
+  --gw-accent-lt: #d8ede5;
+  --gw-accent-hv: #c2e3d7;
+  --gw-blue:      #1a5eb8;
+  --gw-blue-lt:   #dde9f7;
+  --gw-blue-hv:   #c5d9f2;
+  --gw-danger:    #b91c1c;
+  --gw-danger-lt: #fce8e8;
+  --gw-shadow-sm: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
+  --gw-radius:    10px;
+}
+
+/* Dark mode — structure posée, ajustement visuel à venir.
+   Activation future : data-bs-theme="dark" sur <html>. */
+[data-bs-theme="dark"] {
+  --gw-bg:        #1f1e1c;
+  --gw-surface:   #2a2926;
+  --gw-border:    #3d3b37;
+  --gw-text:      #e8e4de;
+  --gw-muted:     #a39b90;
+  --gw-accent-lt: #1d3a2b;
+  --gw-accent-hv: #2a5540;
+  --gw-blue-lt:   #1a2d47;
+  --gw-blue-hv:   #234065;
+  --gw-danger-lt: #3a1515;
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────────── */
+/* Note : ces règles globales ne s'appliquent qu'aux pages chargeant welcome.css */
+body {
+  background: var(--gw-bg);
+  color: var(--gw-text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+#welcome {
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 1.5rem 0.75rem 2rem;
+  font-size: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);
+  line-height: 1.55;
+}
+
+/* Icônes FA visuellement calées sur le texte (légèrement supérieures) */
+#welcome i[class*="fa-"] { font-size: 1.05em; }
+
+/* ── HEADER ─────────────────────────────────────────────────────────────── */
+.gw-header {
+  display: grid;
+  grid-template-columns: 140px 1fr auto;
+  grid-template-areas: "logo title panel";
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.gw-logo {
+  grid-area: logo;
+  display: flex;
+  justify-content: center;
+}
+.gw-logo img {
+  max-width: 120px;
+  height: auto;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.12));
+}
+
+.gw-title h1 {
+  grid-area: title;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.75em;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  margin: 0;
+  line-height: 1.2;
+  color: var(--gw-text);
+}
+.gw-title .gw-count {
+  font-size: 0.9em;
+  color: var(--gw-muted);
+  margin-top: 0.25rem;
+}
+.gw-title .gw-count .gw-random {
+  color: var(--gw-accent);
+  text-decoration: none;
+  margin-left: 0.35rem;
+}
+.gw-title .gw-count .gw-random:hover { text-decoration: underline; }
+
+.gw-user-panel {
+  grid-area: panel;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: stretch;
+  min-width: 180px;
+}
+.gw-user-panel .btn-group-user {
+  display: flex;
+  width: 100%;
+  gap: 0.3rem;
+}
+
+/* Badge identité (utilisateur connecté) */
+.badge-identity {
+  display: block;
+  font-size: 0.85em;
+  background: #d7e2d4;
+  color: #14532d;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0.3rem 0.7rem;
+  text-align: center;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background .15s;
+}
+.badge-identity:hover {
+  background: #bbf7d0;
+  color: #14532d;
+}
+.badge-identity.friend {
+  background: #dbeafe;
+  color: #134a8c;
+}
+.badge-identity.friend:hover {
+  background: #bfdbfe;
+  color: #134a8c;
+}
+/* ── SUBHEADING (motd + sosa) ────────────────────────────────────────────── */
+.gw-subheading {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: var(--gw-muted);
+  font-size: 0.9em;
+}
+.gw-subheading .gw-motd {
+  font-weight: 500;
+  color: var(--gw-text);
+  margin-bottom: 0.25rem;
+}
+.gw-subheading .gw-sosa {
+  font-size: 0.85em;
+}
+.gw-subheading .gw-sosa a {
+  color: var(--gw-blue);
+}
+.gw-subheading .gw-sosa a:hover { text-decoration: underline; }
+
+/* ── CARDS : override vars BS5 ──────────────────────────────────────────── */
+#welcome .card {
+  --bs-card-bg: var(--gw-surface);
+  --bs-card-border-color: var(--gw-border);
+  --bs-card-border-radius: var(--gw-radius);
+  --bs-card-spacer-x: 1.5rem;
+  --bs-card-spacer-y: 1.25rem;
+  box-shadow: var(--gw-shadow-sm);
+}
+
+/* ── Section title (UPPERCASE avec barre horizontale) ───────────────────── */
+.gw-section-title {
+  font-size: 0.78em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gw-muted);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.gw-section-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--gw-border);
+}
+
+/* ── FORMULAIRE DE RECHERCHE ─────────────────────────────────────────────── */
+.search-main-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--gw-surface);
+  border: 1.5px solid var(--gw-border);
+  border-radius: 8px;
+  padding: 0.1rem 0.1rem 0.1rem 0.8rem;
+  box-shadow: var(--gw-shadow-sm);
+  transition: border-color .15s, box-shadow .15s;
+}
+.search-main-input:focus-within {
+  border-color: var(--gw-accent);
+  box-shadow: 0 0 0 3px rgba(45,106,79,.12);
+}
+.search-main-input input {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  flex: 1;
+  min-width: 100%;
+  font-size: 1em;
+  padding: 0.55rem 0.4rem;
+  background: transparent;
+  color: var(--gw-text);
+}
+
+/* Bouton aide (icône point d'interrogation) */
+.search-help-icon {
+  color: var(--gw-blue);
+  font-size: 0.95em;
+  cursor: help;
+  flex-shrink: 0;
+  background: transparent;
+  border: 0;
+  padding: 0.1rem 0.2rem;
+  line-height: 1;
+}
+.search-help-icon:focus-visible {
+  outline: 2px solid var(--gw-blue);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Lignes prénom / patronyme */
+.search-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+.search-sort-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex-shrink: 0;
+  padding-top: 0.1rem;
+}
+.search-sort-btns a {
+  color: var(--gw-muted);
+  font-size: 0.85em;
+  padding: 0.15rem 0.3rem;
+  border-radius: 4px;
+  text-decoration: none;
+  line-height: 1;
+}
+.search-sort-btns a:hover,
+.search-sort-btns a:focus-visible {
+  color: var(--gw-accent);
+  background: var(--gw-accent-lt);
+  outline: none;
+}
+
+.search-field { flex: 1; min-width: 0; }
+.search-field input {
+  width: 100%;
+  border: 1.5px solid var(--gw-border);
+  border-radius: 7px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9em;
+  background: #faf9f7;
+  color: var(--gw-text);
+  transition: border-color .15s, box-shadow .15s;
+}
+.search-field input:focus {
+  outline: none;
+  border-color: var(--gw-accent);
+  box-shadow: 0 0 0 3px rgba(45,106,79,.1);
+  background: var(--gw-surface);
+}
+
+/* Colonne options prénom (Permutés / Partiels) */
+.firstname-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 0.15rem;
+  font-size: 0.82em;
+  color: var(--gw-muted);
+  padding-left: 0.25rem;
+  min-width: 110px;
+}
+.firstname-options .check-label {
+  font-weight: 600;
+  font-size: 0.75em;
+  color: var(--gw-muted);
+  margin-bottom: 0.1rem;
+}
+.firstname-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-bottom: 0;
+}
+.firstname-options .form-check-input {
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
+/* Ligne Titres / Domaines + bouton de recherche global */
+.title-domain-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.title-domain-row .search-field { min-width: 140px; }
+.title-domain-row .search-field input.form-control {
+  /* Harmoniser avec le style search-field local plutôt que BS form-control default */
+  width: 100%;
+  border: 1.5px solid var(--gw-border);
+  border-radius: 7px;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.9em;
+  background: #faf9f7;
+}
+.title-domain-row .search-field input.form-control:focus {
+  border-color: var(--gw-accent);
+  box-shadow: 0 0 0 3px rgba(45,106,79,.1);
+  background: var(--gw-surface);
+}
+.title-domain-row .list-all {
+  color: var(--gw-muted);
+  padding: 0.35rem 0.45rem;
+  text-decoration: none;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+.title-domain-row .list-all:hover,
+.title-domain-row .list-all:focus-visible {
+  color: var(--gw-accent);
+  background: var(--gw-accent-lt);
+  outline: none;
+}
+
+/* ── Override boutons BS5 (via variables --bs-btn-*) ────────────────────── */
+/* Palette douce et cohérente avec les design tokens, contrastes WCAG AA. */
+#welcome .btn {
+  --bs-btn-border-width: 1.5px;
+  --bs-btn-font-weight: 500;
+}
+
+/* BLEU — Ami / liens */
+#welcome .btn-outline-primary {
+  --bs-btn-color: #1a5eb8;
+  --bs-btn-border-color: #1a5eb8;
+  --bs-btn-hover-bg: #dbeafe;               /* pastel */
+  --bs-btn-hover-border-color: #1a5eb8;
+  --bs-btn-hover-color: #134a8c;            /* texte assombri au hover */
+  --bs-btn-active-bg: #1a5eb8;
+  --bs-btn-active-border-color: #1a5eb8;
+  --bs-btn-active-color: #fff;
+  --bs-btn-disabled-color: #1a5eb8;
+  --bs-btn-disabled-bg: transparent;
+  --bs-btn-disabled-border-color: #1a5eb8;
+  --bs-btn-focus-shadow-rgb: 26,94,184;
+}
+#welcome .btn-primary {
+  --bs-btn-bg: #1a5eb8;
+  --bs-btn-border-color: #1a5eb8;
+  --bs-btn-hover-bg: #134a8c;
+  --bs-btn-hover-border-color: #134a8c;
+  --bs-btn-active-bg: #0f3a70;
+  --bs-btn-active-border-color: #0f3a70;
+  --bs-btn-disabled-bg: #1a5eb8;
+  --bs-btn-disabled-border-color: #1a5eb8;
+  --bs-btn-disabled-color: #fff;
+  --bs-btn-focus-shadow-rgb: 26,94,184;
+}
+
+/* VERT FOREST — Magicien  (hover pastel sobre) */
+#welcome .btn-outline-success {
+  --bs-btn-color: #15803d;
+  --bs-btn-border-color: #15803d;
+  --bs-btn-hover-bg: #e8efe6;
+  --bs-btn-hover-border-color: #15803d;
+  --bs-btn-hover-color: #14532d;
+  --bs-btn-active-bg: #15803d;
+  --bs-btn-active-border-color: #15803d;
+  --bs-btn-active-color: #fff;
+  --bs-btn-disabled-color: #15803d;
+  --bs-btn-disabled-bg: transparent;
+  --bs-btn-disabled-border-color: #15803d;
+  --bs-btn-focus-shadow-rgb: 21,128,61;
+}
+#welcome .btn-success {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: #15803d;
+  --bs-btn-border-color: #15803d;
+  --bs-btn-hover-bg: #14532d;
+  --bs-btn-hover-border-color: #14532d;
+  --bs-btn-active-bg: #14532d;
+  --bs-btn-active-border-color: #14532d;
+  --bs-btn-disabled-bg: #15803d;
+  --bs-btn-disabled-border-color: #15803d;
+  --bs-btn-disabled-color: #fff;
+  --bs-btn-focus-shadow-rgb: 21,128,61;
+}
+
+#welcome .btn-link {
+  --bs-btn-color: #7a7168;
+  --bs-btn-hover-color: #2c2825;
+}
+
+/* ── FOOTER ─────────────────────────────────────────────────────────────── */
+.gw-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.82em;
+  color: var(--gw-muted);
+}
+.gw-footer .gw-counter { flex: 1 1 auto; }
+.gw-footer .gw-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.gw-footer a { color: var(--gw-muted); text-decoration: none; }
+.gw-footer a:hover { color: var(--gw-accent); }
+
+/* ── Alertes : padding BS5 par défaut + coins arrondis cohérents ────────── */
+#welcome .alert { border-radius: var(--gw-radius); }
+
+/* ── Datalists (pas de style visible — laissés en défaut navigateur) ───── */
+
+/* ── Accessibilité : focus visible renforcé pour seniors ────────────────── */
+#welcome a:focus-visible,
+#welcome button:focus-visible,
+#welcome input:focus-visible,
+#welcome select:focus-visible {
+  outline: 2px solid var(--gw-accent);
+  outline-offset: 2px;
+}
+
+/* ── RESPONSIVE ─────────────────────────────────────────────────────────── */
+@media (max-width: 767.98px) {
+  .gw-header {
+    grid-template-columns: auto auto;
+    grid-template-areas:
+      "panel panel"
+      "logo  title";
+    justify-content: center;
+    gap: 0.75rem 1rem;
+  }
+  .gw-user-panel {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    min-width: 0;
+  }
+  .gw-user-panel .badge-identity { width: auto; flex: 1 1 auto; }
+  .gw-user-panel .btn.btn-sm     { flex: 0 1 auto; }
+
+  .search-row { flex-wrap: wrap; }
+  .firstname-options {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+    padding-left: 0;
+    width: 100%;
+  }
+  .firstname-options .check-label {
+    margin-bottom: 0;
+  }
+
+  .title-domain-row { 
+    justify-content: center;
+    gap: 0.4rem;
+  }
+  .title-domain-row .search-field {
+    margin-left: auto;
+    margin-right: auto;
+    min-width: 100px;
+  }
+}

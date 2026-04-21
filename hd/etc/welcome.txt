@@ -1,8 +1,7 @@
-<!-- $Id: welcome.txt v7.1 03/04/2026 $ -->
 <!DOCTYPE html>
 <html lang="%lang;">
 <head>
-  <title>GeneWeb – %base.name;</title>
+  <title>GeneWeb &ndash; %base.name;</title>
   <meta name="robots" content="none">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,18 +10,186 @@
   %include;css
 </head>
 <body%body_prop;>
-<div class="container" id="welcome">
+<div id="welcome">
 %include;hed
-%define;book_of(xx)[book of %s:::xx]%end;
-%define;dl(xx)%if;(b.datalist_xx=1)<datalist id="datalist_xx"></datalist>%end;%end;
+
+%define;dl(xx)
+  %if;(b.datalist_xx=1)<datalist id="datalist_xx"></datalist>%end;
+%end;
 %apply;dl("fnames")
 %apply;dl("snames")
 %apply;dl("titles")
 %apply;dl("estates")
+
+%( ---- ALERTE : recherche infructueuse (unknown person) ---- %)
+%if;(e.i!="" or e.p!="" or e.n!="" or e.pn!="")
+  <div class="alert alert-danger alert-dismissible fade show text-center mb-3" role="alert">
+    %if;(e.i!="")[*unknown index][:] %e.i;
+    %elseif;(e.pn!="")[*unknown person][:] %e.pn;
+      %if;(e.p!="") %e.p;%end;%if;(e.n!="") %e.n;%end;
+    %elseif;(e.p!="" and e.n="")[*unknown first_name][:] %e.p;
+    %elseif;(e.n!="" and e.p="")[*unknown surname][:] %e.n;
+    %else;[*unknown person][:] %e.p;%if;(e.oc!="").%e.oc;%end; %e.n;%end;
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+%end;
+
+%( ============================================================
+   HEADER : logo + titre + panneau utilisateur
+   ============================================================ %)
+%define;get_random(xxx)
+  %random.init;
+  %random.xxx;
+%end;
+%let;nb_pers;%base.real_nb_persons;%in;
+<header class="gw-header">
+
+  %( ---- Logo ---- %)
+  <div class="gw-logo">
+    %if;roglo;
+      <img src="%images_prefix;logo-roglo.png" alt="logo Roglo" width="150">
+    %elseif;(b.welcome_logo!="")
+      <img src="%prefix;m=IM;s=%b.welcome_logo;" alt="logo"
+         %if;(b.welcome_logo_style!="")style="%b.welcome_logo_style;"%end;>
+    %else;
+      <img src="%images_prefix;arbre_start.png" alt="logo GeneWeb" width="180">
+    %end;
+  </div>
+
+  %( ---- Titre + compteur de personnes + dé aléatoire ---- %)
+  <div class="gw-title">
+    <h1>%apply;capitalize%with;[database]%end; %base.name;</h1>
+    %if;(b.visitor_access!="no" or wizard or friend)
+      <div class="gw-count">
+        %if;roglo;%nn;
+[
+en: contains
+fr: contient
+]
+ %nb_pers; %nn;
+[
+en: individuals all connected through familial relationships
+fr: individus tous reliés par des liens familiaux
+]
+        %else;
+          %nb_pers; %nn;
+          %if;(nb_pers<1)[person/persons]0%else;[person/persons]1%end;
+        %end;
+        %if;(nb_pers!=0 and not predictable_mode)
+          <a class="gw-random" href="%prefix;i=%apply;get_random(nb_persons.v)"
+             data-bs-toggle="tooltip" data-bs-placement="bottom"
+             title="[*random individual]" aria-label="[*random individual]">%nn;
+            <i class="fa-solid fa-dice" aria-hidden="true"></i>
+          </a>
+        %end;
+      </div>
+    %end;
+  </div>
+
+  %( ---- Panneau utilisateur ---- %)
+  <div class="gw-user-panel">
+
+    %( -- Formulaire mot de passe (mode CGI sans connexion) -- %)
+    %if;(cgi and (not wizard or not friend))
+      <form class="d-flex" method="post" action="%action;">
+        %hidden;
+        <div class="input-group input-group-sm">
+          <input type="password" name="w" class="form-control"
+            title="[wizard/wizards/friend/friends/exterior]2/[wizard/wizards/friend/friends/exterior]0"
+            placeholder="[user/password/cancel]0:[user/password/cancel]1"
+            aria-label="[user/password/cancel]0:[user/password/cancel]1"
+            autofocus>
+          <button type="submit" class="btn btn-primary">OK</button>
+        </div>
+      </form>
+    %end;
+
+    %( -- Boutons login Ami / Magicien (utilisateur non connecté, mode non-CGI) -- %)
+    %if;(b.auth_file="")
+      %if;((b.friend_passwd!="" or b.friend_passwd_file!="")
+         or (b.wizard_passwd!="" or b.wizard_passwd_file!=""))
+        <div class="d-flex gap-2">
+          %if;(b.friend_passwd!="" or b.friend_passwd_file!="")
+            %if;(not friend)
+              %if;(not cgi)
+                <a href="%url_set.w.f;" class="btn btn-outline-primary flex-fill text-nowrap" role="button">
+                  <i class="fas fa-user me-1" aria-hidden="true"></i>[*wizard/wizards/friend/friends/exterior]2</a>
+              %end;
+            %else;
+              <a href="#" class="btn btn-primary disabled flex-fill text-nowrap" role="button" aria-disabled="true">
+                <i class="fas fa-user me-1" aria-hidden="true"></i>[*wizard/wizards/friend/friends/exterior]2</a>
+            %end;
+          %end;
+          %if;(b.wizard_passwd!="" or b.wizard_passwd_file!="")
+            %if;(not wizard)
+              %if;(not cgi)
+                <a href="%url_set.w.w;" class="btn btn-outline-success flex-fill text-nowrap" role="button">
+                  <i class="fas fa-hat-wizard me-1" aria-hidden="true"></i>[*wizard/wizards/friend/friends/exterior]0</a>
+              %end;
+            %else;
+              <a href="#" class="btn btn-success disabled flex-fill text-nowrap" role="button" aria-disabled="true">
+                <i class="fas fa-hat-wizard me-1" aria-hidden="true"></i>[*wizard/wizards/friend/friends/exterior]0</a>
+            %end;
+          %end;
+        </div>
+      %end;
+    %end;
+
+    %( -- Badge identité + bouton de déconnexion (utilisateur connecté) -- %)
+    %let;username;%if;(user.name="")%user.ident;%else;%user.name;%end;%in;
+    %if;((wizard and (b.wizard_passwd_file!="" or b.wizard_passwd!=""))
+      or (friend and (b.friend_passwd_file!="" or b.friend_passwd!="")))
+      %let;userk;%if;(user.key!="")%user.key;%elseif;(user.name!="")%user.name;%else;%user.ident;%end;%in;
+      <a class="badge-identity%if;friend; friend%end;"
+         href="%prefix;m=S&pn=%apply;uri_encode(userk)"%sp;
+         %if;(user.key="")title="[*no user key]" data-bs-toggle="tooltip"%end;>%nn;
+        %if;wizard;[*wizard/wizards/friend/friends/exterior]0%elseif;friend;[*wizard/wizards/friend/friends/exterior]2%end; %username;
+      </a>
+      <a class="btn btn-outline-danger" href="%prefix;w=" role="button">
+        <i class="fas fa-right-from-bracket me-1" aria-hidden="true"></i>[*disconnect]</a>
+    %end;
+  </div>
+
+</header>
+
+%( ============================================================
+   SOUS-TITRE : motd + référence Sosa
+   ============================================================ %)
+
 %define;display_sosa_ref(xx)
   [*sosa reference][:]
   <a href="%prefix;%sosa_ref.access;">%sosa_ref;</a>
 %end;
+
+%if;(b.motd!="" or (browsing_with_sosa_ref and b.visitor_access!="no"))
+  <div class="gw-subheading">
+    %if;(b.motd!="")
+      <div class="gw-motd fw-semibold text-body">%apply;interp(b.motd)</div>
+    %end;
+    %if;(browsing_with_sosa_ref and b.visitor_access!="no")
+      <div class="gw-sosa">%apply;display_sosa_ref%with;%sosa_ref;%end;</div>
+    %end;
+  </div>
+%end;
+
+%( ---- ALERTE : maintenance / droits magiciens suspendus ---- %)
+%if;just_friend_wizard;
+  <div class="alert alert-danger alert-dismissible fade show text-center mb-3" role="alert">
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <span>
+[
+co: I <strong>diritti di i maghi</strong> sò attualmente <strong>disattivati</strong> per via d’una mantenenza.
+en: <strong>Wizard rights</strong> are now <strong>suspended</strong> for maintenance.
+fr: Les <strong>droits des magiciens</strong> sont actuellement <strong>suspendus</strong> pour maintenance.
+]
+    </span>
+  </div>
+%end;
+
+%( ============================================================
+   ACCÈS RESTREINT visiteur OU CARTE DE RECHERCHE
+   ============================================================ %)
+
 %define;get_visitor_access_msg(lg)
   %if;(b.visitor_access_msg_lg!="")
     %b.visitor_access_msg_lg;
@@ -34,489 +201,373 @@
     %end;
   %end;
 %end;
-%define;get_random(xxx)
-  %random.init;
-  %random.xxx;
+
+%if;not (b.visitor_access!="no" or wizard or friend);
+  %let;lg;%lang;%in;
+  <div class="alert alert-danger fw-bold text-center" role="alert">
+    <i class="fa fa-triangle-exclamation fa-fw me-2" aria-hidden="true"></i>
+    <span>%apply;get_visitor_access_msg(lg)</span>
+    <i class="fa fa-triangle-exclamation fa-fw ms-2" aria-hidden="true"></i>
+  </div>
+%elseif;(nb_persons.v!=0)
+  <div class="card mb-3">
+    <div class="card-body">
+
+      <form id="main-search" method="get" action="%prefix;">
+        %hidden;
+        <input type="hidden" name="m" value="S" class="has_validation">
+
+        %( ---- Champ recherche plein texte (fullname) ---- %)
+        <div class="search-main-input">
+          <button type="button" class="search-help-icon"
+            data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+            aria-label="[*search format]"
+            title="<div class='text-start fw-bold'><div class='h5'>[*search format][:]</div>
+                   1. [*person/persons]0[:]<br>
+                      a. [first name/first names]2 [surname/surnames]0 ¹<br>
+                          <i class='fw-lighter'>John Doe</i><br><br>
+                      b. [first name/first names]2/[surname/surnames]0 ²/[occ]1 ³<br>
+                          <i class='fw-lighter'>James William/Smith-Johnson/2<br>       James William/Smith-Johnson<br>
+                          James William/<br>       /Smith-Jonhson</i><br><br>
+                   2. [*surname/surnames]0 ¹[:] <i class='fw-lighter'>Doe</i><br><br>
+                   3. [*public name][:] <i class='fw-lighter'>James Smith</i><br><br>
+                   4. [*alias][:] <i class='fw-lighter'>Jimmy</i><br><br>
+                   5. [*key]0[:] [first name/first names]2.[occ]1 [surname/surnames]0 ²<br>
+                          <i class='fw-lighter'>James William.2 Smith-Johnson<br>       james william.2 smith johnson</i><br>
+                   <br><div class='fw-lighter small'>¹ [word/words]0<br>² [word/words]1<br>³ [optional/mandatory]0</div></div>">
+            <i class="far fa-circle-question" aria-hidden="true"></i>
+          </button>
+          <label for="fullname" class="visually-hidden">[*search/case sensitive]0</label>
+          <input type="search" id="fullname" name="pn" autofocus tabindex="1"
+            placeholder="[*search/case sensitive]0 [person/persons]0, [surname/surnames]0, [public name], [alias], [key]0%if;browsing_with_sosa_ref;, [n° Sosa]%end;"
+            %if;(e.pn!="") value="%e.pn;"%end;>
+        </div>
+
+        %( ---- Ligne PRÉNOM et NOM : tris + champ + options ---- %)
+        <div class="d-md-flex">
+          <div class="d-flex flex-column flex-grow-1">
+            <div class="search-row">
+              <div class="search-sort-btns" role="group" aria-label="[*first name/first names]1">
+                <a role="button" href="%prefix;m=P&tri=A" data-bs-toggle="tooltip"
+                  aria-label="[*first name/first names]1, [sort by/date begin/alphabetic order/nb individuals/nb events]0 [display by/branch/alphabetic order]2"
+                  title="[*first name/first names]1, [sort by/date begin/alphabetic order/nb individuals/nb events]0 [display by/branch/alphabetic order]2">
+                  <i class="fa fa-arrow-down-a-z fa-fw" aria-hidden="true"></i>
+                </a>
+                <a role="button" href="%prefix;m=P&tri=F" data-bs-toggle="tooltip"
+                  aria-label="[*frequency] [first name/first names]1"
+                  title="[*frequency] [first name/first names]1, [sort by/date begin/alphabetic order/nb individuals/nb events]0 [sort by/date begin/alphabetic order/nb individuals/nb events]3">
+                  <i class="fa fa-arrow-down-wide-short fa-fw" aria-hidden="true"></i>
+                </a>
+              </div>
+              <div class="search-field">
+                <label for="firstname" class="visually-hidden">[*first name/first names]2</label>
+                <input type="search" id="firstname" name="p" tabindex="2"
+                  placeholder="[*first name/first names]2"
+                  %if;(e.p!="") value="%e.p;"%end; list="datalist_fnames" data-book="fn">
+              </div>
+            </div>
+            <div class="search-row">
+              <div class="search-sort-btns" role="group" aria-label="[*surname/surnames]1">
+                <a role="button" href="%prefix;m=N&tri=A" data-bs-toggle="tooltip"
+                  aria-label="[*surname/surnames]1, [sort by/date begin/alphabetic order/nb individuals/nb events]0 [display by/branch/alphabetic order]2"
+                  title="[*surname/surnames]1, [sort by/date begin/alphabetic order/nb individuals/nb events]0 [display by/branch/alphabetic order]2">
+                  <i class="fa fa-arrow-down-a-z fa-fw" aria-hidden="true"></i>
+                </a>
+                <a role="button" href="%prefix;m=N&tri=F" data-bs-toggle="tooltip"
+                  aria-label="[*frequency] [surname/surnames]1"
+                  title="[*frequency] [surname/surnames]1, [sort by/date begin/alphabetic order/nb individuals/nb events]0 [sort by/date begin/alphabetic order/nb individuals/nb events]3">
+                  <i class="fa fa-arrow-down-wide-short fa-fw" aria-hidden="true"></i>
+                </a>
+              </div>
+              <div class="search-field">
+                <label for="surname" class="visually-hidden">[*surname/surnames]0</label>
+                <input type="search" id="surname" name="n" tabindex="3"
+                  title="[*word/words]1" data-bs-toggle="tooltip"
+                  placeholder="[*surname/surnames]0"
+                  %if;(e.n!="") value="%e.n;"%end; list="datalist_snames" data-book="sn">
+              </div>
+            </div>
+          </div>
+          <div class="d-flex flex-column mt-2 mt-md-1 ms-1">
+            <div class="firstname-options">
+              <div class="check-label">[*first name/first names]1[:]</div>
+              <label data-bs-toggle="tooltip" data-bs-placement="%if;(b.propose_titles="no")top%else;left%end;" title="[*order hlp]">
+                <input class="form-check-input" type="checkbox" name="p_order" id="p_order" value="on" tabindex="6">
+                <span>[*order]</span>
+              </label>
+              <label data-bs-toggle="tooltip" data-bs-placement="%if;(b.propose_titles="no")top%else;left%end;" title="[*not exact]1, [phonetic variants] [not exact hlp]">
+                <input class="form-check-input" type="checkbox" name="p_exact" id="p_exact" value="off" tabindex="4">
+                <span>[*not exact]0</span>
+              </label>
+            </div>
+            <button id="global-search-inline" class="%if;(b.propose_titles!="no")d-none %end;btn btn-primary fw-bold w-100 mt-3"
+                    type="submit" tabindex="7">
+              <i class="fa fa-magnifying-glass me-1" aria-hidden="true"></i>[*search/case sensitive]0
+            </button>
+          </div>
+        </div>
+      </form>
+
+      %( ---- Ligne TITRE / DOMAINE + bouton de recherche global ---- %)
+      %if;(b.propose_titles!="no")
+        <div class="title-domain-row">
+          <form id="title-search" class="d-flex align-items-center flex-grow-1 flex-wrap gap-2"
+                method="get" action="%action;">
+            %hidden;
+            <input type="hidden" name="m" value="TT">
+            <a class="list-all" role="button" data-bs-toggle="tooltip" data-bs-placement="bottom"
+               href="%prefix;m=TT" title="[*all the titles]" aria-label="[*all the titles]">
+              <i class="fa fa-list-ul fa-fw" aria-hidden="true"></i>
+            </a>
+            <div class="search-field">
+              <label for="titles" class="visually-hidden">[*title/titles]0</label>
+              <input type="search" class="form-control" name="t" id="titles"
+                placeholder="[*title/titles]0" tabindex="7"
+                list="datalist_titles" data-book="title">
+            </div>
+            <a class="list-all" role="button" data-bs-toggle="tooltip" data-bs-placement="bottom"
+               href="%prefix;m=TT&p=*" title="[*all the estates]" aria-label="[*all the estates]">
+              <i class="fa fa-list-ul fa-fw" aria-hidden="true"></i>
+            </a>
+            <div class="search-field">
+              <label for="estates" class="visually-hidden">[*estate]0</label>
+              <input type="search" class="form-control" name="p" id="estates"
+                placeholder="[*estate]0" tabindex="8"
+                list="datalist_estates" data-book="domain">
+            </div>
+            <button class="d-none" type="submit"></button>
+          </form>
+          %( -- Bouton de recherche principal — hors form (comportement hérité) -- %)
+          <button id="global-search" class="btn btn-primary fw-bold mt-1 mt-md-0"
+            type="submit" tabindex="9"
+            data-bs-toggle="tooltip" data-bs-placement="right" title="[*search/case sensitive]0">
+            <i class="fa fa-magnifying-glass me-1" aria-hidden="true"></i>[*search/case sensitive]0
+          </button>
+        </div>
+      %end;
+
+    </div>
+  </div>
 %end;
+
+%( ============================================================
+   BLOC OUTILS — toujours présent (avec variantes selon contexte)
+   ============================================================ %)
+
 %define;notes_title(lang)
   %if;(b.base_notes_title_lang!="")%b.base_notes_title_lang;
   %elseif;(b.base_notes_title!="")%b.base_notes_title;
   %else;[*base notes]
   %end;
 %end;
-%define;book_button(xxx,yyy,zzz)
-  <a role="button" class="btn btn-outline-success" data-bs-toggle="tooltip"
-    href="%prefix;m=MOD_DATA&data=xxx" title="[*modify] %apply;book_of%with;[yyy]1%end;%sp;
-      ([wizard/wizards/friend/friends/exterior]0)"><i class="fa fa-zzz me-1"></i>[*yyy]1
-  </a>
-%end;
-%define;language(x)
-  %apply;nth%with;
-    af/ar/bg/br/ca/co/cs/da/de/en/eo/es/et/fi/fr/he/is/%nn;
-    it/lt/lv/nl/no/oc/pl/pt/pt-br/ro/ru/sk/sl/sv/tr/zh/
-    %and;x%end;
-%end;
-%define;set_lang(l1) %( see same condition in Util.commd and Templ.reorder %)
-  %if;(default_lang!="l1")%url_set.lang_file.l1;%else;%url_set.lang_file;%end;
-%end;
-%define;language_link()
-  %for;i;0;33;
-    %let;l1;%apply;language(i)%in;
-    %if;(lang!=l1)
-      <a class="dropdown-item%if;(l1=b.default_lang) bg-warning%end;" id="lang_%l1;"%sp;
-        href="%apply;set_lang(l1)">%nn;
-       <code>%if;(l1!="pt-br")%l1;&nbsp;&nbsp;&nbsp;%else;%l1;%end;%sp;</code>%nn;
-       %apply;capitalize%with;%apply;language_name(l1)%end;</a>
-    %end;
-  %end;
-%end;
-%if;(e.i!="" or e.p!="" or e.n!="" or e.pn!="")
-  <div class="d-flex justify-content-center">
-    <div class="alert alert-danger alert-dismissible fade show text-center w-75 m-2" role="alert">
-      %if;(e.i!="")[*unknown index][:] %e.i;
-      %elseif;(e.pn!="")[*unknown person][:] %e.pn;
-        %if;(e.p!="") %e.p;%end;%if;(e.n!="") %e.n;%end;
-      %elseif;(e.p!="" and e.n="")[*unknown first_name][:] %e.p;
-      %elseif;(e.n!="" and e.p="")[*unknown surname][:] %e.n;
-      %else;[*unknown person][:] %e.p;%if;(e.oc!="").%e.oc;%end; %e.n;%end;
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-  </div>
-%end;
-<div class="d-flex flex-column flex-md-row align-items-center justify-content-lg-around mt-1 mt-lg-%if;roglo;1%else;3%end;">
-  <div class="col-md-3 order-2 order-md-1 align-self-center mt-3 mt-md-0">
-    <div class="d-flex justify-content-center">
-      %if;roglo;
-        <img src="%images_prefix;logo-roglo.png" alt="logo Roglo" width="150">
-      %elseif;(b.welcome_logo!="")
-        <img src="%prefix;m=IM;s=%b.welcome_logo;" alt="logo"
-           %if;(b.welcome_logo_style!="")style="%b.welcome_logo_style;"%end;>
-      %else;
-        <img src="%images_prefix;arbre_start.png" alt="logo GeneWeb" width="180">
-      %end;
-    </div>
-  </div>
-  <div class="col-12 col-md-3 order-1 order-md-3 ms-md-2 px-0 mt-xs-2 mt-lg-0 align-self-center">
-    <div class="d-flex flex-column col-md-10 ps-1 pe-0">
-      %if;(cgi and (not wizard or not friend))
-        <form class="d-flex" method="post" action="%action;">
-          %hidden;
-          <div class="input-group mt-1">
-            %(<label for="w" class="visually-hidden">[user/password/cancel]0:[user/password/cancel]1</label>%)
-            <input type="password" name="w" class="form-control"
-              title="[wizard/wizards/friend/friends/exterior]2/[wizard/wizards/friend/friends/exterior]0"
-              placeholder="[user/password/cancel]0:[user/password/cancel]1"
-              aria-label="password input" aria-describedby="username:password" autofocus>
-            <button type="submit" class="btn btn-primary">OK</button>
-          </div>
-        </form>
-      %end;
-      %if;(b.auth_file="")
-        <div class="btn-group btn-group-xs mt-1" role="group">
-        %if;(b.friend_passwd!="" or b.friend_passwd_file!="")
-          %if;(not friend)
-            %if;(not cgi)
-              <a href="%url_set.w.f;" class="btn btn-sm btn-outline-primary text-nowrap" role="button">
-                <i class="fas fa-user me-2" aria-hidden="true"></i>%nn;
-                [*wizard/wizards/friend/friends/exterior]2</a>
-            %end;
-          %else;
-            <a href="#" class="btn btn-primary btn-sm disabled text-nowrap" role="button">
-              <i class="fas fa-user me-2" aria-hidden="true"></i>%nn;
-              [*wizard/wizards/friend/friends/exterior]2</a>
-          %end;
-        %end;
-        %if;(b.wizard_passwd!="" or b.wizard_passwd_file!="")
-          %if;(not wizard)
-            %if;(not cgi)
-              <a href="%url_set.w.w;" class="btn btn-sm btn-outline-success text-nowrap" role="button">
-                <i class="fas fa-hat-wizard me-2" aria-hidden="true"></i>%nn;
-                [*wizard/wizards/friend/friends/exterior]0</a>
-            %end;
-          %else;
-              <a href="#" class="btn btn-sm btn-success disabled text-nowrap" role="button">
-                <i class="fas fa-hat-wizard me-2" aria-hidden="true"></i>%nn;
-                [*wizard/wizards/friend/friends/exterior]0</a>
-          %end;
-        %end;
-        </div>
-      %end;
-      %let;username;%if;(user.name="")%user.ident;%else;%user.name;%end;%in;
-      %if;((wizard and (b.wizard_passwd_file!="" or b.wizard_passwd!=""))
-        or (friend and (b.friend_passwd_file!="" or b.friend_passwd!="")))
-        <a class="border border-%if;friend;primary%elseif;wizard;success%end; text-%if;friend;primary%elseif;wizard;success%end; rounded text-center mt-1 w-100 rounded-bottom"
-          %let;userk;%if;(user.key!="")%user.key;%elseif;(user.name!="")%user.name;%else;%user.ident;%end;%in;
-          href="%prefix;m=S&pn=%apply;uri_encode(userk)"%sp;
-          %if;(user.key="")title="[*no user key]" data-bs-toggle="tooltip"%end;>%nn;
-          %if;wizard;[*wizard/wizards/friend/friends/exterior]0%elseif;friend;[*wizard/wizards/friend/friends/exterior]2%end; %username;</a>
-        <a class="btn btn-sm btn-outline-danger mt-1 w-100" href="%prefix;w=" role="button"><i class="fas fa-right-from-bracket me-1" aria-hidden="true"></i>[*disconnect]</a>
-        %if;roglo;
-          <div class="btn-group" data-bs-toggle="tooltip" data-bs-placement="left"
-            title="%apply;language_name(lang) – [*select lang]">
-            <button class="btn btn-link dropdown-toggle" type="button" id="dropdownMenu1"
-              data-bs-toggle="dropdown" aria-expanded="false">%nn;
-              <span class="visually-hidden">lang</span>%nn;
-              <span class="text-uppercase">%lang;</span>%nn;
-              <span class="visually-hidden">, [select lang]</span>%nn;
-            </button>
-            <div class="dropdown-menu scrollable-lang" aria-labelledby="dropdownMenu1">
-              %apply;language_link()
-            </div>
-          </div>
-        %end;
-      %end;
-    </div>
-  </div>
-  <div class="my-0 order-3 order-md-2 flex-fill text-lg-center align-self-md-center">
-    <h1 class="display-5">%apply;capitalize%with;[database]%end; %base.name;</h1>
-    %if;(b.visitor_access!="no" or wizard or friend)
-      <div class="d-flex justify-content-center">
-        <span class="text-center %if;roglo;h5">%nn;
-[
-en: contains
-fr: contient
-]
- %base.real_nb_persons; %nn;
-[
-en: individuals<br> all connected through familial relationships
-fr: individus<br> tous reliés par des liens familiaux
-]
-%else;h4 fw-lighter">%base.real_nb_persons; %nn;
-  %if;(base.real_nb_persons="0" or base.real_nb_persons="1")[person/persons]0%else;[person/persons]1%end;%end;</span>
-        %if;(base.real_nb_persons!="0" and not predictable_mode)
-          <a class="align-self-center ms-2 mb-2" href="%prefix;i=%apply;get_random(nb_persons.v)"
-            data-bs-toggle="tooltip" data-bs-placement="bottom"
-            title="[*random individual]"><i class="fa-solid fa-dice"></i></a>
-        %end;
-      </div>
-    %end;
-  </div>
-</div>
-<div class="d-flex justify-content-center">
-  <div class="d-flex flex-column col-8">
-    %if;(b.motd!="")%nn;
-      <h2 class="h3 text-center">%apply;interp(b.motd)</h2>
-    %end;
-    %if;(browsing_with_sosa_ref and b.visitor_access!="no")
-      <div class="text-center">%apply;display_sosa_ref%with;%sosa_ref;%end;</div>
-    %end;
-  </div>
-</div>
-%if;just_friend_wizard;
-  <div class="col mt-1">
-    <div class="text-center alert alert-danger alert-dismissible fade show" role="alert">
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      <span>
-[
-co: I <strong>diritti di i maghi</strong> sò attualmente<strong>disattivati</strong> per via d'una mantenenza.
-en: <strong>Wizard rights</strong> are now <strong>suspended</strong> for maintenance.
-fr: Les <strong>droits des magiciens</strong> sont actuellement <strong>suspendus</strong> pour maintenance.
-]
-      </span>
-    </div>
-  </div>
-%end;
-%if;not (b.visitor_access!="no" or wizard or friend);
-    %let;lg;%lang;%in;
-  <div class="text-lg-center alert alert-danger fw-bold" role="alert">
-    <i class="fa fa-triangle-exclamation fa-fw me-2"></i>
-    <span>%apply;get_visitor_access_msg(lg)</span>
-    <span class="fa fa-triangle-exclamation fa-fw"></span>
-  </div>
-%elseif;(nb_persons.v!=0)
-  <div id="welcome-search" class="d-flex flex-wrap justify-content-center mt-3 mt-lg-1">
-    <div class="col col-md-10 col-xl-9">
-      <form id="main-search" class="mt-2 mt-xl-4" method="get" action="%prefix;">
-        %hidden;
-        <input type="hidden" name="m" value="S" class="has_validation">
-        <div class="d-flex justify-content-center">
-          <div class="d-flex flex-column justify-content-center w-100">
-            <div class="d-flex flex-column flex-md-row">
-              <div class="w-100 w-md-auto flex-md-grow-1">
-                <div class="d-flex flex-grow-1">
-                  <div class="d-flex align-items-center ms-1 me-2">
-                    <abbr data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                       title="<div class='text-start fw-bold'><div class='h5'>[*search format][:]</div>
-                              1. [*person/persons]0[:]<br>
-                                 a. [first name/first names]2 [surname/surnames]0 ¹<br>
-                                     <i class='fw-lighter'>John Doe</i><br><br>
-                                 b. [first name/first names]2/[surname/surnames]0 ²/[occ]1 ³<br>
-                                     <i class='fw-lighter'>James William/Smith-Johnson/2<br>       James William/Smith-Johnson<br>
-                                     James William/<br>       /Smith-Jonhson</i><br><br>
-                              2. [*surname/surnames]0 ¹[:] <i class='fw-lighter'>Doe</i><br><br>
-                              3. [*public name][:] <i class='fw-lighter'>James Smith</i><br><br>
-                              4. [*alias][:] <i class='fw-lighter'>Jimmy</i><br><br>
-                              5. [*key]0[:] [first name/first names]2.[occ]1 [surname/surnames]0 ²<br>
-                                     <i class='fw-lighter'>James William.2 Smith-Johnson<br>       james william.2 smith johnson</i><br>
-                              <br><div class='fw-lighter small'>¹ [word/words]0<br>² [word/words]1<br>³ [optional/mandatory]0</div></div>">
-                      <i class="far fa-circle-question text-primary"></i>
-                    </abbr>
-                  </div>
-                  <input type="search" id="fullname" class="form-control form-control-lg py-0 border border-top-0" autofocus tabindex="1"
-                    name="pn" placeholder="[*search/case sensitive]0 [person/persons]0, [surname/surnames]0, [public name], [alias], [key]0%if;browsing_with_sosa_ref;, [n° Sosa]%end;"
-                    %if;(e.pn!="") value="%e.pn;"%end;>
-                </div>
-                <div class="d-flex mt-3">
-                  <div class="btn-group-vertical me-2">
-                    <a role="button" href="%prefix;m=P&tri=A" data-bs-toggle="tooltip"
-                      title="[*first name/first names]1, [sort by/date begin/alphabetic order/nb individuals/nb events]0 [display by/branch/alphabetic order]2">%nn;
-                      <i class="fa fa-arrow-down-a-z fa-fw"></i></a>
-                    <a role="button" href="%prefix;m=P&tri=F" data-bs-toggle="tooltip"
-                      title="[*frequency] [first name/first names]1, [sort by/date begin/alphabetic order/nb individuals/nb events]0 [sort by/date begin/alphabetic order/nb individuals/nb events]3">%nn;
-                      <i class="fa fa-arrow-down-wide-short fa-fw"></i></a>
-                  </div>
-                  <div class="d-flex flex-grow-1">
-                    <div class="flex-grow-1 align-self-center">
-                      <label for="firstname" class="visually-hidden form-label">[*first name/first names]2</label>
-                      <input type="search" id="firstname" class="form-control form-control-lg border-top-0"
-                        name="p" placeholder="[*first name/first names]2" tabindex="2"
-                        %if;(e.p!="") value="%e.p;"%end; list="datalist_fnames" data-book="fn">
-                    </div>
-                  </div>
-                </div>
-                <div class="d-flex mt-2">
-                  <div class="btn-group-vertical me-2">
-                    <a role="button" href="%prefix;m=N&tri=A" data-bs-toggle="tooltip"
-                      title="[*surname/surnames]1, [sort by/date begin/alphabetic order/nb individuals/nb events]0 [display by/branch/alphabetic order]2">%nn;
-                      <i class="fa fa-arrow-down-a-z fa-fw"></i></a>
-                    <a role="button" href="%prefix;m=N&tri=F" data-bs-toggle="tooltip"
-                      title="[*frequency] [surname/surnames]1, [sort by/date begin/alphabetic order/nb individuals/nb events]0 [sort by/date begin/alphabetic order/nb individuals/nb events]3">%nn;
-                      <i class="fa fa-arrow-down-wide-short fa-fw"></i></a>
-                  </div>
-                  <div class="d-flex flex-grow-1">
-                    <div class="flex-grow-1 align-self-center">
-                      <label for="surname" class="visually-hidden form-label">[*surname/surnames]0</label>
-                      <input type="search" id="surname" class="form-control form-control-lg border border-top-0"
-                        title="[*word/words]1" data-bs-toggle="tooltip"
-                        name="n" placeholder="[*surname/surnames]0" tabindex="3"
-                        %if;(e.n!="") value="%e.n;"%end; list="datalist_snames" data-book="sn">
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="d-flex flex-column align-items-center justify-content-between mt-3 mt-md-0 mx-0 mx-md-1 px-0 px-md-3 col-md-auto small">
-                <div class="d-flex flex-row flex-md-column justify-content-start mb-3 mb-md-0">
-                  <div class="align-self-md-start fw-bold me-3 me-md-0 mb-0 mb-md-1">[*first name/first names]1[:]</div>
-                  <div class="d-flex flex-row flex-md-column">
-                    <div class="form-check me-3 me-md-0 mb-md-1" data-bs-toggle="tooltip" data-bs-placement="%if;(b.propose_titles="no")top%else;left%end;" title="[*order hlp]">
-                      <input class="form-check-input" type="checkbox" name="p_order" id="p_order" value="on" tabindex="6">
-                      <label class="form-check-label d-flex align-items-center" for="p_order">[*order]</label>
-                    </div>
-                    <div class="form-check" data-bs-toggle="tooltip" data-bs-placement="%if;(b.propose_titles="no")top%else;left%end;" title="[*not exact]1, [phonetic variants] [not exact hlp]">
-                      <input class="form-check-input" type="checkbox" name="p_exact" id="p_exact" value="off" tabindex="4">
-                      <label class="form-check-label d-flex align-items-center" for="p_exact">[*not exact]0</label>
-                    </div>
-                  </div>
-                </div>
-                <button id="global-search-inline" class="%if;(b.propose_titles!="no")d-none %end;btn btn-outline-primary fw-bolder w-100 w-md-auto py-2 mb-1"
-                  type="submit"%if;(b.propose_titles="no") tabindex="7"%end; >
-                  <i class="fa fa-magnifying-glass fa-lg fa-fw"></i>
-                  [*search/case sensitive]0
-                </button>
-              </div>
-            </div>
-            %( BS5: commented-out checkboxes kept in sync for future restoration
-            <div class="d-flex align-items-center mx-2">
-              <div class="d-flex flex-column justify-content-around h-100">
-                <div class="form-check" data-bs-toggle="tooltip" data-bs-placement="bottom" title="[*all-hlp]">
-                  <input class="form-check-input" type="checkbox" name="n_all" id="n_all" value="on" checked>
-                  <label class="form-check-label d-flex align-items-center" for="n_all">[*all]</label>
-                </div>
-                <div class="form-check" data-bs-toggle="tooltip" data-bs-placement="bottom" title="[*order-hlp]">
-                  <input class="form-check-input" type="checkbox" name="n_order" id="n_order" value="on">
-                  <label class="form-check-label small d-flex align-items-center" for="n_order">[*order]</label>
-                </div>
-                <div class="form-check" data-bs-toggle="tooltip" data-bs-placement="bottom" title="[*exact-hlp]">
-                  <input class="form-check-input" type="checkbox" name="n_exact" id="n_exact" value="on" checked>
-                  <label class="form-check-label small d-flex align-items-center" for="n_exact">[*exact]</label>
-                </div>
-              </div>
-            </div>%)
-          </div>
-        </div>
-      </form>
-      <div class="d-flex flex-wrap flex-md-nowrap justify-content-center align-items-md-center mt-1 mt-md-3">
-        %if;(b.propose_titles!="no")
-          <form id="title-search" class="d-flex flex-column flex-md-row align-items-start align-items-md-center col-12 col-md-9 ms-md-4" method="get" action="%action;">
-            %hidden;
-            <input type="hidden" name="m" value="TT">
-            <div class="d-flex align-items-center w-100 mb-2 mb-md-0">
-              <a class="me-2" role="button" data-bs-toggle="tooltip" data-bs-placement="bottom"
-                href="%prefix;m=TT" title="[*all the titles]"><i class="fa fa-list-ul fa-fw"></i></a>
-              <label for="titles" class="visually-hidden form-label">[*title/titles]0</label>
-              <input type="search" class="form-control border-top-0 border-end-0 border-start-0 w-100"
-                name="t" id="titles" placeholder="[*title/titles]0" tabindex="7"
-                list="datalist_titles" data-book="title">
-            </div>
-            <div class="d-flex align-items-center w-100 mb-2 mb-md-0 ms-0 ms-md-2">
-              <a class="me-2" role="button" data-bs-toggle="tooltip" data-bs-placement="bottom"
-                href="%prefix;m=TT&p=*" title="[*all the estates]"><i class="fa fa-list-ul fa-fw"></i></a>
-              <label for="estates" class="visually-hidden form-label">[*estate]0</label>
-              <input type="search" class="form-control border-top-0 border-end-0 border-start-0 w-100"
-                name="p" id="estates" placeholder="[*estate]0" tabindex="8"
-                list="datalist_estates" data-book="domain">
-            </div>
-            <button class="d-none" type="submit"></button>
-          </form>
-        %end;
-        %if;(b.propose_titles!="no")
-          <button id="global-search" class="btn btn-outline-primary fw-bolder col-12 col-md-auto mt-1 mt-md-0%sp;
-            %if;(b.propose_titles!="no")ms-md-auto me-md-2 py-2%else;py-2%end;"
-            type="submit" tabindex="%if;(b.propose_titles!="no")9%else;7%end;"
-            data-bs-toggle="tooltip" data-bs-placement="right" title="[*search/case sensitive]0">
-            <i class="fa fa-magnifying-glass fa-lg fa-fw"></i>
-            [*search/case sensitive]0
-          </button>
-        %end;
-      </div>
-    </div>
-  </div>
-%end;
-<div class="d-flex flex-column justify-content-start justify-content-md-center mt-4 col-12 col-md-11 col-lg-10 mx-auto">
-  <div class="h4 text-md-center"><i class="fas fa-screwdriver-wrench fa-sm fa-fw text-secondary"></i>
-    %if;roglo;[
+
+<div class="card mb-3">
+  <div class="card-body">
+    <h2 class="gw-section-title">
+      <i class="fas fa-screwdriver-wrench" aria-hidden="true"></i>
+      <span>%if;roglo;[
 en: Around the tree
-fr: Autour de l'arbre
-]
-    %else;[*tools]%end;
-  </div>
-  <div class="d-flex flex-wrap justify-content-md-center">
-    %if;(wizard and not base.has_notes)
-      <a role="button" class="btn btn-outline-success" href="%prefix;m=MOD_NOTES">
-        <i class="far fa-file-lines fa-fw me-1" aria-hidden="true"></i>[*add base notes]
-      </a>
-    %end;
-    %if;base.has_notes;
-      <a role="button" class="btn btn-outline-primary" href="%prefix;m=NOTES">%nn;
-        <i class="far fa-file-lines fa-fw me-1" aria-hidden="true"></i>%apply;notes_title(lang)
-      </a>
-    %end;
-    %if;has_misc_notes;
-      <a role="button" class="btn btn-outline-primary" href="%prefix;m=MISC_NOTES">%nn;
-      <i class="fas fa-align-justify fa-fw me-1" aria-hidden="true"></i>[*base index notes]</a>
-    %end;
-    %if;((wizard or friend) and
-        (b.wizard_passwd_file!="" or b.wizard_descr_file!=""))
-       <a role="button" class="btn btn-outline-primary" href="%prefix;m=WIZNOTES">%nn;
-         <i class="far fa-file-lines fa-fw me-1" aria-hidden="true"></i>[*base wizard notes]</a>
-    %end;
-    %if;(nb_persons.v!=0)
-      <a role="button" class="btn btn-outline-primary" href="%prefix;m=ISOLATED">%nn;
-        <i class="fa fa-user fa-fw me-1" aria-hidden="true"></i>%nn;
-        [*isolated persons/totally isolated/linked by relation/witness to an event]0</a>
-      <a role="button" class="btn btn-outline-primary" href="%prefix;m=STAT">%nn;
-        <i class="far fa-chart-bar fa-fw me-1" aria-hidden="true"></i>[*statistics]</a>
-      <a role="button" class="btn btn-outline-primary" href="%prefix;m=ANM">%nn;
-        <i class="fa fa-cake-candles fa-fw me-1" aria-hidden="true"></i>[*anniversaries]</a>
-      %if;(has_history and b.history="yes")
-        <a role="button" class="btn btn-outline-primary" href="%prefix;m=HIST&k=20">%nn;
-          <i class="fas fa-clock-rotate-left fa-fw me-1" aria-hidden="true"></i>[*history]</a>
-      %end;
-    %end;
-    %if;((plugin.forum or roglo) and b.disable_forum!="yes")
-      <a class="btn btn-outline-primary"
-        href="%if;roglo;https://forum.roglo.eu%else;%prefix;m=FORUM%end;">%nn;
-        <i class="far fa-comments fa-fw me-1" aria-hidden="true"></i>[*forum]</a>
-    %end;
-    %if;(b.propose_place_surnames!="no" and nb_persons.v!=0)
-      <a role="button" class="btn btn-outline-primary" href="%prefix;m=PPS&bi=on&ba=on&ma=on&de=on&bu=on">%nn;
-        <i class="fas fa-globe fa-fw me-1" aria-hidden="true"></i>[*place/places]1/[surname/surnames]0</a>
-    %end;
-    %if;(b.hide_advanced_request="no")
-      <a role="button" class="btn btn-outline-primary" href="%prefix;m=AS">%nn;
-        <i class="fa fa-magnifying-glass-plus fa-fw me-1" aria-hidden="true"></i>[*advanced request]0</a>
-    %end;
-    <a role="button" class="btn btn-outline-primary" href="%prefix;m=CAL">%nn;
-      <i class="far fa-calendar-days fa-fw me-1" aria-hidden="true"></i>[*calendar/calendars]1</a>
-    %if;((roglo and (user.ident in b.superwizard or (b.superwizard="all" and wizard)))
-      or ((not roglo) and wizard))
-      <a role="button" class="btn btn-outline-success" href="%prefix;m=H&v=conf">%nn;
-        <i class="fas fa-gear fa-fw me-1" aria-hidden="true"></i>[*configuration]1</a>
-    %end;
-    %if;wizard;
-      <a role="button" class="btn btn-outline-success" href="%prefix;m=MOD_NOTES&new">%nn;
-        <i class="fa fa-file-lines fa-fw me-1" aria-hidden="true"></i>[*add::note/notes]0</a>
-      %if;(b.propose_add_family!="no")
-      <a role="button" class="btn btn-outline-success" href="%prefix;m=ADD_FAM">%nn;
-        <i class="fas fa-user-plus fa-fw me-1" aria-hidden="true"></i>[*add::family/families]0</a>
-      %end;
-    %end;
-  </div>
-</div>
-%if;roglo;
-  <div class="d-flex flex-column justify-content-start justify-content-md-center mt-3 col-12 col-md-10 mx-auto">
-    <div class="h4 text-md-center">
-      <img src="%images_prefix;logo-roglo.png" alt="Roglo" style="width:30px">
-      Association Roglo
-    </div>
-    <div class="d-flex flex-wrap justify-content-md-center">
-      %if;(b.alt_serv_base!="" and not cgi)
-        <a role="button" class="btn btn-outline-primary"%sp;
-          href="%if;(b.alt_serv_adr!="")%b.alt_serv_adr;%end;%b.alt_serv_base?w=%nn;
-            %if;wizard;w%elseif;friend;f%else;%end;%foreach;env_binding;%if;(env.key!="" and env.key!="w")&%env.key;=%env.val;%end;%end;"%sp;
-          title="[*go to alt base]0 %b.alt_serv_base;">%nn;
-          %if;(b.alt_serv_title!="")%b.alt_serv_title;%else;[*other base]%end;
+fr: Autour de l’arbre
+]%else;[*tools]%end;</span>
+    </h2>
+    <div class="d-flex flex-wrap gap-1">
+      %if;(wizard and not base.has_notes)
+        <a role="button" class="btn btn-outline-success" href="%prefix;m=MOD_NOTES">
+          <i class="far fa-file-lines fa-fw me-1" aria-hidden="true"></i>[*add base notes]
         </a>
       %end;
-      <a role="button" class="btn btn-outline-primary" href="%prefix;m=NOTES&f=0_Sommaire_des_notes_diverses">Encyclopædia Roglo</a>
-      <a role="button" class="btn btn-outline-primary" href="https://asso.roglo.eu/page/350795-l-association">Site de l'association</a>
-      <a role="button" class="btn btn-outline-primary" href="https://asso.roglo.eu/page/358570-donnees-personnelles">Politique de confidentialité</a>
-      <a role="button" class="btn btn-outline-primary" href="https://asso.roglo.eu/page/350796-decouvrir">Fonctionnement et usage</a>
-      <a role="button" class="btn btn-outline-primary" href="https://asso.roglo.eu/page/358680-contact">Nous contacter</a>
-      <a role="button" class="btn btn-outline-primary" href="https://asso.roglo.eu/page/419445-s-inscrire-comme-ami">%nn;
+      %if;base.has_notes;
+        <a role="button" class="btn btn-outline-primary" href="%prefix;m=NOTES">
+          <i class="far fa-file-lines fa-fw me-1" aria-hidden="true"></i>%apply;notes_title(lang)
+        </a>
+      %end;
+      %if;has_misc_notes;
+        <a role="button" class="btn btn-outline-primary" href="%prefix;m=MISC_NOTES">
+          <i class="fas fa-align-justify fa-fw me-1" aria-hidden="true"></i>[*base index notes]
+        </a>
+      %end;
+      %if;((wizard or friend) and
+          (b.wizard_passwd_file!="" or b.wizard_descr_file!=""))
+        <a role="button" class="btn btn-outline-primary" href="%prefix;m=WIZNOTES">
+          <i class="far fa-file-lines fa-fw me-1" aria-hidden="true"></i>[*base wizard notes]
+        </a>
+      %end;
+      %if;(nb_persons.v!=0)
+        <a role="button" class="btn btn-outline-primary" href="%prefix;m=ISOLATED">
+          <i class="fa fa-user fa-fw me-1" aria-hidden="true"></i>%nn;
+          [*isolated persons/totally isolated/linked by relation/witness to an event]0
+        </a>
+        <a role="button" class="btn btn-outline-primary" href="%prefix;m=STAT">
+          <i class="far fa-chart-bar fa-fw me-1" aria-hidden="true"></i>[*statistics]
+        </a>
+        <a role="button" class="btn btn-outline-primary" href="%prefix;m=ANM">
+          <i class="fa fa-cake-candles fa-fw me-1" aria-hidden="true"></i>[*anniversaries]
+        </a>
+        %if;(has_history and b.history="yes")
+          <a role="button" class="btn btn-outline-primary" href="%prefix;m=HIST&k=20">
+            <i class="fas fa-clock-rotate-left fa-fw me-1" aria-hidden="true"></i>[*history]
+          </a>
+        %end;
+      %end;
+      %if;((plugin.forum or roglo) and b.disable_forum!="yes")
+        <a class="btn btn-outline-primary"
+          href="%if;roglo;https://forum.roglo.eu%else;%prefix;m=FORUM%end;">
+          <i class="far fa-comments fa-fw me-1" aria-hidden="true"></i>[*forum]
+        </a>
+      %end;
+      %if;(b.propose_place_surnames!="no" and nb_persons.v!=0)
+        <a role="button" class="btn btn-outline-primary" href="%prefix;m=PPS&bi=on&ba=on&ma=on&de=on&bu=on">
+          <i class="fas fa-globe fa-fw me-1" aria-hidden="true"></i>[*place/places]1/[surname/surnames]0
+        </a>
+      %end;
+      %if;(b.hide_advanced_request="no")
+        <a role="button" class="btn btn-outline-primary" href="%prefix;m=AS">
+          <i class="fa fa-magnifying-glass-plus fa-fw me-1" aria-hidden="true"></i>[*advanced request]0
+        </a>
+      %end;
+      <a role="button" class="btn btn-outline-primary" href="%prefix;m=CAL">
+        <i class="far fa-calendar-days fa-fw me-1" aria-hidden="true"></i>[*calendar/calendars]1
+      </a>
+      %if;((roglo and (user.ident in b.superwizard or (b.superwizard="all" and wizard)))
+        or ((not roglo) and wizard))
+        <a role="button" class="btn btn-outline-success" href="%prefix;m=H&v=conf">
+          <i class="fas fa-gear fa-fw me-1" aria-hidden="true"></i>[*configuration]1
+        </a>
+      %end;
+      %if;wizard;
+        <a role="button" class="btn btn-outline-success" href="%prefix;m=MOD_NOTES&new">
+          <i class="fa fa-file-lines fa-fw me-1" aria-hidden="true"></i>[*add::note/notes]0
+        </a>
+        %if;(b.propose_add_family!="no")
+          <a role="button" class="btn btn-outline-success" href="%prefix;m=ADD_FAM">
+            <i class="fas fa-user-plus fa-fw me-1" aria-hidden="true"></i>[*add::family/families]0
+          </a>
+        %end;
+      %end;
+    </div>
+  </div>
+</div>
+
+
+%( ============================================================
+   BLOC ASSOCIATION ROGLO (instance roglo uniquement)
+   ============================================================ %)
+%if;roglo;
+  <div class="card gw-card-roglo mb-3">
+    <div class="card-body">
+      <h2 class="gw-section-title">
+        <img src="%images_prefix;logo-roglo.png" alt="" width="22" height="22">
+        <span>Association Roglo</span>
+      </h2>
+      <div class="d-flex flex-wrap gap-1">
+        %if;(b.alt_serv_base!="" and not cgi)
+          <a role="button" class="btn btn-outline-primary"%sp;
+            href="%if;(b.alt_serv_adr!="")%b.alt_serv_adr;%end;%b.alt_serv_base?w=%nn;
+              %if;wizard;w%elseif;friend;f%else;%end;%foreach;env_binding;%if;(env.key!="" and env.key!="w")&%env.key;=%env.val;%end;%end;"%sp;
+            title="[*go to alt base]0 %b.alt_serv_base;">%nn;
+            %if;(b.alt_serv_title!="")%b.alt_serv_title;%else;[*other base]%end;
+          </a>
+        %end;
+        <a role="button" class="btn btn-outline-primary"
+           href="%prefix;m=NOTES&f=0_Sommaire_des_notes_diverses">Encyclopædia Roglo</a>
+        <a role="button" class="btn btn-outline-primary"
+           href="https://asso.roglo.eu/page/350795-l-association">Site de l’association</a>
+        <a role="button" class="btn btn-outline-primary"
+           href="https://asso.roglo.eu/page/358570-donnees-personnelles">Politique de confidentialité</a>
+        <a role="button" class="btn btn-outline-primary"
+           href="https://asso.roglo.eu/page/350796-decouvrir">Fonctionnement et usage</a>
+        <a role="button" class="btn btn-outline-primary"
+           href="https://asso.roglo.eu/page/358680-contact">Nous contacter</a>
+        <a role="button" class="btn btn-outline-primary"
+           href="https://asso.roglo.eu/page/419445-s-inscrire-comme-ami">%nn;
 [
 en: Obtain a <code class="mb-1">Friend</code> access
 fr: Obtenir un accès <code class="mb-1">Ami</code>
 ]</a>
-      <a role="button" class="btn btn-outline-primary" href="https://asso.roglo.eu/collect/description/383016-j-campagne-de-dons-2024-cb-uniquement">%nn;
+        <a role="button" class="btn btn-outline-primary"
+           href="https://asso.roglo.eu/collect/description/383016-j-campagne-de-dons-2024-cb-uniquement">%nn;
 [
 en: Contribute/join
 fr: Cotiser/adhérer
 ]</a>
-      <a role="button" class="btn btn-outline-primary" href="https://asso.roglo.eu/membres/profil">%nn;
+        <a role="button" class="btn btn-outline-primary"
+           href="https://asso.roglo.eu/membres/profil">%nn;
 [
 en: My association account
 fr: Mon compte associatif
 ]</a>
-      <a role="button" class="btn btn-outline-primary" href="https://asso.roglo.eu/page/418348-faq">Questions fréquentes</a>
-      <a role="button" class="btn btn-outline-primary" href="https://asso.roglo.eu/page/365469-charte-des-amis">Charte des amis</a>
-      %if;(roglo and wizard)
-        <a role="button" class="btn btn-outline-success" href="https://asso.roglo.eu/page/358694-charte-des-magiciens">Chartes des Magiciens</a>
-        <a role="button" class="btn btn-outline-success" href="https://asso.roglo.eu/page/358695-charte-des-lieux">Chartes des lieux</a>
-        <a role="button" class="btn btn-outline-success" href="https://asso.roglo.eu/page/1409612-charte-des-sources">Chartes des sources</a>
-        <a role="button" class="btn btn-outline-success" href="https://roglo.eu/wizard_w?lang=fr;m=NOTES;f=GeneWeb:Trucs">Trucs et astuces</a>
-        <a role="button" class="btn btn-outline-success" href="https://roglo.eu/wizard_w?lang=fr;m=NOTES;f=Admin:anoma">Anomalies</a>
-      %end;
+        <a role="button" class="btn btn-outline-primary"
+           href="https://asso.roglo.eu/page/418348-faq">Questions fréquentes</a>
+        <a role="button" class="btn btn-outline-primary"
+           href="https://asso.roglo.eu/page/365469-charte-des-amis">Charte des amis</a>
+        %if;(roglo and wizard)
+          <a role="button" class="btn btn-outline-success"
+             href="https://asso.roglo.eu/page/358694-charte-des-magiciens">Chartes des Magiciens</a>
+          <a role="button" class="btn btn-outline-success"
+             href="https://asso.roglo.eu/page/358695-charte-des-lieux">Chartes des lieux</a>
+          <a role="button" class="btn btn-outline-success"
+             href="https://asso.roglo.eu/page/1409612-charte-des-sources">Chartes des sources</a>
+          <a role="button" class="btn btn-outline-success"
+             href="https://roglo.eu/wizard_w?lang=fr;m=NOTES;f=GeneWeb:Trucs">Trucs et astuces</a>
+          <a role="button" class="btn btn-outline-success"
+             href="https://roglo.eu/wizard_w?lang=fr;m=NOTES;f=Admin:anoma">Anomalies</a>
+        %end;
+      </div>
     </div>
   </div>
 %end;
+
+%( ============================================================
+   BLOC LIVRES (dictionnaires) — wizard / superwizard uniquement
+   ============================================================ %)
+
+%define;book_of(xx)
+  [book of %s:::xx]
+%end;
+
+%define;book_button(xxx,yyy,zzz)
+  <a role="button" class="btn btn-outline-success" data-bs-toggle="tooltip"
+    href="%prefix;m=MOD_DATA&data=xxx" title="[*modify] %apply;book_of%with;[yyy]1%end;%sp;
+      ([wizard/wizards/friend/friends/exterior]0)"><i class="fa fa-zzz fa-fw me-1" aria-hidden="true"></i>[*yyy]1</a>
+%end;
+
 %if;(((not roglo and wizard) or (roglo and user.ident!=""
     and (user.ident in b.superwizard or (b.superwizard="all" and wizard)))) and nb_persons.v!=0)
-  <div class="d-flex flex-column justify-content-start justify-content-md-center mt-3 col-12 col-md-9 mx-auto">
-    <div class="h4 text-md-center">
-      <i class="fas fa-book fa-sm fa-fw text-success me-1"></i>[*book/books]1%nn;
-    </div>
-    <div class="d-flex flex-wrap justify-content-md-center">
-      %apply;book_button("fn","first name/first names","child")
-      %apply;book_button("sn","surname/surnames","user")
-      %apply;book_button("fna","first name alias","child")
-      %apply;book_button("sna","surname alias","user")
-      %apply;book_button("pubn","public name/public names","signature")
-      %apply;book_button("qual","qualifier/qualifiers","comment")
-      %apply;book_button("alias","alias/aliases","mask")
-      %apply;book_button("occu","occupation/occupations","briefcase")
-      %apply;book_button("place","place/places","location-dot")
-      %apply;book_button("src","source/sources","box-archive")
-      %apply;book_button("title","title/titles","crown")
-      %apply;book_button("domain","domain/domains","chess-rook")
-      <a href="%prefix;m=CHK_DATA" class="btn btn-outline-success ms-2"
-        title="[*data typographic checker]"><i class="fas fa-spell-check"></i>
-      </a>
+  <div class="card mb-3">
+    <div class="card-body">
+      <h2 class="gw-section-title">
+        <i class="fas fa-book" aria-hidden="true"></i>
+        <span>[*book/books]1</span>
+      </h2>
+      <div class="d-flex flex-wrap gap-1">
+        %apply;book_button("fn","first name/first names","child")
+        %apply;book_button("sn","surname/surnames","user")
+        %apply;book_button("fna","first name alias","child")
+        %apply;book_button("sna","surname alias","user")
+        %apply;book_button("pubn","public name/public names","signature")
+        %apply;book_button("qual","qualifier/qualifiers","comment")
+        %apply;book_button("alias","alias/aliases","mask")
+        %apply;book_button("occu","occupation/occupations","briefcase")
+        %apply;book_button("place","place/places","location-dot")
+        %apply;book_button("src","source/sources","box-archive")
+        %apply;book_button("title","title/titles","crown")
+        %apply;book_button("domain","domain/domains","chess-rook")
+        <a href="%prefix;m=CHK_DATA" class="btn btn-outline-success ms-1"
+           data-bs-toggle="tooltip" title="[*data typographic checker]"
+           aria-label="[*data typographic checker]">
+          <i class="fas fa-spell-check" aria-hidden="true"></i>
+        </a>
+      </div>
     </div>
   </div>
 %end;
-<div class="d-flex mt-3">
-  <div class="col-11 col-md-auto mx-auto">
+
+
+%( ============================================================
+   FOOTER : compteur d'accès (31 langues) + sélecteur de langue
+   ============================================================ %)
+<footer class="gw-footer ms-2">
+  <div class="gw-counter">
 %if;(b.counter!="no")%apply;interp([
 af: Daar was %nb_accesses; besoeke, %nb_accesses_to_welcome; van hulle
     aan hierdie blad, sedert %start_date;.
@@ -581,8 +632,11 @@ zh: 已经有 %nb_accesses; 次访问数据库，其中 %nb_accesses_to_welcome;
 ])
 %end;
   </div>
-</div>
-%include;trl
+  <div class="gw-footer-right">
+    %include;trl
+  </div>
+</footer>
+
 %include;copyr
 </div>
 %include;js
