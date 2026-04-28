@@ -2,7 +2,7 @@ open Config
 open Def
 open Util
 
-let src = Logs.Src.create ~doc:"ImageCarrousel" "CARR"
+let src = Logs.Src.create ~doc:"ImageCarrousel" __MODULE__
 
 module Log = (val Logs.src_log src : Logs.LOG)
 module Driver = Geneweb_db.Driver
@@ -27,9 +27,15 @@ let extension_of_type = function
 let image_types = [ JPEG; GIF; PNG ]
 let raise_modErr s = raise @@ Update.ModErr (Update.UERR s)
 
+(* Raised after a complete HTTP response has been sent, to cleanly unwind the
+   call stack without triggering the server's generic exception handler (which
+   would produce a blank "no content sent" page). *)
+exception Done
+
 let incorrect conf str =
+  Log.err (fun k -> k "%s: incorrect request: %s" __FILE__ str);
   Hutil.incorrect_request conf ~comment:str;
-  failwith (__FILE__ ^ " (" ^ str ^ ")" :> string)
+  raise Done
 
 let incorrect_content_type conf base p s =
   let title _ =
@@ -41,7 +47,9 @@ let incorrect_content_type conf base p s =
   Output.printf conf "</em>\n</p>\n<ul>\n<li>\n%s</li>\n</ul>\n"
     (Util.referenced_person_title_text conf base p :> string);
   Hutil.trailer conf;
-  failwith (__FILE__ ^ " " ^ string_of_int __LINE__ :> string)
+  Output.flush conf;
+  (* <-- seal the response before unwinding *)
+  raise Done
 
 let error_too_big_image conf base p len max_len =
   let title _ =
@@ -55,7 +63,9 @@ let error_too_big_image conf base p len max_len =
   Output.printf conf "</em></p>\n<ul>\n<li>\n%s</li>\n</ul>\n"
     (Util.referenced_person_title_text conf base p :> string);
   Hutil.trailer conf;
-  failwith (__FILE__ ^ " " ^ string_of_int __LINE__ :> string)
+  Output.flush conf;
+  (* <-- seal the response before unwinding *)
+  raise Done
 
 let raw_get conf key =
   try List.assoc key conf.env
@@ -338,6 +348,8 @@ let effective_send_ok conf base p file =
   in
   let strm = Stream.of_string file in
   let request, content = Server.get_request_and_content strm in
+  (* Remove the raw file bytes from the environment immediately so they
+     cannot leak into error pages or redirects. *)
   let content =
     let s =
       let rec loop len (strm__ : _ Stream.t) =
@@ -388,12 +400,14 @@ let effective_send_ok conf base p file =
   print_sent conf base p
 
 let print_send_ok conf base =
-  let ip =
-    try raw_get conf "i" |> Mutil.decode |> Driver.Iper.of_string
-    with Failure _ -> incorrect conf "print send ok"
-  in
-  let p = Driver.poi base ip in
-  raw_get conf "file" |> Adef.as_string |> effective_send_ok conf base p
+  try
+    let ip =
+      try raw_get conf "i" |> Mutil.decode |> Driver.Iper.of_string
+      with Failure _ -> incorrect conf "print send ok"
+    in
+    let p = Driver.poi base ip in
+    raw_get conf "file" |> Adef.as_string |> effective_send_ok conf base p
+  with Done -> ()
 
 (* carrousel *)
 let effective_send_c_ok conf base p file file_name =
@@ -443,16 +457,25 @@ let effective_send_c_ok conf base p file file_name =
       in
       (content :> string) ^ s
   in
+  let conf = { conf with env = List.remove_assoc "file" conf.env } in
   let typ, content =
     if content <> "" then
       match image_type content with
       | None ->
           let ct = Mutil.extract_param "Content-Type: " '\n' request in
           dump_bad_image conf content;
+          (* Drain any remaining multipart data before reporting the error,
+             to prevent the server from appending it to the response body. *)
+          while Stream.peek strm <> None do
+            Stream.junk strm
+          done;
           incorrect_content_type conf base p ct
       | Some (typ, content) -> (
           match List.assoc_opt "max_images_size" conf.base_env with
           | Some len when String.length content > int_of_string len ->
+              while Stream.peek strm <> None do
+                Stream.junk strm
+              done;
               error_too_big_image conf base p (String.length content)
                 (int_of_string len)
           | _ -> (typ, content))
@@ -605,11 +628,13 @@ let effective_delete_ok conf base p =
   print_deleted conf base p
 
 let print_del_ok conf base =
-  match p_getenv conf.env "i" with
-  | Some ip ->
-      let p = Driver.poi base (Driver.Iper.of_string ip) in
-      effective_delete_ok conf base p
-  | None -> incorrect conf "print del ok"
+  try
+    match p_getenv conf.env "i" with
+    | Some ip ->
+        let p = Driver.poi base (Driver.Iper.of_string ip) in
+        effective_delete_ok conf base p
+    | None -> incorrect conf "print del ok"
+  with Done -> ()
 
 let print_del conf base =
   match p_getenv conf.env "i" with
@@ -820,156 +845,166 @@ let effective_reset_c_ok conf base p =
    - Single, clean request cycle *)
 
 let print_main_c conf base =
-  match Util.p_getenv conf.env "em" with
-  | None -> (
-      (* Process action and redirect with success message *)
-      match Util.p_getenv conf.env "m" with
-      | Some m -> (
-          match Util.p_getenv conf.env "i" with
-          | Some ip -> (
-              let p = Driver.poi base (Driver.Iper.of_string ip) in
-              let processed_filename =
-                match m with
-                | "SND_IMAGE_C_OK" ->
+  try
+    match Util.p_getenv conf.env "em" with
+    | None -> (
+        (* Process action and redirect with success message *)
+        match Util.p_getenv conf.env "m" with
+        | Some m -> (
+            match Util.p_getenv conf.env "i" with
+            | Some ip -> (
+                let p = Driver.poi base (Driver.Iper.of_string ip) in
+                let processed_filename =
+                  match m with
+                  | "SND_IMAGE_C_OK" ->
+                      let mode =
+                        try (List.assoc "mode" conf.env :> string)
+                        with Not_found -> "portraits"
+                      in
+                      let file_name =
+                        try List.assoc "file_name" conf.env |> Mutil.decode
+                        with Not_found -> ""
+                      in
+                      let file_name =
+                        if file_name = "" then
+                          try List.assoc "file_name_2" conf.env |> Mutil.decode
+                          with Not_found -> ""
+                        else file_name
+                      in
+                      let file_name =
+                        (Mutil.decode (Adef.encoded file_name) :> string)
+                      in
+                      let file =
+                        if mode = "note" || mode = "source" then "file_name"
+                        else
+                          match Util.p_getenv conf.env "image_url" with
+                          | Some url when url <> "" -> ""
+                          | _ -> (
+                              try (raw_get conf "file" :> string) with _ -> "")
+                      in
+                      effective_send_c_ok conf base p file file_name
+                  | "DEL_IMAGE_C_OK" -> effective_delete_c_ok conf base p
+                  | "RESET_IMAGE_C_OK" -> effective_reset_c_ok conf base p
+                  | "BLASON_MOVE_TO_ANC" ->
+                      if Image.has_blason conf base p true then
+                        match Util.p_getenv conf.env "ia" with
+                        | Some ia ->
+                            let fa =
+                              Driver.poi base (Driver.Iper.of_string ia)
+                            in
+                            Filename.basename (move_blason_file conf base p fa)
+                        | None -> ""
+                      else ""
+                  | "PORTRAIT_TO_BLASON" ->
+                      Filename.basename
+                        (effective_copy_portrait_to_blason conf base p)
+                  | "IMAGE_TO_BLASON" ->
+                      Filename.basename
+                        (effective_copy_image_to_blason conf base p)
+                  | "BLASON_STOP" ->
+                      let has_blason_self = Image.has_blason conf base p true in
+                      let has_blason = Image.has_blason conf base p false in
+                      if has_blason && not has_blason_self then
+                        Filename.basename (create_blason_stop conf base p)
+                      else "error"
+                  | _ -> "incorrect request"
+                in
+
+                (* HTTP redirect to main page with success message *)
+                match processed_filename with
+                | "error" -> Hutil.incorrect_request conf
+                | "incorrect request" ->
+                    Hutil.incorrect_request conf ~comment:"incorrect request"
+                | _ ->
                     let mode =
                       try (List.assoc "mode" conf.env :> string)
                       with Not_found -> "portraits"
                     in
-                    let file_name =
-                      try List.assoc "file_name" conf.env |> Mutil.decode
-                      with Not_found -> ""
-                    in
-                    let file_name =
-                      if file_name = "" then
-                        try List.assoc "file_name_2" conf.env |> Mutil.decode
-                        with Not_found -> ""
-                      else file_name
-                    in
-                    let file_name =
-                      (Mutil.decode (Adef.encoded file_name) :> string)
-                    in
-                    let file =
-                      if mode = "note" || mode = "source" then "file_name"
-                      else
-                        match Util.p_getenv conf.env "image_url" with
-                        | Some url when url <> "" -> ""
-                        | _ -> (
-                            try (raw_get conf "file" :> string) with _ -> "")
-                    in
-                    effective_send_c_ok conf base p file file_name
-                | "DEL_IMAGE_C_OK" -> effective_delete_c_ok conf base p
-                | "RESET_IMAGE_C_OK" -> effective_reset_c_ok conf base p
-                | "BLASON_MOVE_TO_ANC" ->
-                    if Image.has_blason conf base p true then
-                      match Util.p_getenv conf.env "ia" with
-                      | Some ia ->
-                          let fa = Driver.poi base (Driver.Iper.of_string ia) in
-                          Filename.basename (move_blason_file conf base p fa)
-                      | None -> ""
-                    else ""
-                | "PORTRAIT_TO_BLASON" ->
-                    Filename.basename
-                      (effective_copy_portrait_to_blason conf base p)
-                | "IMAGE_TO_BLASON" ->
-                    Filename.basename
-                      (effective_copy_image_to_blason conf base p)
-                | "BLASON_STOP" ->
-                    let has_blason_self = Image.has_blason conf base p true in
-                    let has_blason = Image.has_blason conf base p false in
-                    if has_blason && not has_blason_self then
-                      Filename.basename (create_blason_stop conf base p)
-                    else "error"
-                | _ -> "incorrect request"
-              in
-
-              (* HTTP redirect to main page with success message *)
-              match processed_filename with
-              | "error" -> Hutil.incorrect_request conf
-              | "incorrect request" ->
-                  Hutil.incorrect_request conf ~comment:"incorrect request"
-              | _ ->
-                  let mode =
-                    try (List.assoc "mode" conf.env :> string)
-                    with Not_found -> "portraits"
-                  in
-                  let display_filename =
-                    if Filename.extension processed_filename = "" then
-                      (* Pas d'extension, essayer de la récupérer *)
-                      let keydir =
-                        Image.default_image_filename "portraits" base p
-                      in
-                      let ext =
-                        get_extension conf keydir mode false processed_filename
-                      in
-                      if ext <> "." then processed_filename ^ ext
+                    let display_filename =
+                      if Filename.extension processed_filename = "" then
+                        (* Pas d'extension, essayer de la récupérer *)
+                        let keydir =
+                          Image.default_image_filename "portraits" base p
+                        in
+                        let ext =
+                          get_extension conf keydir mode false
+                            processed_filename
+                        in
+                        if ext <> "." then processed_filename ^ ext
+                        else processed_filename
                       else processed_filename
-                    else processed_filename
-                  in
-                  let base_url =
-                    Printf.sprintf
-                      "%sm=SND_IMAGE_C&i=%s&em=%s&file_name=%s&mode=%s"
-                      (commd conf :> string)
-                      ip
-                      (Mutil.encode m :> string)
-                      (Mutil.encode display_filename :> string)
-                      (Mutil.encode mode :> string)
-                  in
-                  let url_params = ref [] in
-                  (try
-                     if List.assoc "delete" conf.env = Adef.encoded "on" then
-                       url_params := ("delete", "on") :: !url_params
-                   with Not_found -> ());
-                  (try
-                     let fn2 =
-                       List.assoc "file_name_2" conf.env |> Mutil.decode
-                     in
-                     if fn2 <> "" then
-                       url_params := ("file_name_2", fn2) :: !url_params
-                   with Not_found -> ());
-                  (if m = "IMAGE_TO_BLASON" then
-                     let ext = Filename.extension processed_filename in
-                     if ext <> "" then url_params := ("ext", ext) :: !url_params);
-                  let params_string =
-                    List.fold_left
-                      (fun acc (key, value) ->
-                        acc ^ "&" ^ key ^ "=" ^ (Mutil.encode value :> string))
-                      "" !url_params
-                  in
-                  let redirect_url = base_url ^ params_string in
-                  Output.status conf Code.Moved_Temporarily;
-                  Output.header conf "Location: %s" redirect_url;
-                  Output.header conf "Connection: close";
-                  Output.flush conf)
-          | None -> Hutil.incorrect_request conf ~comment:"missing person index"
-          )
-      | None -> Hutil.incorrect_request conf ~comment:"missing action")
-  (* Display main page with success message from URL params *)
-  | Some _ ->
-      let p =
-        match Util.p_getint conf.env "i" with
-        | Some ip -> Driver.poi base (Driver.Iper.of_string (string_of_int ip))
-        | None -> failwith "No person index in success display"
-      in
-      Perso.interp_templ "carrousel" conf base p
+                    in
+                    let base_url =
+                      Printf.sprintf
+                        "%sm=SND_IMAGE_C&i=%s&em=%s&file_name=%s&mode=%s"
+                        (commd conf :> string)
+                        ip
+                        (Mutil.encode m :> string)
+                        (Mutil.encode display_filename :> string)
+                        (Mutil.encode mode :> string)
+                    in
+                    let url_params = ref [] in
+                    (try
+                       if List.assoc "delete" conf.env = Adef.encoded "on" then
+                         url_params := ("delete", "on") :: !url_params
+                     with Not_found -> ());
+                    (try
+                       let fn2 =
+                         List.assoc "file_name_2" conf.env |> Mutil.decode
+                       in
+                       if fn2 <> "" then
+                         url_params := ("file_name_2", fn2) :: !url_params
+                     with Not_found -> ());
+                    (if m = "IMAGE_TO_BLASON" then
+                       let ext = Filename.extension processed_filename in
+                       if ext <> "" then
+                         url_params := ("ext", ext) :: !url_params);
+                    let params_string =
+                      List.fold_left
+                        (fun acc (key, value) ->
+                          acc ^ "&" ^ key ^ "=" ^ (Mutil.encode value :> string))
+                        "" !url_params
+                    in
+                    let redirect_url = base_url ^ params_string in
+                    Output.status conf Code.Moved_Temporarily;
+                    Output.header conf "Location: %s" redirect_url;
+                    Output.header conf "Connection: close";
+                    Output.flush conf)
+            | None ->
+                Hutil.incorrect_request conf ~comment:"missing person index")
+        | None -> Hutil.incorrect_request conf ~comment:"missing action")
+    (* Display main page with success message from URL params *)
+    | Some _ ->
+        let p =
+          match Util.p_getint conf.env "i" with
+          | Some ip ->
+              Driver.poi base (Driver.Iper.of_string (string_of_int ip))
+          | None ->
+              Hutil.incorrect_request conf
+                ~comment:"missing person index in display";
+              raise Done
+        in
+        Perso.interp_templ "carrousel" conf base p
+  with Done -> ()
 
 let print conf base =
   match p_getenv conf.env "i" with
   | None -> Hutil.incorrect_request conf
-  | Some ip ->
+  | Some ip -> (
       let p = Driver.poi base (Driver.Iper.of_string ip) in
       let fn = Driver.p_first_name base p in
       let sn = Driver.p_surname base p in
       if fn = "?" || sn = "?" then Hutil.incorrect_request conf
-      else print_send_image conf base "portraits" p
+      else try print_send_image conf base "portraits" p with Done -> ())
 
 let print_family conf base =
   match p_getenv conf.env "i" with
   | None -> Hutil.incorrect_request conf
-  | Some ip ->
+  | Some ip -> (
       let p = Driver.poi base (Driver.Iper.of_string ip) in
       let sn = Driver.p_surname base p in
       if sn = "?" then Hutil.incorrect_request conf
-      else print_send_image conf base "blasons" p
+      else try print_send_image conf base "blasons" p with Done -> ())
 
 (* carrousel *)
 let print_c ?(saved = false) ?(portrait = true) conf base =
