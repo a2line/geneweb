@@ -40,6 +40,7 @@ const get = Utils.get;
 
 // Creates new row in map table and adds corresponding area and legend elements
 function addNewArea(x1, y1, x2, y2) {
+    if (!table) return;
     if (x2 - x1 > 5 && y2 - y1 > 5) {
         x1 = parseFloat(x1.toFixed(2));
         y1 = parseFloat(y1.toFixed(2));
@@ -556,6 +557,7 @@ function bindLegendKeyboardNavigation() {
 
 // Optimize updateLegendLinks with batched DOM updates
 const updateLegendLinks = () => {
+    if (!table) return;
     table.rows().every(function(rowIdx) {
         const rowData = this.data();
         const row = this.node();
@@ -599,12 +601,12 @@ function generateGwSyntax(data) {
            (txt ? '/' + data.fn + ' ' + data.sn : '') + ']]';
 }
 
-
 // Handles row reordering in the data table, ensuring consistency between
 // table data, DOM elements, and visual elements (areas, legends).
 // DataTables returns a diff array with cascading position changes; we only
 // process the specifically dragged row (edit.triggerRow).
 function handleAreaReorder(event, diff, edit) {
+    if (!table) return;
     if (!diff.length) return;
 
     const currentData = table.rows().data().toArray();
@@ -1249,8 +1251,10 @@ function initTables() {
             const digestEl = document.getElementById('digest');
             if (digestEl) digestEl.value = json.digest;
 
-            if (json.r?.images) {
+            if (json.r?.images?.length) {
                 albumImages = json.r.images;
+            } else if (json.r?.images) {
+                albumImages = [{ img: '', desc: '', map: [], groups: [] }];
             } else if (json.r) {
                 albumImages = [{
                     img: json.r.img || '',
@@ -1258,6 +1262,8 @@ function initTables() {
                     map: json.r.map || [],
                     groups: json.r.groups || []
                 }];
+            } else {
+                albumImages = [{ img: '', desc: '', map: [], groups: [] }];
             }
 
             const p = new URLSearchParams(window.location.search);
@@ -1556,7 +1562,10 @@ function saveAlbumCurrent() {
 function fnameSet(value) {
     if (!fnameTS) {
         const el = document.getElementById('fname');
-        if (el) el.value = value || '';
+        if (el) {
+            el.value = value || '';
+            el.dispatchEvent(new Event('change'));
+        }
         return;
     }
     if (!value) { fnameTS.clear(true); return; }
@@ -1570,19 +1579,21 @@ function loadAlbumImage(index) {
     albumCurrent = index;
     const imgData = albumImages[index] || { img: '', map: [], groups: [] };
 
-    // Clear current state
-    table.clear();
-    groupTable.clear();
+    if (table) table.clear();
+    if (groupTable) groupTable.clear();
     ['map', 'ul_legend', 'ul_groups_legend'].forEach(id => {
         const el = document.getElementById(id); if (el) el.innerHTML = '';
     });
     currentAreaCount = 0;
 
-    // Reload map data
-    if (imgData.map?.length) table.rows.add(imgData.map);
-    table.draw(false);
-    if (imgData.groups?.length) groupTable.rows.add(imgData.groups);
-    groupTable.draw(false);
+    if (table) {
+        if (imgData.map?.length) table.rows.add(imgData.map);
+        table.draw(false);
+    }
+    if (groupTable) {
+        if (imgData.groups?.length) groupTable.rows.add(imgData.groups);
+        groupTable.draw(false);
+    }
     updateGroupsLegend();
 
     // Update filename and load image
@@ -1725,7 +1736,11 @@ function initAlbumHandlers() {
 
 function initFnameSelect() {
     const fnameEl = document.getElementById('fname');
-    if (!fnameEl || typeof TomSelect === 'undefined') return;
+    if (!fnameEl) return;
+    if (typeof TomSelect === 'undefined') {
+        console.warn('TomSelect not loaded; gallery filename picker disabled');
+        return;
+    }
 
     const buildOpts = (listId, optgroup) =>
         [...document.querySelectorAll('#' + listId + ' option')]
@@ -1778,7 +1793,8 @@ function importFolder(folder) {
             return r.json();
         })
         .then(files => {
-            if (!Array.isArray(files) || !files.length) {
+            files = Array.isArray(files) ? files : (files?.images || []);
+            if (!files.length) {
                 updateStatus('No images found in folder: ' + folder);
                 fnameTS?.clear(true);
                 return;
@@ -1786,8 +1802,13 @@ function importFolder(folder) {
             fnameTS?.clear(true);
             const newEntries = files.map(f =>
                 ({ img: f, desc: '', map: [], groups: [] }));
-            if (!albumImages[albumCurrent].img) {
+
+            const cur = albumImages[albumCurrent];
+            if (!cur || !cur.img) {
                 albumImages.splice(albumCurrent, 1, ...newEntries);
+                if (albumCurrent >= albumImages.length) {
+                    albumCurrent = albumImages.length - 1;
+                }
                 loadAlbumImage(albumCurrent);
             } else {
                 saveAlbumCurrent();
@@ -1803,6 +1824,7 @@ function importFolder(folder) {
 }
 
 function cleanMapEntries() {
+    if (!table) return [];
     return table.rows().data().toArray().map(item => {
         const clean = {};
         if (item.shape)  clean.shape  = item.shape;
@@ -1830,6 +1852,7 @@ function cleanMapEntries() {
 }
 
 function currentGroups() {
+    if (!groupTable) return [];
     return groupTable.rows().data().toArray().map((g, i) => ({
         name: i + 1,
         label: g.label
@@ -1847,7 +1870,7 @@ function setupFormHandler() {
         const fnameInput = document.getElementById('fnotes_name');
         const title = document.getElementById('page_title')?.value
             || fnameInput?.value
-            || '…';
+            || '';
         if (typeof table !== 'undefined' && table) saveAlbumCurrent();
         const chronicle =
             document.getElementById('album_chronicle')?.value || '';
@@ -1858,9 +1881,10 @@ function setupFormHandler() {
             .replace(/\}\]/g, '}\n]')
             .replace(/\}\,\{/g, '},\n  {');
         const notesEl = document.getElementById('notes');
-        if (notesEl) {
+        const titleHeader = title ? 'TITLE=' + title + '\n' : '';
+        if (notesEl) { 
             notesEl.value =
-                'TITLE=' + title + '\nTYPE=gallery\n' + jsonString;
+                titleHeader + 'TYPE=gallery\n' + jsonString;
         }
         const newFEl = document.getElementById('new_f');
         if (newFEl && fnameInput) {
@@ -1961,9 +1985,10 @@ function populateReorderModal() {
     const tbody = document.querySelector('#reorder_table tbody');
     tbody.innerHTML = '';
     albumImages.forEach((img, i) => {
-        const thumbSrc = img.img.startsWith('albums/')
-            ? GW.prefix + 'm=IMA&s=' + encodeURI(img.img.substring(7))
-            : GW.prefix + 'm=DOC&s=' + encodeURI(img.img);
+        const imgPath = img.img || '';
+        const thumbSrc = imgPath.startsWith('albums/')
+            ? GW.prefix + 'm=IMA&s=' + encodeURI(imgPath.substring(7))
+            : GW.prefix + 'm=DOC&s=' + encodeURI(imgPath);
         tbody.insertAdjacentHTML('beforeend', `
             <tr data-idx="${i}">
               <td class="text-nowrap reorder-btns align-middle">
