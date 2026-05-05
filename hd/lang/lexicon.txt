@@ -5254,6 +5254,11 @@ sv: konfigurationsparametrar
 tr: yapılandırma parametreleri
 zh: 配置参数
 
+    confirm import folder
+en: import {n} images from "{f}"?
+fr: importer {n} images depuis « {f} » ?
+de: {n} Bilder aus „{f}" importieren?
+
     confirmation
 co: cresima
 de: Firmung
@@ -11993,6 +11998,11 @@ sk: spojené stránky
 sl: povezane strani
 sv: länkade sidor
 tr: bağlantılı sayfalar
+
+    list/add images from directory
+de: alle Bilder aus diesem Verzeichnis auflisten/alle Bilder aus diesem Verzeichnis zur aktuellen Galerie hinzufügen
+en: list all images from this directory/add all images from this directory to current gallery
+fr: lister toutes les images de ce répertoire/ajouter toutes les images de ce répertoire à la galerie courante
 
     list eclair
 co: lista rapida

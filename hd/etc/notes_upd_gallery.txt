@@ -120,7 +120,7 @@ li.in { background-color: #FFE8CC; }
 <div class="visually-hidden" aria-live="polite" id="status-updates"></div>
 <form id="form" class="mt-3 ms-2" method="post" action="%action;">
   <div class="row ms-3">
-    <div class="col-sm-12 col-lg-8">
+    <div class="col-12 col-lg-10 col-xl-9">
       %if;(e.f="")
         <div class="row">
           <label for="fnotes_name" class="col-sm-2 col-form-label">[*name]</label>
@@ -159,13 +159,24 @@ li.in { background-color: #FFE8CC; }
         <label for="fname" class="col-sm-2 col-form-label">[*file]/[folder/folders]0</label>
         <div class="col-sm-10 d-flex align-items-center pe-1">
           <div class="flex-grow-1">
-            <input id="fname" type="text" class="form-control no-clear-button" placeholder="[*choose a file or a folder]">
+            <input id="fname" type="text" class="form-control no-clear-button"
+                   placeholder="[*choose a file or a folder]">
             <datalist id="src_images">%src_images_list;</datalist>
             <datalist id="src_albums">%src_albums_list;</datalist>
           </div>
+          <div id="add_key_inline" class="d-none ms-2" style="min-width: 200px;">
+            <input id="add_key_input" type="text" class="form-control form-control-sm p-input"
+                   placeholder="[first name/first names]1.[occurence]0.[surname/surnames]0">
+          </div>
+          <button type="button" id="add_key_validate"
+                  class="btn btn-sm btn-outline-info ms-1 d-none"
+                  disabled title="[*add::key]1">
+            <i class="fa-solid fa-check"></i>
+          </button>
           <div id="album-actions-mount-solo" class="pe-2">
             <div id="album-actions" class="d-inline-flex align-items-center gap-2 ms-2">
               <a href="#" id="album-add" class="me-1" title="[*add::image/images]0"><i class="fa-solid fa-file-circle-plus"></i></a>
+              <a href="#" id="add_key_btn" class="me-1" title="[*add::key]1"><i class="fa-solid fa-folder-plus"></i></a>
               <a href="#" id="album-remove" class="d-none text-danger" title="[*delete::image/images]0"><i class="fa-solid fa-trash-can"></i></a>
             </div>
           </div>
@@ -322,6 +333,9 @@ const GW = {
     lockGroup: "[*lock group]",
     addItem: "[*add]",
     noResult: "[*no match]",
+    listImagesDir: "[*list/add images from directory]0",
+    addImagesDir: "[*list/add images from directory]1",
+    confirmImportFolder: "[*confirm import folder]"
   }
 };
 </script>
