@@ -152,3 +152,44 @@ val init_asc_cnt :
 (** Builds array of ancestors by level. Index 0 = person, 1 = parents, etc. Each
     entry contains all ancestor paths to that level (including duplicates for
     implex detection). *)
+
+val cousins_to_json :
+  config ->
+  Geneweb_db.Driver.base ->
+  Geneweb_db.Driver.person ->
+  cousins_sparse ->
+  Yojson.Safe.t
+(** Serializes the full cousins sparse structure as a single JSON value suitable
+    for inline injection into the cousmenu template and for consumption by the
+    frontend.
+
+    Persons are deduplicated into a top-level dict keyed by iper string; cells
+    reference persons by iper. Performs exactly one [Driver.poi] per distinct
+    iper.
+
+    Date handling: the formatted [dates] string from
+    [DateDisplay.short_dates_text] carries display content; raw years are
+    exposed as [birth_yr] / [death_yr] for sorting and gradient interpolation;
+    precomputed age in days from [Perso.age_days] (calendar-aware) is exposed as
+    [age_d]. No raw Julian Day fields are emitted: all date arithmetic is done
+    OCaml-side.
+
+    Output shape (informal):
+    {[
+    { version: 1; abk: bool; wizard: bool; lvl: int;
+      max_anc_lvl: int; max_desc_lvl: int;
+      self_iper: string;
+      persons: { <iper>: { fn; sn; oc; sex; alive; has_par;
+                           has_child; vis; dates;
+                           birth_yr; death_yr; age_d } };
+      cells: [ { i; j; label_s; label_p; tt;
+                 cnt: { paths; dist; alive; no_desc };
+                 span: { min_yr; max_yr };
+                 paths: [ { ip; anc; ifams; lvl } ] } ];
+      totals: { anc; desc; dist; alive } }
+    ]}
+
+    Sex: 0 Neuter, 1 Male, 2 Female. [vis] reflects [Util.authorized_age];
+    non-visible persons are still emitted with [vis=false] but with empty
+    [dates] and null [age_d]. [alive] uses the strict convention
+    [Driver.get_death p = NotDead]. *)
