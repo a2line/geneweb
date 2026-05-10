@@ -36,7 +36,6 @@
 %end;
 %if;(max!=0 and not (max=1 and not has_children))
   <div class="d-flex flex-wrap align-self-center btn-toolbar py-0 mx-3 mt-1" role="toolbar" aria-label="buttons to select maximum ascending level v">
-
     <span>%for;i;min;maxp;%if;(i=13)<span class="high-lev d-none">%end;%apply;picklvl(i)%if;(i=max and max>12)</span>%end;%end;
       %if;(max>12)
         <span class="toggle-lev ms-1" data-caution=". [*high generation caution]">
@@ -47,6 +46,7 @@
     </span>
   </div>
 %end;
+
 %define;cousin_lex_tt(vvv,www)
   %( condition pour garder la tooltip (title="") vide si elle n'est pas définie pour la langue en cours %)
   %if;([cousins.vvv.www tt]!="[cousins.vvv.www tt]")[cousins.vvv.www tt]1%else;%end;
@@ -71,6 +71,7 @@
   %cous_paths_max_date.vvv.www;
 %end;
 %empty_sorted_list;%empty_sorted_listb;%empty_sorted_listc;%reset_count3;
+
 %define;cous_mod(vvv,www)
   %empty_sorted_list;%empty_sorted_listb;
   %( min/max = extremum dates for all individuals at v1/v2 | span = period of the generation %)
@@ -376,10 +377,243 @@
       </div>
     </div>
   </div>
+%)
+%define;link_cousin_v2(vvv,www)
+  <button type="button" data-bs-toggle="tooltip" data-bs-html="true" data-cell="vvv:www"
+    class="p-1 mx-1 btn-light position-relative%if;(vvv+www=0) disabled%end; h-4"
+    title="<span class='h5 pt-2 px-2'>%if;(i=0 and k=0)[him/her]s%else;%apply;cousin_lex(i,k)%end;</span><hr class='bg-light text-white my-2 mx-4'>
+    <div class='d-flex justify-content-center mt-1'>
+      <div class='me-4 h5'>
+        <i class='fa-solid fa-arrow-up-right-dots fa-fw'></i>
+        <span class='fw-heavy'>vvv</span>
+        <i class='fa-solid fa-arrow-down-long'></i>
+        <span class='fw-heavy ms-1'>www</span>
+      </div>
+      <div class='ms-4 h5'>
+        <i class='fa-solid fa-dna fa-fw'></i>
+        %if;(vvv=0 or www=0)%expr((100/.(2^(vvv+www))))%else;%expr((100/.(2^(vvv+www-1))))%end; %%
+      </div>
+    </div><hr class='bg-light text-white mt-0 mb-1'>%apply;cousin_lex_tt(i,k)">
+    <div class="d-flex justify-content-around stretched-link h-100" data-cell="vvv:www"
+      data-bs-toggle="modal" data-bs-target="#cousins-modal-v2">
+      <div class="cell-label order-2 w-75 align-self-center text-bottom ms-1"></div>
+      <div class="d-flex justify-content-end align-self-center text-end">
+        <div class="cell-count h5 mt-2 py-0 pe-0
+          text-%if;(vvv=0)info%elseif;(vvv%2=1)primary%else;danger%end;"></div>
+      </div>
+    </div>
+  </button>
+%end;
+%( table of cousins.j-vvv+i.i c(k,i) | table size = v × (v+%cousins.max_d;)
+    == l1 asc./l2 = max_desc (plus longue colonne v2) %)
+%define;table_v2()
+  %let;maxa;%expr(e_v+1)%in;%(todo redefine better maxa%)
+  %let;maxd;%expr(cousins.max_d+maxa)%in;
+  <table id="quickrel-v2" class="table table-responsive-sm mb-0 mt-1 order-3%( col-%if;(e_v=1)8%elseif;(e_v=0)4%end; removed by Claude %)">
+    %for;j;1;maxd;
+      <tr>%nn;
+        %for;i;0;maxa;
+          %let;k;%expr(j+i-maxa)%in;
+          %if;(k>=0 and i<maxa)
+              %let;tot;%apply;cous_paths_cnt%with;%i;%and;%k;%end;%in;
+              %let;tot_next;%apply;cous_paths_cnt%with;%i;%and;%expr(k+1)%end;%in;
+              %if;(i>1 and k=0)
+                <td class="h4 fw-light user-select-none text-start align-middle border-0 pb-3 ps-3">%nn;
+                  %if;(maxa>4)%expr(maxa-j)%else;%end;
+                </td>
+                %if;(i>2)<td colspan="%expr(i-2)" class="border-0"></td>%end;
+              %end;
+              <td%if;(j=maxa) style="width:%expr(100/maxa)%%"%end;%if;(i>0 and k=0) colspan="2"%end;%sp;
+                class="border-0">
+                %if;(tot!=0)
+                  <div class="d-flex flex-column justify-content-center border-0 py-0">
+                     %apply;link_cousin_v2(i,k)
+                    <div class="d-inline-flex py-0">
+                      %if;(i!=0 and k=0)
+                      %( for ancestors c(i,0) border links | self has 2×col-6 and his ancestors 4×col-3
+            prints — only first cell border if c(i-1,0) have no siblings [cousins_cnt.i.1=0] |
+                   — two first even cells borders overwise | |
+                   — nothing if self has no children %)
+                        %let;mx;%if;(i=0)1%else;3%end;%in;
+                        %for;z;0;mx;
+                          %(%let;couscntk1;%apply;cousins_cnt%with;%i%and;1%end;%in;%)
+                         <div class="h-10p col-%if;(i=0)6%else;3%end;
+                           %if;(((tot_next=0 and z=0) or (tot_next!=0 and z%2=0))
+                             and not (i=0 and not has_children)) border-dark border-end%end;"> </div>
+                        %end;
+                      %else;
+                        <div class="col-6 border-dark%if;(tot_next!=0) border-end
+                          border-top-0 border-start-0 border-bottom-0%else; border-0%end; h-10p"></div>
+                        <div class="col-6 border-0"></div>
+                      %end;
+                    </div>
+                  </div>
+                %end;
+              </td>
+          %end;
+        %end;
+        %(<td class="h3 align-top border-0">%if;(j>1)%expr(j-1)%else; %end;</td>%)
+      </tr>
+    %end;
+  </table>
+  <div class="d-flex flex-column justify-items-center order-4 mt-2">
+    <span><i class="fa-solid fa-dna fa-sm me-1"></i>[coefficient of relationship]</span>
+    <span><i class="fa-solid fa-user fa-sm me-1"></i>[one ancestor counted]</span>
+    <span><i class="fa-solid fa-triangle-exclamation fa-sm text-danger me-1"></i>[multiple relations]</span>
+  </div>
+%end;
+
+%( =====================================================================
+   v2 (Phase C) — JS-rendered version, target of hd/etc/js/cousins.js
+   Coexists above the legacy template-rendered version below for visual
+   diff during the refactor. Will replace the legacy block in Phase D.
+   ===================================================================== %)
+<section id="cousins-v2-root"
+         class="border border-info border-3 rounded-3 my-3 p-2"
+         data-prefix="%prefix;" aria-label="cousins v2 (JS)">
+  <div class="text-info small fw-bold mb-2">
+    v2 — rendered from JSON by hd/etc/js/cousins.js
+  </div>
+  %apply;table_v2()
+  <div id="cousins-totals-v2" class="d-flex flex-column align-items-center my-2">
+    <div>
+      <span class="text-body-secondary tot-anc"  title="[ancestor/ancestors]1"></span>
+      <span class="text-body-secondary tot-desc" title="[descendants]"></span>
+    </div>
+    <div>
+      <span class="text-body-secondary tot-dist"  title="[nb individuals]"></span>
+      <span class="text-body-secondary tot-alive" title="[number of living persons]"></span>
+    </div>
+  </div>
+
+  %( single reusable modal shell, populated at click time %)
+  <div class="modal fade px-4 overflow-y-scroll" id="cousins-modal-v2"
+       tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl w-100" style="max-width:1500px">
+      <div class="modal-content bg-transparent border-0">
+        <div class="position-relative p-2 pb-1 rounded-3 bg-linen">
+          <div class="modal-title bg-transparent">
+            <div class="d-flex justify-content-around align-items-center">
+              <div class="d-inline-flex flex-column justify-content-around
+                          align-self-center text-start ms-4 me-5">
+                <div><span class="mh-dist"></span>&nbsp;<span class="mh-noun"></span></div>
+                <div class="mh-alive-row"><span class="mh-alive"></span></div>
+                <div class="mh-nodesc-row"><span class="mh-nodesc"></span>&nbsp;[no descendants]&nbsp;║</div>
+              </div>
+              <div class="d-flex flex-column mx-auto text-center align-items-center">
+                <a role="button" href="#"
+                   class="mh-title h2 display-4 stretched-link ms-2 modal-title-font-size"
+                   data-bs-toggle="tooltip" data-bs-html="true" title=""></a>
+                <small class="mh-extra text-body-secondary"></small>
+                <span class="mh-span h4"></span>
+              </div>
+              <div class="d-flex justify-content-end align-items-end ms-2 z-index1">
+                <div class="d-inline-flex align-self-center">
+                  <div class="mh-nav-up d-inline-flex align-items-end me-1"></div>
+                  <div class="mh-nav-down d-inline-flex flex-column me-2"></div>
+                  <a role="button" href="#"
+                     class="mh-rl btn btn-lg btn-light p-2 me-2 align-self-center">
+                    <span data-bs-toggle="tooltip" data-bs-html="true" title="">
+                      <i class="fa-solid fa-person-arrow-up-from-line"></i>
+                      <i class="fa-solid fa-person-arrow-down-to-line fa-fw fa-flip-horizontal"></i>
+                    </span>
+                  </a>
+                  <button type="button" class="btn btn-light p-2 flex-shrink-1 me-2 sortbtn"
+                          data-lbl-surname="[surname/surnames]0"
+                          data-lbl-age="[age]0"
+                          data-lbl-birth="[birth]0">
+                    <i class="fa-solid fa-user fa-fw me-1 sorticon"></i>[*sort by/branch/alphabetic order]0<br>
+                    <span class="sorttype">[surname/surnames]0</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-body">
+          <div id="cousins-modal-v2-cols" style="column-gap:1rem">
+            <ul id="cousins-modal-v2-list" class="list-group bg-transparent listitems"
+                style="padding:0;list-style:none"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <template id="cousins-nav-up-tpl">
+    <button type="button" class="btn btn-sm py-0 mb-2 btn-light v2-nav-btn">
+      <i class="fa-solid fa-arrow-down-long fa-fw fa-rotate-by"
+         style="--fa-rotate-angle:45deg"
+         data-bs-toggle="tooltip" title=""></i>
+    </button>
+  </template>
+
+  <template id="cousins-nav-down-i-tpl">
+    <div>
+      <button type="button" class="btn btn-sm py-0 mt-2 btn-light v2-nav-btn">
+        <span data-bs-toggle="tooltip" data-bs-html="true" title="">
+          <i class="fa-solid fa-arrow-up-right-dots fa-fw"></i><span class="nav-val"></span>
+        </span>
+      </button>
+    </div>
+  </template>
+
+  <template id="cousins-nav-down-k-tpl">
+    <div>
+      <button type="button" class="btn btn-sm py-0 mt-1 btn-light v2-nav-btn">
+        <span data-bs-toggle="tooltip" data-bs-html="true" title="">
+          <i class="fa-solid fa-arrow-down-long fa-fw"></i><span class="nav-val"></span>
+        </span>
+      </button>
+    </div>
+  </template>
+
+  %( per-card template, cloned per path inside the modal %)
+  <template id="cousins-card-tpl">
+    <li class="card text-small rounded-3 border-top-0 border-bottom-0 me-2
+               border-left-5">
+      <div class="d-flex justify-content-between align-items-start ms-n2">
+        <div class="d-block ps-n2 pe-2 align-self-center order-1
+                    position-relative">
+          <a class="card-nav stretched-link py-3" role="button" href="#"
+             title="">&nbsp;</a>
+        </div>
+        <div class="d-flex flex-column align-self-center order-3 m-0 me-1">
+          <a class="card-r" href="#"
+             title=""><i class="fa-solid fa-link fa-sm"></i></a>
+          <a class="card-rlm" href="#" title="" hidden></a>
+        </div>
+        <div class="d-block flex-grow-1 justify-content-start align-self-center
+                    order-2 text-truncate text-nowrap px-0">
+          <a class="card-name lh-2" href="#" title=""></a>
+          <span class="card-edit"></span>
+        </div>
+      </div>
+    </li>
+  </template>
+</section>
+
+
 %include;trl
 %include;copyr
 </div>
 %include;overlay
+
+%( lexicon strings consumed by cousins.js — template-processed block %)
+<script id="cousins-lex" type="application/json">{
+  "person_s":    "[person/persons]0",
+  "person_p":    "[person/persons]1",
+  "alive":       "[alive]3",
+  "died":        "[died]3",
+  "no_desc":     "[no descendants]",
+  "him_her":     "[him/her]s",
+  "years_old":   "[years old]",
+  "days_old":    "[days old]",
+  "one_day":     "[one day old]",
+  "ymd0":        "[year/month/day]2",
+  "modify":      "[modify] [person/persons]0",
+  "navigation":  "[navigation] [with]…"
+}</script>
 %include;js
 %query_time;
 <script>
@@ -410,41 +644,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.high-lev .btn').forEach(function(btn) {
       btn.title = btn.title + caution;
     });
-  }
-});
-%( tri décroissant avec order: -1, attention le bouton appelle les icônes et label du type suivant %)
-const sortTypes = %[
-  { type: 'surname', icon: 'fa-arrow-down-9-1', label: '[age]0' },
-  { type: 'age',  order: -1, icon: 'fa-cake-candles', label: '[birth]0' },
-  { type: 'birth', icon: 'fa-user', label: '[surname/surnames]0' }
-%];
-let currentSortIndex = -1;
-function sortList(sortType) {
-  document.querySelectorAll('.listitems').forEach(function(ul) {
-    var items = Array.from(ul.querySelectorAll('li'));
-    items.sort(function(a, b) {
-      var aVal = a.dataset%[sortType.type%] || '';
-      var bVal = b.dataset%[sortType.type%] || '';
-      if (sortType.order === -1) {
-        return bVal > aVal ? 1 : bVal < aVal ? -1 : 0;
-      } else {
-        return bVal < aVal ? 1 : bVal > aVal ? -1 : 0;
-      }
-    });
-    items.forEach(function(item) { ul.appendChild(item); });
-  });
-  document.querySelectorAll('.sorticon').forEach(function(el) {
-    sortTypes.forEach(function(t) { el.classList.remove(t.icon); });
-    el.classList.add(sortType.icon);
-  });
-  document.querySelectorAll('.sorttype').forEach(function(el) {
-    el.textContent = sortType.label;
-  });
-}
-document.addEventListener('click', function(event) {
-  if (event.target.closest('.sortbtn')) {
-    currentSortIndex = (currentSortIndex + 1) % sortTypes.length;
-    sortList(sortTypes%[currentSortIndex%]);
   }
 });
 </script>

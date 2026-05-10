@@ -191,5 +191,6 @@ val cousins_to_json :
 
     Sex: 0 Neuter, 1 Male, 2 Female. [vis] reflects [Util.authorized_age];
     non-visible persons are still emitted with [vis=false] but with empty
-    [dates] and null [age_d]. [alive] uses the strict convention
-    [Driver.get_death p = NotDead]. *)
+    [dates] and null [age_d]. [alive] follows the perso.ml is_dead convention:
+    true for NotDead/DontKnowIfDead/OfCourseDead, and true for
+    Death/DeadYoung/DeadDontKnowWhen if not p_auth *)

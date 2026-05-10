@@ -529,7 +529,10 @@ let cell_label conf i j =
   let p = Util.transl_nth conf key 1 in
   let tt_key = key ^ " tt" in
   let tt_raw = Util.transl conf tt_key in
-  let tt = if tt_raw = tt_key then `Null else `String tt_raw in
+  let tt =
+    if tt_raw = tt_key || tt_raw = Printf.sprintf "[%s]" tt_key then `Null
+    else `String tt_raw
+  in
   (s, p, tt)
 
 let collect_all_ipers sparse =
@@ -546,7 +549,12 @@ let collect_persons conf base ipers =
     Iper.Set.fold
       (fun ip acc ->
         let p = Driver.poi base ip in
-        let alive = Driver.get_death p = NotDead in
+        let alive =
+          let p_auth = Util.authorized_age conf base p in
+          match Driver.get_death p with
+          | NotDead | DontKnowIfDead | OfCourseDead -> true
+          | Death _ | DeadYoung | DeadDontKnowWhen -> not p_auth
+        in
         let has_par = Driver.get_parents p <> None in
         let has_child = Array.length (Driver.get_family p) > 0 in
         Hashtbl.add meta_tbl ip (alive, has_child);

@@ -217,7 +217,7 @@ td .rm-cell {
 }
 
 /* cousins relation table m=C */
-#quickrel .btn-light {
+#quickrel .btn-light, #quickrel-v2 .btn-light {
   background-color: #f8f9fa;   /* fond quasi-blanc : le p-1 crée le cadre blanc visible */
   border-color: #f8f9fa;       /* bordure quasi-blanche sur beige = effet 3D subtil */
 }
@@ -234,11 +234,11 @@ td .rm-cell {
   box-shadow: none;
 }
 
-#quickrel td {
+#quickrel td, #quickrel-v2 td {
   background-color: transparent !important;
 }
 
-#quickrel tr {
+#quickrel tr, #quickrel-v2 tr {
   height:2rem;
 }
 
@@ -743,7 +743,7 @@ p {
 }
 
 /* Relation menu table */
-#quickrel.table td{
+#quickrel.table td, #quickrel-v2.table td{
   padding: 0px;
   line-height:1em;
 }
