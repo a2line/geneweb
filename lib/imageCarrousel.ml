@@ -33,11 +33,12 @@ let raise_modErr s = raise @@ Update.ModErr (Update.UERR s)
 exception Done
 
 let incorrect conf str =
-  Log.err (fun k -> k "%s: incorrect request: %s" __FILE__ str);
+  Log.err (fun k -> k "incorrect request: %s" str);
   Hutil.incorrect_request conf ~comment:str;
   raise Done
 
 let incorrect_content_type conf base p s =
+  Log.err (fun k -> k "incorrect image content type: %s" s);
   let title _ =
     Output.print_sstring conf (Utf8.capitalize (Util.transl conf "error"))
   in
@@ -48,10 +49,10 @@ let incorrect_content_type conf base p s =
     (Util.referenced_person_title_text conf base p :> string);
   Hutil.trailer conf;
   Output.flush conf;
-  (* <-- seal the response before unwinding *)
   raise Done
 
 let error_too_big_image conf base p len max_len =
+  Log.err (fun k -> k "image too big: %d bytes (max %d)" len max_len);
   let title _ =
     Output.print_sstring conf (Utf8.capitalize (Util.transl conf "error"))
   in
@@ -348,8 +349,6 @@ let effective_send_ok conf base p file =
   in
   let strm = Stream.of_string file in
   let request, content = Server.get_request_and_content strm in
-  (* Remove the raw file bytes from the environment immediately so they
-     cannot leak into error pages or redirects. *)
   let content =
     let s =
       let rec loop len (strm__ : _ Stream.t) =
@@ -464,18 +463,10 @@ let effective_send_c_ok conf base p file file_name =
       | None ->
           let ct = Mutil.extract_param "Content-Type: " '\n' request in
           dump_bad_image conf content;
-          (* Drain any remaining multipart data before reporting the error,
-             to prevent the server from appending it to the response body. *)
-          while Stream.peek strm <> None do
-            Stream.junk strm
-          done;
           incorrect_content_type conf base p ct
       | Some (typ, content) -> (
           match List.assoc_opt "max_images_size" conf.base_env with
           | Some len when String.length content > int_of_string len ->
-              while Stream.peek strm <> None do
-                Stream.junk strm
-              done;
               error_too_big_image conf base p (String.length content)
                 (int_of_string len)
           | _ -> (typ, content))
@@ -990,21 +981,21 @@ let print_main_c conf base =
 let print conf base =
   match p_getenv conf.env "i" with
   | None -> Hutil.incorrect_request conf
-  | Some ip -> (
+  | Some ip ->
       let p = Driver.poi base (Driver.Iper.of_string ip) in
       let fn = Driver.p_first_name base p in
       let sn = Driver.p_surname base p in
       if fn = "?" || sn = "?" then Hutil.incorrect_request conf
-      else try print_send_image conf base "portraits" p with Done -> ())
+      else print_send_image conf base "portraits" p
 
 let print_family conf base =
   match p_getenv conf.env "i" with
   | None -> Hutil.incorrect_request conf
-  | Some ip -> (
+  | Some ip ->
       let p = Driver.poi base (Driver.Iper.of_string ip) in
       let sn = Driver.p_surname base p in
       if sn = "?" then Hutil.incorrect_request conf
-      else try print_send_image conf base "blasons" p with Done -> ())
+      else print_send_image conf base "blasons" p
 
 (* carrousel *)
 let print_c ?(saved = false) ?(portrait = true) conf base =
