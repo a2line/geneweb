@@ -330,11 +330,15 @@ let try_addresses l =
     match l with
     | Unix.{ ai_family = Unix.PF_UNIX; _ } :: l -> loop l
     | Unix.{ ai_family; ai_socktype; ai_addr; _ } :: l -> (
-        let socket = Unix.socket ai_family ai_socktype 0 in
-        Unix.setsockopt socket Unix.SO_REUSEADDR true;
-        match Unix.bind socket ai_addr with
-        | exception _ -> loop l
-        | () -> Some (ai_addr, socket))
+        match Unix.socket ai_family ai_socktype 0 with
+        | exception Unix.Unix_error _ -> loop l
+        | socket -> (
+            Unix.setsockopt socket Unix.SO_REUSEADDR true;
+            match Unix.bind socket ai_addr with
+            | exception Unix.Unix_error _ ->
+                Unix.close socket;
+                loop l
+            | () -> Some (ai_addr, socket)))
     | [] -> None
   in
   loop l
@@ -344,10 +348,14 @@ let pp_url ppf s =
   | Unix.ADDR_UNIX _ ->
       (* Cannot happen as these addresses are discarded in [try_addresses]. *)
       assert false
-  | ADDR_INET (a, p) ->
-      if Unix.is_inet6_addr a then
-        Fmt.pf ppf "http://[%s]:%d" (Unix.string_of_inet_addr a) p
-      else Fmt.pf ppf "http://%s:%d" (Unix.string_of_inet_addr a) p
+  | ADDR_INET (a, p) -> (
+      match Unix.getnameinfo s [ NI_NAMEREQD; NI_NUMERICSERV ] with
+      | { ni_hostname; ni_service } ->
+          Fmt.pf ppf "http://%s:%s" ni_hostname ni_service
+      | exception Not_found ->
+          let addr = Unix.string_of_inet_addr a in
+          if Unix.is_inet6_addr a then Fmt.pf ppf "http://[%s]:%d" addr p
+          else Fmt.pf ppf "http://%s:%d" addr p)
 
 let start ?addr ~port ?(timeout = 0) ~max_pending_requests ~n_workers callback =
   match Sys.getenv "WSERVER" with
