@@ -371,14 +371,17 @@ let min_disp_req =
 (* HTTP server commands *)
 
 let http_section = "HTTP SERVER"
-let default_interface = "127.0.0.1"
+let default_interface = "::"
 let default_port = 2317
 let default_connection_timeout = 120
 let default_max_pending_requests = 150
 let default_n_workers = 20
 
 let interface =
-  let doc = "Bind the HTTP server to the network interface $(docv)." in
+  let doc =
+    "Bind the HTTP server to the network interface $(docv). Use :: for every \
+     interface (IPv4+IPv6) or 0.0.0.0 for IPv4 only."
+  in
   C.Arg.(
     value
     & opt string default_interface

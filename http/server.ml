@@ -325,6 +325,11 @@ let resolve_addr ?addr port =
   | Some a -> Unix.getaddrinfo a port hints
   | None -> Unix.getaddrinfo "" port (Unix.AI_PASSIVE :: hints)
 
+let enable_dual_stack socket_domain socket =
+  match socket_domain with
+  | Unix.PF_INET6 -> Unix.setsockopt socket Unix.IPV6_ONLY false
+  | _ -> ()
+
 let try_addresses l =
   let rec loop l =
     match l with
@@ -334,6 +339,7 @@ let try_addresses l =
         | exception Unix.Unix_error _ -> loop l
         | socket -> (
             Unix.setsockopt socket Unix.SO_REUSEADDR true;
+            enable_dual_stack ai_family socket;
             match Unix.bind socket ai_addr with
             | exception Unix.Unix_error _ ->
                 Unix.close socket;
@@ -343,11 +349,36 @@ let try_addresses l =
   in
   loop l
 
+let lan_urls port =
+  let hints =
+    [ Unix.AI_FAMILY Unix.PF_INET; Unix.AI_SOCKTYPE Unix.SOCK_STREAM ]
+  in
+  match Unix.getaddrinfo (Unix.gethostname ()) (string_of_int port) hints with
+  | exception _ -> []
+  | l ->
+      List.filter_map
+        (fun ai ->
+          match ai.Unix.ai_addr with
+          | Unix.ADDR_INET (a, _) ->
+              let s = Unix.string_of_inet_addr a in
+              if String.length s >= 4 && String.sub s 0 4 = "127." then None
+              else Some (Printf.sprintf "http://%s:%d" s port)
+          | Unix.ADDR_UNIX _ -> None)
+        l
+      |> List.sort_uniq compare
+
 let pp_url ppf s =
   match s with
   | Unix.ADDR_UNIX _ ->
       (* Cannot happen as these addresses are discarded in [try_addresses]. *)
       assert false
+  | ADDR_INET (a, p) when a = Unix.inet6_addr_any || a = Unix.inet_addr_any ->
+      let urls =
+        Printf.sprintf "http://localhost:%d" p
+        :: Printf.sprintf "http://127.0.0.1:%d" p
+        :: lan_urls p
+      in
+      Fmt.string ppf (String.concat " or " urls)
   | ADDR_INET (a, p) -> (
       match Unix.getnameinfo s [ NI_NAMEREQD; NI_NUMERICSERV ] with
       | { ni_hostname; ni_service } ->
