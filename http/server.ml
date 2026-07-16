@@ -325,23 +325,38 @@ let resolve_addr ?addr port =
   | Some a -> Unix.getaddrinfo a port hints
   | None -> Unix.getaddrinfo "" port (Unix.AI_PASSIVE :: hints)
 
-let enable_dual_stack socket_domain socket =
-  match socket_domain with
-  | Unix.PF_INET6 -> Unix.setsockopt socket Unix.IPV6_ONLY false
+let pp_sockaddr ppf s =
+  match s with
+  | Unix.ADDR_UNIX _ ->
+      (* Cannot happen as these addresses are discarded in [try_addresses]. *)
+      assert false
+  | ADDR_INET (a, p) -> Fmt.pf ppf "%s:%d" (Unix.string_of_inet_addr a) p
+
+let enable_dual_stack ai_addr socket =
+  match ai_addr with
+  | Unix.ADDR_INET (a, _) when a = Unix.inet6_addr_any ->
+      Unix.setsockopt socket Unix.IPV6_ONLY false
   | _ -> ()
 
 let try_addresses l =
   let rec loop l =
     match l with
     | Unix.{ ai_family = Unix.PF_UNIX; _ } :: l -> loop l
-    | Unix.{ ai_family; ai_socktype; ai_addr; _ } :: l -> (
-        match Unix.socket ai_family ai_socktype 0 with
-        | exception Unix.Unix_error _ -> loop l
+    | Unix.{ ai_family = _; ai_socktype; ai_addr; _ } :: l -> (
+        match Unix.socket (Unix.domain_of_sockaddr ai_addr) ai_socktype 0 with
+        | exception Unix.Unix_error (e, _, _) ->
+            Log.debug (fun k ->
+                k "failed to create socket for %a: %s" pp_sockaddr ai_addr
+                  (Unix.error_message e));
+            loop l
         | socket -> (
             Unix.setsockopt socket Unix.SO_REUSEADDR true;
-            enable_dual_stack ai_family socket;
+            enable_dual_stack ai_addr socket;
             match Unix.bind socket ai_addr with
-            | exception Unix.Unix_error _ ->
+            | exception Unix.Unix_error (e, _, _) ->
+                Log.debug (fun k ->
+                    k "failed to bind socket to %a: %s" pp_sockaddr ai_addr
+                      (Unix.error_message e));
                 Unix.close socket;
                 loop l
             | () -> Some (ai_addr, socket)))
@@ -373,12 +388,10 @@ let pp_url ppf s =
       (* Cannot happen as these addresses are discarded in [try_addresses]. *)
       assert false
   | ADDR_INET (a, p) when a = Unix.inet6_addr_any || a = Unix.inet_addr_any ->
-      let urls =
-        Printf.sprintf "http://localhost:%d" p
-        :: Printf.sprintf "http://127.0.0.1:%d" p
-        :: lan_urls p
+      let lan =
+        match lan_urls p with [] -> "" | l -> "; LAN: " ^ String.concat ", " l
       in
-      Fmt.string ppf (String.concat " or " urls)
+      Fmt.pf ppf "http://127.0.0.1:%d (listening on all interfaces%s)" p lan
   | ADDR_INET (a, p) -> (
       match Unix.getnameinfo s [ NI_NAMEREQD; NI_NUMERICSERV ] with
       | { ni_hostname; ni_service } ->
