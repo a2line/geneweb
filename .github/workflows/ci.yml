@@ -78,14 +78,6 @@ jobs:
         with:
           command: start-timer
 
-      - name: Cache Opam dependencies
-        id: cache-opam
-        uses: actions/cache@v6
-        with:
-          path: ${{ runner.os == 'Windows' && 'C:\\.opam' || '~/.opam' }}
-          key: ${{ runner.os }}-opam-${{ matrix.ocaml-compiler }}-${{ hashFiles('**/*.opam') }}
-          restore-keys: ${{ runner.os }}-opam-${{ matrix.ocaml-compiler }}-
-
       - name: Setup Ocaml with v3
         uses: ocaml/setup-ocaml@v3
         with:
