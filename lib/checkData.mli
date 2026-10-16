@@ -46,6 +46,10 @@ val find_dict_type_for_istr :
 val cache_file_exists : Config.config -> dict_type -> bool
 (** Check if a cache file exists for the specified dictionary type. *)
 
+val read_cache : Config.config -> dict_type -> checkdata_entry list
+(** [read_cache conf dict] returns the entries of the cache of [dict], or [[]]
+    if it is missing or unreadable. *)
+
 val make_error_html :
   Config.config ->
   Geneweb_db.Driver.base ->
