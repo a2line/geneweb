@@ -36,4 +36,4 @@ type excl = {
     - [who]: monitored clients;
     - [max_conn]: highest [nb_connect] seen and its address, reset when a client
       is blocked;
-    - [last_summary]: time of the last logged summary. *)
+    - [last_summary]: unused, kept for compatibility with existing files. *)
