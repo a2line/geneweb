@@ -587,8 +587,9 @@ let print_witness_note opts base wnote =
             ("" :: String.split_on_char '\n' wnote)
         else
           List.iter
-            (fun line -> Printf.ksprintf (oc opts) "wnote %s\n" line)
-            (String.split_on_char '\n' wnote)
+            (fun line ->
+              if line <> "" then Printf.ksprintf (oc opts) "wnote %s\n" line)
+            (lines_list_of_string wnote)
 
 let print_pevent opts base gen e =
   (match e.epers_name with
