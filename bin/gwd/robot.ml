@@ -7,31 +7,7 @@ let src = Logs.Src.create ~doc:"Robot" "ROB "
 
 module Log = (val Logs.src_log src : Logs.LOG)
 module Code = Geneweb_http.Code
-
-let magic_robot = "GWRB0008"
-
-module W = Map.Make (struct
-  type t = string
-
-  let compare = compare
-end)
-
-type norfriwiz = Normal | Friend of string | Wizard of string
-
-type who = {
-  acc_times : float list;
-  oldest_time : float;
-  nb_connect : int;
-  nbase : string;
-  utype : norfriwiz;
-}
-
-type excl = {
-  mutable excl : (string * int ref) list;
-  mutable who : who W.t;
-  mutable max_conn : int * string;
-  mutable last_summary : float;
-}
+include Geneweb_robot
 
 let is_log_worthy n =
   let rec check_power10 base =

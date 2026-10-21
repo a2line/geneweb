@@ -2,25 +2,10 @@
 (* Usage: robot <command> [options] *)
 
 open Printf
-
-let magic_robot = "GWRB0008"
+open Geneweb_robot
 
 let get_robot_file () =
   String.concat Filename.dir_sep [ Secure.base_dir (); "cnt"; "robot" ]
-
-module W = Map.Make (struct
-  type t = string
-
-  let compare = compare
-end)
-
-type who = { acc_times : float list; nb_connect : int }
-
-type excl = {
-  mutable excl : (string * int ref) list;
-  mutable who : who W.t;
-  max_conn : int * string;
-}
 
 let output_excl oc xcl =
   output_string oc magic_robot;
@@ -159,7 +144,8 @@ let import_blacklist input_file =
   let xcl =
     match read_robot_file fname with
     | Some x -> x
-    | None -> { excl = []; who = W.empty; max_conn = (0, "") }
+    | None ->
+        { excl = []; who = W.empty; max_conn = (0, ""); last_summary = 0.0 }
   in
 
   let ic = Secure.open_in input_file in
@@ -223,7 +209,8 @@ let add_ip patterns_str =
   let xcl =
     match read_robot_file fname with
     | Some x -> x
-    | None -> { excl = []; who = W.empty; max_conn = (0, "") }
+    | None ->
+        { excl = []; who = W.empty; max_conn = (0, ""); last_summary = 0.0 }
   in
 
   List.iter
@@ -269,7 +256,8 @@ let remove_ip ip =
   let xcl =
     match read_robot_file fname with
     | Some x -> x
-    | None -> { excl = []; who = W.empty; max_conn = (0, "") }
+    | None ->
+        { excl = []; who = W.empty; max_conn = (0, ""); last_summary = 0.0 }
   in
   if List.mem_assoc ip xcl.excl then (
     xcl.excl <- List.remove_assoc ip xcl.excl;
@@ -279,7 +267,9 @@ let remove_ip ip =
 
 let clear_all () =
   let fname = get_robot_file () in
-  let xcl = { excl = []; who = W.empty; max_conn = (0, "") } in
+  let xcl =
+    { excl = []; who = W.empty; max_conn = (0, ""); last_summary = 0.0 }
+  in
   write_robot_file fname xcl;
   printf "Cleared all robot data\n"
 
@@ -288,7 +278,8 @@ let clear_monitoring () =
   let xcl =
     match read_robot_file fname with
     | Some x -> { x with who = W.empty; max_conn = (0, "") }
-    | None -> { excl = []; who = W.empty; max_conn = (0, "") }
+    | None ->
+        { excl = []; who = W.empty; max_conn = (0, ""); last_summary = 0.0 }
   in
   write_robot_file fname xcl;
   printf "Cleared monitoring data (kept blacklist)\n"
