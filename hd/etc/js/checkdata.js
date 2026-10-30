@@ -150,9 +150,7 @@
     const s2 = t.closest(SELECTORS.s2);
     if (s2?.closest(SELECTORS.err)) {
       e.preventDefault();
-      const errEl = s2.closest(SELECTORS.err);
-      if (isPendingAutoFix(s2, errEl)) showAutoFix(errEl);
-      else validateEntry(s2, errEl);
+      validateEntry(s2, s2.closest(SELECTORS.err));
     }
   };
 
@@ -181,28 +179,11 @@
     window.open(`${u.origin}${u.pathname}?${p}`, '_blank');
   };
 
-  // An automatic correction proposed by the server and not yet shown.
-  const isPendingAutoFix = (s2, errEl) =>
-    s2.classList.contains('btn-info') && isVisible(s2) &&
-    !errEl.classList.contains(CLASSES.editing) &&
-    !errEl.classList.contains(CLASSES.validated);
-
-  // Open the edit field prefilled with the proposed correction: Enter
-  // validates it and moves to the next entry, Escape cancels.
-  const showAutoFix = errEl => {
-    const s2 = q(SELECTORS.s2, errEl);
-    const btn = q(SELECTORS.button, errEl);
-    if (!s2 || !btn) return;
-    const fixed = getUrlParams(s2.href).s2;
-    showEditInput(btn, fixed);
-  };
-
-  const showEditInput = (btn, proposed = null) => {
+  const showEditInput = btn => {
     const err = btn.closest(SELECTORS.err);
     if (err.classList.contains(CLASSES.editing)) return;
 
     const val = err.dataset.ori || '';
-    const fieldVal = proposed ?? val;
     const s2 = q(SELECTORS.s2, err);
     const hidden = s2?.style.visibility === 'hidden';
 
@@ -212,21 +193,20 @@
 
     err.classList.add(CLASSES.editing);
 
-    const useTextarea = fieldVal.length > CONFIG.TEXTAREA_THRESHOLD ||
-                        fieldVal.includes('\n');
-    const field = createField(useTextarea, fieldVal);
+    const useTextarea = val.length > CONFIG.TEXTAREA_THRESHOLD ||
+                        val.includes('\n');
+    const field = createField(useTextarea, val);
     const container = createContainer(btn, field);
 
     btn.replaceWith(container);
 
     RAF(() => {
       field.focus();
-      field.setSelectionRange(fieldVal.length, fieldVal.length);
+      field.setSelectionRange(val.length, val.length);
       if (useTextarea && window.autosize) autosize(field);
     });
 
     setupField(field, container, s2, val, hidden);
-    if (fieldVal !== val) field.dispatchEvent(new Event('input'));
   };
 
   const setupField = (field, container, s2, origVal, wasHidden) => {
@@ -242,7 +222,6 @@
       if (!stored) {
         s2.dataset.origHref = attrs.href;
         s2.dataset.origTitle = attrs.title;
-        s2.dataset.origClass = s2.className;
         stored = true;
       }
 
@@ -309,7 +288,7 @@
     }
 
     if (s2 && !s2.classList.contains('btn-info')) {
-      s2.className = s2.dataset.origClass || 's2 btn btn-success';
+      s2.className = 's2 btn btn-success';
       s2.style.visibility = wasHidden ? 'hidden' : 'visible';
       if (s2.dataset.origHref) {
         s2.href = s2.dataset.origHref;
@@ -344,12 +323,12 @@
     if (!next) return;
 
     const s2 = q(SELECTORS.s2, next);
-    const auto = s2 && isPendingAutoFix(s2, next);
+    const auto = s2?.classList.contains('btn-info');
 
     RAF(() => {
-      if (auto) {
-        showAutoFix(next);
-        next.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (auto && isVisible(s2)) {
+        s2.focus();
+        s2.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } else {
         const btn = q(SELECTORS.button, next);
         if (btn) {

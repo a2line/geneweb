@@ -380,12 +380,12 @@ let add_pattern_positions s ws we acc =
   in
   scan ws acc
 
-let bad_capitalization_positions_with particles dict s =
+let find_bad_capitalization_positions dict base s =
   match dict with
   | Sources -> []
   | Fnames | Snames | Fnames_alias | Snames_alias | PubNames | Aliases | Places
   | Qualifiers | Occupation | Estates | Titles ->
-      let pspans = particle_spans particles s in
+      let pspans = particle_spans (Driver.base_particles base) s in
       let exempt = exempts_allowed_words dict in
       let initial = requires_initial_capital dict in
       List.fold_left
@@ -402,62 +402,8 @@ let bad_capitalization_positions_with particles dict s =
       |> List.filter (fun i -> not (in_spans pspans i))
       |> List.sort_uniq compare
 
-let find_bad_capitalization_positions dict base s =
-  bad_capitalization_positions_with (Driver.base_particles base) dict s
-
 let has_bad_capitalization dict base s =
   find_bad_capitalization_positions dict base s <> []
-
-(* Rewrite of [s] where, in each segment (separated by spaces or hyphens)
-   holding an error, the part after any particle is capitalized: with
-   [~full:false] only its initial is raised ("jean" -> "Jean", "mcDonald" ->
-   "McDonald"), with [~full:true] the rest is also lowercased ("DUpont" ->
-   "Dupont"). Particles are kept as they are. *)
-let rewrite_flagged_segments ~full pspans positions s =
-  let len = String.length s in
-  let buf = Buffer.create len in
-  let flagged a b = List.exists (fun i -> i >= a && i < b) positions in
-  let fix_segment a b =
-    let rec skip i = if i < b && in_spans pspans i then skip (i + 1) else i in
-    let start = skip a in
-    Buffer.add_string buf (String.sub s a (start - a));
-    if start < b then
-      let rest = String.sub s start (b - start) in
-      if not (flagged start b) then Buffer.add_string buf rest
-      else if full && flagged (start + 1) b then
-        Buffer.add_string buf (Utf8.capitalize rest)
-      else Buffer.add_string buf (Utf8.capitalize_fst rest)
-  in
-  let rec next_sep j =
-    if j >= len || s.[j] = ' ' || s.[j] = '-' then j else next_sep (j + 1)
-  in
-  let rec segments i =
-    if i < len then (
-      let j = next_sep i in
-      fix_segment i j;
-      if j < len then Buffer.add_char buf s.[j];
-      segments (j + 1))
-  in
-  segments 0;
-  Buffer.contents buf
-
-(* Proposed correction for a badly capitalized string: the smallest rewrite
-   (initials only, then initials and lowercased rest) that is no longer
-   flagged, or [s] itself when there is none. *)
-let fix_bad_capitalization_with particles dict s =
-  let positions = bad_capitalization_positions_with particles dict s in
-  if positions = [] then s
-  else
-    let pspans = particle_spans particles s in
-    let is_ok x = bad_capitalization_positions_with particles dict x = [] in
-    let minimal = rewrite_flagged_segments ~full:false pspans positions s in
-    if is_ok minimal then minimal
-    else
-      let full = rewrite_flagged_segments ~full:true pspans positions s in
-      if is_ok full then full else s
-
-let fix_bad_capitalization dict base s =
-  fix_bad_capitalization_with (Driver.base_particles base) dict s
 
 let is_zero_width hex =
   match hex with
@@ -770,10 +716,10 @@ let find_error_highlight_info error_type data base s conf =
       WithMessages (find_misc_typographic_positions dict_type s conf)
   | _ -> SimplePositions (find_error_positions error_type data base s)
 
-let fix_error error_type dict_type base s =
+let fix_error error_type dict_type s =
   match error_type with
   | InvisibleCharacters -> Util.only_printable s
-  | BadCapitalization -> fix_bad_capitalization dict_type base s
+  | BadCapitalization -> s
   | MultipleSpaces -> fix_multiple_spaces s
   | NonBreakingSpace -> s
   | MiscTypographicErrors -> fix_misc_typographic_errors dict_type s
@@ -927,7 +873,7 @@ let make_error_html conf base data istr entry error_type =
   in
   let s = (Mutil.encode s' :> string) in
   let s_ori = (Mutil.encode entry :> string) in
-  let entry_fixed = fix_error error_type dict_type base entry in
+  let entry_fixed = fix_error error_type dict_type entry in
   let entry_escaped = (Util.escape_html entry :> string) in
   let s2 = (Mutil.encode entry_fixed :> string) in
   let s2_auto = entry_fixed <> entry in
@@ -943,7 +889,7 @@ let make_error_html conf base data istr entry error_type =
     Printf.sprintf "%sm=CHK_DATA_OK&d=%s&k=%s&s=%s&s2=%s" prefix data istr_
       s_ori s2
   in
-  (hl, url_mod, url_chk, entry_escaped, s2_auto, entry_fixed)
+  (hl, url_mod, url_chk, entry_escaped, s2_auto)
 
 (* Generic collector for attributes - places or sources *)
 let collect_attributes base p

@@ -51,11 +51,8 @@ val make_error_html :
   Geneweb_db.Driver.istr ->
   string ->
   error_type ->
-  string * string * string * string * bool * string
-(** Generate HTML markup for displaying an error with highlighting. Returns
-    [(highlighted, url_mod, url_chk, escaped_entry, auto_fix, fixed_entry)]:
-    [auto_fix] tells whether [fixed_entry], the automatic correction proposed by
-    [url_chk], differs from the entry. *)
+  string * string * string * string * bool
+(** Generate HTML markup for displaying an error with highlighting. *)
 
 val collect_all_errors_with_cache :
   ?max_results:int ->

@@ -254,16 +254,11 @@ let print_redirect_to_list conn conf base =
 
 let render_error_entry_fast conf base dict_param istr s error_type ~book_title
     ~list_title ~fix_title =
-  let hled, url_mod, url_chk, entry, visible, fixed =
+  let hled, url_mod, url_chk, entry, visible =
     CheckData.make_error_html conf base dict_param istr s error_type
   in
   let dict_vis = if url_mod = "" then " style=\"visibility:hidden\"" else "" in
   let chk_vis = if visible then "" else " style=\"visibility:hidden\"" in
-  let fix_title =
-    if visible then
-      Printf.sprintf "%s → %s" fix_title (Util.escape_html fixed :> string)
-    else fix_title
-  in
   Printf.sprintf
     {|    <div class="err" data-ori="%s">
       <a href="%s" class="bk" title="%s"%s></a>
