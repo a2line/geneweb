@@ -17420,7 +17420,7 @@ eo: Ĉi tiu ordo kontraŭdiras la datojn aŭ la vivofluon: „%s“ ne povas ant
 es: Este orden contradice las fechas o el curso de la vida: «%s» no puede preceder a «%s».
 et: See järjekord on vastuolus kuupäevade või elukäiguga: „%s“ ei saa olla enne „%s“.
 fi: Järjestys on ristiriidassa päivämäärien tai elämänkulun kanssa: ”%s” ei voi edeltää tapahtumaa ”%s”.
-fr: Cet ordre contredit les dates ou le cours de la vie : « %s » ne peut pas précéder « %s ».
+fr: Cet ordre contredit les dates ou le cours de la vie : « %s » ne peut pas précéder « %s ».
 he: סדר זה סותר את התאריכים או את מהלך החיים: “%s” אינו יכול לבוא לפני “%s”.
 is: Þessi röð stangast á við dagsetningarnar eða lífshlaupið: „%s“ getur ekki komið á undan „%s“.
 it: Questo ordine contraddice le date o il corso della vita: «%s» non può precedere «%s».
