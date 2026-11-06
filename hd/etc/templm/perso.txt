@@ -1097,7 +1097,7 @@
 %if;(evar.del = "on")<h1 class="del">[*delete::] [person/persons]0 (-) [or] [family/families]0 (&)</h1>
   %if;(wizard and bvar.can_kill_ancestors="yes")
     <p><strong>/!\ can_kill_ancestors=yes   </strong>
-       <a class="del" href="%prefix;m=KILL_ANC;i=%index;" target="ifr"
+       <a class="del" href="%prefix;m=KILL_ANC&%access;" target="ifr"
           onclick="javascript:deleted(this);" title="[delete::ancestor/ancestors]0">%nn;
           %self; <em>/!\ [delete::ancestor/ancestors]0 /!\</em></a>
        <strong>   can_kill_ancestors=yes /!\</strong>
