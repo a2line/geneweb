@@ -1,0 +1,4 @@
+(executable
+ (name unidecode_audit)
+ (modules unidecode_audit)
+ (libraries geneweb uucp uunf))

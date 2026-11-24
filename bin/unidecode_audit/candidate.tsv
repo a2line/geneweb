@@ -1,0 +1,48 @@
+# Candidate entries of the table of lib/util/unidecode.ml, simulated over
+# the current table by: unidecode_audit -table candidate.tsv -fallback <base>
+# One entry per line: code point, TAB, ASCII output (may be empty), then
+# optionally TAB and a comment. Lines starting with # are ignored.
+# With -fallback, the characters the table does not map are folded
+# generically: the entries below are the corrections of the table and the
+# letters the fallback cannot fold (no decomposition, no mapped other case).
+#
+# Wrong mappings
+U+0284	j	ʄ was u
+U+026E	l	ɮ was i
+U+0389	E	Ή was H, as Η
+U+03AE	e	ή was n, as η
+U+0390	i	ΐ was I
+U+03B0	u	ΰ was a, as υ
+U+038E	U	Ύ was Y, as Υ
+U+03AB	U	Ϋ was Y, as Υ
+U+1E9D	s	ẝ was r
+U+1E9E	SZ	ẞ was s, as ß
+U+1E20	G	Ḡ was F
+U+1E21	g	ḡ was f
+U+1E22	H	Ḣ was G
+U+1E23	h	ḣ was g
+U+044E	you	ю was yu, as Ю (or U+042E YU, whichever changes fewer keys)
+#
+# Letters without decomposition nor mapped other case
+U+026A	i	ɪ
+U+0191	F	Ƒ
+U+0192	f	ƒ
+U+0402	D	Ђ, as Đ
+U+0452	d	ђ
+U+0405	DZ	Ѕ
+U+0455	dz	ѕ
+U+0408	J	Ј
+U+0458	j	ј
+U+0409	LJ	Љ
+U+0459	lj	љ
+U+040A	NJ	Њ
+U+045A	nj	њ
+U+040B	C	Ћ, as Ć
+U+045B	c	ћ
+U+040F	DZ	Џ, as Dž
+U+045F	dz	џ
+U+0490	G	Ґ
+U+0491	g	ґ
+#
+# To decide: U+0404 U+0454 Є є; U+042A U+044A Ъ ъ, silent in Russian, a
+# vowel in Bulgarian. Without entry, -fallback only folds their case.
