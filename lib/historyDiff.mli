@@ -39,6 +39,16 @@ val history_file : string -> string -> int -> string
 val history_path : Config.config -> string -> string
 (** Returns path to the history file inside {i history_d} with given filename *)
 
+val history_dir : (string * string) list -> string -> string
+(** [history_dir base_env bpath] is the directory of the history files of the
+    base [bpath] configured by [base_env]: the variable [history_path], relative
+    to [bpath] unless absolute, {i history_d} in [bpath] if it is not set. *)
+
+val path_in : string -> string -> string
+(** [path_in dir fname] is the path of the history file [fname] in the history
+    directory [dir], under the two levels of folders named after its first two
+    characters. *)
+
 val archive_deleted : Config.config -> ('a, 'b, string) Def.gen_person -> unit
 (** [archive_deleted conf p] moves the history file of the deleted person [p] to
     the folder {i _deleted} of {i history_d}, under the same subfolders,

@@ -269,16 +269,15 @@ let history_file fn sn occ =
   let s = space_to_unders (Name.lower sn) in
   f ^ "." ^ string_of_int occ ^ "." ^ s
 
-(* history directory path *)
-let history_d conf =
+let history_dir base_env bpath =
   let path =
-    match List.assoc_opt "history_path" conf.base_env with
+    match List.assoc_opt "history_path" base_env with
     | Some path when path <> "" -> path
-    | _ -> "history_d"
+    | Some _ | None -> "history_d"
   in
-  if Filename.is_relative path then
-    Filename.concat (GWPARAM.bpath conf.bname) path
-  else path
+  if Filename.is_relative path then Filename.concat bpath path else path
+
+let history_d conf = history_dir conf.base_env (GWPARAM.bpath conf.bname)
 
 (* Folder name for the character of [fname] starting at byte [i], and the
    index of the next character. A multi-byte UTF-8 character is kept whole:
